@@ -3,6 +3,7 @@
 > **Purpose of this file:** Summarize the three project documents into an implementation-oriented plan so the development team can quickly understand **what must be built**, **how the system is expected to work**, **what is out of scope**, and **which requirements still need clarification**.
 >
 > This summary is grounded in:
+>
 > 1. `DA 2 Proposal.docx`
 > 2. `ĐỀ CƯƠNG ĐỒ ÁN 2_ HỆ THỐNG QUẢN LÝ VÀ GỢI Ý PHỐI ĐỒ THÔNG MINH (2).docx`
 > 3. `Product Requirements Document_ CapsuleAI.docx`
@@ -592,16 +593,16 @@ The documents converge on the following architecture:
 
 ## Technology stack explicitly proposed
 
-| Layer | Technology |
-|---|---|
-| Mobile client | React Native |
-| Core backend | Java + Spring Boot |
-| AI/CV | Python and/or external Vision APIs |
-| Database | MongoDB |
-| Object storage | AWS S3 |
-| Weather | OpenWeatherMap or equivalent |
-| API style | RESTful APIs |
-| Transport security | HTTPS/TLS |
+| Layer              | Technology                         |
+| ------------------ | ---------------------------------- |
+| Mobile client      | React Native                       |
+| Core backend       | Java + Spring Boot                 |
+| AI/CV              | Python and/or external Vision APIs |
+| Database           | MongoDB                            |
+| Object storage     | AWS S3                             |
+| Weather            | OpenWeatherMap or equivalent       |
+| API style          | RESTful APIs                       |
+| Transport security | HTTPS/TLS                          |
 
 ---
 
@@ -628,49 +629,59 @@ backend/
 Possible responsibilities:
 
 ### `auth`
+
 - register/login;
 - JWT creation/validation;
 - authorization.
 
 ### `user`
+
 - profile;
 - gender;
 - style preferences;
 - location settings.
 
 ### `wardrobe`
+
 - garment CRUD;
 - search/filter;
 - garment metadata.
 
 ### `image`
+
 - CV processing orchestration;
 - prediction confidence;
 - manual fallback.
 
 ### `storage`
+
 - S3 upload;
 - pre-signed URLs;
 - deletion.
 
 ### `weather`
+
 - weather-provider client;
 - normalized weather model.
 
 ### `outfit`
+
 - compatibility rules;
 - combination generation;
 - shuffle.
 
 ### `history`
+
 - daily outfit logging;
 - likes/dislikes;
 - wear tracking.
 
 ### `catalog`
+
 - capsule staple catalog.
 
 ### `recommendation`
+
 - gap analysis;
 - multiplier calculation;
 - shopping recommendations.
@@ -868,14 +879,14 @@ Based on the documented user flows, the mobile application needs approximately t
 
 The documents state several related targets:
 
-| Operation | Requirement appearing in documents |
-|---|---|
-| Outfit generation | `< 3 seconds` |
-| Outfit generation at 100+ wardrobe items | `< 3 seconds` |
-| Image background removal + tagging | `3–5 seconds` in proposal |
-| Image processing | `< 6 seconds` in detailed PRD |
-| Normal API read/write | average `< 500 ms` in proposal |
-| Cached wardrobe reads | `< 200 ms` in detailed PRD |
+| Operation                                | Requirement appearing in documents |
+| ---------------------------------------- | ---------------------------------- |
+| Outfit generation                        | `< 3 seconds`                      |
+| Outfit generation at 100+ wardrobe items | `< 3 seconds`                      |
+| Image background removal + tagging       | `3–5 seconds` in proposal          |
+| Image processing                         | `< 6 seconds` in detailed PRD      |
+| Normal API read/write                    | average `< 500 ms` in proposal     |
+| Cached wardrobe reads                    | `< 200 ms` in detailed PRD         |
 
 These should be converted into measurable integration/performance tests.
 
@@ -1150,7 +1161,7 @@ or a deliberately designed hybrid.
 
 Do not accidentally build both unless the project specifically requires comparison/research.
 
----
+-> I choose option B. Java Backend -> Python AI Service -> Model
 
 ## 15.2 Final image-processing accuracy target
 
@@ -1167,6 +1178,8 @@ vs
 ```
 
 Choose one official acceptance criterion.
+
+-> I choose 90%
 
 ---
 
@@ -1185,6 +1198,8 @@ under 6 seconds
 ```
 
 Define one measurable target for testing.
+
+-> I choose 3-5 seconds
 
 ---
 
@@ -1276,6 +1291,8 @@ The broad research motivation mentions:
 The detailed functional PRD does not define algorithms or required fields for all of these.
 
 Treat them as **not fully specified** until the team confirms whether they are MVP requirements.
+
+-> My team will implement these fields for MVP, and we will research methods for them later
 
 ---
 
