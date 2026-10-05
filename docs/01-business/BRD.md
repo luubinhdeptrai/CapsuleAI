@@ -6,7 +6,7 @@
 |---|---|
 | Document Name | CapsuleAI — Business Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-05 |
 | Primary Owner / Role | Business Analyst / Product; accountable to the Product Owner |
@@ -17,7 +17,7 @@
 
 ### 1.1 Purpose and Authority
 
-This BRD establishes the business intent, users, value, capabilities, and initial scope of CapsuleAI. It is the business source of truth for downstream product and requirements work once accepted. The approved decisions in the BRD creation request established the v0.1 business baseline, which is preserved in this v0.2 visual revision; the draft status records that document review and acceptance have not yet occurred.
+This BRD establishes the business intent, users, value, capabilities, and initial scope of CapsuleAI. It is the business source of truth for downstream product and requirements work once accepted. The approved decisions in the BRD creation request established the v0.1 business baseline. The v0.2 revision added business visualizations; this v0.3 revision resolves the capsule-needs and interface-language decisions and clarifies user-reported wear activity. Core positioning, scope, and stable business IDs are preserved; the draft status records that document review and acceptance have not yet occurred.
 
 The [Scrum development workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), especially Sections 6, 39–41, 46, and 49, governs artifact ownership, order, traceability, and change propagation. Product behavior belongs in the PRD; testable software requirements in the SRS; domain invariants in Business Rules; architecture drivers and design in ASR/ADD. This BRD does not replace those artifacts.
 
@@ -34,10 +34,11 @@ The [Scrum development workflow](../../Initial%20files/CapsuleAI_Scrum_Developme
 | SRC-07 | [Business Analysis notes](../../Business%20Analysis.docx) | Exploratory commercial and marketing notes; not approved MVP scope. |
 | SRC-08 | [Food Delivery BRD reference](../../docs%20tham%20kh%E1%BA%A3o/BRD_FoodDelivery.md) | Documentation-quality reference for context, conceptual objects, and business processes; no CapsuleAI domain authority. |
 | SRC-09 | User-approved BRD visual enhancement request, October 5, 2026 | Mermaid presentation policy and visual revision scope; preserves approved business decisions. |
+| SRC-10 | User-approved product-decision synchronization request, October 5, 2026 | Resolves the personalized everyday capsule-needs approach, Vietnamese initial UI, and multiple user-reported wear events. Detailed product decisions are maintained in the [normalized PRD](../02-product/PRD.md). |
 
 The repository provides Markdown versions of the proposal, outline, and PRD referenced by DOCX name in earlier documents. These versions and the available Business Analysis DOCX were reviewed. The README identifies the product only; no separate architecture reference documents were present. SRC-08 was reviewed for visual organization and supporting explanations only; its domain requirements are not transferred to CapsuleAI.
 
-Conflicts are resolved in this order: SRC-02; later explicit CapsuleAI decisions; the most detailed internally consistent product specification; earlier proposals. The Baseline Decision Summary records the resulting decisions. In particular, active behavioral personalization, the richer garment profile, inclusive optional profile fields, and the contextual Wardrobe Coverage Score supersede narrower earlier descriptions. The 90% recognition and 3–5 second processing targets also match SRC-04 Sections 15.2–15.3. Earlier growth projections and exploratory marketing ideas are not baseline commitments. Legacy competitor observations are not treated as verified current market evidence.
+Conflicts are resolved in this order: SRC-02 and the later approved business clarifications in SRC-10; other later explicit CapsuleAI decisions; the most detailed internally consistent product specification; earlier proposals. The Baseline Decision Summary records the resulting decisions. In particular, active behavioral personalization, the richer garment profile, inclusive optional profile fields, and the contextual Wardrobe Coverage Score supersede narrower earlier descriptions. The 90% recognition and 3–5 second processing targets also match SRC-04 Sections 15.2–15.3. Earlier growth projections and exploratory marketing ideas are not baseline commitments. Legacy competitor observations are not treated as verified current market evidence.
 
 Stable IDs in this BRD identify business intent. Subsequent artifacts must reference them rather than recreate competing business baselines. Accepted changes retain IDs and propagate to affected artifacts through repository review.
 
@@ -47,12 +48,13 @@ Stable IDs in this BRD identify business intent. Subsequent artifacts must refer
 |---|---|---|
 | 0.1 | 2026-10-05 | Initial business baseline draft. |
 | 0.2 | 2026-10-05 | Added business value loop, system context, conceptual domain model, and business process diagrams; no intentional change to approved business scope or stable IDs. |
+| 0.3 | 2026-10-05 | Resolved capsule-needs and initial-interface-language business questions and synchronized wear-history semantics; no change to core product positioning, scope, or stable IDs. |
 
 ### 1.4 Business Visualization Policy
 
 Embedded Mermaid diagrams explain business context, concepts, and processes. They supplement the business goals, requirements, and capabilities; they do not introduce additional requirements. Formal UML use-case, activity, sequence, state, deployment, and architecture artifacts remain separate and follow the notation rules in SRC-01.
 
-SRC-02 remains the business decision authority; SRC-09 governs this presentation enhancement. Mermaid business process visualizations in this BRD do not replace later formal requirements or design diagrams.
+SRC-02 and SRC-10 govern the business decisions and subsequent clarifications; SRC-09 governs the business visualization policy. Mermaid business process visualizations in this BRD do not replace later formal requirements or design diagrams.
 
 ## 2. Executive Summary
 
@@ -190,7 +192,7 @@ The initial validation focus is **smartphone users in Vietnam** whose behavior a
 
 CapsuleAI is **mobile-first**, targeting **Android and iOS**. A consumer web or desktop application is not required for the initial baseline. No device-version threshold or implementation framework is established by this BRD.
 
-The business approach is **Vietnam-first, expansion-ready**. Clothing needs, climate, occasions, units, currencies, language, and shopping destinations may vary by region. Product concepts should permit later localization and geographic expansion without making Vietnamese location, a single climate model, or one retailer essential to the domain. Initial interface language choices remain an open, non-blocking business question.
+The business approach is **Vietnam-first, expansion-ready**. Clothing needs, climate, occasions, units, currencies, language, and shopping destinations may vary by region. Product concepts should permit later localization and geographic expansion without making Vietnamese location, a single climate model, or one retailer essential to the domain. The initial Vietnam MVP interface is Vietnamese; project documentation remains English. English and additional interface languages may be added later without redefining the business/domain model. Multi-language UI is not an MVP obligation.
 
 ## 11. User Personas
 
@@ -247,7 +249,7 @@ classDiagram
     ShoppingRecommendation --> WardrobeMultiplier : explains utility
 ```
 
-A Garment is an owned wardrobe item; a Candidate Garment is a possible addition evaluated hypothetically. Wardrobe Gaps express underserved needs, and a Shopping Recommendation offers one possible response. Garment Profile means the user-confirmed representation, while Wear History records user-reported selections. The diagram omits attributes, methods, and physical cardinalities; the descriptions below retain the business meaning needed for CAP-01–CAP-10 and BR-002, BR-006–BR-017.
+A Garment is an owned wardrobe item; a Candidate Garment is a possible addition evaluated hypothetically. Wardrobe Gaps express underserved needs, and a Shopping Recommendation offers one possible response. Garment Profile means the user-confirmed representation, while Wear History records user-reported wear events. Multiple events can occur within a day; they do not prove observed physical wear. The diagram omits attributes, methods, and physical cardinalities; the descriptions below retain the business meaning needed for CAP-01–CAP-10 and BR-002, BR-006–BR-017.
 
 ### 12.2 Business Object Descriptions
 
@@ -261,7 +263,7 @@ A Garment is an owned wardrobe item; a Candidate Garment is a possible addition 
 | Outfit | A meaningful combination of clothing assessed for compatibility and context. | Daily outfits combine owned Garments; hypothetical previews may also include a Candidate Garment. |
 | Outfit Recommendation | Advice proposing a valid outfit for the user's current context, ordered by personalized relevance. | Proposes an Outfit to a User and can receive Feedback or a recorded wear selection. |
 | Feedback | Explicit Like/Dislike assessments and meaningful behavioral signals used to improve advice. | Comes from the User, relates to recommended outfits, and informs future personalized ranking. |
-| Wear History | The record of user-reported outfit choices and associated garment use. | Connects the User to selected Outfits and informs utilization, preference, diversity, and recency. |
+| Wear History | The record of user-reported wear activity, including multiple wear events within a day; it is not automatic verification of physical wear. | Connects the User to reported Outfits and associated garment use and informs utilization, preference, diversity, and recency. |
 | Wardrobe Coverage | The contextual assessment of how well the wardrobe meets the user's clothing needs, expressed through an explainable Wardrobe Coverage Score. | Evaluates the Wardrobe using relevant needs and context and may reveal Wardrobe Gaps. |
 | Wardrobe Gap | An underserved clothing capability rather than an obligation to buy a particular product. | Arises from coverage analysis and leads to possible Candidate Garments. |
 | Candidate Garment | A hypothetical addition with attributes relevant to a wardrobe gap. | Can address a Wardrobe Gap, be evaluated through Wardrobe Multiplier, and appear in a Shopping Recommendation or preview. |
@@ -308,7 +310,7 @@ Exact taxonomies, scales, inference methods, and storage structures belong in la
 
 Hard deterministic constraints eliminate invalid outfits, including incompatible required slots, layering, weather/season suitability, physically invalid combinations, and strong pattern conflicts. Soft personalized scoring ranks valid alternatives using color harmony, style, occasion, wear history, explicit feedback, recency, diversity, and optional body-profile preferences where applicable.
 
-Style and occasion actively inform the initial recommendations. **Wear This Today** is a strong positive behavioral signal; **Like** is explicit positive feedback; **Dislike** is explicit negative feedback. Wear history can support long-term preferences, utilization, diversity, and short-term recency considerations. These signals influence the product experience in the MVP rather than only appear in a history display. Recorded wear is user-reported behavior, not proof of physical wear.
+Style and occasion actively inform the initial recommendations. **Wear This Today** is a strong positive behavioral signal; **Like** is explicit positive feedback; **Dislike** is explicit negative feedback. Wear history can support long-term preferences, utilization, diversity, and short-term recency considerations. These signals influence the product experience in the MVP rather than only appear in a history display. Wear This Today records distinct user-reported wear events; multiple events may occur within a day, including separate intentional uses of the same outfit. Wear history supports utilization and lightweight personalization, while accidental or artificial repetition must not disproportionately distort advice. Recorded wear is not automatic proof of physical wear.
 
 Body shape and gender are optional, editable context. Body shape may contribute softly; neither field creates discriminatory eligibility restrictions. Actual wardrobe contents and stated preferences take precedence. Location supports environmental context; permission is optional and manual city/location selection remains available.
 
@@ -316,7 +318,7 @@ The hybrid approach can initially use explicit rules and lightweight scoring. Ad
 
 ### 13.4 Coverage, Gaps, and Incremental Utility
 
-**Wardrobe Coverage Score** estimates how well the current wardrobe covers clothing needs associated with the user's style, occasions, climate, and selected capsule profile. It may use weighted coverage, but must explain covered and underserved needs and its assessment context. It does not claim that a wardrobe is objectively complete.
+**Wardrobe Coverage Score** estimates how well the current wardrobe serves the **Personalized Everyday Capsule**, one personalized capsule-needs model informed by common occasion priorities, style preferences, climate/environmental context, and confirmed wardrobe contents. Users' relevant needs can differ, so the same wardrobe can receive different contextual assessments. Coverage explains covered and underserved needs without a universal mandatory wardrobe checklist or an objective-completeness claim. Exact weighting and calculation rules remain downstream.
 
 **Wardrobe Profile → Coverage Analysis → Missing Wardrobe Capability → Candidate Garments → Simulated Outfit Expansion → Wardrobe Multiplier → Strategic Recommendation**
 
@@ -395,7 +397,7 @@ This process relates confirmed inventory to clothing needs before identifying po
 flowchart TD
     Wardrobe["Confirmed wardrobe"] --> Assess["Evaluate wardrobe coverage"]
     Context["Style, occasion needs, climate"] --> Assess
-    Capsule["Selected capsule-needs profile"] --> Assess
+    Capsule["Personalized Everyday<br/>Capsule"] --> Assess
     Assess --> Coverage["Explain Wardrobe Coverage Score"]
     Coverage --> Needs{"Underserved<br/>capabilities?"}
     Needs -->|"No"| Covered["Explain covered needs"]
@@ -404,7 +406,7 @@ flowchart TD
     Gaps --> Candidates["Identify candidate garment needs"]
 ```
 
-A gap is an underserved capability, such as versatile neutral casual footwear; white sneakers might be one candidate response. The example is illustrative and is not a universal requirement. Assessment depends on sufficiently confirmed information and an appropriate capsule-needs profile (OBQ-001); insufficient information must not be presented as a proven need to purchase. This process supports BG-03–BG-04, BR-014–BR-015, and CAP-07–CAP-08.
+A gap is an underserved capability, such as versatile neutral casual footwear; white sneakers might be one candidate response. The example is illustrative and is not a universal requirement. Assessment depends on sufficiently confirmed information and the Personalized Everyday Capsule approach (resolved OBQ-001); insufficient information must not be presented as a proven need to purchase. This process supports BG-03–BG-04, BR-014–BR-015, and CAP-07–CAP-08.
 
 ### 14.4 Strategic Shopping and Wardrobe Multiplier
 
@@ -463,7 +465,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 
 | ID | Requirement | Business Rationale | Priority | Related Goals |
 |---|---|---|---|---|
-| BR-014 | Users must receive an explainable Wardrobe Coverage Score related to their style, occasions, climate, and selected capsule profile. | Make underserved needs understandable without claiming universal completeness. | Must | BG-03, BG-04 |
+| BR-014 | Users must receive an explainable Wardrobe Coverage Score related to their style, common occasion needs, climate, and personalized everyday capsule-needs model. | Make underserved needs understandable without claiming universal completeness. | Must | BG-03, BG-04 |
 | BR-015 | Gap analysis must identify missing wardrobe capabilities and connect them to candidate garments and estimated outfit expansion. | Make improvement advice specific to existing clothing and needs. | Must | BG-03, BG-04 |
 | BR-016 | Candidate purchase utility must include Wardrobe Multiplier as the incremental count of unique valid outfits under a consistent assessment context. | Give users concrete evidence of additional versatility. | Must | BG-04 |
 | BR-017 | Users must be able to inspect hypothetical newly enabled outfits before deciding whether a candidate addition is useful. | Make utility estimates understandable and assessable. | Must | BG-04 |
@@ -552,7 +554,7 @@ These are intended validation targets and measurement directions, not observed r
 |---|---|---|---|---|
 | MET-E01 | Confirmed garments added and time to a usable wardrobe | Understand setup friction and BG-01. | Establish a pilot baseline; improve completion and reduce effort without forcing a garment quota. | Initial user validation |
 | MET-E02 | Outfit-generation use and reported time/effort to selection | Assess BG-02. | Establish baseline behavior and test whether the experience reduces decision effort. | Initial and repeat-use validation |
-| MET-E03 | Wear This Today selection rate and Like/Dislike behavior | Assess relevance and feedback participation. | Evaluate selections against eligible recommendation sessions; analyze explicit feedback separately. | Initial and repeat-use validation |
+| MET-E03 | Wear This Today participation, wear-event activity, and Like/Dislike behavior | Assess relevance and feedback participation. | Distinguish reported wear-event activity from recommendation sessions with wear participation; account for multiple intentional events without accidental inflation and analyze explicit feedback separately. | Initial and repeat-use validation |
 | MET-E04 | Recorded wardrobe utilization and outfit diversity | Assess BG-03. | Increase the share of owned garments represented in recorded wear and the variety of chosen combinations; account for incomplete logging. | Repeat-use validation |
 | MET-E05 | AI correction rate | Find prediction and onboarding weaknesses. | Track by attribute and image conditions; reduce avoidable corrections while preserving user authority. | Evaluation and pilot review |
 | MET-E06 | Gap and Wardrobe Multiplier engagement | Assess whether purchase evidence is useful. | Measure explanation/detail views and hypothetical-preview use; establish a baseline before setting numerical targets. | Initial user validation |
@@ -585,7 +587,7 @@ The following are unvalidated assumptions, not confirmed market facts.
 
 | ID | Constraint | Business Implication |
 |---|---|---|
-| CON-001 | Initial delivery is mobile-first on Android and iOS, with Vietnam-first validation. | Prioritize the smartphone experience while retaining expansion compatibility. |
+| CON-001 | Initial delivery is mobile-first on Android and iOS, with Vietnam-first validation and a Vietnamese interface. | Prioritize the initial smartphone experience while retaining localization and expansion compatibility; multi-language UI is not required for MVP. |
 | CON-002 | Initial recommendations cover Top, Bottom, Outerwear, and Footwear. | Validate within these categories; preserve room for later taxonomy growth. |
 | CON-003 | Shopping occurs externally; native commerce is excluded. | Product value and MVP completion cannot depend on checkout or transaction fulfillment. |
 | CON-004 | User-confirmed garment information takes precedence over uncertain predictions. | AI assists the wardrobe representation and does not remove user authority. |
@@ -601,7 +603,7 @@ No unsupported launch deadline, staffing capacity, market-size estimate, or grow
 | DEP-001 | Usable garment-image input | Image conditions affect prediction quality; guidance, correction, and manual entry preserve participation. |
 | DEP-002 | Availability and quality of AI image processing | Automation benefit depends on usable results; manual wardrobe creation remains necessary. |
 | DEP-003 | Weather information and user-selected location context | Environmental relevance depends on available, credible context; unavailable or stale weather must be communicated. |
-| DEP-004 | Sufficient confirmed inventory and an appropriate capsule-needs profile | Outfit variety and coverage require relevant wardrobe data and an agreed basis for assessed needs. |
+| DEP-004 | Sufficient confirmed inventory and relevant Personalized Everyday Capsule needs/context | Outfit variety and coverage require meaningful wardrobe information and the user's common occasion priorities, style, and climate/context. |
 | DEP-005 | Curated candidate information and usable external purchasing destinations | Shopping advice needs relevant candidates, qualified claims, and maintained links; core wardrobe advice remains independent. |
 | DEP-006 | Mobile distribution and reliable handling of personal images/data | Android/iOS availability and user trust depend on operational readiness; vendors and infrastructure choices belong in later artifacts. |
 
@@ -662,20 +664,20 @@ The matrix connects business goals to the requirements that support them and the
 | BG-03 — Increase Wardrobe Utilization | BR-002, BR-003, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-014, BR-015, BR-021, BR-022, BR-023, BR-024 | CAP-03 Wardrobe Management; CAP-04 Garment Intelligence; CAP-05 Context-Aware Styling; CAP-06 Behavioral Personalization; CAP-07 Wardrobe Analytics; CAP-08 Gap Analysis |
 | BG-04 — Improve Purchase Quality | BR-002, BR-003, BR-009, BR-010, BR-012, BR-013, BR-014, BR-015, BR-016, BR-017, BR-018, BR-019, BR-020, BR-021, BR-022, BR-023, BR-024 | CAP-01 Account & Personalization; CAP-04 Garment Intelligence; CAP-05 Context-Aware Styling; CAP-07 Wardrobe Analytics; CAP-08 Gap Analysis; CAP-09 Wardrobe Multiplier; CAP-10 Strategic Shopping |
 
-## 27. Open Business Questions
+## 27. Resolved Business Decisions
 
-**No blocking business questions remain for BRD v0.2 or the start of PRD normalization.** The approved positioning, goals, personas, mobile scope, personalization meaning, garment-intelligence direction, and commerce boundaries are settled.
+The business questions below are resolved by SRC-10. No new open business question was identified during synchronization; document review and acceptance remain separate from decision resolution.
 
-| ID | Unresolved Business Question | Decision Owner | Resolution Point / Effect |
+| ID | Resolved Business Decision | Status | Business Effect |
 |---|---|---|---|
-| OBQ-001 | Which initial capsule-needs profile(s) should anchor coverage and gap advice for the Vietnam validation audience? | Product Owner with Product / UX and user input | Non-blocking for PRD normalization; settle before accepting MVP coverage/gap behavior. Defines relevant needs without imposing a universal wardrobe checklist. |
-| OBQ-002 | Which interface language(s) will the initial Vietnam validation experience support? | Product Owner / Product Team | Non-blocking for PRD normalization; settle before finalizing user-facing content and pilot preparation. This BRD's English-language requirement does not determine the app's language. |
+| OBQ-001 | Use one Personalized Everyday Capsule approach informed by user needs/common occasion priorities, style, climate/context, and the current confirmed wardrobe. | Resolved | Coverage evaluates relevant individual needs rather than a universal mandatory wardrobe checklist; detailed product vocabularies and weighting remain in PRD/downstream artifacts. |
+| OBQ-002 | Initial Vietnam MVP UI is Vietnamese; documentation remains English. English and additional UI languages may be introduced later. | Resolved | Establishes initial audience comprehension while preserving localization/expansion readiness; multi-language UI is not required for MVP. |
 
-Exact taxonomies, scoring formulas, confidence handling, performance-test conditions, and technical choices are downstream specification work. They are not unresolved business positioning decisions.
+Product decisions OPQ-001–OPQ-010 are resolved in the [PRD's Resolved Product Decisions](../02-product/PRD.md#34-resolved-product-decisions). Exact scoring formulas, numerical confidence thresholds, performance-test conditions, and technical design remain downstream specification work rather than unresolved business positioning decisions.
 
 ## 28. Approval / Exit Criteria
 
-BRD v0.2 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
+BRD v0.3 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
 
 - The user problems, product vision, three connected pillars, and expected value are clear.
 - Decision stakeholders, end users, and supporting roles are identified.
@@ -684,7 +686,7 @@ BRD v0.2 is ready for acceptance and the next workflow step when the Product Own
 - Initial scope, exclusions, and the complete MVP experience are explicit.
 - Garment confirmation authority, inclusive personalization, explainability, and commerce independence are preserved.
 - Validation targets, assumptions, dependencies, constraints, and material risks are documented without presenting hypotheses as results.
-- No unresolved business ambiguity blocks PRD normalization; the non-blocking questions have decision owners and resolution points.
+- OBQ-001 and OBQ-002 are resolved, the approved business clarifications are synchronized with the PRD, and no unresolved business ambiguity blocks downstream refinement.
 
 Acceptance is recorded through repository review and an appropriate document-status update by the decision authority. This draft does not claim completed approval. Later evidence may refine the baseline through controlled, traceable changes rather than freeze requirements before iterative development.
 
@@ -694,15 +696,15 @@ Acceptance is recorded through repository review and an appropriate document-sta
 |---|---|---|
 | Positioning | Real MVP-stage wardrobe-intelligence and decision-support product with commercial evolution potential. | SRC-02; Sections 2 and 5 |
 | Value model | AI Digital Closet → Context-Aware Styling → Wardrobe Intelligence & Strategic Shopping, connected by user feedback. | SRC-02; Section 6 |
-| Market and platform | Vietnam-first, expansion-ready; mobile-first on Android and iOS. | SRC-02; Section 10 |
+| Market and platform | Vietnam-first, expansion-ready; mobile-first on Android and iOS; Vietnamese initial UI with later localization possible. | SRC-02, SRC-10; Section 10 |
 | Personas | Indecisive Professional is primary; Fashion-Conscious Minimalist and Smart Shopper are secondary behavioral archetypes. | SRC-02; Section 11 |
 | Initial categories | Top, Bottom, Outerwear, Footwear; richer categories are deferred. | SRC-02; Section 16 |
 | Garment intelligence | Rich classification, layering/shape, color, pattern, context, and confidence-aware material concepts. | SRC-02; Section 13.2 |
 | Wardrobe authority | User-confirmed/corrected information is canonical; AI uncertainty and manual entry remain meaningful. | SRC-02; BR-002–BR-004 |
 | Recommendation strategy | Hard validity constraints plus soft personalized ranking; no sophisticated ML requirement. | SRC-02; Section 13.3 |
-| Active feedback and context | Wear This Today, Like/Dislike, and wear history affect lightweight personalization; style and occasion are active MVP inputs. | SRC-02; BR-010–BR-011 |
+| Active feedback and context | Wear This Today records user-reported wear events, including multiple intentional events within a day; Like/Dislike and history actively inform lightweight personalization. | SRC-02, SRC-10; BR-010–BR-011 |
 | Inclusive context | Body shape and gender are optional and non-restrictive; device location permission is optional with manual selection. | SRC-02; BR-012–BR-013 |
-| Wardrobe Coverage Score | Explainable, contextual estimate of clothing-need coverage; no objective-completeness claim. | SRC-02; BR-014 |
+| Wardrobe Coverage Score | Explainable coverage of relevant needs through one Personalized Everyday Capsule; no universal checklist or objective-completeness claim. | SRC-02, SRC-10; BR-014 |
 | Wardrobe Multiplier | Core differentiator: incremental count of unique valid outfits under a consistent context, with hypothetical previews. | SRC-02; BR-016–BR-017 |
 | Commercial boundary | Commerce-independent, affiliate-ready advice and external links; no native marketplace, payments, or fulfillment. | SRC-02; Sections 16 and 18 |
 | Validation direction | 90% category/color recognition; approximately 3–5 second garment processing; below approximately 3 second outfit generation under defined conditions. | SRC-02; SRC-04 Sections 15.2–15.3; Section 19 |
@@ -711,6 +713,6 @@ Acceptance is recorded through repository review and an appropriate document-sta
 
 ## Next Artifact
 
-According to `CapsuleAI_Scrum_Development_Workflow.md`, after BRD v0.2 is accepted, the next step is to normalize/refine the existing PRD rather than immediately designing the system architecture.
+This BRD v0.3 is synchronized with the [normalized PRD v0.2](../02-product/PRD.md). The next workflow artifact is `docs/03-requirements/SRS.md`, derived from the product behavior after PRD review; it is not created by this revision.
 
-Use the accepted baseline to normalize the [existing PRD](../../Product%20Requirements%20Document_%20CapsuleAI.md) at the workflow's designated location, `docs/02-product/PRD.md`, preserving links to the applicable business requirements.
+BRD and PRD remain Baseline Draft until document review/acceptance is recorded. Their resolved business and product decisions support SRS drafting without reopening the settled capsule-needs, language, and wear-activity meaning. Formal requirements, domain rules, and architecture remain separate downstream artifacts under `CapsuleAI_Scrum_Development_Workflow.md`.
