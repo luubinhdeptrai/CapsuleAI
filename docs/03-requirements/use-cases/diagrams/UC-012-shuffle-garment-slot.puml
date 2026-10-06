@@ -1,0 +1,17 @@
+@startuml
+
+' Local projection of ../use-case-diagram.puml; actor goals only.
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+title UC-012 - Shuffle Garment Slot
+
+actor "User" as User
+
+rectangle "CapsuleAI" {
+    usecase "UC-012\nShuffle Garment Slot" as UC012
+}
+
+User -- UC012
+
+@enduml

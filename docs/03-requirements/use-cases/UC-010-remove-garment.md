@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -40,7 +40,7 @@ The User chooses to remove the selected garment.
 3. The User deliberately confirms removal.
 4. CapsuleAI acknowledges accepted removal and refreshes the current wardrobe without that garment.
 5. CapsuleAI refreshes affected current recommendations/Coverage/Multiplier or marks them for reevaluation; new current evaluations exclude the garment.
-6. When historical reports reference it, CapsuleAI retains understandable snapshots labeled Removed from wardrobe.
+6. When historical reports reference it, CapsuleAI shows necessary minimal snapshots labeled Removed from wardrobe and explains the 30-day deletion policy for original images/nonessential removed personal data.
 
 ## 7. Alternative Flows
 
@@ -77,7 +77,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - The selected garment is excluded from active inventory, new current outfits, current Coverage and the current Multiplier baseline.
-- Affected prior advice is refreshed or visibly outdated; past Wear Events/outfit/garment snapshots remain understandable with removed labeling.
+- Affected prior advice is refreshed or visibly outdated; past Wear Events/outfit/garment meaning remains understandable through necessary minimal snapshots with removed labeling; original images/nonessential removed personal data are physically deleted within 30 days.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -92,6 +92,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-009` | Accepted removal changes active state and affected advice; failed/canceled work does not. |
 | `BRULE-OUT-002` | Removed items cannot enter new current daily outfits. |
@@ -110,16 +111,18 @@ The following references constrain this interaction; detailed policy remains in 
 | [Software Requirements — Data](../SRS.md) | `DATA-GAR-005`, `DATA-INT-002`, `DATA-INT-004`, `DATA-HIST-001`, `DATA-HIST-002`, `DATA-RET-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-ANL-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-008`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-009`, `BRULE-OUT-002`, `BRULE-HIST-002`, `BRULE-HIST-003`, `BRULE-COV-006`, `BRULE-MULT-008` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-009`, `BRULE-OUT-002`, `BRULE-HIST-002`, `BRULE-HIST-003`, `BRULE-COV-006`, `BRULE-MULT-008`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-005`, `BR-006`, `BR-021`, `BR-022` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-03`, `CAP-07` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - This is active-ownership removal, not automatic erasure of historical reports or an archive/restore feature.
 - Removed from wardrobe labeling must be understandable without relying only on the garment image/color.
+
+- Removal immediately affects active ownership and current recommendations/Coverage/Multiplier. Necessary minimal historical meaning may remain; original removed-garment images are not retained indefinitely for history, and physical deletion occurs within 30 days.
 
 ## 14. Related Use Cases
 
@@ -132,9 +135,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Retention, physical deletion and privacy handling of garment images/historical snapshots remain unresolved at final privacy/data acceptance; effective current exclusion is already required. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-010-remove-garment.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

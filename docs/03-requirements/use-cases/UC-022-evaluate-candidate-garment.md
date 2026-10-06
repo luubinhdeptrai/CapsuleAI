@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -129,6 +129,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-MULT-001` | Use a current owned ready baseline and a separately identified hypothetical candidate. |
 | `BRULE-MULT-002` | Compare identity-based sets under the same context/rule basis; permutations are not new outfits. |
@@ -149,21 +150,23 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-07` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-MULT-001`, `FEAT-SHOP-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-MULT-001`, `FR-MULT-002`, `FR-MULT-003`, `FR-MULT-004`, `FR-MULT-005`, `FR-MULT-006`, `FR-MULT-007`, `FR-MULT-008`, `FR-SHOP-002`, `FR-SHOP-004`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-MULT-001`, `FR-MULT-002`, `FR-MULT-003`, `FR-MULT-004`, `FR-MULT-005`, `FR-MULT-006`, `FR-MULT-007`, `FR-MULT-008`, `FR-SHOP-002`, `FR-SHOP-004`, `FR-AUTH-008`, `FR-SHOP-001`, `FR-SHOP-003`, `FR-WEATHER-003` |
 | [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-OUT-002`, `DATA-OUT-003`, `DATA-ANL-003`, `DATA-ANL-004`, `DATA-INT-003` |
-| [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-SHOP-001`, `ERR-SHOP-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001`, `ERR-ANL-001`, `ERR-ANL-002` |
+| [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-SHOP-001`, `ERR-SHOP-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001`, `ERR-ANL-001`, `ERR-ANL-002`, `ERR-WEATHER-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-008`, `UI-009`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-REL-002`, `NFR-TEST-001`, `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-MULT-001`, `BRULE-MULT-002`, `BRULE-MULT-003`, `BRULE-MULT-004`, `BRULE-MULT-005`, `BRULE-MULT-006`, `BRULE-MULT-007`, `BRULE-MULT-008`, `BRULE-MULT-009`, `BRULE-GAR-003`, `BRULE-OUT-008`, `BRULE-SHOP-001` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-009`, `BR-015`, `BR-016`, `BR-017`, `BR-022`, `BR-024` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-REL-002`, `NFR-TEST-001`, `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-MULT-001`, `BRULE-MULT-002`, `BRULE-MULT-003`, `BRULE-MULT-004`, `BRULE-MULT-005`, `BRULE-MULT-006`, `BRULE-MULT-007`, `BRULE-MULT-008`, `BRULE-MULT-009`, `BRULE-GAR-003`, `BRULE-OUT-008`, `BRULE-SHOP-001`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-009`, `BR-015`, `BR-016`, `BR-017`, `BR-022`, `BR-024`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-09`, `CAP-08`, `CAP-10` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The multiplier is incremental outfit utility, not a weighted score, forecast, purchase guarantee or number of permutations. No internal enumeration/ranking design is specified.
 - Baseline and expanded assessments must share context/rules; candidate evaluation is the documented hypothetical exception to daily owned-garment eligibility.
-- No new multiplier latency or exhaustive-completion capacity threshold is invented; supported operating envelope remains OSQ-013. Exactness cannot be claimed from an arbitrary truncated subset.
+- No separate multiplier latency or mandatory larger-wardrobe quantitative threshold is specified. SRS Section 12.3 defines supported validation conditions; exactness requires complete evidence rather than an arbitrary truncated subset.
+
+- Candidate descriptors require explicit user-provided evidence or an identifiable configured credible source. No candidate import/capture interaction is added. Weather context follows the 30-minute/2-second acquisition boundary; optional external price/availability follows source/time and 24-hour currentness. Missing/stale commercial values or destination failure do not turn valid utility into +0.
 
 ## 14. Related Use Cases
 
@@ -178,10 +181,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-012` | External candidate-information credibility/context freshness remains governed by the SRS without invented thresholds. |
-| `OSQ-013` | Supported operating environment/capacity for complete candidate evaluation remains at the SRS gate; no new exactness promise resolves it. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-022-evaluate-candidate-garment.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

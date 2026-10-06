@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | Email Delivery Service |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -122,6 +122,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-002` | Recovery uses the account's normalized email identity. |
 | `BRULE-AUTH-003` | The new password preserves its value and satisfies the approved policy. |
 | `BRULE-AUTH-004` | Interactions last 30 minutes, permit one successful use and are superseded by new issuance. |
@@ -137,16 +138,18 @@ The following references constrain this interaction; detailed policy remains in 
 | [Software Requirements — Data](../SRS.md) | `DATA-AUTH-001`, `DATA-AUTH-005` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-002`, `ERR-NET-001`, `ERR-DEP-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `SI-003`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-SEC-003`, `NFR-SEC-002`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-002`, `BRULE-AUTH-003`, `BRULE-AUTH-004`, `BRULE-AUTH-005` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-SEC-003`, `NFR-SEC-002`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-002`, `BRULE-AUTH-003`, `BRULE-AUTH-004`, `BRULE-AUTH-005`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-01` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The initial Vietnamese response conveys a conditional account-safe meaning; response wording must not confirm whether an account exists.
 - No session/token storage or revocation mechanism is selected here. Revocation refers to the SRS's account-wide login/renewal-session boundary.
+
+- Email Delivery Service receives only email and information necessary for recovery delivery, without unrelated wardrobe/profile/history contents.
 
 ## 14. Related Use Cases
 
@@ -157,8 +160,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-004-reset-password.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

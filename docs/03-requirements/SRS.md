@@ -5,8 +5,8 @@
 | Field | Value |
 |---|---|
 | Document | CapsuleAI — Software Requirements Specification |
-| Version / Status | 0.2.1 / Baseline Draft |
-| Last Updated | 2026-10-05 |
+| Version / Status | 0.3 / Baseline Draft |
+| Last Updated | 2026-10-06 |
 | Primary Owner | Requirements Engineer / Business Analyst / System Analyst |
 | Decision Authority | Product Owner, with Engineering and QA review |
 | Business Baseline | [BRD v0.3](../01-business/BRD.md) |
@@ -18,14 +18,15 @@
 | Version | Date | Revision |
 |---|---|---|
 | 0.1 | 2026-10-05 | Initial SRS derived from BRD v0.3 and PRD v0.2; specifies MVP behavior, logical information, interfaces, quality directions, failures, verification, and traceability. |
-| 0.2 | 2026-10-05 | Resolved OSQ-001–OSQ-010 and propagated acceptance targets, access/recovery policy, confidence/readiness vocabularies, outfit validity, personalization, Wear Event time/identity, Coverage formulas and Multiplier exactness/freshness. Preserved upstream scope and stable existing requirement IDs. |
-| 0.2.1 | 2026-10-05 | Editorial normalization of SRS terminology and section headings; removed decision-log style wording, standardized normative language, and made FR-AUTH-018 mandatory. No other requirement semantics or scope changed. |
+| 0.2 | 2026-10-05 | Defined acceptance targets, access/recovery policy, confidence/readiness vocabularies, outfit validity, personalization, Wear Event time/identity, Coverage formulas and Multiplier exactness/freshness. Preserved upstream scope and stable existing requirement IDs. |
+| 0.2.1 | 2026-10-05 | Standardized normative terminology and made FR-AUTH-018 mandatory while preserving other requirement meanings and scope. |
+| 0.3 | 2026-10-06 | Defined privacy/retention, external-information freshness and credibility, reference operating/test conditions, and usability/accessibility acceptance; normalized current requirements while preserving established scope and stable IDs. |
 
 ### 1.1 Purpose
 
 This Software Requirements Specification defines CapsuleAI's required software behavior, logical information, interfaces, quality criteria, and failure handling. It supports implementation planning, verification, Business Rules derivation, and subsequent behavioral analysis by specifying observable outcomes.
 
-The BRD and PRD provide the business and product sources of truth. OSQ-001–OSQ-010 were resolved during requirements refinement and are reflected in the corresponding requirements and criteria; Section 12.1 records those decisions. This SRS and its upstream documents remain Baseline Draft; formal acceptance and software verification are not recorded here.
+The BRD and PRD provide the business and product sources of truth. Sections 3–9 define required behavior and quality; Section 12 consolidates acceptance conditions. This SRS and its upstream documents remain Baseline Draft; formal acceptance and software verification are not recorded here.
 
 ### 1.2 Scope
 
@@ -37,9 +38,8 @@ The initial categories are TOP, BOTTOM, OUTERWEAR, and FOOTWEAR. Consumer web/de
 
 - **Shall** denotes a mandatory system obligation; **may** denotes an explicitly permitted option. Referenced rules, criteria, and formulas define requirement interpretation and acceptance.
 - **MVP** denotes required initial behavior. **Conditional** denotes an obligation when its stated condition applies, not permission to omit a core capability. Credible optional shopping information remains conditional under BR-020.
-- **TBD** identifies an unsettled parameter associated with OSQ-011–OSQ-014 in Section 12.2.
 - Verification codes: **T** behavioral/integration test; **A** analysis of controlled fixtures/results; **I** inspection of content, information, or constraints; **D** demonstration of an end-to-end journey. The scenario following the code states the evidence sought.
-- Controlled fixtures identify context, ownership, confirmed inputs, and expected results from the requirements defined in this SRS. Business Rules will formalize reusable rule IDs and executable edge-case examples; fixture refinement preserves the specified rules.
+- Controlled fixtures identify context, ownership, confirmed inputs, and expected results from the requirements defined in this SRS. Business Rules formalize reusable rule IDs and executable edge-case examples; fixture refinement preserves the specified rules.
 
 ### 1.4 Requirement Identification Scheme
 
@@ -52,15 +52,14 @@ The initial categories are TOP, BOTTOM, OUTERWEAR, and FOOTWEAR. Consumer web/de
 | LOC-* | Localization behavior. |
 | AI-REQ-* | AI-specific authority, uncertainty, and correctness obligations. |
 | ERR-* | Condition-specific failure and recovery requirements. |
-| OSQ-* | Software questions and decision records; Section 12 records their status. These identifiers do not define a separate requirement family or reopen resolved product questions. |
 
 IDs are stable after assignment. Requirement statements may be refined through review while preserving identity and source links. No future-only requirement is added merely to fill a family.
 
 ### 1.5 Source Documents and Authority
 
-Source precedence is current approved BRD decisions → current approved PRD decisions → workflow for process and artifact boundaries → other current CapsuleAI sources → older or exploratory sources. The Food Delivery document is used only as a structural reference. Resolved software decisions in Section 12.1 supplement affected requirements' feature and business sources while preserving BRD/PRD intent.
+Source precedence is current approved BRD decisions → current approved PRD decisions → workflow for process and artifact boundaries → other current CapsuleAI sources → older or exploratory sources. The Food Delivery document is used only as a structural reference. Software requirements and acceptance conditions refine feature/business intent without redefining it.
 
-BRD BG-01–BG-04, BR-001–BR-024, and CAP-01–CAP-10 remain unchanged. PRD FEAT-* and JRN-* remain upstream identifiers. OPQ-001–OPQ-010 and OBQ-001/OBQ-002 are resolved; they are not SRS blockers. No upstream contradiction requiring a business/product change was identified.
+BRD BG-01–BG-04, BR-001–BR-024, and CAP-01–CAP-10 remain unchanged. PRD FEAT-* and JRN-* remain upstream identifiers. Existing upstream scope, vocabularies, personas and product behavior remain the basis for this specification.
 
 Legacy fixed weather/pattern heuristics, combined recognition claims, implementation stacks, cached-operation timings, and Sprint plans do not override the normalized baselines. Workflow examples illustrate artifact types rather than establish additional CapsuleAI domain rules.
 
@@ -68,7 +67,7 @@ Legacy fixed weather/pattern heuristics, combined recognition claims, implementa
 
 Each normative row identifies its PRD feature and relevant BRD requirement. Capability and goal meaning follows the existing upstream traceability. Section 10 supplies the functional matrix and reverse coverage audits; supporting requirements retain their own source/verification columns.
 
-The chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. It is a relationship among existing artifacts, not a new hierarchy of business intent. Later Business Rules, Use Cases, tests, quality analysis, and architecture must retain applicable SRS/feature/business links.
+The chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. It is a relationship among existing artifacts, not a new hierarchy of business intent. Business Rules, Use Cases, tests, quality analysis, and architecture retain applicable SRS/feature/business links.
 
 ### 1.7 References
 
@@ -77,9 +76,8 @@ The chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. It is a rel
 | [BRD](../01-business/BRD.md), especially Sections 13–24 and 27 | Business meaning, scope, validation directions, trust, and resolved business questions. |
 | [PRD](../02-product/PRD.md), especially Sections 8–26 and 33–37 | Journeys, 22 features, acceptance criteria, states, and ten resolved product decisions. |
 | [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 8–11 and 39–41 | SRS ownership, next artifacts, traceability, and change propagation. |
-| [SRS structural reference](../../docs%20tham%20kh%E1%BA%A3o/SRS_FoodDelivery.md) | Introduction, feature sequences, logical information, interfaces, quality, localization, and glossary discipline. No domain, technology, legal claim, or numerical target is copied. |
-| Resolved software decisions, 2026-10-05 — Section 12.1 | OSQ-001–OSQ-010 record software acceptance, security, and domain-rule decisions; the applicable SRS sections specify the requirements and criteria. |
-| [Legacy PRD](../../Product%20Requirements%20Document_%20CapsuleAI.md) and [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md) | Historical context only where consistent with current baselines. |
+| Food Delivery SRS — structural reference | Introduction, feature sequences, logical information, interfaces, quality, localization, and glossary discipline only. The reference source is not included in this checkout; no domain, technology, legal claim, or numerical target is copied. |
+| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), [Project Proposal](../../Initial%20files/DA%202%20Proposal.md), and [Official Project Outline](../../Initial%20files/%C4%90%E1%BB%80%20C%C6%AF%C6%A0NG%20%C4%90%E1%BB%92%20%C3%81N%202_%20H%E1%BB%86%20TH%E1%BB%90NG%20QU%E1%BA%A2N%20L%C3%9D%20V%C3%80%20G%E1%BB%A2I%20%C3%9D%20PH%E1%BB%90I%20%C4%90%E1%BB%92%20TH%C3%94NG%20MINH.md) | Historical context only where consistent with current baselines. |
 
 ## 2. Overall Description
 
@@ -101,9 +99,9 @@ These overlapping personas receive the same core permissions; they are not separ
 
 ### 2.3 Operating Environment
 
-The initial environment is connected Android/iOS mobile use in Vietnam with a Vietnamese interface. Camera/photo-library/location capabilities are used only with applicable permission and alternatives. No minimum OS version, hardware quota, deployment platform, simultaneous-user count, or multi-language UI obligation is specified for the MVP.
+The connected Vietnamese MVP supports Android 10 or later and iOS 15 or later; support below those versions is not guaranteed. Camera/photo-library/location capabilities require applicable permission and retain their documented alternatives. A denied permission is distinct from unavailable network/service operation.
 
-Supported device/OS versions and reference test environments remain OSQ-013. A denied permission is distinct from unavailable network/service operation.
+Performance reference conditions are modern mid-range Android hardware with at least 6 GB RAM, or an iPhone 11-class device or newer, on stable Wi-Fi or 4G-class connectivity with download ≥20 Mbps, upload ≥5 Mbps and network RTT ≤100 ms. These are validation reference conditions, not minimum purchase requirements for every supported user device. Section 12.3 defines measurement, functional concurrency and recovery acceptance; deployment topology remains downstream.
 
 ### 2.4 System Constraints
 
@@ -111,10 +109,10 @@ Supported device/OS versions and reference test environments remain OSQ-013. A d
 |---|---|
 | Platform and locale | Android/iOS; Vietnamese MVP UI and English documentation; localization-ready domain meaning (BR-023; OPQ-002). |
 | Taxonomy | Four primary categories and unchanged bounded PRD subtypes/styles/occasions; additional descriptor values are specified in Section 4.10, with no new primary category. |
-| Authority and completeness | Confirmed category/dominant color permit saving; manual creation needs no image. Bounded descriptors and applicable common/layering/bulk readiness are defined in Sections 3.5.1/4.10 (OPQ-004/OPQ-005; resolved OSQ-005). |
-| Authentication | 15-minute JWT Access Token; maximum 30-day Refresh Session; rotation/reuse detection, session-scoped logout and account-wide reset revocation; 12–128-character untransformed passwords; normalized unique email; single-use 30-minute recovery (OPQ-008; resolved OSQ-002/OSQ-003). |
+| Authority and completeness | Confirmed category/dominant color permit saving; manual creation needs no image. Bounded descriptors and applicable common/layering/bulk readiness are defined in Sections 3.5.1/4.10 (OPQ-004/OPQ-005). |
+| Authentication | 15-minute JWT Access Token; maximum 30-day Refresh Session; rotation/reuse detection, session-scoped logout and account-wide reset revocation; 12–128-character untransformed passwords; normalized unique email; single-use 30-minute recovery (OPQ-008). |
 | Recommendation and learning | Slot/layer/bulk/environment/severe-pattern checks precede soft ranking. Base evidence +1/−2/+2 uses the 90-day decay window and same-outfit/day Wear normalization; recency penalties stay soft (BR-009–BR-012). |
-| Wear and history | Multiple intentional events per local day; logical-action duplicate protection; absolute timestamp and original local/timezone context; no-future/same-original-day correction; individual removal and removed-garment snapshots (OPQ-006/OPQ-007; resolved OSQ-008). |
+| Wear and history | Multiple intentional events per local day; logical-action duplicate protection; absolute timestamp and original local/timezone context; no-future/same-original-day correction; individual removal and removed-garment snapshots (OPQ-006/OPQ-007). |
 | Coverage and utility | One Personalized Everyday Capsule uses the specified priority weights, need mapping, formula, and sufficient-data gate; multiplier is the same-context/rule-version unique-valid set difference with five exactness/freshness states (BR-014–BR-017). |
 | Commerce | Required candidate utility and credible optional commercial information; external navigation only; no transaction workflow (BR-018–BR-020, BR-024). |
 
@@ -135,7 +133,7 @@ BRD ASM-001–ASM-007 remain unvalidated: users will maintain useful inventory a
 | DEP-005 — candidate information/destinations | Candidate utility must be credible; optional links/commercial fields cannot gate core value. |
 | DEP-006 — mobile/private handling | Authorized information and usable mobile access support participation. |
 
-The following sections specify the image benchmark, percentiles, timing boundaries, and domain/security rules. Reference device/network/operating configuration (OSQ-013), provider freshness (OSQ-012), retention/privacy (OSQ-011), and usability/accessibility acceptance (OSQ-014) require further refinement.
+The following sections specify image benchmarks, timing boundaries, domain/security rules, purpose-limited data handling, external-information freshness and mobile acceptance. Section 12 consolidates their validation conditions. Optional dependency failure must preserve applicable core fallback behavior.
 
 ## 3. Functional Requirements
 
@@ -175,24 +173,24 @@ The following rules define authentication, session renewal, password handling, a
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-AUTH-001 | The system shall accept Email/Password/Confirm Password registration with matching confirmation and the password/email policy in Section 3.1.1, without requiring Display Name. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: optional name; password limits and email identity/conflict fixtures. |
-| FR-AUTH-002 | The system shall authenticate Email/Password login using case-insensitive, surrounding-whitespace-trimmed email identity while comparing the user's untransformed password value. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: email case/space variants; exact Unicode/space-containing passwords. |
-| FR-AUTH-003 | The system shall provide email-based Forgot Password initiation with equivalent user-facing responses for registered and unregistered email addresses. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: paired known/unknown email responses and recovery handoff. |
-| FR-AUTH-004 | The system shall allow a valid single-use email recovery interaction to set a policy-valid new password, consume that interaction, revoke all account Refresh Sessions, and require subsequent authentication using the new password. | MVP | FEAT-AUTH-001; BR-021; OSQ-002, OSQ-003 (Resolved) | T: successful reset; old password/refresh sessions denied; new-password login. |
-| FR-AUTH-005 | The system shall preserve the correct user's returning access while the login session remains usable, supporting access renewal within its maximum 30-day lifetime. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: ordinary return, valid renewal, expired session, separate-device context. |
-| FR-AUTH-006 | The system shall renew expired Access Token access only through a usable Refresh Session or successful authentication, explaining when reauthentication is required instead of showing an empty wardrobe. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: 15-minute expiry with usable/unusable renewal; 30-day session limit. |
-| FR-AUTH-007 | The system shall revoke the current Refresh Session on logout and end that session/device's personal access until authentication succeeds again, without automatically revoking another device's separate session. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: logout Session A; protected A access denied; Session B unaffected. |
-| FR-AUTH-008 | The system shall restrict protected personal operations to an authenticated user authorized for the affected information. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: signed-out/cross-user denial. |
-| FR-AUTH-009 | The system shall authenticate protected operations with a valid, unexpired JWT Access Token and the authorized session/account context. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T/I: absent, invalid, expired and valid JWT access; session authorization. |
-| FR-AUTH-010 | The system shall use a 15-minute JWT Access Token lifetime and a maximum 30-day Refresh Token/login-session lifetime; rotation shall not extend that session beyond its maximum lifetime. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: access expiry and absolute session-lifetime boundaries across refreshes. |
+| FR-AUTH-001 | The system shall accept Email/Password/Confirm Password registration with matching confirmation and the password/email policy in Section 3.1.1, without requiring Display Name. | MVP | FEAT-AUTH-001; BR-021 | T: optional name; password limits and email identity/conflict fixtures. |
+| FR-AUTH-002 | The system shall authenticate Email/Password login using case-insensitive, surrounding-whitespace-trimmed email identity while comparing the user's untransformed password value. | MVP | FEAT-AUTH-001; BR-021 | T: email case/space variants; exact Unicode/space-containing passwords. |
+| FR-AUTH-003 | The system shall provide email-based Forgot Password initiation with equivalent user-facing responses for registered and unregistered email addresses. | MVP | FEAT-AUTH-001; BR-021 | T: paired known/unknown email responses and recovery handoff. |
+| FR-AUTH-004 | The system shall allow a valid single-use email recovery interaction to set a policy-valid new password, consume that interaction, revoke all account Refresh Sessions, and require subsequent authentication using the new password. | MVP | FEAT-AUTH-001; BR-021 | T: successful reset; old password/refresh sessions denied; new-password login. |
+| FR-AUTH-005 | The system shall preserve the correct user's returning access while the login session remains usable, supporting access renewal within its maximum 30-day lifetime. | MVP | FEAT-AUTH-001; BR-021 | T: ordinary return, valid renewal, expired session, separate-device context. |
+| FR-AUTH-006 | The system shall renew expired Access Token access only through a usable Refresh Session or successful authentication, explaining when reauthentication is required instead of showing an empty wardrobe. | MVP | FEAT-AUTH-001; BR-021 | T: 15-minute expiry with usable/unusable renewal; 30-day session limit. |
+| FR-AUTH-007 | The system shall revoke the current Refresh Session on logout and end that session/device's personal access until authentication succeeds again, without automatically revoking another device's separate session. | MVP | FEAT-AUTH-001; BR-021 | T: logout Session A; protected A access denied; Session B unaffected. |
+| FR-AUTH-008 | The system shall restrict protected personal operations to an authenticated user authorized for the affected information. | MVP | FEAT-AUTH-001; BR-021 | T: signed-out/cross-user denial. |
+| FR-AUTH-009 | The system shall authenticate protected operations with a valid, unexpired JWT Access Token and the authorized session/account context. | MVP | FEAT-AUTH-001; BR-021 | T/I: absent, invalid, expired and valid JWT access; session authorization. |
+| FR-AUTH-010 | The system shall use a 15-minute JWT Access Token lifetime and a maximum 30-day Refresh Token/login-session lifetime; rotation shall not extend that session beyond its maximum lifetime. | MVP | FEAT-AUTH-001; BR-021 | T: access expiry and absolute session-lifetime boundaries across refreshes. |
 | FR-AUTH-011 | The system shall allow authenticated product entry without body/gender, device-location permission, first garment, or Display Name. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-012, BR-021 | T: omitted optional information. |
 | FR-AUTH-012 | The system shall explain missing registration Email/Password/Confirm Password or a password-confirmation mismatch and allow correction without reporting successful account creation. | MVP | FEAT-AUTH-001; BR-021 | T: each required field missing and mismatch. |
-| FR-AUTH-013 | The system shall consume the current Refresh Token on every successful refresh and issue a new Access Token and Refresh Token, making the consumed token invalid for ordinary reuse. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: successful rotation and attempted reuse. |
-| FR-AUTH-014 | The system shall revoke the affected login session and require authentication again when a previously rotated Refresh Token is reused. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: rotated-token replay; affected session revoked. |
-| FR-AUTH-015 | The system shall accept policy-valid passwords of 12–128 characters including letters, numbers, symbols, spaces, and Unicode without mandatory character-class mixtures or silent trimming, normalization, or transformation. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
-| FR-AUTH-016 | The system shall map each normalized email to at most one account, trimming surrounding whitespace and comparing case-insensitively; duplicate registration shall offer sign-in/recovery guidance without creating another account or applying provider-specific alias rules. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: duplicate case/space variants and distinct provider-alias strings. |
-| FR-AUTH-017 | The system shall limit each password-reset interaction to 30 minutes and one successful use, rejecting expired or already-used interactions without changing credentials. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
-| FR-AUTH-018 | The system shall invalidate any earlier unused password-reset interaction for the account when a new password-reset interaction is successfully issued. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
+| FR-AUTH-013 | The system shall consume the current Refresh Token on every successful refresh and issue a new Access Token and Refresh Token, making the consumed token invalid for ordinary reuse. | MVP | FEAT-AUTH-001; BR-021 | T: successful rotation and attempted reuse. |
+| FR-AUTH-014 | The system shall revoke the affected login session and require authentication again when a previously rotated Refresh Token is reused. | MVP | FEAT-AUTH-001; BR-021 | T: rotated-token replay; affected session revoked. |
+| FR-AUTH-015 | The system shall accept policy-valid passwords of 12–128 characters including letters, numbers, symbols, spaces, and Unicode without mandatory character-class mixtures or silent trimming, normalization, or transformation. | MVP | FEAT-AUTH-001; BR-021 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
+| FR-AUTH-016 | The system shall map each normalized email to at most one account, trimming surrounding whitespace and comparing case-insensitively; duplicate registration shall offer sign-in/recovery guidance without creating another account or applying provider-specific alias rules. | MVP | FEAT-AUTH-001; BR-021 | T: duplicate case/space variants and distinct provider-alias strings. |
+| FR-AUTH-017 | The system shall limit each password-reset interaction to 30 minutes and one successful use, rejecting expired or already-used interactions without changing credentials. | MVP | FEAT-AUTH-001; BR-021 | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
+| FR-AUTH-018 | The system shall invalidate any earlier unused password-reset interaction for the account when a new password-reset interaction is successfully issued. | MVP | FEAT-AUTH-001; BR-021 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
 
 ### 3.2 Profile & Personalization
 
@@ -202,7 +200,7 @@ JRN-01 and OPQ-001/OPQ-003/OPQ-009 define context. Long-term needs and the curre
 |---|---|---|---|---|
 | FR-PROF-001 | The system shall provide the progressive sequence Welcome → Register/Login → Style Preferences → Common Occasion Needs → Optional Personal Context → Location → recommended First Garment → Today/Wardrobe. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002; BR-010, BR-012, BR-013, BR-023 | D: first-use journey. |
 | FR-PROF-002 | The system shall allow users to select and revise style preferences from the controlled vocabulary in Section 4.10. | MVP | FEAT-PROF-001; BR-010 | T: every defined style choice. |
-| FR-PROF-003 | The system shall allow users to revise common capsule need priorities using Not Relevant=0, Low=1, Medium=2 and High=3 and the need-to-occasion mapping in Section 3.14.1. | MVP | FEAT-PROF-001; BR-010, BR-014; OSQ-009 (Resolved) | T: every priority and need mapping; differing request/common occasion. |
+| FR-PROF-003 | The system shall allow users to revise common capsule need priorities using Not Relevant=0, Low=1, Medium=2 and High=3 and the need-to-occasion mapping in Section 3.14.1. | MVP | FEAT-PROF-001; BR-010, BR-014 | T: every priority and need mapping; differing request/common occasion. |
 | FR-PROF-004 | The system shall keep the current recommendation occasion distinct from ongoing common needs so a request occasion does not automatically overwrite those priorities. | MVP | FEAT-PROF-001, FEAT-OUT-001; BR-010 | T: differing current/common context. |
 | FR-PROF-005 | The system shall allow body-profile information to be omitted, edited, or removed. | MVP | FEAT-PROF-001; BR-012 | T: optional-field lifecycle. |
 | FR-PROF-006 | The system shall allow gender information to be omitted, edited, or removed without prohibiting supported garment categories. | MVP | FEAT-PROF-001; BR-012 | T: gender/category combinations. |
@@ -217,9 +215,9 @@ Environmental context may be consented device location or manual city/location. 
 |---|---|---|---|---|
 | FR-WEATHER-001 | The system shall offer device-location access as an optional, purpose-explained choice. | MVP | FEAT-PROF-002; BR-013 | T: grant, deny, skip. |
 | FR-WEATHER-002 | The system shall allow manual city/location selection independently of device permission, including after denial. | MVP | FEAT-PROF-002; BR-013 | T: manual city after denial. |
-| FR-WEATHER-003 | The system shall request environmental information for the selected location when the dependency is available. | Conditional | FEAT-PROF-002; BR-007, BR-013 | T: selected-location response. |
-| FR-WEATHER-004 | The system shall identify the location and available environmental context actually used by an assessment. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | I/T: context matches evaluation. |
-| FR-WEATHER-005 | The system shall reevaluate or mark affected advice outdated when its location/environmental context changes. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | T: changed-location assessment. |
+| FR-WEATHER-003 | The system shall request environmental information for the selected location when available, use it as current only at age ≤30 minutes from its applicable retrieval/observation timestamp, attempt refresh when older, and allow an external weather request to delay the assessment by no more than 2 seconds. | Conditional | FEAT-PROF-002; BR-007, BR-013 | T: age 30 minutes versus older; fresh/stale responses; usable result within 2 seconds versus unavailable fallback. |
+| FR-WEATHER-004 | The system shall identify the selected location, environmental information and applicable retrieval/observation timestamp actually used, disclosing unavailable environmental context when usable current information is not obtained within the 2-second boundary. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | I/T: displayed context/timestamp matches evaluation; no invented forecast at timeout. |
+| FR-WEATHER-005 | The system shall reevaluate or mark affected advice outdated when its location/environmental context changes, attempting refresh before stale weather is used as current. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | T: changed location/context and stale-weather refresh; failed refresh retains an explicit limited/outdated state. |
 
 ### 3.4 Garment Ingestion
 
@@ -248,18 +246,18 @@ Section 8.1 specifies the locked benchmark/accuracy protocol. NFR-PERF-001 measu
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-AI-001 | The system shall allow permitted camera garment input in JPEG/JPG, PNG, and HEIC/HEIF formats subject to Section 3.4.1 image limits. | MVP | FEAT-AI-001; BR-001; OSQ-001 (Resolved) | T: supported capture inputs and size/dimension boundaries. |
-| FR-AI-002 | The system shall allow permitted photo-library garment input in JPEG/JPG, PNG, and HEIC/HEIF subject to the image limits in Section 3.4.1, without requiring a plain/white background. | MVP | FEAT-AI-001; BR-001; OSQ-001 (Resolved) | T: all formats; valid non-plain backgrounds and limit boundaries. |
+| FR-AI-001 | The system shall allow permitted camera garment input in JPEG/JPG, PNG, and HEIC/HEIF formats subject to Section 3.4.1 image limits. | MVP | FEAT-AI-001; BR-001 | T: supported capture inputs and size/dimension boundaries. |
+| FR-AI-002 | The system shall allow permitted photo-library garment input in JPEG/JPG, PNG, and HEIC/HEIF subject to the image limits in Section 3.4.1, without requiring a plain/white background. | MVP | FEAT-AI-001; BR-001 | T: all formats; valid non-plain backgrounds and limit boundaries. |
 | FR-AI-003 | The system shall provide manual garment entry without requiring an image or successful automated analysis. | MVP | FEAT-AI-002; BR-004 | T: imageless/manual completion. |
 | FR-AI-004 | The system shall allow replacement or cancellation of the selected image before garment confirmation. | MVP | FEAT-AI-001; BR-001 | T: replace/cancel selected image. |
 | FR-AI-005 | The system shall display a processing state while analysis is pending without reporting a completed wardrobe addition. | MVP | FEAT-AI-001; BR-001, BR-022 | T: delayed analysis state. |
-| FR-AI-006 | The system shall present an available usable processed preview and reviewable proposals under the preview-usability criteria in Section 3.4.1, with prediction certainty distinct from preview quality. | Conditional | FEAT-AI-001; BR-001, BR-003; OSQ-001 (Resolved) | T/I: identifiable garment, retained major regions, reviewable background/proposals. |
+| FR-AI-006 | The system shall present an available usable processed preview and reviewable proposals under the preview-usability criteria in Section 3.4.1, with prediction certainty distinct from preview quality. | Conditional | FEAT-AI-001; BR-001, BR-003 | T/I: identifiable garment, retained major regions, reviewable background/proposals. |
 | FR-AI-007 | The system shall allow the user to accept, correct, or manually supply proposed garment information before confirmation. | MVP | FEAT-AI-002; BR-002 | T: category/color correction. |
 | FR-AI-008 | The system shall create a confirmed wardrobe entry only after explicit user confirmation of the saveable minimum. | MVP | FEAT-AI-002; BR-002, BR-005 | T: confirm versus draft. |
 | FR-AI-009 | The system shall leave no confirmed entry from canceled preconfirmation work. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: canceled draft absent. |
 | FR-AI-010 | The system shall acknowledge a successful addition distinctly from pending/failed work without manufacturing duplicate entries on retry. | MVP | FEAT-AI-002; BR-005 | T: successful/failed-save retry. |
 | FR-AI-011 | The system shall provide capture/selection guidance about lighting, garment visibility, and avoiding confusing backgrounds. | MVP | FEAT-AI-001; BR-001, BR-022 | I/D: image-entry guidance. |
-| FR-AI-012 | The system shall validate garment-image input against supported formats, maximum 15 MB file size, and shortest dimension of at least 512 pixels, explaining unsupported/out-of-limit input with replacement or manual continuation. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-004, BR-022; OSQ-001 (Resolved) | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
+| FR-AI-012 | The system shall validate garment-image input against supported formats, maximum 15 MB file size, and shortest dimension of at least 512 pixels, explaining unsupported/out-of-limit input with replacement or manual continuation. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-004, BR-022 | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
 
 ### 3.5 Garment Intelligence
 
@@ -282,14 +280,14 @@ Justified derived information can satisfy an applicable requirement without inve
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-GAR-001 | The system shall support primary classification limited to TOP, BOTTOM, OUTERWEAR, and FOOTWEAR. | MVP | FEAT-GAR-001; BR-003 | T: defined categories only. |
-| FR-GAR-002 | The system shall offer the unchanged bounded category subtypes plus the descriptor vocabularies in Section 4.10, permitting OTHER/UNKNOWN where defined without blocking otherwise saveable entries. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-003, BR-002; OSQ-005 (Resolved) | T: defined vocabularies and subtype fallback saving. |
+| FR-GAR-002 | The system shall offer the unchanged bounded category subtypes plus the descriptor vocabularies in Section 4.10, permitting OTHER/UNKNOWN where defined without blocking otherwise saveable entries. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-003, BR-002 | T: defined vocabularies and subtype fallback saving. |
 | FR-GAR-003 | The system shall accept saving when the user has confirmed Primary Category and Dominant Color without requiring the remaining rich descriptors. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: minimum-only profile. |
-| FR-GAR-004 | The system shall distinguish saveable ownership from rule-specific readiness, keeping unknown required compatibility fields ineligible for the decisions requiring them while retaining saveable entries. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009; OSQ-005 (Resolved) | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
-| FR-GAR-005 | The system shall require Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability for every category's readiness, applicable Layering Level for TOP/OUTERWEAR, and Bulk Index when layered compatibility requires it, using only justified derivation and no fabricated fields. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009; OSQ-005 (Resolved) | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
-| FR-GAR-006 | The system shall treat Subtype as strongly recommended and Fit/Material/Silhouette/Secondary Colors/precise HEX-HSL display/Style Tags/Occasion Tags as non-universal readiness requirements; Bulk Index is required only for applicable layered compatibility. | MVP | FEAT-GAR-001; BR-003; OSQ-005 (Resolved) | T: omitted optional fields versus required applicable bulk. |
-| FR-GAR-007 | The system shall provide review/correction of bounded Layering Level, Bulk Index and Fit and optional silhouette descriptors using Section 4.10 meanings. | MVP | FEAT-GAR-001; BR-003; OSQ-005 (Resolved) | T/I: every layer/fit value and 1–5 bulk bounds. |
-| FR-GAR-008 | The system shall provide review/correction of dominant color family, secondary color, Color Temperature and Palette Role using the bounded vocabulary, with optional conceptual HEX/HSL support. | MVP | FEAT-GAR-001; BR-003; OSQ-005 (Resolved) | T/I: all color-family/temperature/role values and unknown handling. |
-| FR-GAR-009 | The system shall provide review/correction of bounded Pattern Type/Density/Visual Noise and climate/occasion/style associations, applying SOLID → NONE and the Vietnam-first environmental taxonomy. | MVP | FEAT-GAR-001; BR-003; OSQ-005 (Resolved) | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
+| FR-GAR-004 | The system shall distinguish saveable ownership from rule-specific readiness, keeping unknown required compatibility fields ineligible for the decisions requiring them while retaining saveable entries. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
+| FR-GAR-005 | The system shall require Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability for every category's readiness, applicable Layering Level for TOP/OUTERWEAR, and Bulk Index when layered compatibility requires it, using only justified derivation and no fabricated fields. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
+| FR-GAR-006 | The system shall treat Subtype as strongly recommended and Fit/Material/Silhouette/Secondary Colors/precise HEX-HSL display/Style Tags/Occasion Tags as non-universal readiness requirements; Bulk Index is required only for applicable layered compatibility. | MVP | FEAT-GAR-001; BR-003 | T: omitted optional fields versus required applicable bulk. |
+| FR-GAR-007 | The system shall provide review/correction of bounded Layering Level, Bulk Index and Fit and optional silhouette descriptors using Section 4.10 meanings. | MVP | FEAT-GAR-001; BR-003 | T/I: every layer/fit value and 1–5 bulk bounds. |
+| FR-GAR-008 | The system shall provide review/correction of dominant color family, secondary color, Color Temperature and Palette Role using the bounded vocabulary, with optional conceptual HEX/HSL support. | MVP | FEAT-GAR-001; BR-003 | T/I: all color-family/temperature/role values and unknown handling. |
+| FR-GAR-009 | The system shall provide review/correction of bounded Pattern Type/Density/Visual Noise and climate/occasion/style associations, applying SOLID → NONE and the Vietnam-first environmental taxonomy. | MVP | FEAT-GAR-001; BR-003 | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
 | FR-GAR-010 | The system shall permit uncertain material information to be corrected or left unknown without claiming verified composition or durability. | MVP | FEAT-GAR-001; BR-003 | T: uncertain material case. |
 | FR-GAR-011 | The system shall make user-confirmed/corrected/entered values authoritative and prevent later automated output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002 | T: analysis after correction. |
 
@@ -303,7 +301,7 @@ JRN-03 operates on the current owned wardrobe; historical information remains di
 | FR-WAR-002 | The system shall show applicable garment readiness and recorded-use information without equating no recorded use with proven nonuse. | MVP | FEAT-WAR-001, FEAT-ANL-001; BR-005, BR-006 | I: readiness and usage labels. |
 | FR-WAR-003 | The system shall allow explicit confirmation/cancellation of supported garment-profile edits. | MVP | FEAT-WAR-002; BR-002, BR-005 | T: edit/confirm/cancel. |
 | FR-WAR-004 | The system shall allow deliberate confirmation/cancellation of garment removal from active ownership. | MVP | FEAT-WAR-002; BR-005 | T: remove/confirm/cancel. |
-| FR-WAR-005 | The system shall exclude removed garments from new current outfits, current coverage, and the current multiplier baseline. | MVP | FEAT-WAR-002; BR-005 | T/A: post-removal evaluations. |
+| FR-WAR-005 | The system shall immediately exclude a removed garment from active ownership and current recommendation/coverage/multiplier inputs, retaining only minimal understandable historical snapshots and physically deleting its original image/nonessential removed personal data within 30 days. | MVP | FEAT-WAR-002; BR-005 | T/I: immediate current exclusion, minimal historical fields and deletion within 30 days. |
 | FR-WAR-006 | The system shall refresh or mark affected prior advice for reevaluation after relevant edits/removal. | MVP | FEAT-WAR-002; BR-005 | T: affected assessment state. |
 | FR-WAR-007 | The system shall provide descriptor search and category/color filtering of confirmed garments with visible conditions and reset. | MVP | FEAT-WAR-003; BR-005 | T: match, filter, clear. |
 | FR-WAR-008 | The system shall distinguish an empty wardrobe, no matching results, loading, and unavailable data with applicable Add Garment or reset/retry actions. | MVP | FEAT-WAR-001, FEAT-WAR-003; BR-005 | T: empty/no-match/failure states. |
@@ -341,21 +339,21 @@ An outfit is valid for MVP recommendation only when the applicable rules below a
 | COOL | ≥12°C and <18°C |
 | COLD | <12°C |
 
-Environmental suitability uses HOT/WARM/MILD/COOL/COLD/ALL_SEASON/UNKNOWN rather than a mandatory calendar-season taxonomy. ALL_SEASON expresses suitability across environmental bands; UNKNOWN cannot establish a required compatibility claim. Provider freshness remains OSQ-012.
+Environmental suitability uses HOT/WARM/MILD/COOL/COLD/ALL_SEASON/UNKNOWN rather than a mandatory calendar-season taxonomy. ALL_SEASON expresses suitability across environmental bands; UNKNOWN cannot establish a required compatibility claim. Current weather must satisfy Section 3.3's timestamp/freshness and bounded refresh conditions.
 
 Moderate patterns may coexist and are considered through soft ranking. Color harmony, declared style, current occasion, Like/Dislike, Wear/history, recency, diversity and optional body/gender are soft factors. Gender/body/stereotypes cannot become hard category restrictions. These rules apply equally to Shuffle's resulting outfit and to valid hypothetical combinations; candidate ownership remains hypothetical.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-OUT-001 | The system shall use only confirmed, active, owned garments that satisfy applicable readiness for current daily recommendations, excluding removed items and hypothetical candidates. | MVP | FEAT-OUT-001; BR-007; OSQ-005, OSQ-006 (Resolved) | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
+| FR-OUT-001 | The system shall use only confirmed, active, owned garments that satisfy applicable readiness for current daily recommendations, excluding removed items and hypothetical candidates. | MVP | FEAT-OUT-001; BR-007 | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
 | FR-OUT-002 | The system shall evaluate available environmental/season context, current occasion, declared style, and relevant personalization context. | MVP | FEAT-OUT-001; BR-007, BR-010 | T/A: context variation. |
 | FR-OUT-003 | The system shall exclude combinations that fail applicable hard validity constraints before personalized ranking. | MVP | FEAT-OUT-001; BR-009 | A: invalid high-preference fixture. |
-| FR-OUT-004 | The system shall enforce exactly one TOP, one BOTTOM and one FOOTWEAR with zero or one OUTERWEAR, plus the applicable layering/bulk/environment/severe-pattern validity policies in Section 3.7.1 before ranking. | MVP | FEAT-OUT-001; BR-007, BR-009; OSQ-005, OSQ-006 (Resolved) | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
-| FR-OUT-005 | The system shall rank valid candidates through soft color harmony, style, current occasion, Like/Dislike, Wear/history, recency/diversity and optional body/gender, never using body/gender/stereotypes as hard category restrictions. | MVP | FEAT-OUT-001; BR-007, BR-009, BR-010, BR-011, BR-012; OSQ-006, OSQ-007 (Resolved) | A: preference differences among valid sets; no identity-based category rejection. |
+| FR-OUT-004 | The system shall enforce exactly one TOP, one BOTTOM and one FOOTWEAR with zero or one OUTERWEAR, plus the applicable layering/bulk/environment/severe-pattern validity policies in Section 3.7.1 before ranking. | MVP | FEAT-OUT-001; BR-007, BR-009 | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
+| FR-OUT-005 | The system shall rank valid candidates through soft color harmony, style, current occasion, Like/Dislike, Wear/history, recency/diversity and optional body/gender, never using body/gender/stereotypes as hard category restrictions. | MVP | FEAT-OUT-001; BR-007, BR-009, BR-010, BR-011, BR-012 | A: preference differences among valid sets; no identity-based category rejection. |
 | FR-OUT-006 | The system shall present at least three distinct valid outfits when that many exist under the current wardrobe/context. | MVP | FEAT-OUT-001; BR-008 | T/A: three-valid fixture. |
 | FR-OUT-007 | The system shall count a reordered combination of the same garment identities as the same outfit rather than a distinct option. | MVP | FEAT-OUT-001; BR-008 | A: reordered duplicates. |
 | FR-OUT-008 | The system shall show the actual fewer-valid/no-valid result with limitations instead of duplicate padding or invalid alternatives. | MVP | FEAT-OUT-001; BR-008, BR-022 | T: two, one, zero valid. |
-| FR-OUT-009 | The system shall reevaluate or clearly mark advice outdated when relevant wardrobe/context/validity-rule inputs change, never presenting a failed refresh as current advice. | MVP | FEAT-OUT-001; BR-007, BR-022; OSQ-006, OSQ-010 (Resolved) | T: attribute/context and applicable rule-version changes. |
+| FR-OUT-009 | The system shall reevaluate or clearly mark advice outdated when relevant wardrobe/context/validity-rule inputs change, never presenting a failed refresh as current advice. | MVP | FEAT-OUT-001; BR-007, BR-022 | T: attribute/context and applicable rule-version changes. |
 
 ### 3.8 Outfit Explanation
 
@@ -380,7 +378,7 @@ Only the selected item slot changes; the remaining garment identities and assess
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-OUT-014 | The system shall replace only the user-selected garment slot during a successful Shuffle action. | MVP | FEAT-OUT-003; BR-008 | T: fixed other identities. |
-| FR-OUT-015 | The system shall offer a selected-slot replacement only when the resulting outfit satisfies Section 3.7.1 validity with unchanged other garment identities and assessment context. | MVP | FEAT-OUT-003; BR-007, BR-009; OSQ-006 (Resolved) | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
+| FR-OUT-015 | The system shall offer a selected-slot replacement only when the resulting outfit satisfies Section 3.7.1 validity with unchanged other garment identities and assessment context. | MVP | FEAT-OUT-003; BR-007, BR-009 | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
 | FR-OUT-016 | The system shall retain the current selection and explain the limitation when no compatible alternative exists. | MVP | FEAT-OUT-003; BR-008, BR-022 | T: no-alternative fixture. |
 | FR-OUT-017 | The system shall avoid recording Like, Dislike, or a Wear Event solely because Shuffle was used. | MVP | FEAT-OUT-003; BR-008 | T: interaction isolation. |
 
@@ -391,9 +389,9 @@ Preference feedback is not reported wear and is reversible as specified by FEAT-
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-PERS-001 | The system shall record Like as current positive feedback on the identified recommendation/exact outfit combination with conceptual base contribution +1, subject to Section 3.12.1 aging. | MVP | FEAT-PERS-001; BR-011; OSQ-007 (Resolved) | T/A: exact target, Like +1 and age-dependent influence. |
-| FR-PERS-002 | The system shall record Dislike as current negative evidence for the identified recommendation/exact outfit combination with conceptual base contribution −2, without a permanent ban on its garments/categories. | MVP | FEAT-PERS-001; BR-011; OSQ-007 (Resolved) | T/A: Dislike −2; no automatic per-garment/category ban. |
-| FR-PERS-003 | The system shall keep Like/Dislike state until changed, cleared, or superseded through user action and prevent simultaneously effective contradictory feedback for the same target. | MVP | FEAT-PERS-001; BR-011, BR-021; OSQ-007 (Resolved) | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
+| FR-PERS-001 | The system shall record Like as current positive feedback on the identified recommendation/exact outfit combination with conceptual base contribution +1, subject to Section 3.12.1 aging. | MVP | FEAT-PERS-001; BR-011 | T/A: exact target, Like +1 and age-dependent influence. |
+| FR-PERS-002 | The system shall record Dislike as current negative evidence for the identified recommendation/exact outfit combination with conceptual base contribution −2, without a permanent ban on its garments/categories. | MVP | FEAT-PERS-001; BR-011 | T/A: Dislike −2; no automatic per-garment/category ban. |
+| FR-PERS-003 | The system shall keep Like/Dislike state until changed, cleared, or superseded through user action and prevent simultaneously effective contradictory feedback for the same target. | MVP | FEAT-PERS-001; BR-011, BR-021 | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
 | FR-PERS-004 | The system shall distinguish accepted feedback from an unsuccessful recording attempt. | MVP | FEAT-PERS-001; BR-011 | T: failed versus recorded signal. |
 | FR-PERS-005 | The system shall avoid creating Wear Events from Like, Dislike, recommendation views, or other preference-only interactions. | MVP | FEAT-PERS-001; BR-011 | T: history unchanged. |
 
@@ -418,18 +416,18 @@ The user can correct applicable outfit, occasion/context and local event time. A
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-WEAR-001 | The system shall create one distinct user-reported Wear Event for each successful explicit logical Wear action on a valid owned outfit, defaulting event time to the accepted current time of that action. | MVP | FEAT-PERS-002; BR-006, BR-011; OSQ-008 (Resolved) | T: new explicit initiation versus retries; accepted-action default time. |
-| FR-WEAR-002 | The system shall permit multiple different outfit events in one local calendar day without replacing earlier events. | MVP | FEAT-PERS-002; BR-011; OSQ-008 (Resolved) | T: same-day different outfits. |
-| FR-WEAR-003 | The system shall allow a new explicit Wear This Today initiation for the same valid outfit within the same local day to create a separate intentional event, without using user+outfit+date alone as duplicate identity. | MVP | FEAT-PERS-002; BR-011; OSQ-008 (Resolved) | T: separate same-outfit/same-day initiation creates two events. |
-| FR-WEAR-004 | The system shall associate each event with outfit, absolute timestamp, event-associated timezone or UTC offset, original local date/time and user-reported nature, preserving that original event-local context after travel. | MVP | FEAT-PERS-002; BR-006, BR-011; OSQ-008 (Resolved) | T/I: absolute/local correspondence and later timezone change. |
-| FR-WEAR-005 | The system shall retain recommendation context and occasion with an event when available without fabricating absent context. | MVP | FEAT-PERS-002; BR-011, BR-022; OSQ-008 (Resolved) | T: available/missing context. |
-| FR-WEAR-006 | The system shall allow correction of an individual event's applicable outfit, occasion/context and local time, rejecting a future corrected time or one outside its original local calendar day. | MVP | FEAT-PERS-002; BR-006, BR-021; OSQ-008 (Resolved) | T: outfit/context correction; future/cross-day rejection in original timezone. |
-| FR-WEAR-007 | The system shall allow removal of an individual Wear Event without removing unrelated events. | MVP | FEAT-PERS-002; BR-006, BR-021; OSQ-008 (Resolved) | T: individual removal. |
-| FR-WEAR-008 | The system shall preserve the underlying Outfit and Garments when a Wear Event is removed. | MVP | FEAT-PERS-002; BR-006, BR-021; OSQ-008 (Resolved) | T: underlying objects remain. |
-| FR-WEAR-009 | The system shall treat retry, repeated delivery or reprocessing of one logical Wear action as the same event, while treating a new explicit user initiation as a separate event even for the same outfit/day. | MVP | FEAT-PERS-002; BR-011; OSQ-008 (Resolved) | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
-| FR-WEAR-010 | The system shall reflect accepted creation/correction/removal in effective history/utilization/recency and normalized, age-weighted behavioral evidence without deleting other legitimate reports. | MVP | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003; BR-006, BR-011; OSQ-007, OSQ-008 (Resolved) | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
+| FR-WEAR-001 | The system shall create one distinct user-reported Wear Event for each successful explicit logical Wear action on a valid owned outfit, defaulting event time to the accepted current time of that action. | MVP | FEAT-PERS-002; BR-006, BR-011 | T: new explicit initiation versus retries; accepted-action default time. |
+| FR-WEAR-002 | The system shall permit multiple different outfit events in one local calendar day without replacing earlier events. | MVP | FEAT-PERS-002; BR-011 | T: same-day different outfits. |
+| FR-WEAR-003 | The system shall allow a new explicit Wear This Today initiation for the same valid outfit within the same local day to create a separate intentional event, without using user+outfit+date alone as duplicate identity. | MVP | FEAT-PERS-002; BR-011 | T: separate same-outfit/same-day initiation creates two events. |
+| FR-WEAR-004 | The system shall associate each event with outfit, absolute timestamp, event-associated timezone or UTC offset, original local date/time and user-reported nature, preserving that original event-local context after travel. | MVP | FEAT-PERS-002; BR-006, BR-011 | T/I: absolute/local correspondence and later timezone change. |
+| FR-WEAR-005 | The system shall retain recommendation context and occasion with an event when available without fabricating absent context. | MVP | FEAT-PERS-002; BR-011, BR-022 | T: available/missing context. |
+| FR-WEAR-006 | The system shall allow correction of an individual event's applicable outfit, occasion/context and local time, rejecting a future corrected time or one outside its original local calendar day. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: outfit/context correction; future/cross-day rejection in original timezone. |
+| FR-WEAR-007 | The system shall allow removal of an individual Wear Event, immediately excluding it from effective history/utilization/recency/personalization while preserving unrelated events and physically deleting applicable personal event data within 30 days. | MVP | FEAT-PERS-002; BR-006, BR-021 | T/I: immediate effective exclusion, surviving group recalculation and physical deletion by the 30-day deadline. |
+| FR-WEAR-008 | The system shall preserve the underlying Outfit and Garments when a Wear Event is removed. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: underlying objects remain. |
+| FR-WEAR-009 | The system shall treat retry, repeated delivery or reprocessing of one logical Wear action as the same event, while treating a new explicit user initiation as a separate event even for the same outfit/day. | MVP | FEAT-PERS-002; BR-011 | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
+| FR-WEAR-010 | The system shall reflect accepted creation/correction/removal in effective history/utilization/recency and normalized, age-weighted behavioral evidence without deleting other legitimate reports. | MVP | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003; BR-006, BR-011 | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
 | FR-WEAR-011 | The system shall avoid interpreting any event or repeated reporting as verified physical wear or as permission to bypass outfit validity. | MVP | FEAT-PERS-002, FEAT-PERS-003; BR-011, BR-009 | T/A: invalid/hypothetical attempts. |
-| FR-WEAR-012 | The system shall allow cancellation of a pending Wear Event correction/removal without applying that requested change. | MVP | FEAT-PERS-002; BR-006, BR-021; OSQ-008 (Resolved) | T: cancel correction/removal; original event remains. |
+| FR-WEAR-012 | The system shall allow cancellation of a pending Wear Event correction/removal without applying that requested change. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: cancel correction/removal; original event remains. |
 
 ### 3.12 Behavioral Personalization
 
@@ -452,7 +450,9 @@ The following rules define behavioral contributions, aging, normalization, and r
 | 61–90 days | 25% |
 | >90 days | 0% |
 
-The behavioral window is the most recent 90 days. Like/Dislike state remains until changed, cleared or superseded through user action; aging its ranking influence does not automatically clear that state. History can retain older events subject to OSQ-011 retention. Dislike targets the outfit and does not automatically ban every constituent garment.
+Behavioral age and elapsed-day recency use completed elapsed 24-hour periods between absolute instants: CompletedElapsedDays = floor((EvaluationInstant − EvidenceAnchorInstant) / 24 hours). Original event-local date/time determines history and same-day grouping; a device timezone change does not change elapsed age. For each exact-outfit/original-local-day Wear group, the anchor is the latest surviving accepted event's currently accepted absolute timestamp. Accepted correction/removal recalculates affected group membership, anchors, aging and recency; no survivors means no group Wear contribution.
+
+The behavioral window is the most recent 90 days. Like/Dislike state remains until changed, cleared or superseded through user action; aging its ranking influence does not automatically clear that state. History may retain older events while the account is active and the information is necessary, subject to Section 4.9's removal/retention boundaries. Dislike targets the outfit and does not automatically ban every constituent garment.
 
 All legitimate Wear Events remain separate in history. For ranking, the same exact outfit within the same event-local calendar day supplies at most one Wear-based preference increment, before applicable time decay. This normalization does not deduplicate separate intentional actions or collapse different outfits/days.
 
@@ -468,13 +468,13 @@ Strong/mild penalties remain ranking effects and never invalidate an outfit. The
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-PERS-006 | The system shall apply declared style and current occasion to relevant initial advice even without behavioral history. | MVP | FEAT-PERS-003, FEAT-PROF-001; BR-010 | A: no-history preference fixture. |
-| FR-PERS-007 | The system shall apply the +1 Like/−2 Dislike base contributions and 90-day time-decay policy in Section 3.12.1 to effective outfit-targeted evidence, preserving feedback state until user revision. | MVP | FEAT-PERS-003, FEAT-PERS-001; BR-011; OSQ-007 (Resolved) | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
-| FR-PERS-008 | The system shall use a Wear-based preference increment of +2 before decay, stronger than Like's +1 under controlled conditions, subject to exact-outfit/day normalization. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011; OSQ-007 (Resolved) | A: equal-age +2 versus +1; normalized intentional repeats. |
-| FR-PERS-009 | The system shall apply strong soft exact-outfit diversity penalty within the last 2 days, mild penalty at 3–7 days and none beyond 7 days, permitting a small 14-day-overlooked ready-garment boost only within Section 3.12.1 limits. | MVP | FEAT-PERS-003, FEAT-ANL-001; BR-011, BR-006; OSQ-007 (Resolved) | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
+| FR-PERS-007 | The system shall apply the +1 Like/−2 Dislike base contributions and 90-day time-decay policy in Section 3.12.1 to effective outfit-targeted evidence, preserving feedback state until user revision. | MVP | FEAT-PERS-003, FEAT-PERS-001; BR-011 | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
+| FR-PERS-008 | The system shall use a Wear-based preference increment of +2 before decay, stronger than Like's +1 under controlled conditions, subject to exact-outfit/day normalization. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: equal-age +2 versus +1; normalized intentional repeats. |
+| FR-PERS-009 | The system shall apply strong soft exact-outfit diversity penalty within the last 2 days, mild penalty at 3–7 days and none beyond 7 days, permitting a small 14-day-overlooked ready-garment boost only within Section 3.12.1 limits. | MVP | FEAT-PERS-003, FEAT-ANL-001; BR-011, BR-006 | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
 | FR-PERS-010 | The system shall use optional body context only softly and avoid category restrictions or prerequisite eligibility based on body/gender. | MVP | FEAT-PERS-003, FEAT-PROF-001; BR-012 | T/A: optional context and eligibility. |
 | FR-PERS-011 | The system shall keep validity dominant over every preference signal and avoid requiring a changed result when no useful valid alternative exists. | MVP | FEAT-PERS-003, FEAT-OUT-001; BR-009, BR-011 | A: constrained/no-alternative fixture. |
-| FR-PERS-012 | The system shall limit multiple same-exact-outfit Wear Events in one event-local calendar day to at most one Wear-based preference increment and apply the 0–30/31–60/61–90/>90-day behavioral influence policy while retaining legitimate event history. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011; OSQ-007, OSQ-008 (Resolved) | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
-| FR-PERS-013 | The system shall recompute effective evidence after feedback/event/context revision or removal, applying decay/normalization without treating expired influence as deleted history or automatically cleared feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012; OSQ-007, OSQ-008 (Resolved) | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
+| FR-PERS-012 | The system shall limit multiple same-exact-outfit Wear Events in one event-local calendar day to at most one Wear-based preference increment and apply the 0–30/31–60/61–90/>90-day behavioral influence policy while retaining legitimate event history. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
+| FR-PERS-013 | The system shall recompute effective evidence after feedback/event/context revision or removal, applying decay/normalization without treating expired influence as deleted history or automatically cleared feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012 | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
 
 ### 3.13 Wardrobe Utilization & History
 
@@ -482,13 +482,13 @@ History is user-reported and time-aware; preserved historical garments are not c
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-ANL-001 | The system shall present events using their original event-local date/time and available context rather than automatically re-dating them when the current device timezone changes. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006; OSQ-008 (Resolved) | T/I: original-local history after travel; accepted in-day correction. |
+| FR-ANL-001 | The system shall present events using their original event-local date/time and available context rather than automatically re-dating them when the current device timezone changes. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006 | T/I: original-local history after travel; accepted in-day correction. |
 | FR-ANL-002 | The system shall display multiple same-day events separately, including intentional repeated outfit uses. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011 | T: multiple-event history. |
-| FR-ANL-003 | The system shall derive reported garment-use frequency/recency and overlooked-item/variety indicators from accepted events, preserving distinct history beyond the 90-day ranking window subject to retention policy. | MVP | FEAT-ANL-001; BR-006, BR-011; OSQ-007, OSQ-008 (Resolved) | A: all legitimate reports versus normalized/expired ranking evidence; OSQ-011. |
+| FR-ANL-003 | The system shall derive reported garment-use frequency/recency and overlooked-item/variety indicators from accepted events, preserving distinct history beyond the 90-day ranking window subject to retention policy. | MVP | FEAT-ANL-001; BR-006, BR-011 | A: all legitimate reports versus normalized/expired ranking evidence. |
 | FR-ANL-004 | The system shall explain incomplete logging and label no recorded use without claiming that the garment was never physically worn. | MVP | FEAT-ANL-001; BR-006, BR-022 | I: logging limitations. |
 | FR-ANL-005 | The system shall show a no-Wear-Events state without invented usage/diversity statistics. | MVP | FEAT-ANL-001; BR-006, BR-022 | T: empty history. |
 | FR-ANL-006 | The system shall preserve understandable historical outfit/garment snapshots and label a garment removed from active ownership as Removed from wardrobe. | MVP | FEAT-ANL-001; BR-006, BR-022 | T/I: history after garment removal. |
-| FR-ANL-007 | The system shall update event-specific history/utilization and relevant normalized ranking evidence after valid correction/removal, preserving unrelated records and original event-local context. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011; OSQ-007, OSQ-008 (Resolved) | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
+| FR-ANL-007 | The system shall update event-specific history/utilization and relevant normalized ranking evidence after valid correction/removal, preserving unrelated records and original event-local context. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011 | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
 
 ### 3.14 Wardrobe Coverage Score
 
@@ -532,14 +532,14 @@ A relevant need with NeedCoverage <1 (below 100% displayed coverage) may prompt 
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-ANL-008 | The system shall evaluate the Personalized Everyday Capsule's relevant needs through the Section 3.14.1 occasion mapping and valid-distinct-outfit rules rather than a universal checklist. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010; OSQ-006, OSQ-009 (Resolved) | A: six need mappings and unique outfit counts per need. |
-| FR-ANL-009 | The system shall identify active need priorities, mapped occasions, style, environmental context and current confirmed/eligible wardrobe used in coverage. | MVP | FEAT-ANL-002; BR-014, BR-022; OSQ-009 (Resolved) | I/A: visible assessment basis and disabled priority-zero needs. |
-| FR-ANL-010 | The system shall use only positive priorities as weights in the CoverageScore denominator so changing need priorities can change the same wardrobe's contextual score. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010; OSQ-009 (Resolved) | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
-| FR-ANL-011 | The system shall show numeric CoverageScore only when Section 3.14.1 sufficient-data conditions hold and calculate it as 100 × Σ(PriorityWeight × NeedCoverage) / Σ(PriorityWeight). | MVP | FEAT-ANL-002; BR-014, BR-022; OSQ-009 (Resolved) | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
-| FR-ANL-012 | The system shall calculate NeedCoverage as min(ValidDistinctOutfitsForNeed / 3, 1), presenting covered/underserved need evidence and its mapped context. | MVP | FEAT-ANL-002; BR-014, BR-022; OSQ-006, OSQ-009 (Resolved) | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
+| FR-ANL-008 | The system shall evaluate the Personalized Everyday Capsule's relevant needs through the Section 3.14.1 occasion mapping and valid-distinct-outfit rules rather than a universal checklist. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010 | A: six need mappings and unique outfit counts per need. |
+| FR-ANL-009 | The system shall identify active need priorities, mapped occasions, style, environmental context and current confirmed/eligible wardrobe used in coverage. | MVP | FEAT-ANL-002; BR-014, BR-022 | I/A: visible assessment basis and disabled priority-zero needs. |
+| FR-ANL-010 | The system shall use only positive priorities as weights in the CoverageScore denominator so changing need priorities can change the same wardrobe's contextual score. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010 | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
+| FR-ANL-011 | The system shall show numeric CoverageScore only when Section 3.14.1 sufficient-data conditions hold and calculate it as 100 × Σ(PriorityWeight × NeedCoverage) / Σ(PriorityWeight). | MVP | FEAT-ANL-002; BR-014, BR-022 | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
+| FR-ANL-012 | The system shall calculate NeedCoverage as min(ValidDistinctOutfitsForNeed / 3, 1), presenting covered/underserved need evidence and its mapped context. | MVP | FEAT-ANL-002; BR-014, BR-022 | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
 | FR-ANL-013 | The system shall exclude removed garments from current coverage. | MVP | FEAT-ANL-002; BR-014 | A: post-removal baseline. |
-| FR-ANL-014 | The system shall reevaluate or mark coverage outdated after relevant wardrobe, needs, context or applicable validity-rule changes. | MVP | FEAT-ANL-002; BR-014, BR-022; OSQ-006, OSQ-009 (Resolved) | T: changed priority, garment attributes and applicable rule version. |
-| FR-ANL-015 | The system shall distinguish insufficient information from defensible evaluated coverage, withholding a false 0% while avoiding universal-completeness or compulsory-purchase claims. | MVP | FEAT-ANL-002; BR-014, BR-022, BR-024; OSQ-009 (Resolved) | T/I: insufficient versus valid zero; no universal completion claim. |
+| FR-ANL-014 | The system shall reevaluate or mark coverage outdated after relevant wardrobe, needs, context or applicable validity-rule changes. | MVP | FEAT-ANL-002; BR-014, BR-022 | T: changed priority, garment attributes and applicable rule version. |
+| FR-ANL-015 | The system shall distinguish insufficient information from defensible evaluated coverage, withholding a false 0% while avoiding universal-completeness or compulsory-purchase claims. | MVP | FEAT-ANL-002; BR-014, BR-022, BR-024 | T/I: insufficient versus valid zero; no universal completion claim. |
 
 ### 3.15 Gap Analysis
 
@@ -552,10 +552,10 @@ Gap analysis follows adequate contextual coverage; a gap is an underserved capab
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-GAP-001 | The system shall consider a positive-priority need with NeedCoverage below 100% for gap analysis and identify its evidence-supported underserved capability/bottleneck before evaluating a specific candidate. | MVP | FEAT-GAP-001; BR-015; OSQ-009 (Resolved) | A: 0/1/2 versus ≥3 valid need outfits, priority-zero exclusion, capability-first evidence. |
+| FR-GAP-001 | The system shall consider a positive-priority need with NeedCoverage below 100% for gap analysis and identify its evidence-supported underserved capability/bottleneck before evaluating a specific candidate. | MVP | FEAT-GAP-001; BR-015 | A: 0/1/2 versus ≥3 valid need outfits, priority-zero exclusion, capability-first evidence. |
 | FR-GAP-002 | The system shall explain useful candidate characteristics without making one specific product a mandatory solution. | MVP | FEAT-GAP-001; BR-015, BR-022 | I: gap versus product wording. |
 | FR-GAP-003 | The system shall connect supported gaps to candidate evaluation and estimated outfit expansion when evaluable candidates exist. | MVP | FEAT-GAP-001; BR-015 | D: gap to utility evaluation. |
-| FR-GAP-004 | The system shall explain no important gap or insufficient assessment without manufacturing demand, never treating lack of sufficient coverage data as a numeric 0% or a compulsory purchase. | MVP | FEAT-GAP-001; BR-014, BR-022, BR-024; OSQ-009 (Resolved) | T: no-gap, incomplete and valid-zero distinction. |
+| FR-GAP-004 | The system shall explain no important gap or insufficient assessment without manufacturing demand, never treating lack of sufficient coverage data as a numeric 0% or a compulsory purchase. | MVP | FEAT-GAP-001; BR-014, BR-022, BR-024 | T: no-gap, incomplete and valid-zero distinction. |
 | FR-GAP-005 | The system shall permit continued insight/context/wardrobe use without requiring external shopping. | MVP | FEAT-GAP-001; BR-024 | D: commerce-independent path. |
 
 ### 3.16 Wardrobe Multiplier
@@ -588,18 +588,18 @@ Exact evaluation requires sufficient candidate readiness; applicable readiness f
 
 Garment-identity sets define canonical outfit uniqueness; permutation creates no additional combination. Failures, timeouts, missing information and unavailable evaluation do not establish +0 or a complete exact count.
 
-Changes to active wardrobe composition, confirmed garment attributes, candidate attributes, context or relevant validity/business rules make the prior result Outdated. Freshness is input/rule based; no arbitrary time-based TTL is specified. Weather freshness affecting context remains OSQ-012.
+Changes to active wardrobe composition, confirmed garment attributes, candidate attributes, context or relevant validity/business rules make the prior result Outdated. Freshness is input/rule based; no arbitrary time-based TTL is specified. Weather evidence must also meet Section 3.3; a failed refresh follows reduced-context validity rather than restoring stale evidence as current.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-MULT-001 | The system shall evaluate a sufficiently described hypothetical candidate against the current confirmed active wardrobe, using only applicable ready owned garments in counted combinations and excluding removed inventory. | MVP | FEAT-MULT-001; BR-015, BR-016; OSQ-005, OSQ-010 (Resolved) | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
-| FR-MULT-002 | The system shall compare current and expanded valid outfit sets under the same context, validity/business-rule version and identity-based uniqueness semantics. | MVP | FEAT-MULT-001; BR-009, BR-016; OSQ-006, OSQ-010 (Resolved) | A: matched context/rule-version versus mismatched comparison. |
-| FR-MULT-003 | The system shall calculate WardrobeMultiplier(candidate) as the cardinality of O(W ∪ {candidate}) − O(W), using garment-identity sets so existing or permuted combinations do not inflate new valid outfits. | MVP | FEAT-MULT-001; BR-016; OSQ-010 (Resolved) | A: exact set-difference fixtures and identity permutations. |
-| FR-MULT-004 | The system shall show an exact +N New Outfits only when Section 3.16.1 completeness/readiness/context/version/deduplication conditions hold, explaining the evaluated baseline and count. | MVP | FEAT-MULT-001; BR-016, BR-022; OSQ-010 (Resolved) | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
-| FR-MULT-005 | The system shall provide newly enabled hypothetical previews for an exact completed evaluation, visibly identifying the unowned candidate and associating previews with the same evaluated context/rule basis. | MVP | FEAT-MULT-001; BR-017; OSQ-010 (Resolved) | T/I: newly enabled candidate previews; stale/incomplete previews not current exact evidence. |
+| FR-MULT-001 | The system shall evaluate a sufficiently described hypothetical candidate against the current confirmed active wardrobe, using only applicable ready owned garments in counted combinations and excluding removed inventory. | MVP | FEAT-MULT-001; BR-015, BR-016 | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
+| FR-MULT-002 | The system shall compare current and expanded valid outfit sets under the same context, validity/business-rule version and identity-based uniqueness semantics. | MVP | FEAT-MULT-001; BR-009, BR-016 | A: matched context/rule-version versus mismatched comparison. |
+| FR-MULT-003 | The system shall calculate WardrobeMultiplier(candidate) as the cardinality of O(W ∪ {candidate}) − O(W), using garment-identity sets so existing or permuted combinations do not inflate new valid outfits. | MVP | FEAT-MULT-001; BR-016 | A: exact set-difference fixtures and identity permutations. |
+| FR-MULT-004 | The system shall show an exact +N New Outfits only when Section 3.16.1 completeness/readiness/context/version/deduplication conditions hold, explaining the evaluated baseline and count. | MVP | FEAT-MULT-001; BR-016, BR-022 | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
+| FR-MULT-005 | The system shall provide newly enabled hypothetical previews for an exact completed evaluation, visibly identifying the unowned candidate and associating previews with the same evaluated context/rule basis. | MVP | FEAT-MULT-001; BR-017 | T/I: newly enabled candidate previews; stale/incomplete previews not current exact evidence. |
 | FR-MULT-006 | The system shall leave candidate ownership and wear history unchanged by evaluation or preview viewing. | MVP | FEAT-MULT-001; BR-015, BR-017 | T: no ingestion/wear side effect. |
-| FR-MULT-007 | The system shall distinguish Exact, Evaluated Zero, Incomplete, Unavailable and Outdated, showing +0 only for a fully completed exact evaluation with no newly enabled outfits and suppressing exact +N for non-exact states. | MVP | FEAT-MULT-001; BR-016, BR-022; OSQ-010 (Resolved) | T/A: all five states; failures/timeouts/missing data never become zero. |
-| FR-MULT-008 | The system shall mark a prior multiplier Outdated when relevant wardrobe composition, confirmed/candidate attributes, context or validity/business rules change, withholding current exact status until reevaluated without arbitrary time-based TTL. | MVP | FEAT-MULT-001; BR-016, BR-022; OSQ-010 (Resolved) | T: each input/rule trigger; unchanged inputs do not expire under an invented TTL. |
+| FR-MULT-007 | The system shall distinguish Exact, Evaluated Zero, Incomplete, Unavailable and Outdated, showing +0 only for a fully completed exact evaluation with no newly enabled outfits and suppressing exact +N for non-exact states. | MVP | FEAT-MULT-001; BR-016, BR-022 | T/A: all five states; failures/timeouts/missing data never become zero. |
+| FR-MULT-008 | The system shall mark a prior multiplier Outdated when relevant wardrobe composition, confirmed/candidate attributes, context or validity/business rules change, withholding current exact status until reevaluated without arbitrary time-based TTL. | MVP | FEAT-MULT-001; BR-016, BR-022 | T: each input/rule trigger; unchanged inputs do not expire under an invented TTL. |
 
 ### 3.17 Strategic Shopping
 
@@ -614,12 +614,12 @@ Usable candidate utility must satisfy PRD display rules; optional credible comme
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-SHOP-001 | The system shall show applicable candidate image/visual, human-readable identity, primary category, subtype, gap addressed, and relevant attributes for each usable recommendation. | MVP | FEAT-SHOP-001; BR-018, BR-020 | I: required candidate information. |
-| FR-SHOP-002 | The system shall show exact +N, reasons and newly enabled previews for usable completed candidate utility, explicitly identifying incomplete/unavailable/outdated evaluation instead of presenting it as current exact advice. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-016, BR-017, BR-018; OSQ-010 (Resolved) | T/I: exact usable utility versus all non-exact evaluation states. |
-| FR-SHOP-003 | The system shall show price range, material, longevity/durability, retailer identity, or destination only when credible and available, qualifying estimates. | Conditional | FEAT-SHOP-001; BR-020 | I: credible and missing optional fields. |
-| FR-SHOP-004 | The system shall retain supported candidate utility without optional commercial fields, while avoiding invented merchant claims or exact +N/previews unsupported by evaluation completeness. | MVP | FEAT-SHOP-001; BR-020, BR-024; OSQ-010 (Resolved) | T/I: missing commercial data versus missing required utility data. |
+| FR-SHOP-001 | The system shall show applicable candidate visual, human-readable identity, category/subtype, gap and relevant attributes for usable advice, using candidate information supported by explicit user-provided information or an identifiable configured credible source. | MVP | FEAT-SHOP-001; BR-018, BR-020 | I: required candidate information and supported provenance; no candidate-capture/import goal is introduced. |
+| FR-SHOP-002 | The system shall show exact +N, reasons and newly enabled previews for usable completed candidate utility, explicitly identifying incomplete/unavailable/outdated evaluation instead of presenting it as current exact advice. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-016, BR-017, BR-018 | T/I: exact usable utility versus all non-exact evaluation states. |
+| FR-SHOP-003 | The system shall show optional price, material, durability/longevity, retailer or destination only when credible and available, qualify estimates and preserve identifiable source/retrieval or last-checked time for external commercial information; price/availability is current informational guidance for at most 24 hours, after which it is refreshed, explicitly stale/last checked, or omitted. | Conditional | FEAT-SHOP-001; BR-020 | I/T: source/time, age 24 hours versus older, refresh/qualification/omission, and absent optional fields; no guaranteed merchant/stock/price/durability claim. |
+| FR-SHOP-004 | The system shall retain supported candidate utility without optional commercial fields, while avoiding invented merchant claims or exact +N/previews unsupported by evaluation completeness. | MVP | FEAT-SHOP-001; BR-020, BR-024 | T/I: missing commercial data versus missing required utility data. |
 | FR-SHOP-005 | The system shall provide optional navigation to an available external destination with an explicit external-shopping indication. | Conditional | FEAT-SHOP-002; BR-018 | T: available link handoff. |
-| FR-SHOP-006 | The system shall preserve candidate/gap/utility context after known destination failure or normal return where available. | MVP | FEAT-SHOP-002; BR-018, BR-022 | T: failed link and return. |
+| FR-SHOP-006 | The system shall retain otherwise valid candidate information, gap explanation, multiplier, reasons and hypothetical previews after known destination failure or normal return where available; destination unavailability affects navigation only and does not imply zero utility, candidate invalidity, ownership or a transaction state. | MVP | FEAT-SHOP-002; BR-018, BR-022 | T: unavailable destination with current valid utility retained; changed basis separately becomes outdated. |
 | FR-SHOP-007 | The system shall avoid equating candidate/link interaction with verified sale, purchase, automatic garment ingestion, or reported wear. | MVP | FEAT-SHOP-002; BR-018, BR-019 | T/I: navigation side effects. |
 | FR-SHOP-008 | The system shall keep core advice available without native cart, payment, orders, fulfillment, purchase, or affiliate participation. | MVP | FEAT-SHOP-001, FEAT-SHOP-002; BR-018, BR-024 | D/I: independent core journey. |
 
@@ -632,9 +632,9 @@ This specifies conceptual measurable outcomes, not an analytics schema/vendor or
 | FR-MET-001 | The system shall make confirmed garment additions, attribute corrections, outfit requests/views, Shuffle outcomes, and Like/Dislike changes distinguishable for measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001; BR-019, BR-001, BR-007 | T/I: distinct interaction evidence. |
 | FR-MET-002 | The system shall distinguish Wear Event creation, correction, and removal as separate measurement meanings. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/I: event lifecycle evidence. |
 | FR-MET-003 | The system shall make coverage/gap/candidate/previews views and external-link attempts/openings distinguishable without interpreting them as sales. | MVP | FEAT-MET-001, FEAT-SHOP-002; BR-019 | T/I: exposure versus navigation. |
-| FR-MET-004 | The system shall support recognition/preview validation and processing/recommendation timing evidence under OSQ-001's locked benchmark, timing boundaries and p95 targets, alongside manual continuity/utilization/repeat-use measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001; BR-019, BR-001, BR-007, BR-006; OSQ-001 (Resolved) | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
-| FR-MET-005 | The system shall avoid inflation from one logical Wear action's retries, distinguishing intentional event counts from normalized same-outfit/day ranking evidence. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011; OSQ-007, OSQ-008 (Resolved) | T/A: two intentional history events versus one preference increment; retry counted once. |
-| FR-MET-006 | The system shall respect authorized privacy handling and avoid requiring raw personal images or sensitive profile details as engagement-metric content. | MVP | FEAT-MET-001; BR-021 | I: measurement information. |
+| FR-MET-004 | The system shall support recognition/preview validation and processing/recommendation timing evidence under 's locked benchmark, timing boundaries and p95 targets, alongside manual continuity/utilization/repeat-use measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001; BR-019, BR-001, BR-007, BR-006 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
+| FR-MET-005 | The system shall avoid inflation from one logical Wear action's retries, distinguishing intentional event counts from normalized same-outfit/day ranking evidence. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/A: two intentional history events versus one preference increment; retry counted once. |
+| FR-MET-006 | The system shall minimize user-linked measurement content, avoid requiring raw private images or sensitive profile detail for ordinary engagement metrics, and delete or aggregate/de-identify user-linked engagement/measurement information within 90 days so older information is no longer maintained as user-linked personal behavior. | MVP | FEAT-MET-001; BR-021 | I/T: metric contents and 90-day retention boundary; no residual user-linked information in aggregates. |
 | FR-MET-007 | The system shall preserve an otherwise usable core action when measurement is unavailable without falsely changing its success/failure state. | MVP | FEAT-MET-001; BR-019 | T: measurement dependency failure. |
 
 
@@ -656,47 +656,47 @@ These requirements specify information meaning/ownership, not tables, storage ty
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-AUTH-001 | The system shall associate credentials/recovery/session information with the correct account, protect those secrets, and preserve the password value and policy-governed validity outcomes in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021; OSQ-002, OSQ-003 (Resolved) | T/I: account ownership; exact password meaning; protected recovery/session state. |
-| DATA-AUTH-002 | The system shall represent Email through the normalized account identity defined in Section 3.1.1 and Display Name as optional, preserving one account per identity without provider-specific alias transformations. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: uniqueness across email case/whitespace variants; optional Display Name. |
+| DATA-AUTH-001 | The system shall associate credentials/recovery/session information with the correct account, protect those secrets, and preserve the password value and policy-governed validity outcomes in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | T/I: account ownership; exact password meaning; protected recovery/session state. |
+| DATA-AUTH-002 | The system shall represent Email through the normalized account identity defined in Section 3.1.1 and Display Name as optional, preserving one account per identity without provider-specific alias transformations. | MVP | FEAT-AUTH-001; BR-021 | T: uniqueness across email case/whitespace variants; optional Display Name. |
 | DATA-AUTH-003 | The system shall retain the user's current declared styles/common priorities and distinguish them from request-specific occasion. | MVP | FEAT-PROF-001; BR-010 | T/I: independent context values. |
 | DATA-AUTH-004 | The system shall represent omitted/removed body/gender as absent current context rather than inferred replacements. | MVP | FEAT-PROF-001; BR-012, BR-021 | T/I: removed optional values. |
-| DATA-AUTH-005 | The system shall represent separate login sessions with account association, maximum lifetime, current/consumed refresh validity and revocation state, and reset interactions with account association, expiry and single-use validity, sufficient to enforce Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021; OSQ-002, OSQ-003 (Resolved) | T/I: independent sessions, rotated-token reuse, current/all-session revocation, reset expiry/use. |
+| DATA-AUTH-005 | The system shall represent separate login sessions with account association, maximum lifetime, current/consumed refresh validity and revocation state, and reset interactions with account association, expiry and single-use validity, sufficient to enforce Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | T/I: independent sessions, rotated-token reuse, current/all-session revocation, reset expiry/use. |
 
 ### 4.3 Garment & Wardrobe Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | DATA-GAR-001 | The system shall associate each current garment/profile with its owning user's wardrobe and confirmed primary category/dominant color. | MVP | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005 | T/I: owner and saveable minimum. |
-| DATA-GAR-002 | The system shall represent Section 4.10 garment descriptors with bounded values/scales, SOLID → NONE density, environmental rather than calendar-season primary taxonomy, and applicable unknown/optional states. | MVP | FEAT-GAR-001; BR-003; OSQ-005 (Resolved) | I/T: descriptor sets, scales, SOLID density and non-mandatory rich information. |
-| DATA-GAR-003 | The system shall associate proposals with evidence-based confidence/provenance under Section 8.1 separately from authoritative user values, without treating numeric confidence as confirmation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004, OSQ-005 (Resolved) | T/I: default thresholds, evidence guards, calibration and confirmation. |
+| DATA-GAR-002 | The system shall represent Section 4.10 garment descriptors with bounded values/scales, SOLID → NONE density, environmental rather than calendar-season primary taxonomy, and applicable unknown/optional states. | MVP | FEAT-GAR-001; BR-003 | I/T: descriptor sets, scales, SOLID density and non-mandatory rich information. |
+| DATA-GAR-003 | The system shall associate proposals with evidence-based confidence/provenance under Section 8.1 separately from authoritative user values, without treating numeric confidence as confirmation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: default thresholds, evidence guards, calibration and confirmation. |
 | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
-| DATA-GAR-005 | The system shall represent active ownership, removed state and applicable readiness separately, retaining saveable entries with UNKNOWN/unavailable required compatibility fields. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005; OSQ-005 (Resolved) | T/I: conditional layering/bulk readiness and retained minimum-only entries. |
+| DATA-GAR-005 | The system shall represent active ownership, removed state and applicable readiness separately, retaining saveable entries with UNKNOWN/unavailable required compatibility fields. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: conditional layering/bulk readiness and retained minimum-only entries. |
 
 ### 4.4 Outfit & Recommendation Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-OUT-001 | The system shall identify an outfit through its set of constituent garment identities, treating every permutation of that set as one unique combination for advice, feedback, daily Wear normalization and multiplier comparison. | MVP | FEAT-OUT-001, FEAT-MULT-001; BR-008, BR-016; OSQ-006, OSQ-007, OSQ-010 (Resolved) | A: identity permutations and exact-combination targeting. |
-| DATA-OUT-002 | The system shall associate advice with its evaluated wardrobe/context and relevant validity-rule version, sufficient for explanations and input/rule-based outdated-state detection. | MVP | FEAT-OUT-001, FEAT-OUT-002; BR-007, BR-022; OSQ-006, OSQ-010 (Resolved) | T/I: context/rule version and changed-input detection. |
+| DATA-OUT-001 | The system shall identify an outfit through its set of constituent garment identities, treating every permutation of that set as one unique combination for advice, feedback, daily Wear normalization and multiplier comparison. | MVP | FEAT-OUT-001, FEAT-MULT-001; BR-008, BR-016 | A: identity permutations and exact-combination targeting. |
+| DATA-OUT-002 | The system shall associate advice with its evaluated wardrobe/context and relevant validity-rule version, sufficient for explanations and input/rule-based outdated-state detection. | MVP | FEAT-OUT-001, FEAT-OUT-002; BR-007, BR-022 | T/I: context/rule version and changed-input detection. |
 | DATA-OUT-003 | The system shall distinguish current owned outfits, historical selections, and hypothetical candidate outfits in their logical meaning. | MVP | FEAT-OUT-002, FEAT-MULT-001; BR-017, BR-022 | I: three outfit contexts. |
 
 ### 4.5 Feedback & Wear Event Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-WEAR-001 | The system shall associate current outfit-targeted Like/Dislike state and applicable action-time information with the correct user/combination, sufficient to preserve state and apply the contribution/decay rules in Section 3.12.1. | MVP | FEAT-PERS-001; BR-011, BR-021; OSQ-007 (Resolved) | T/I: target, user revision, age and persistent feedback versus expired influence. |
-| DATA-WEAR-002 | The system shall represent each intentional Wear Event with outfit, absolute timestamp, associated timezone or UTC offset, original local date/time context, available occasion/context, user-reported meaning and applicable corrected information. | MVP | FEAT-PERS-002; BR-006, BR-011; OSQ-008 (Resolved) | I/T: time information and valid same-original-day correction. |
-| DATA-WEAR-003 | The system shall distinguish logical-action identity from exact-outfit/local-day grouping, preserving separate intentional events while deduplicating one action and normalizing only its applicable ranking contribution. | MVP | FEAT-PERS-002; BR-011; OSQ-007, OSQ-008 (Resolved) | T/A: retries versus explicit repeats; two history records, one day preference increment. |
-| DATA-WEAR-004 | The system shall reflect valid event corrections/removals in effective history and normalized/age-weighted signals without deleting underlying Outfit/Garments or unrelated events. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011; OSQ-007, OSQ-008 (Resolved) | T/A: surviving reports and recalculated contribution after removal/correction. |
+| DATA-WEAR-001 | The system shall associate current outfit-targeted Like/Dislike state and applicable action-time information with the correct user/combination, sufficient to preserve state and apply the contribution/decay rules in Section 3.12.1. | MVP | FEAT-PERS-001; BR-011, BR-021 | T/I: target, user revision, age and persistent feedback versus expired influence. |
+| DATA-WEAR-002 | The system shall represent each intentional Wear Event with outfit, absolute timestamp, associated timezone or UTC offset, original local date/time context, available occasion/context, user-reported meaning and applicable corrected information. | MVP | FEAT-PERS-002; BR-006, BR-011 | I/T: time information and valid same-original-day correction. |
+| DATA-WEAR-003 | The system shall distinguish logical-action identity from exact-outfit/local-day grouping, preserving separate intentional events while deduplicating one action and normalizing only its applicable ranking contribution. | MVP | FEAT-PERS-002; BR-011 | T/A: retries versus explicit repeats; two history records, one day preference increment. |
+| DATA-WEAR-004 | The system shall reflect valid event corrections/removals in effective history and normalized/age-weighted signals without deleting underlying Outfit/Garments or unrelated events. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011 | T/A: surviving reports and recalculated contribution after removal/correction. |
 
 ### 4.6 Coverage / Gap / Candidate Evaluation Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-ANL-001 | The system shall associate coverage with mapped needs, 0/1/2/3 priorities, sufficient-data state, relevant context/rule basis, valid distinct outfit counts, per-need ratios and the weighted score/limitations. | MVP | FEAT-ANL-002; BR-014, BR-022; OSQ-006, OSQ-009 (Resolved) | I/A: formula inputs/results and sufficient-versus-incomplete state. |
-| DATA-ANL-002 | The system shall associate each proposed gap with a relevant positive-weight underserved need, its capability/bottleneck evidence and candidate characteristics rather than a mandatory product name. | MVP | FEAT-GAP-001; BR-015, BR-022; OSQ-009 (Resolved) | I/A: <100% need evidence and capability-before-candidate linkage. |
-| DATA-ANL-003 | The system shall represent the hypothetical candidate separately from owned garments with required identity/visual/category/subtype/gap/attribute information, applicable readiness and credible optional commercial values. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-018, BR-020; OSQ-005, OSQ-010 (Resolved) | I/T: usable versus incomplete candidate and unowned distinction. |
-| DATA-ANL-004 | The system shall associate multiplier state/count/previews with candidate, wardrobe/context, relevant rule version, readiness/completion/deduplication evidence and input/rule-based freshness. | MVP | FEAT-MULT-001; BR-016, BR-017, BR-022; OSQ-010 (Resolved) | A/I: five states and exact-result evidence; no arbitrary TTL. |
+| DATA-ANL-001 | The system shall associate coverage with mapped needs, 0/1/2/3 priorities, sufficient-data state, relevant context/rule basis, valid distinct outfit counts, per-need ratios and the weighted score/limitations. | MVP | FEAT-ANL-002; BR-014, BR-022 | I/A: formula inputs/results and sufficient-versus-incomplete state. |
+| DATA-ANL-002 | The system shall associate each proposed gap with a relevant positive-weight underserved need, its capability/bottleneck evidence and candidate characteristics rather than a mandatory product name. | MVP | FEAT-GAP-001; BR-015, BR-022 | I/A: <100% need evidence and capability-before-candidate linkage. |
+| DATA-ANL-003 | The system shall represent the hypothetical candidate separately from owned garments with required identity/visual/category/subtype/gap/attributes, applicable readiness and evidence from explicit user-provided information or an identifiable configured credible source; external commercial values retain source and retrieval/last-checked time. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-018, BR-020 | I/T: credible candidate provenance, qualified optional values/time and hypothetical status. |
+| DATA-ANL-004 | The system shall associate multiplier state/count/previews with candidate, wardrobe/context, relevant rule version, readiness/completion/deduplication evidence and input/rule-based freshness. | MVP | FEAT-MULT-001; BR-016, BR-017, BR-022 | A/I: five states and exact-result evidence; no arbitrary TTL. |
 
 ### 4.7 Data Integrity
 
@@ -705,23 +705,24 @@ These requirements specify information meaning/ownership, not tables, storage ty
 | DATA-INT-001 | The system shall prevent an AI proposal or later analysis from silently superseding a confirmed/corrected garment value. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002 | T: authority preservation. |
 | DATA-INT-002 | The system shall exclude removed garments from effective current recommendation/coverage/multiplier inputs even when historical snapshots remain. | MVP | FEAT-WAR-002, FEAT-MULT-001, FEAT-ANL-002; BR-005, BR-014, BR-016 | A: current versus historical input. |
 | DATA-INT-003 | The system shall avoid creating owned garments or Wear Events solely from candidate evaluation, preview, or external navigation. | MVP | FEAT-MULT-001, FEAT-SHOP-002; BR-015, BR-017, BR-018 | T: no ownership/wear side effect. |
-| DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions. | MVP | FEAT-AI-002, FEAT-PERS-002; BR-005, BR-011; OSQ-008 (Resolved) | T: interrupted additions/Wear actions; retry versus explicit same-outfit/day repeat. |
+| DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions. | MVP | FEAT-AI-002, FEAT-PERS-002; BR-005, BR-011 | T: interrupted additions/Wear actions; retry versus explicit same-outfit/day repeat. |
 
 ### 4.8 Historical Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-HIST-001 | The system shall retain meaningful past event/outfit/garment snapshots and original event-local time context after garment removal, timezone travel or behavioral-ranking expiry, subject to the unresolved retention policy. | MVP | FEAT-ANL-001; BR-006; OSQ-007, OSQ-008 (Resolved) | T/I: removed garment, >90-day event and device timezone change; OSQ-011. |
-| DATA-HIST-002 | The system shall identify removed garments in historical presentation as Removed from wardrobe without treating the snapshot as an active item. | MVP | FEAT-ANL-001; BR-006, BR-022; OSQ-008 (Resolved) | I/A: removed snapshot. |
+| DATA-HIST-001 | The system shall retain the minimal meaningful past event/outfit/garment snapshot and original event-local time context needed to understand history after garment removal, travel or ranking expiry, without indefinitely retaining original removed-garment images or nonessential removed personal data. | MVP | FEAT-ANL-001; BR-006 | T/I: minimal snapshot, >90-day retained history, original timezone and removed-image/nonessential-data deletion within 30 days. |
+| DATA-HIST-002 | The system shall identify removed garments in historical presentation as Removed from wardrobe without treating the snapshot as an active item. | MVP | FEAT-ANL-001; BR-006, BR-022 | I/A: removed snapshot. |
 
 ### 4.9 Retention / Deletion
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-RET-001 | The system shall remove a deleted event from effective history/utilization/recency/signals while retaining Outfit/Garments and unrelated events, recomputing any surviving outfit/day preference increment. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021; OSQ-007, OSQ-008 (Resolved) | T/A: individual removal versus surviving same-day report. |
-| DATA-RET-002 | The system shall retain meaningful history after active-garment removal and avoid deleting events merely because they exceed the 90-day behavioral ranking window, subject to approved retention policy. | MVP | FEAT-WAR-002, FEAT-ANL-001; BR-005, BR-006; OSQ-007, OSQ-008 (Resolved) | T: removed garment and aging history; OSQ-011 retention remains open. |
+| DATA-RET-001 | The system shall immediately remove an accepted removed event from effective history/utilization/recency/signals, preserve underlying Outfits/Garments and unrelated events, recalculate surviving outfit/day evidence, and physically delete applicable personal event data within 30 days. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021 | T/A/I: individual removal, survivor anchor/effects and deletion deadline. |
+| DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary; ranking expiry alone does not erase history, while a removed garment's original image and nonessential personal data are physically deleted within 30 days. | MVP | FEAT-WAR-002, FEAT-ANL-001; BR-005, BR-006 | T/I: retained necessary active/minimal history versus removed images/nonessential data; ranking influence and retention have separate boundaries. |
+| DATA-RET-003 | The system shall retain user-linked engagement/measurement information for no more than 90 days, then delete it or aggregate/de-identify it so it is no longer maintained as user-linked personal behavioral information. | MVP | FEAT-MET-001; BR-019, BR-021 | I/T: before/at 90-day deadline and older information; retained aggregates are no longer user-linked. |
 
-No physical purge mechanism, legal retention duration, indefinite retention guarantee, account-export/closure workflow, or unrestricted future AI-training use is specified. Remaining retention/deletion/consent rules are OSQ-011; they must respect the settled historical and user-control semantics.
+The 30-day removal-deletion and 90-day user-linked measurement limits are MVP product policies. Necessary minimal historical snapshots may remain; original removed-garment images and nonessential personal data may not be retained indefinitely for history. Physical deletion/aggregation mechanisms remain downstream design choices. No self-service account-deletion/export feature, statutory retention rule or legal certification is introduced.
 
 ### 4.10 Logical Data Dictionary
 
@@ -787,12 +788,12 @@ These requirements preserve navigation responsibilities and semantic states; the
 |---|---|---|---|---|
 | UI-001 | The system shall make Today, Wardrobe, Insights, and Profile responsibilities reachable with Add Garment and applicable detail/return paths. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-PROF-001; BR-005, BR-007, BR-010 | D: navigation through JRN-01–JRN-07. |
 | UI-002 | The system shall present the progressive onboarding flow with optional context and non-blocking first-garment guidance. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-012, BR-021, BR-023 | D: onboarding skip/return. |
-| UI-003 | The system shall distinguish loading, empty, no-match, pending, confirmed and failed states plus Exact/Evaluated Zero/Incomplete/Unavailable/Outdated multiplier states where applicable. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001; BR-005, BR-016, BR-022; OSQ-010 (Resolved) | T/I: generic state inventory and five multiplier result states. |
+| UI-003 | The system shall distinguish loading, empty, no-match, pending, confirmed and failed states plus Exact/Evaluated Zero/Incomplete/Unavailable/Outdated multiplier states where applicable. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001; BR-005, BR-016, BR-022 | T/I: generic state inventory and five multiplier result states. |
 | UI-004 | The system shall display garment identity/category/color, readiness guidance, and available image without hiding imageless manual entries. | MVP | FEAT-WAR-001, FEAT-GAR-001; BR-005, BR-003 | I: cards and minimum-only detail. |
-| UI-005 | The system shall display High Confidence, Needs Review and Uncertain through understandable Vietnamese semantic labels under the Section 8.1 mapping, retaining confirmation authority and avoiding primary raw-score presentation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004 (Resolved) | I/T: threshold boundaries, evidence guards and localized field guidance. |
+| UI-005 | The system shall display High Confidence, Needs Review and Uncertain through understandable Vietnamese semantic labels under the Section 8.1 mapping, retaining confirmation authority and avoiding primary raw-score presentation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | I/T: threshold boundaries, evidence guards and localized field guidance. |
 | UI-006 | The system shall require explicit confirmation for an authoritative garment entry and expose correction/manual controls. | MVP | FEAT-AI-002; BR-002 | D: proposal to corrected confirmation. |
-| UI-007 | The system shall show Wear Events with original local date/time and event-specific inspect/correct/remove controls governed by the no-future/same-original-day correction bounds. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021; OSQ-008 (Resolved) | D/T: multiple-event lifecycle and invalid correction guidance. |
-| UI-008 | The system shall visibly distinguish hypothetical candidates/previews from owned outfits and removed historical garments from active ownership. | MVP | FEAT-MULT-001, FEAT-ANL-001; BR-017, BR-006, BR-022; OSQ-008, OSQ-010 (Resolved) | I: hypothetical and removed indicators. |
+| UI-007 | The system shall show Wear Events with original local date/time and event-specific inspect/correct/remove controls governed by the no-future/same-original-day correction bounds. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021 | D/T: multiple-event lifecycle and invalid correction guidance. |
+| UI-008 | The system shall visibly distinguish hypothetical candidates/previews from owned outfits and removed historical garments from active ownership. | MVP | FEAT-MULT-001, FEAT-ANL-001; BR-017, BR-006, BR-022 | I: hypothetical and removed indicators. |
 | UI-009 | The system shall show required candidate utility information and identify optional external navigation without requiring absent commercial data. | MVP | FEAT-SHOP-001, FEAT-SHOP-002; BR-018, BR-020, BR-024 | I/T: usable candidate without retailer. |
 
 ### 5.2 Software Interfaces
@@ -802,8 +803,8 @@ The interfaces below identify logical capabilities. Garment analysis may be deli
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | SI-001 | The system shall exchange selected-image analysis input and available preview/proposals/uncertainty with the garment-analysis capability while retaining user confirmation as authority. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T/I: analysis success/failure exchange. |
-| SI-002 | The system shall exchange selected location and relevant environmental information with a weather capability and distinguish unavailable/stale results. | MVP | FEAT-PROF-002; BR-013, BR-022 | T: location/weather variants. |
-| SI-003 | The system shall use email delivery for password recovery while keeping initiation responses account-existence-safe and distinguishing a valid completed reset from requested, failed, expired, or consumed interactions. | MVP | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: email recovery outcomes; paired known/unknown account responses. |
+| SI-002 | The system shall exchange only the selected location needed for weather retrieval, apply the 30-minute currentness and 2-second assessment-delay boundary, and distinguish stale/unavailable information without sending unrelated wardrobe/profile/history. | MVP | FEAT-PROF-002; BR-013, BR-022 | T/I: minimal location exchange, timestamp ages and bounded fallback. |
+| SI-003 | The system shall send Email Delivery Service only email and necessary recovery-delivery information, preserve account-existence-safe initiation responses, and distinguish requested/delivered recovery from a valid completed reset. | MVP | FEAT-AUTH-001; BR-021 | I/T: minimal delivery information, known/unknown initiation equivalence and requested/failed/expired/consumed/completed reset. |
 | SI-004 | The system shall support optional external-destination handoff without treating retailer operations as CapsuleAI transactions or guaranteed outcomes. | MVP | FEAT-SHOP-002; BR-018, BR-024 | T/I: external navigation boundary. |
 
 ### 5.3 Hardware Interfaces
@@ -818,13 +819,13 @@ The interfaces below identify logical capabilities. Garment analysis may be deli
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| COM-001 | The system shall protect private access/wardrobe/profile/history exchanges against unauthorized disclosure or alteration, preserving password values and the session/account authority defined in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021; OSQ-002, OSQ-003 (Resolved) | A/T: protected exchange; Unicode/spaces preserved; session ownership. |
-| COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions. | MVP | FEAT-AI-002, FEAT-PERS-002, FEAT-AUTH-001; BR-005, BR-011, BR-021; OSQ-002, OSQ-003, OSQ-008 (Resolved) | T: interrupted save/reset/refresh/Wear actions and outcome review. |
-| COM-003 | The system shall avoid granting external destinations unrestricted access to private wardrobe/profile/history merely because a shopping link was opened. | MVP | FEAT-SHOP-002, FEAT-AUTH-001; BR-018, BR-021 | I/T: handoff data/privacy boundary. |
+| COM-001 | The system shall protect private access/wardrobe/profile/history exchanges against unauthorized disclosure or alteration, preserving password values and the session/account authority defined in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | A/T: protected exchange; Unicode/spaces preserved; session ownership. |
+| COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions. | MVP | FEAT-AI-002, FEAT-PERS-002, FEAT-AUTH-001; BR-005, BR-011, BR-021 | T: interrupted save/reset/refresh/Wear actions and outcome review. |
+| COM-003 | The system shall limit external shopping interaction to explicitly chosen navigation without granting destinations unrestricted private wardrobe/profile/history access; external dependencies receive only the minimum information needed for their purpose. | MVP | FEAT-SHOP-002, FEAT-AUTH-001; BR-018, BR-021 | I/T: explicit handoff, provider-specific minimal exchanges and no unrelated personal-data disclosure. |
 
 ## 6. Quality Requirements
 
-Quality requirements apply to MVP behavior and derive from BRD MET-Q01–MET-Q03 and PRD Section 25. They cover locked-set recognition acceptance, criterion-based preview review, garment-processing p95 ≤5 seconds, and outfit-result p95 <3 seconds. The following sections define timing boundaries and workload; reference device/network and operating configuration remain OSQ-013. Availability, throughput, concurrency, and recovery targets are not quantified here; architecture decisions remain downstream.
+Quality requirements apply to MVP behavior and derive from BRD MET-Q01–MET-Q03 and PRD Section 25. They cover locked-set recognition acceptance, criterion-based preview review, garment-processing p95 ≤5 seconds, and outfit-result p95 <3 seconds. Sections 2.3 and 12.3 define reference device/network conditions, the unchanged timing boundaries, functional concurrency and recoverable-restart acceptance. A production uptime percentage and additional mandatory larger-wardrobe threshold are not established; architecture tactics remain downstream.
 
 ### 6.1 Performance
 
@@ -832,30 +833,31 @@ Faster valid completion is acceptable.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-PERF-001 | The system shall complete garment processing at p95 ≤5 seconds from accepted analysis request after image transfer completes to available usable processed preview and reviewable proposals, under reference conditions governed by OSQ-013. | MVP | FEAT-AI-001, FEAT-MET-001; BR-001, BR-019; OSQ-001 (Resolved) | T/A: accepted-request-to-preview/proposals durations, p95 and recorded reference configuration. |
-| NFR-PERF-002 | The system shall provide the first complete outfit recommendation result set at p95 <3 seconds from accepted request with required context available, for the specified 100-confirmed-garment nominal workload. | MVP | FEAT-OUT-001, FEAT-MET-001; BR-007, BR-019; OSQ-001 (Resolved) | T/A: p95 with exactly 100 confirmed garments; reference device/network OSQ-013. |
+| NFR-PERF-001 | The system shall complete garment processing at p95 ≤5 seconds from accepted analysis request after image transfer completes to available usable processed preview and reviewable proposals, under the reference conditions in Sections 2.3 and 12.3. | MVP | FEAT-AI-001, FEAT-MET-001; BR-001, BR-019 | T/A: unchanged start/end durations, 5 warm-ups, ≥100 measured executions, retained slow runs and recorded reference configuration. |
+| NFR-PERF-002 | The system shall provide the first complete outfit recommendation result set at p95 <3 seconds from accepted request with required context available, for the specified 100-confirmed-garment nominal workload. | MVP | FEAT-OUT-001, FEAT-MET-001; BR-007, BR-019 | T/A: p95 with exactly 100 confirmed garments; reference device/network conditions and measurement procedure in Section 12.3. |
 
 ### 6.2 Security
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | NFR-SEC-001 | The system shall permit zero successful unauthorized cross-user wardrobe/image accesses in the agreed validation scenarios. | MVP | FEAT-AUTH-001, FEAT-WAR-001; BR-021 | T: two-account and unauthenticated attempts; MET-Q06. |
-| NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: two sessions/accounts; current logout versus account-wide reset. |
-| NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021; OSQ-002, OSQ-003 (Resolved) | I/T: secret-output review and known/unknown email response comparison. |
+| NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
+| NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review and known/unknown email response comparison. |
 
 ### 6.3 Privacy
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-PRIV-001 | The system shall explain the relevant use of personal images, profile, location, and behavioral information and respect the originating feature's omission, correction, removal, and permission controls. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose/control review across JRN-01–JRN-05. |
-| NFR-PRIV-002 | The system shall avoid treating garment corrections, behavior recording, or external navigation as automatic unrestricted permission for future AI training or retailer data sharing. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: usage and external-handoff boundaries; OSQ-011. |
+| NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
+| NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
 ### 6.4 Reliability
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | NFR-REL-001 | The system shall preserve manual garment creation in all agreed representative AI-failure scenarios without changing confirmed information into an unconfirmed proposal. | MVP | FEAT-AI-001, FEAT-AI-002; BR-002, BR-004 | T: agreed unavailable/failed/uncertain analysis cases; MET-Q05. |
-| NFR-REL-002 | The system shall maintain controlled coverage/formula/explanation and unique-valid multiplier integrity under the validity, completeness, and same-context/rule-version rules. | MVP | FEAT-MULT-001, FEAT-ANL-002; BR-014, BR-016, BR-022; OSQ-006, OSQ-009, OSQ-010 (Resolved) | A: exact coverage fixtures and complete/zero/incomplete/outdated multiplier cases; MET-Q07. |
+| NFR-REL-002 | The system shall maintain controlled coverage/formula/explanation and unique-valid multiplier integrity under the validity, completeness, and same-context/rule-version rules. | MVP | FEAT-MULT-001, FEAT-ANL-002; BR-014, BR-016, BR-022 | A: exact coverage fixtures and complete/zero/incomplete/outdated multiplier cases; MET-Q07. |
+| NFR-REL-003 | In the agreed validation environment, the system shall restore core service within 5 minutes after a recoverable CapsuleAI application/service restart without silently corrupting previously accepted authoritative user information or losing applicable optional-dependency fallbacks. | MVP | FEAT-AUTH-001, FEAT-WAR-001, FEAT-OUT-001; BR-005, BR-007, BR-021, BR-022 | T/D: restart-to-core-restoration ≤5 minutes; accepted-state integrity and dependency fallback. |
 
 ### 6.5 Availability
 
@@ -863,14 +865,14 @@ Faster valid completion is acceptable.
 |---|---|---|---|---|
 | NFR-AVL-001 | The system shall keep otherwise usable current-wardrobe and core advice paths independent of unavailable optional weather, shopping, or measurement dependencies, subject to available access/network and sufficient valid assessment information. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-SHOP-002, FEAT-MET-001; BR-005, BR-007, BR-019, BR-024 | T: isolated dependency failures and applicable reduced-context/limited-result states. |
 
-A production availability percentage, outage window, and recovery target are not established. OSQ-013 must define any required operating targets before quality acceptance; this requirement establishes dependency independence, not guaranteed offline access.
+No production uptime percentage is required for the MVP. NFR-REL-003 defines a ≤5-minute core restoration target after a recoverable restart in the validation environment; this dependency-independence requirement does not guarantee offline access.
 
 ### 6.6 Usability
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-USE-001 | The system shall make the initial Android/iOS journeys usable through understandable Vietnamese guidance for setup, confirmation/correction, readiness, limited results, and recovery. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/I: representative users complete core journeys; evaluation criteria OSQ-014. |
-| NFR-USE-002 | The system shall evaluate preview usability by identifiable garment, preserved major regions, non-obstructive remaining background and sufficient correction/confirmation information, independently of recognition accuracy and without an invented preview percentage. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002, BR-022; OSQ-001 (Resolved) | D/A: each usable-preview criterion, acceptable background and manual fallback. |
+| NFR-USE-001 | The system shall make Vietnamese setup/confirmation/readiness/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
+| NFR-USE-002 | The system shall evaluate preview usability by identifiable garment, preserved major regions, non-obstructive remaining background and sufficient correction/confirmation information, independently of recognition accuracy and without an invented preview percentage. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002, BR-022 | D/A: each usable-preview criterion, acceptable background and manual fallback. |
 
 ### 6.7 Accessibility
 
@@ -879,7 +881,7 @@ These are requirement-level interpretations of BRD stakeholder usability/accessi
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | NFR-ACC-001 | The system shall communicate meaningful confidence, readiness, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
-| NFR-ACC-002 | The system shall make core action meanings and outcomes understandable in the agreed Android/iOS accessibility validation scenarios; supported assistive interactions and acceptance criteria remain OSQ-014. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D: accessibility scenarios TBD; no unsupported conformance level. |
+| NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
 
 ### 6.8 Maintainability
 
@@ -892,21 +894,23 @@ These are requirement-level interpretations of BRD stakeholder usability/accessi
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | NFR-TEST-001 | The system shall make the evaluated context, relevant confirmed inputs, limitations, and displayed results inspectable through authorized product behavior so controlled validity, coverage, and multiplier cases can be verified. | MVP | FEAT-OUT-001, FEAT-ANL-002, FEAT-MULT-001; BR-009, BR-014, BR-016, BR-022 | A/I: known fixtures and explained results; no test-only public interface required. |
-| NFR-TEST-002 | The system shall make validation inputs/results, accepted versus attempted/failed actions and specified timing start/end evidence inspectable without requiring sensitive personal contents in engagement metrics. | MVP | FEAT-MET-001; BR-019, BR-021; OSQ-001 (Resolved) | A/I: locked benchmark and p95 evidence; measurement privacy. |
+| NFR-TEST-002 | The system shall make validation inputs/results, accepted versus attempted/failed actions and specified timing start/end evidence inspectable without requiring sensitive personal contents in engagement metrics. | MVP | FEAT-MET-001; BR-019, BR-021 | A/I: locked benchmark and p95 evidence; measurement privacy. |
+| NFR-TEST-003 | Formal MVP performance validation shall use 5 warm-up executions followed by at least 100 measured executions per evaluated operation, calculate p95 from the measured executions without excluding legitimate slow runs, and record the device/network/environment in Section 12.3. | MVP | FEAT-AI-001, FEAT-OUT-001, FEAT-MET-001; BR-001, BR-007, BR-019 | A/I: warm-up/measured manifests, retained slow runs, p95 calculation and recorded conditions. |
 
 ### 6.10 Interoperability
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-INT-001 | The system shall preserve the logical meaning of dependency success, incomplete information, and unavailability across garment-analysis, weather, email-recovery, and external-shopping interactions. | MVP | FEAT-AI-001, FEAT-PROF-002, FEAT-AUTH-001, FEAT-SHOP-002; BR-001, BR-013, BR-018, BR-021, BR-022 | T/I: representative interface outcome contracts; OSQ-012. |
+| NFR-INT-001 | The system shall preserve the logical meaning of dependency success, incomplete information, and unavailability across garment-analysis, weather, email-recovery, and external-shopping interactions. | MVP | FEAT-AI-001, FEAT-PROF-002, FEAT-AUTH-001, FEAT-SHOP-002; BR-001, BR-013, BR-018, BR-021, BR-022 | T/I: representative interface outcome contracts. |
 
 ### 6.11 Scalability
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-SCA-001 | The system shall retain valid core wardrobe/recommendation behavior for the 100-confirmed-garment timing benchmark without silently omitting eligible inputs to meet latency, while preserving growth direction subject to OSQ-013 capacity refinement. | MVP | FEAT-WAR-001, FEAT-OUT-001; BR-005, BR-007, BR-009; OSQ-001 (Resolved) | T/A: 100-item reference manifest, applicable eligible inputs and result integrity. |
+| NFR-SCA-001 | The system shall retain valid core wardrobe/recommendation behavior for the exactly-100-confirmed-garment timing benchmark without silently omitting eligible inputs or imposing a wardrobe/onboarding maximum; no additional mandatory larger-wardrobe quantitative threshold is established. | MVP | FEAT-WAR-001, FEAT-OUT-001; BR-005, BR-007, BR-009 | T/A: reference manifest of exactly 100 confirmed garments, complete eligible inputs and result integrity. |
+| NFR-SCA-002 | The system shall preserve functional integrity with 20 concurrently active authenticated users: no cross-user leakage, broken authorization, corrupted accepted state or accidental duplicate logical actions caused solely by concurrency, with core operations remaining functional. | MVP | FEAT-AUTH-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-PERS-002; BR-005, BR-007, BR-011, BR-021 | T/D: 20-user functional validation; this is not a mandatory 20-user p95 timing workload. |
 
-The nominal timing workload contains 100 confirmed garments, refining the upstream growing-wardrobe/100+ direction without setting an onboarding quota or a maximum. Larger-load/capacity/concurrency acceptance remains OSQ-013.
+The nominal timing workload contains 100 confirmed garments, refining the upstream growing-wardrobe/100+ direction without setting an onboarding quota or a maximum. NFR-SCA-002 separately defines 20-user functional integrity; it does not turn the timing benchmark into a mandatory 20-concurrent-user p95 target. No additional mandatory larger-wardrobe threshold is introduced.
 
 ### 6.12 Supportability / Manageability
 
@@ -925,7 +929,7 @@ The English canonical terms in this document describe meaning; equivalent unders
 | LOC-002 | The system shall keep canonical category/subtype, style/occasion, confidence, and provenance semantics independent of translated display labels. | MVP | FEAT-PROF-001, FEAT-GAR-001, FEAT-AUTH-001; BR-003, BR-010, BR-023 | I/T: vocabulary-to-label mapping. |
 | LOC-003 | The system shall allow later label-language additions without redefining those established domain meanings or changing existing confirmed information. | MVP | FEAT-PROF-001, FEAT-GAR-001, FEAT-AUTH-001; BR-003, BR-010, BR-023 | I: localization readiness; no second MVP language. |
 | LOC-004 | The system shall preserve Vietnamese text and diacritics accurately in supported user entry and display. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-010, BR-021, BR-023 | T: Vietnamese names and applicable text round-trip. |
-| LOC-005 | The system shall present event-local date/time in understandable Vietnamese while preserving the original event timezone/offset/day through travel, in-day correction and multiple intentional same-day reports. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-022; OSQ-008 (Resolved) | T/I: original-local date after travel; future/cross-day correction rejected. |
+| LOC-005 | The system shall present event-local date/time in understandable Vietnamese while preserving the original event timezone/offset/day through travel, in-day correction and multiple intentional same-day reports. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-022 | T/I: original-local date after travel; future/cross-day correction rejected. |
 
 Project documentation remains in English. Event-local time, travel behavior, and correction limits follow Section 3.11.1; scheduling/calendar capabilities are outside MVP scope.
 
@@ -960,26 +964,26 @@ Independent recognition validation uses the locked benchmark below. Section 3.4.
 | Dominant-color accuracy | ≥90% overall, reported separately. |
 | Preview usability | Criterion-based review under Section 3.4.1; no percentage threshold is invented. |
 
-These targets do not automatically apply to every rich attribute. Dataset/label manifests, qualification decisions and evaluation-isolation evidence support reproducible acceptance. Reference devices/network and nominal operating configuration remain OSQ-013; no training infrastructure or model architecture is selected.
+These targets do not automatically apply to every rich attribute. Dataset/label manifests, qualification decisions and evaluation-isolation evidence support reproducible acceptance. Reference devices/network and measurement conditions are defined in Sections 2.3/12.3; personal user data is not used for MVP AI training/improvement.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| AI-REQ-001 | The system shall treat unconfirmed AI-generated garment values as suggestions rather than authoritative wardrobe information, regardless of predicted confidence. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003; OSQ-004 (Resolved) | T: high-confidence proposal before confirmation. |
-| AI-REQ-002 | The system shall allow users to review and correct proposed attribute information before confirming the garment profile. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003; OSQ-004 (Resolved) | T: proposed, corrected, and confirmed values. |
+| AI-REQ-001 | The system shall treat unconfirmed AI-generated garment values as suggestions rather than authoritative wardrobe information, regardless of predicted confidence. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: high-confidence proposal before confirmation. |
+| AI-REQ-002 | The system shall allow users to review and correct proposed attribute information before confirming the garment profile. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: proposed, corrected, and confirmed values. |
 | AI-REQ-003 | The system shall allow users to continue with manual information when analysis is unavailable, uncertain, or unsuitable, including imageless manual creation. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-004 | T: analysis failures and manual completion. |
-| AI-REQ-004 | The system shall apply default confidence mapping High Confidence ≥0.85, Needs Review ≥0.60 and <0.85, and Uncertain <0.60, subject to Section 8.1 evidence/validation guards and stricter calibrated criteria. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004 (Resolved) | T/A: 0.60/0.85 boundaries; missing/conflicting evidence; stricter calibration. |
-| AI-REQ-005 | The system shall use understandable localized confidence states as the primary presentation rather than require raw numeric confidence for user decisions. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004 (Resolved) | I: review presentation. |
-| AI-REQ-006 | The system shall distinguish AI Suggested, User Confirmed, User Corrected, and User Entered provenance for applicable garment information. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004 (Resolved) | T/I: proposal, accept, change, and manual entry. |
-| AI-REQ-007 | The system shall make the user's confirmed, corrected, or entered-and-confirmed values authoritative while preventing later AI output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002; OSQ-004 (Resolved) | T: confirmation and subsequent analysis. |
+| AI-REQ-004 | The system shall apply default confidence mapping High Confidence ≥0.85, Needs Review ≥0.60 and <0.85, and Uncertain <0.60, subject to Section 8.1 evidence/validation guards and stricter calibrated criteria. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/A: 0.60/0.85 boundaries; missing/conflicting evidence; stricter calibration. |
+| AI-REQ-005 | The system shall use understandable localized confidence states as the primary presentation rather than require raw numeric confidence for user decisions. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | I: review presentation. |
+| AI-REQ-006 | The system shall distinguish AI Suggested, User Confirmed, User Corrected, and User Entered provenance for applicable garment information. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: proposal, accept, change, and manual entry. |
+| AI-REQ-007 | The system shall make the user's confirmed, corrected, or entered-and-confirmed values authoritative while preventing later AI output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002 | T: confirmation and subsequent analysis. |
 | AI-REQ-008 | The system shall preserve unknown/missing attribute states instead of fabricating category details, colors, materials, or optional context to complete a profile. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: partial/unsupported information. |
 | AI-REQ-009 | The system shall qualify material predictions/claims when uncertain rather than present inferred composition as verified physical fact. | MVP | FEAT-GAR-001; BR-003, BR-022 | I: unknown and qualified material. |
-| AI-REQ-010 | The system shall achieve ≥90% overall primary-category recognition accuracy and ≥85% accuracy within each TOP/BOTTOM/OUTERWEAR/FOOTWEAR benchmark group on the locked qualified-image set in Section 8.1. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019; OSQ-001 (Resolved) | A: overall category result and four per-category floors; locked benchmark. |
-| AI-REQ-011 | The system shall achieve ≥90% overall dominant-color recognition accuracy against controlled color-family ground truth on the same locked qualified-image benchmark, measured separately from category/preview quality. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019; OSQ-001, OSQ-005 (Resolved) | A: independent color-family accuracy report; adjudicated labels. |
-| AI-REQ-012 | The system shall identify an attribute marked Needs Review and prompt the user to check its proposed value while retaining review/correction control. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003; OSQ-004 (Resolved) | T/I: Needs Review field guidance. |
-| AI-REQ-013 | The system shall explain that an Uncertain attribute could not be identified confidently and offer correction/manual information rather than imply a confirmed prediction. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003, BR-004; OSQ-004 (Resolved) | T/I: Uncertain field continuation. |
-| AI-REQ-014 | The system shall support recognition validation against a locked set of at least 200 qualified images, including at least 50 per primary category, and exclude the locked evaluation set from model training/tuning. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019; OSQ-001 (Resolved) | A/I: benchmark manifest/counts, qualification, label adjudication and training/tuning exclusion evidence. |
+| AI-REQ-010 | The system shall achieve ≥90% overall primary-category recognition accuracy and ≥85% accuracy within each TOP/BOTTOM/OUTERWEAR/FOOTWEAR benchmark group on the locked qualified-image set in Section 8.1. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: overall category result and four per-category floors; locked benchmark. |
+| AI-REQ-011 | The system shall achieve ≥90% overall dominant-color recognition accuracy against controlled color-family ground truth on the same locked qualified-image benchmark, measured separately from category/preview quality. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: independent color-family accuracy report; adjudicated labels. |
+| AI-REQ-012 | The system shall identify an attribute marked Needs Review and prompt the user to check its proposed value while retaining review/correction control. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: Needs Review field guidance. |
+| AI-REQ-013 | The system shall explain that an Uncertain attribute could not be identified confidently and offer correction/manual information rather than imply a confirmed prediction. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003, BR-004 | T/I: Uncertain field continuation. |
+| AI-REQ-014 | The system shall support recognition validation against a locked set of at least 200 qualified images, including at least 50 per primary category, and exclude the locked evaluation set from model training/tuning. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A/I: benchmark manifest/counts, qualification, label adjudication and training/tuning exclusion evidence. |
 
-The ≥90% category/color targets are separate from rich-attribute expectations and preview criteria. The tables above define qualification, ground truth, locked-set minimum/balance, and accuracy floors; reference operating configuration remains OSQ-013. Verification distinguishes user-authority integrity from prediction accuracy.
+The ≥90% category/color targets are separate from rich-attribute expectations and preview criteria. The tables above define qualification, ground truth, locked-set minimum/balance, and accuracy floors; reference operating configuration is defined in Sections 2.3/12.3. Verification distinguishes user-authority integrity from prediction accuracy.
 
 ### 8.2 Explainability Requirements
 
@@ -991,7 +995,7 @@ These are the normative explanation requirements. Explanations must correspond t
 
 FR-AUTH-008, DATA-AUTH-001, COM-001/COM-003, NFR-SEC-001–NFR-SEC-003, and NFR-PRIV-001/NFR-PRIV-002 establish private access, protected exchange, clear purposes, and control. FR-PROF-005–FR-PROF-007 and HW-003 preserve optional context. FR-MET-006 limits engagement evidence; DATA-RET-* preserves settled effective-removal/history semantics.
 
-Consent, retention, and broader deletion/sharing boundaries remain OSQ-011. Optional fields and permissions cannot become undisclosed access gates.
+Personal data is processed only for necessary product, personalization, history/utilization, validation/measurement, security and operational purposes. MVP personal data is not used for AI training/improvement; future use requires separate explicit opt-in and an approved product/privacy change. Private access excludes public wardrobes, user-to-user sharing, unrestricted third-party sharing and sale of personal data. External dependencies receive only purpose-minimal information: selected weather location, email/necessary recovery-delivery information, or explicitly chosen shopping navigation. Section 4.9 defines active/minimal history retention, 30-day removed-data deletion and 90-day user-linked measurement retention. Optional fields and permissions cannot become undisclosed access gates.
 
 ### 8.4 Auditability / Provenance Requirements
 
@@ -1001,13 +1005,13 @@ This does not require an immutable audit store, indefinite retention, an adminis
 
 ### 8.5 Legal / Regulatory Considerations
 
-The baselines establish Vietnam-first scope and privacy/trust commitments, not certification or a named legal-compliance regime. This SRS makes no additional legal claim or statutory retention rule. Product/legal review must resolve applicable handling policy through OSQ-011 before final privacy acceptance; any newly binding obligation must be approved and traced through the source documents.
+The baselines establish Vietnam-first scope and privacy/trust commitments, not certification or a named legal-compliance regime. This SRS makes no additional legal claim or statutory retention rule. The product's deletion and retention limits do not assert statutory compliance. Any future binding legal/security obligation requires authorized review and normal source/change propagation; GDPR, Vietnam privacy-law, WCAG or platform accessibility certification is not claimed.
 
 ### 8.6 Operational Requirements
 
 FR-MET-001–FR-MET-007, NFR-SUP-001/NFR-SUP-002, and Section 9 define interpretable measurement, protected validation evidence, failure distinction, and recoverability. No production results or uptime claim is asserted.
 
-Supported operating conditions/capacity remain OSQ-013. Operational targets and architectural significance will be refined later; CI/CD products, deployment topology, monitoring vendors, backup mechanisms, and recovery tactics are outside this document.
+Supported Android/iOS versions and reference conditions are specified in Section 2.3. Functional integrity is validated with 20 concurrently active authenticated users; recoverable core restoration targets ≤5 minutes under Section 12.3. Optional dependency failure retains documented fallback. Operating acceptance does not prescribe deployment, monitoring, backup or recovery tactics.
 
 ## 9. Error and Failure Requirements
 
@@ -1017,59 +1021,59 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-AUTH-001 | Invalid or unusable login information. | The system shall deny invalid credentials or unavailable authorized session access with useful correction/recovery guidance without exposing private content or representing the wardrobe as empty. | User may correct input or initiate recovery; personal state is not changed. | FEAT-AUTH-001; BR-021; OSQ-002, OSQ-003 (Resolved) | T: incorrect credentials, token expiry and revoked session. |
-| ERR-AUTH-002 | Reset cannot complete, is expired, or has already been used. | The system shall reject failed, expired, or already-used recovery interactions without claiming reset completion, offering renewed recovery with account-existence-safe initiation wording. | Credentials and session state change only on an actually completed reset; successful reset revokes all Refresh Sessions and requires login. | FEAT-AUTH-001; BR-021; OSQ-003 (Resolved) | T: 30-minute expiry, consumed interaction, delivery failure, known/unknown email. |
-| ERR-AUTH-003 | Renewal is unusable, the session is revoked/expired, or rotated Refresh Token reuse is detected. | The system shall require renewed authentication for expired/revoked Refresh Sessions or detected rotated-token reuse, retaining the inaccessible-versus-empty distinction. | Protected session use pauses; reauthenticate. Reuse revokes the affected session, and logout does not automatically revoke other sessions. | FEAT-AUTH-001; BR-021; OSQ-002 (Resolved) | T: maximum 30-day expiry and consumed refresh-token replay. |
+| ERR-AUTH-001 | Invalid or unusable login information. | The system shall deny invalid credentials or unavailable authorized session access with useful correction/recovery guidance without exposing private content or representing the wardrobe as empty. | User may correct input or initiate recovery; personal state is not changed. | FEAT-AUTH-001; BR-021 | T: incorrect credentials, token expiry and revoked session. |
+| ERR-AUTH-002 | Reset cannot complete, is expired, or has already been used. | The system shall reject failed, expired, or already-used recovery interactions without claiming reset completion, offering renewed recovery with account-existence-safe initiation wording. | Credentials and session state change only on an actually completed reset; successful reset revokes all Refresh Sessions and requires login. | FEAT-AUTH-001; BR-021 | T: 30-minute expiry, consumed interaction, delivery failure, known/unknown email. |
+| ERR-AUTH-003 | Renewal is unusable, the session is revoked/expired, or rotated Refresh Token reuse is detected. | The system shall require renewed authentication for expired/revoked Refresh Sessions or detected rotated-token reuse, retaining the inaccessible-versus-empty distinction. | Protected session use pauses; reauthenticate. Reuse revokes the affected session, and logout does not automatically revoke other sessions. | FEAT-AUTH-001; BR-021 | T: maximum 30-day expiry and consumed refresh-token replay. |
 
 ### 9.2 Analysis and Uncertainty
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-AI-001 | Input violates image limits/format support, is unsuitable, or analysis cannot complete. | The system shall explain unsupported formats, file-size/dimension violations, unsuitable images or unavailable/failed analysis with replacement/manual/retry recovery while preserving confirmed profiles. | Manual entry remains usable; no garment is added from an unconfirmed failed attempt. | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002, BR-004; OSQ-001 (Resolved) | T: unsupported input, >15 MB, shortest side <512, failed analysis. |
-| ERR-AI-002 | Prediction is uncertain or low confidence. | The system shall identify guarded uncertain/incomplete predictions under Section 8.1 and allow correction/manual continuation without silently confirming them or fabricating missing evidence. | User may confirm sufficient corrected/manual information; confidence never gates saving the confirmed minimum. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003, BR-004; OSQ-004 (Resolved) | T: <0.60, materially conflicting/unavailable evidence and user correction. |
+| ERR-AI-001 | Input violates image limits/format support, is unsuitable, or analysis cannot complete. | The system shall explain unsupported formats, file-size/dimension violations, unsuitable images or unavailable/failed analysis with replacement/manual/retry recovery while preserving confirmed profiles. | Manual entry remains usable; no garment is added from an unconfirmed failed attempt. | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002, BR-004 | T: unsupported input, >15 MB, shortest side <512, failed analysis. |
+| ERR-AI-002 | Prediction is uncertain or low confidence. | The system shall identify guarded uncertain/incomplete predictions under Section 8.1 and allow correction/manual continuation without silently confirming them or fabricating missing evidence. | User may confirm sufficient corrected/manual information; confidence never gates saving the confirmed minimum. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003, BR-004 | T: <0.60, materially conflicting/unavailable evidence and user correction. |
 
 ### 9.3 Garment Completeness
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
 | ERR-GAR-001 | Save attempted without the saveable minimum. | The system shall explain missing confirmed Primary Category or Dominant Color and retain the draft for correction rather than save it as an authoritative garment. | User supplies/changes the missing information; existing garments remain unchanged. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: each minimum value missing. |
-| ERR-GAR-002 | Saved garment lacks recommendation-ready information. | The system shall retain a minimum-confirmed saveable garment while explaining required UNKNOWN/unavailable pattern/climate/layering/bulk fields and excluding only decisions requiring those missing fields. | User can enrich the profile; no fabricated descriptor or invalid outfit. | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001; BR-003, BR-005, BR-007, BR-009; OSQ-005 (Resolved) | T: category-specific and layered readiness cases. |
+| ERR-GAR-002 | Saved garment lacks recommendation-ready information. | The system shall retain a minimum-confirmed saveable garment while explaining required UNKNOWN/unavailable pattern/climate/layering/bulk fields and excluding only decisions requiring those missing fields. | User can enrich the profile; no fabricated descriptor or invalid outfit. | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001; BR-003, BR-005, BR-007, BR-009 | T: category-specific and layered readiness cases. |
 
 ### 9.4 Environmental Context
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-WEATHER-001 | Weather/location information cannot support the request. | The system shall disclose unavailable/stale weather, offer applicable context review/retry, and skip unavailable environmental hard filtering where appropriate while enforcing remaining validity without false weather claims. | Missing weather alone does not reject every outfit; use remaining valid information and disclose reduced context. Provider freshness remains OSQ-012. | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-013, BR-022; OSQ-006 (Resolved) | T: missing weather retains structurally/layer/pattern-valid options; stale policy OSQ-012. |
+| ERR-WEATHER-001 | Weather/location information cannot support the request. | The system shall attempt refresh of weather older than 30 minutes, treat usable information not obtained within the 2-second assessment-delay boundary as unavailable, skip only unavailable environmental hard filtering where appropriate, preserve remaining hard validity and disclose missing context without fabricated weather or blanket outfit rejection. | Missing weather alone does not reject all outfits; remaining validity and useful core context remain, without invented evidence. | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-013, BR-022 | T: freshness equality/older and availability at/after boundary; remaining validity stays enforced. |
 
 ### 9.5 Outfit Choice and Shuffle
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-OUT-001 | Insufficient applicable information for useful advice. | The system shall explain insufficient applicable ready garments/context under Sections 3.5.1/3.7.1 and useful corrections/additions without a fixed onboarding quota. | Wardrobe/manual setup remains available; accepted inventory is not erased. | FEAT-OUT-001, FEAT-GAR-001; BR-007, BR-009, BR-022; OSQ-005, OSQ-006 (Resolved) | T: no ready role, unknown required field and conditional layering/bulk failure. |
+| ERR-OUT-001 | Insufficient applicable information for useful advice. | The system shall explain insufficient applicable ready garments/context under Sections 3.5.1/3.7.1 and useful corrections/additions without a fixed onboarding quota. | Wardrobe/manual setup remains available; accepted inventory is not erased. | FEAT-OUT-001, FEAT-GAR-001; BR-007, BR-009, BR-022 | T: no ready role, unknown required field and conditional layering/bulk failure. |
 | ERR-OUT-002 | Fewer than three distinct valid outfits exist. | The system shall show the actual one, two, or zero distinct valid outfits with a limitation/no-valid-outfit explanation rather than padding with duplicates or invalid combinations. | User may revise context or wardrobe; no fake third option or fabricated wardrobe gap. | FEAT-OUT-001; BR-007, BR-008, BR-009, BR-022 | T/A: known two/one/zero valid sets. |
-| ERR-OUT-003 | No compatible same-context slot replacement. | The system shall retain the fixed outfit and explain no replacement when no owned candidate satisfies the same slot/context and full validity rules. | Other garments remain fixed; no Dislike or Wear Event is inferred. | FEAT-OUT-003; BR-007, BR-008, BR-009, BR-022; OSQ-006 (Resolved) | T: no valid same-slot substitute; incompatible/high-noise replacements rejected. |
+| ERR-OUT-003 | No compatible same-context slot replacement. | The system shall retain the fixed outfit and explain no replacement when no owned candidate satisfies the same slot/context and full validity rules. | Other garments remain fixed; no Dislike or Wear Event is inferred. | FEAT-OUT-003; BR-007, BR-008, BR-009, BR-022 | T: no valid same-slot substitute; incompatible/high-noise replacements rejected. |
 
 ### 9.6 Wear Event Protection
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-WEAR-001 | Duplicate processing of one reporting action. | The system shall deduplicate retry/delivery/reprocessing of the same logical Wear action without collapsing a new explicit same-outfit/same-day intention or confusing ranking normalization with event deletion. | One event per logical action; distinct intentional reports remain in history, with at most one Wear preference increment per exact outfit/event-local day. | FEAT-PERS-002; BR-011; OSQ-007, OSQ-008 (Resolved) | T: logical-action retries versus new explicit repeat and daily contribution cap. |
-| ERR-WEAR-002 | Event mutation fails/is uncertain, or corrected time is future/outside the original local day. | The system shall reject future or cross-original-day time corrections and distinguish failed/pending event mutations from accepted changes without deleting Outfit/Garments or unrelated events. | Invalid corrections leave the accepted event unchanged; uncertain outcomes require review/safe retry. Valid corrections/removals update effective history/signals. | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-021, BR-022; OSQ-008 (Resolved) | T: future/cross-day corrections, interrupted mutation, original event retained. |
+| ERR-WEAR-001 | Duplicate processing of one reporting action. | The system shall deduplicate retry/delivery/reprocessing of the same logical Wear action without collapsing a new explicit same-outfit/same-day intention or confusing ranking normalization with event deletion. | One event per logical action; distinct intentional reports remain in history, with at most one Wear preference increment per exact outfit/event-local day. | FEAT-PERS-002; BR-011 | T: logical-action retries versus new explicit repeat and daily contribution cap. |
+| ERR-WEAR-002 | Event mutation fails/is uncertain, or corrected time is future/outside the original local day. | The system shall reject future or cross-original-day time corrections and distinguish failed/pending event mutations from accepted changes without deleting Outfit/Garments or unrelated events. | Invalid corrections leave the accepted event unchanged; uncertain outcomes require review/safe retry. Valid corrections/removals update effective history/signals. | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-021, BR-022 | T: future/cross-day corrections, interrupted mutation, original event retained. |
 
 ### 9.7 Assessment Integrity
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-ANL-001 | Coverage lacks positive-priority/required ready-role data, or multiplier inputs/completion/capability cannot support an exact result. | The system shall show incomplete/insufficient coverage or gap assessment when sufficient-data conditions fail and distinguish Incomplete/Unavailable multiplier evaluation from exact zero, without fabricated scores or purchase needs. | Improve required context/readiness or retry available evaluation; numeric 0% and +0 require adequate completed assessments. | FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001; BR-014, BR-015, BR-016, BR-022; OSQ-009, OSQ-010 (Resolved) | T/A: no positive need; missing ready role; incomplete/unavailable versus full exact zero. |
-| ERR-ANL-002 | Prior advice/assessment no longer matches current relevant inputs or rules. | The system shall reevaluate affected assessments or mark them Outdated after relevant wardrobe/profile/context/candidate or validity-rule changes, withholding current exact multiplier status until reevaluation. | Historical results remain identifiable; prior counts/previews are not current exact evidence. Weather freshness remains OSQ-012. | FEAT-OUT-001, FEAT-ANL-002, FEAT-MULT-001; BR-007, BR-014, BR-016, BR-022; OSQ-009, OSQ-010 (Resolved) | T: changes to all relevant input/rule triggers and context/version mismatch. |
+| ERR-ANL-001 | Coverage lacks positive-priority/required ready-role data, or multiplier inputs/completion/capability cannot support an exact result. | The system shall show incomplete/insufficient coverage or gap assessment when sufficient-data conditions fail and distinguish Incomplete/Unavailable multiplier evaluation from exact zero, without fabricated scores or purchase needs. | Improve required context/readiness or retry available evaluation; numeric 0% and +0 require adequate completed assessments. | FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001; BR-014, BR-015, BR-016, BR-022 | T/A: no positive need; missing ready role; incomplete/unavailable versus full exact zero. |
+| ERR-ANL-002 | Prior advice/assessment no longer matches current relevant inputs or rules. | The system shall reevaluate affected assessments or mark them Outdated after relevant wardrobe/profile/context/candidate or validity-rule changes, withholding current exact multiplier status until reevaluation. | Historical results remain identifiable; prior counts/previews are not current exact evidence. Weather evidence follows FR-WEATHER-003's 30-minute currentness and 2-second assessment-delay boundary. | FEAT-OUT-001, FEAT-ANL-002, FEAT-MULT-001; BR-007, BR-014, BR-016, BR-022 | T: changes to all relevant input/rule triggers and context/version mismatch. |
 
 ### 9.8 Candidate Information and Shopping Destinations
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-SHOP-001 | Candidate unavailable, insufficient, or unhelpful. | The system shall explain unavailable/insufficient candidate information through the applicable Incomplete or Unavailable evaluation state without inventing attributes, exact counts or current previews. | Wardrobe/gap/context work can continue; no forced purchase path. | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-016, BR-017, BR-018, BR-022; OSQ-005, OSQ-010 (Resolved) | T: candidate missing readiness fields versus unavailable capability. |
-| ERR-SHOP-002 | Optional commercial data unavailable or uncertain. | The system shall omit/qualify unverified optional commercial data while retaining supported exact candidate utility or clearly labeled evaluation limitations. | Usable +N/reasons/previews remain accessible when supported; no invented claim. | FEAT-SHOP-001; BR-018, BR-020, BR-022; OSQ-010 (Resolved) | T/I: optional commercial omissions with valid exact versus incomplete multiplier. |
-| ERR-SHOP-003 | External shopping navigation cannot proceed. | The system shall explain a known absent/unavailable external destination and retain available candidate/wardrobe utility without claiming navigation or purchase succeeded. | User may continue core use/retry where appropriate; retailer operations are outside system control. | FEAT-SHOP-002, FEAT-SHOP-001; BR-018, BR-022, BR-024 | T: absent link and known handoff failure. |
+| ERR-SHOP-001 | Candidate unavailable, insufficient, or unhelpful. | The system shall explain unavailable/insufficient candidate information through the applicable Incomplete or Unavailable evaluation state without inventing attributes, exact counts or current previews. | Wardrobe/gap/context work can continue; no forced purchase path. | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-016, BR-017, BR-018, BR-022 | T: candidate missing readiness fields versus unavailable capability. |
+| ERR-SHOP-002 | Optional commercial data unavailable or uncertain. | The system shall omit/qualify unsupported optional commercial values while retaining otherwise valid utility; price/availability older than 24 hours must be refreshed, clearly stale/last checked, or omitted rather than presented as guaranteed current information. | Usable +N/reasons/previews remain accessible when supported; no invented claim. | FEAT-SHOP-001; BR-018, BR-020, BR-022 | I/T: source/time, 24-hour and older data, qualification/omission with valid count/previews retained. |
+| ERR-SHOP-003 | External shopping navigation cannot proceed. | The system shall explain known absent/unavailable external navigation and retain otherwise valid candidate/gap/multiplier/reasons/previews where available without claiming opening/purchase succeeded, changing utility to +0, invalidating the candidate or creating ownership/transaction state. | User may continue core use/retry where appropriate; retailer operations are outside system control. | FEAT-SHOP-002, FEAT-SHOP-001; BR-018, BR-022, BR-024 | T: failed/absent destination with otherwise valid utility, no side effects and usable core continuation. |
 
 ### 9.9 Communication and Partial Dependency Failure
 
@@ -1085,161 +1089,170 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 
 The unchanged chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. BRD Section 26 and PRD Section 33 retain goal/business/capability meaning. Capability context below derives from each cited feature; it does not assert that an individual requirement independently delivers every feature capability.
 
-Links to resolved OSQ-001–OSQ-010 in requirement source columns and the matrix record software decisions alongside the existing feature and business sources. Supporting DATA/UI/SI/HW/COM/NFR/LOC/AI/ERR rows retain source and verification information. ID ranges include only contiguous defined requirements.
+Requirement source columns and the matrix link required behavior directly to existing product and business sources. Supporting DATA/UI/SI/HW/COM/NFR/LOC/AI/ERR rows retain source and verification information. ID ranges include only contiguous defined requirements.
 
 These audits establish specification coverage; implementation and successful verification require separate evidence.
 
 ### 10.2 Functional Requirement Traceability Matrix
 
-| SRS Requirement | PRD Feature | BRD Requirement | Capability Context | Resolved Software Decision | Verification |
-|---|---|---|---|---|---|
-| FR-AUTH-001 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: optional name; password limits and email identity/conflict fixtures. |
-| FR-AUTH-002 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: email case/space variants; exact Unicode/space-containing passwords. |
-| FR-AUTH-003 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: paired known/unknown email responses and recovery handoff. |
-| FR-AUTH-004 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002, OSQ-003 (Resolved) | T: successful reset; old password/refresh sessions denied; new-password login. |
-| FR-AUTH-005 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: ordinary return, valid renewal, expired session, separate-device context. |
-| FR-AUTH-006 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: 15-minute expiry with usable/unusable renewal; 30-day session limit. |
-| FR-AUTH-007 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: logout Session A; protected A access denied; Session B unaffected. |
-| FR-AUTH-008 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: signed-out/cross-user denial. |
-| FR-AUTH-009 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T/I: absent, invalid, expired and valid JWT access; session authorization. |
-| FR-AUTH-010 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: access expiry and absolute session-lifetime boundaries across refreshes. |
-| FR-AUTH-011 | FEAT-AUTH-001, FEAT-PROF-001 | BR-012, BR-021 | CAP-01, CAP-06 | — | T: omitted optional information. |
-| FR-AUTH-012 | FEAT-AUTH-001 | BR-021 | CAP-01 | — | T: each required field missing and mismatch. |
-| FR-AUTH-013 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: successful rotation and attempted reuse. |
-| FR-AUTH-014 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-002 (Resolved) | T: rotated-token replay; affected session revoked. |
-| FR-AUTH-015 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
-| FR-AUTH-016 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: duplicate case/space variants and distinct provider-alias strings. |
-| FR-AUTH-017 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
-| FR-AUTH-018 | FEAT-AUTH-001 | BR-021 | CAP-01 | OSQ-003 (Resolved) | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
-| FR-PROF-001 | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 | BR-010, BR-012, BR-013, BR-023 | CAP-01, CAP-05, CAP-06, CAP-07 | — | D: first-use journey. |
-| FR-PROF-002 | FEAT-PROF-001 | BR-010 | CAP-01, CAP-06 | — | T: every defined style choice. |
-| FR-PROF-003 | FEAT-PROF-001 | BR-010, BR-014 | CAP-01, CAP-06 | OSQ-009 (Resolved) | T: every priority and need mapping; differing request/common occasion. |
-| FR-PROF-004 | FEAT-PROF-001, FEAT-OUT-001 | BR-010 | CAP-01, CAP-05, CAP-06 | — | T: differing current/common context. |
-| FR-PROF-005 | FEAT-PROF-001 | BR-012 | CAP-01, CAP-06 | — | T: optional-field lifecycle. |
-| FR-PROF-006 | FEAT-PROF-001 | BR-012 | CAP-01, CAP-06 | — | T: gender/category combinations. |
-| FR-PROF-007 | FEAT-PROF-001, FEAT-PERS-003 | BR-012, BR-021 | CAP-01, CAP-05, CAP-06 | — | T: subsequent request after removal. |
-| FR-PROF-008 | FEAT-AUTH-001, FEAT-PROF-001 | BR-012, BR-021 | CAP-01, CAP-06 | — | D: skip and return. |
-| FR-WEATHER-001 | FEAT-PROF-002 | BR-013 | CAP-01, CAP-05, CAP-07 | — | T: grant, deny, skip. |
-| FR-WEATHER-002 | FEAT-PROF-002 | BR-013 | CAP-01, CAP-05, CAP-07 | — | T: manual city after denial. |
-| FR-WEATHER-003 | FEAT-PROF-002 | BR-007, BR-013 | CAP-01, CAP-05, CAP-07 | — | T: selected-location response. |
-| FR-WEATHER-004 | FEAT-PROF-002, FEAT-OUT-001 | BR-007, BR-022 | CAP-01, CAP-05, CAP-06, CAP-07 | — | I/T: context matches evaluation. |
-| FR-WEATHER-005 | FEAT-PROF-002, FEAT-OUT-001 | BR-007, BR-022 | CAP-01, CAP-05, CAP-06, CAP-07 | — | T: changed-location assessment. |
-| FR-AI-001 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | OSQ-001 (Resolved) | T: supported capture inputs and size/dimension boundaries. |
-| FR-AI-002 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | OSQ-001 (Resolved) | T: all formats; valid non-plain backgrounds and limit boundaries. |
-| FR-AI-003 | FEAT-AI-002 | BR-004 | CAP-02, CAP-03, CAP-04 | — | T: imageless/manual completion. |
-| FR-AI-004 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | — | T: replace/cancel selected image. |
-| FR-AI-005 | FEAT-AI-001 | BR-001, BR-022 | CAP-02, CAP-04 | — | T: delayed analysis state. |
-| FR-AI-006 | FEAT-AI-001 | BR-001, BR-003 | CAP-02, CAP-04 | OSQ-001 (Resolved) | T/I: identifiable garment, retained major regions, reviewable background/proposals. |
-| FR-AI-007 | FEAT-AI-002 | BR-002 | CAP-02, CAP-03, CAP-04 | — | T: category/color correction. |
-| FR-AI-008 | FEAT-AI-002 | BR-002, BR-005 | CAP-02, CAP-03, CAP-04 | — | T: confirm versus draft. |
-| FR-AI-009 | FEAT-AI-001, FEAT-AI-002 | BR-001, BR-002 | CAP-02, CAP-03, CAP-04 | — | T: canceled draft absent. |
-| FR-AI-010 | FEAT-AI-002 | BR-005 | CAP-02, CAP-03, CAP-04 | — | T: successful/failed-save retry. |
-| FR-AI-011 | FEAT-AI-001 | BR-001, BR-022 | CAP-02, CAP-04 | — | I/D: image-entry guidance. |
-| FR-AI-012 | FEAT-AI-001, FEAT-AI-002 | BR-001, BR-004, BR-022 | CAP-02, CAP-03, CAP-04 | OSQ-001 (Resolved) | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
-| FR-GAR-001 | FEAT-GAR-001 | BR-003 | CAP-04 | — | T: defined categories only. |
-| FR-GAR-002 | FEAT-GAR-001, FEAT-AI-002 | BR-003, BR-002 | CAP-02, CAP-03, CAP-04 | OSQ-005 (Resolved) | T: defined vocabularies and subtype fallback saving. |
-| FR-GAR-003 | FEAT-AI-002, FEAT-GAR-001 | BR-002, BR-003 | CAP-02, CAP-03, CAP-04 | — | T: minimum-only profile. |
-| FR-GAR-004 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | OSQ-005 (Resolved) | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
-| FR-GAR-005 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | OSQ-005 (Resolved) | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
-| FR-GAR-006 | FEAT-GAR-001 | BR-003 | CAP-04 | OSQ-005 (Resolved) | T: omitted optional fields versus required applicable bulk. |
-| FR-GAR-007 | FEAT-GAR-001 | BR-003 | CAP-04 | OSQ-005 (Resolved) | T/I: every layer/fit value and 1–5 bulk bounds. |
-| FR-GAR-008 | FEAT-GAR-001 | BR-003 | CAP-04 | OSQ-005 (Resolved) | T/I: all color-family/temperature/role values and unknown handling. |
-| FR-GAR-009 | FEAT-GAR-001 | BR-003 | CAP-04 | OSQ-005 (Resolved) | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
-| FR-GAR-010 | FEAT-GAR-001 | BR-003 | CAP-04 | — | T: uncertain material case. |
-| FR-GAR-011 | FEAT-GAR-001, FEAT-AI-002 | BR-002 | CAP-02, CAP-03, CAP-04 | — | T: analysis after correction. |
-| FR-WAR-001 | FEAT-WAR-001 | BR-005 | CAP-03, CAP-07 | — | T: browse and imageless detail. |
-| FR-WAR-002 | FEAT-WAR-001, FEAT-ANL-001 | BR-005, BR-006 | CAP-03, CAP-06, CAP-07 | — | I: readiness and usage labels. |
-| FR-WAR-003 | FEAT-WAR-002 | BR-002, BR-005 | CAP-03, CAP-04 | — | T: edit/confirm/cancel. |
-| FR-WAR-004 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | — | T: remove/confirm/cancel. |
-| FR-WAR-005 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | — | T/A: post-removal evaluations. |
-| FR-WAR-006 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | — | T: affected assessment state. |
-| FR-WAR-007 | FEAT-WAR-003 | BR-005 | CAP-03 | — | T: match, filter, clear. |
-| FR-WAR-008 | FEAT-WAR-001, FEAT-WAR-003 | BR-005 | CAP-03, CAP-07 | — | T: empty/no-match/failure states. |
-| FR-OUT-001 | FEAT-OUT-001 | BR-007 | CAP-05, CAP-06 | OSQ-005, OSQ-006 (Resolved) | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
-| FR-OUT-002 | FEAT-OUT-001 | BR-007, BR-010 | CAP-05, CAP-06 | — | T/A: context variation. |
-| FR-OUT-003 | FEAT-OUT-001 | BR-009 | CAP-05, CAP-06 | — | A: invalid high-preference fixture. |
-| FR-OUT-004 | FEAT-OUT-001 | BR-007, BR-009 | CAP-05, CAP-06 | OSQ-005, OSQ-006 (Resolved) | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
-| FR-OUT-005 | FEAT-OUT-001 | BR-007, BR-009, BR-010, BR-011, BR-012 | CAP-05, CAP-06 | OSQ-006, OSQ-007 (Resolved) | A: preference differences among valid sets; no identity-based category rejection. |
-| FR-OUT-006 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | — | T/A: three-valid fixture. |
-| FR-OUT-007 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | — | A: reordered duplicates. |
-| FR-OUT-008 | FEAT-OUT-001 | BR-008, BR-022 | CAP-05, CAP-06 | — | T: two, one, zero valid. |
-| FR-OUT-009 | FEAT-OUT-001 | BR-007, BR-022 | CAP-05, CAP-06 | OSQ-006, OSQ-010 (Resolved) | T: attribute/context and applicable rule-version changes. |
-| FR-OUT-010 | FEAT-OUT-002 | BR-007 | CAP-04, CAP-05 | — | D: outfit to garment detail. |
-| FR-OUT-011 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | — | I/A: explanation matches fixture. |
-| FR-OUT-012 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | — | I: unavailable-context reasoning. |
-| FR-OUT-013 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | — | T/I: three presentation contexts. |
-| FR-OUT-014 | FEAT-OUT-003 | BR-008 | CAP-05 | — | T: fixed other identities. |
-| FR-OUT-015 | FEAT-OUT-003 | BR-007, BR-009 | CAP-05 | OSQ-006 (Resolved) | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
-| FR-OUT-016 | FEAT-OUT-003 | BR-008, BR-022 | CAP-05 | — | T: no-alternative fixture. |
-| FR-OUT-017 | FEAT-OUT-003 | BR-008 | CAP-05 | — | T: interaction isolation. |
-| FR-PERS-001 | FEAT-PERS-001 | BR-011 | CAP-06 | OSQ-007 (Resolved) | T/A: exact target, Like +1 and age-dependent influence. |
-| FR-PERS-002 | FEAT-PERS-001 | BR-011 | CAP-06 | OSQ-007 (Resolved) | T/A: Dislike −2; no automatic per-garment/category ban. |
-| FR-PERS-003 | FEAT-PERS-001 | BR-011, BR-021 | CAP-06 | OSQ-007 (Resolved) | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
-| FR-PERS-004 | FEAT-PERS-001 | BR-011 | CAP-06 | — | T: failed versus recorded signal. |
-| FR-PERS-005 | FEAT-PERS-001 | BR-011 | CAP-06 | — | T: history unchanged. |
-| FR-WEAR-001 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: new explicit initiation versus retries; accepted-action default time. |
-| FR-WEAR-002 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: same-day different outfits. |
-| FR-WEAR-003 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: separate same-outfit/same-day initiation creates two events. |
-| FR-WEAR-004 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T/I: absolute/local correspondence and later timezone change. |
-| FR-WEAR-005 | FEAT-PERS-002 | BR-011, BR-022 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: available/missing context. |
-| FR-WEAR-006 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: outfit/context correction; future/cross-day rejection in original timezone. |
-| FR-WEAR-007 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: individual removal. |
-| FR-WEAR-008 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: underlying objects remain. |
-| FR-WEAR-009 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
-| FR-WEAR-010 | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003 | BR-006, BR-011 | CAP-05, CAP-06, CAP-07 | OSQ-007, OSQ-008 (Resolved) | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
-| FR-WEAR-011 | FEAT-PERS-002, FEAT-PERS-003 | BR-011, BR-009 | CAP-05, CAP-06, CAP-07 | — | T/A: invalid/hypothetical attempts. |
-| FR-WEAR-012 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T: cancel correction/removal; original event remains. |
-| FR-PERS-006 | FEAT-PERS-003, FEAT-PROF-001 | BR-010 | CAP-01, CAP-05, CAP-06 | — | A: no-history preference fixture. |
-| FR-PERS-007 | FEAT-PERS-003, FEAT-PERS-001 | BR-011 | CAP-05, CAP-06 | OSQ-007 (Resolved) | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
-| FR-PERS-008 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | OSQ-007 (Resolved) | A: equal-age +2 versus +1; normalized intentional repeats. |
-| FR-PERS-009 | FEAT-PERS-003, FEAT-ANL-001 | BR-011, BR-006 | CAP-05, CAP-06, CAP-07 | OSQ-007 (Resolved) | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
-| FR-PERS-010 | FEAT-PERS-003, FEAT-PROF-001 | BR-012 | CAP-01, CAP-05, CAP-06 | — | T/A: optional context and eligibility. |
-| FR-PERS-011 | FEAT-PERS-003, FEAT-OUT-001 | BR-009, BR-011 | CAP-05, CAP-06 | — | A: constrained/no-alternative fixture. |
-| FR-PERS-012 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | OSQ-007, OSQ-008 (Resolved) | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
-| FR-PERS-013 | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002 | BR-011, BR-012 | CAP-05, CAP-06, CAP-07 | OSQ-007, OSQ-008 (Resolved) | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
-| FR-ANL-001 | FEAT-ANL-001, FEAT-PERS-002 | BR-006 | CAP-06, CAP-07 | OSQ-008 (Resolved) | T/I: original-local history after travel; accepted in-day correction. |
-| FR-ANL-002 | FEAT-ANL-001, FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | — | T: multiple-event history. |
-| FR-ANL-003 | FEAT-ANL-001 | BR-006, BR-011 | CAP-06, CAP-07 | OSQ-007, OSQ-008 (Resolved) | A: all legitimate reports versus normalized/expired ranking evidence; OSQ-011. |
-| FR-ANL-004 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | — | I: logging limitations. |
-| FR-ANL-005 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | — | T: empty history. |
-| FR-ANL-006 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | — | T/I: history after garment removal. |
-| FR-ANL-007 | FEAT-ANL-001, FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | OSQ-007, OSQ-008 (Resolved) | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
-| FR-ANL-008 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | OSQ-006, OSQ-009 (Resolved) | A: six need mappings and unique outfit counts per need. |
-| FR-ANL-009 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | OSQ-009 (Resolved) | I/A: visible assessment basis and disabled priority-zero needs. |
-| FR-ANL-010 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | OSQ-009 (Resolved) | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
-| FR-ANL-011 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | OSQ-009 (Resolved) | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
-| FR-ANL-012 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | OSQ-006, OSQ-009 (Resolved) | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
-| FR-ANL-013 | FEAT-ANL-002 | BR-014 | CAP-07, CAP-08 | — | A: post-removal baseline. |
-| FR-ANL-014 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | OSQ-006, OSQ-009 (Resolved) | T: changed priority, garment attributes and applicable rule version. |
-| FR-ANL-015 | FEAT-ANL-002 | BR-014, BR-022, BR-024 | CAP-07, CAP-08 | OSQ-009 (Resolved) | T/I: insufficient versus valid zero; no universal completion claim. |
-| FR-GAP-001 | FEAT-GAP-001 | BR-015 | CAP-07, CAP-08 | OSQ-009 (Resolved) | A: 0/1/2 versus ≥3 valid need outfits, priority-zero exclusion, capability-first evidence. |
-| FR-GAP-002 | FEAT-GAP-001 | BR-015, BR-022 | CAP-07, CAP-08 | — | I: gap versus product wording. |
-| FR-GAP-003 | FEAT-GAP-001 | BR-015 | CAP-07, CAP-08 | — | D: gap to utility evaluation. |
-| FR-GAP-004 | FEAT-GAP-001 | BR-014, BR-022, BR-024 | CAP-07, CAP-08 | OSQ-009 (Resolved) | T: no-gap, incomplete and valid-zero distinction. |
-| FR-GAP-005 | FEAT-GAP-001 | BR-024 | CAP-07, CAP-08 | — | D: commerce-independent path. |
-| FR-MULT-001 | FEAT-MULT-001 | BR-015, BR-016 | CAP-08, CAP-09 | OSQ-005, OSQ-010 (Resolved) | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
-| FR-MULT-002 | FEAT-MULT-001 | BR-009, BR-016 | CAP-08, CAP-09 | OSQ-006, OSQ-010 (Resolved) | A: matched context/rule-version versus mismatched comparison. |
-| FR-MULT-003 | FEAT-MULT-001 | BR-016 | CAP-08, CAP-09 | OSQ-010 (Resolved) | A: exact set-difference fixtures and identity permutations. |
-| FR-MULT-004 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | OSQ-010 (Resolved) | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
-| FR-MULT-005 | FEAT-MULT-001 | BR-017 | CAP-08, CAP-09 | OSQ-010 (Resolved) | T/I: newly enabled candidate previews; stale/incomplete previews not current exact evidence. |
-| FR-MULT-006 | FEAT-MULT-001 | BR-015, BR-017 | CAP-08, CAP-09 | — | T: no ingestion/wear side effect. |
-| FR-MULT-007 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | OSQ-010 (Resolved) | T/A: all five states; failures/timeouts/missing data never become zero. |
-| FR-MULT-008 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | OSQ-010 (Resolved) | T: each input/rule trigger; unchanged inputs do not expire under an invented TTL. |
-| FR-SHOP-001 | FEAT-SHOP-001 | BR-018, BR-020 | CAP-08, CAP-09, CAP-10 | — | I: required candidate information. |
-| FR-SHOP-002 | FEAT-SHOP-001, FEAT-MULT-001 | BR-016, BR-017, BR-018 | CAP-08, CAP-09, CAP-10 | OSQ-010 (Resolved) | T/I: exact usable utility versus all non-exact evaluation states. |
-| FR-SHOP-003 | FEAT-SHOP-001 | BR-020 | CAP-08, CAP-09, CAP-10 | — | I: credible and missing optional fields. |
-| FR-SHOP-004 | FEAT-SHOP-001 | BR-020, BR-024 | CAP-08, CAP-09, CAP-10 | OSQ-010 (Resolved) | T/I: missing commercial data versus missing required utility data. |
-| FR-SHOP-005 | FEAT-SHOP-002 | BR-018 | CAP-10 | — | T: available link handoff. |
-| FR-SHOP-006 | FEAT-SHOP-002 | BR-018, BR-022 | CAP-10 | — | T: failed link and return. |
-| FR-SHOP-007 | FEAT-SHOP-002 | BR-018, BR-019 | CAP-10 | — | T/I: navigation side effects. |
-| FR-SHOP-008 | FEAT-SHOP-001, FEAT-SHOP-002 | BR-018, BR-024 | CAP-08, CAP-09, CAP-10 | — | D/I: independent core journey. |
-| FR-MET-001 | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001 | BR-019, BR-001, BR-007 | CAP-02, CAP-04, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | — | T/I: distinct interaction evidence. |
-| FR-MET-002 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | — | T/I: event lifecycle evidence. |
-| FR-MET-003 | FEAT-MET-001, FEAT-SHOP-002 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | — | T/I: exposure versus navigation. |
-| FR-MET-004 | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001 | BR-019, BR-001, BR-007, BR-006 | CAP-02, CAP-04, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | OSQ-001 (Resolved) | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
-| FR-MET-005 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | OSQ-007, OSQ-008 (Resolved) | T/A: two intentional history events versus one preference increment; retry counted once. |
-| FR-MET-006 | FEAT-MET-001 | BR-021 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | — | I: measurement information. |
-| FR-MET-007 | FEAT-MET-001 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | — | T: measurement dependency failure. |
+| SRS Requirement | PRD Feature | BRD Requirement | Capability Context | Verification |
+|---|---|---|---|---|
+| FR-AUTH-001 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: optional name; password limits and email identity/conflict fixtures. |
+| FR-AUTH-002 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: email case/space variants; exact Unicode/space-containing passwords. |
+| FR-AUTH-003 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: paired known/unknown email responses and recovery handoff. |
+| FR-AUTH-004 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: successful reset; old password/refresh sessions denied; new-password login. |
+| FR-AUTH-005 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: ordinary return, valid renewal, expired session, separate-device context. |
+| FR-AUTH-006 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: 15-minute expiry with usable/unusable renewal; 30-day session limit. |
+| FR-AUTH-007 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: logout Session A; protected A access denied; Session B unaffected. |
+| FR-AUTH-008 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: signed-out/cross-user denial. |
+| FR-AUTH-009 | FEAT-AUTH-001 | BR-021 | CAP-01 | T/I: absent, invalid, expired and valid JWT access; session authorization. |
+| FR-AUTH-010 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: access expiry and absolute session-lifetime boundaries across refreshes. |
+| FR-AUTH-011 | FEAT-AUTH-001, FEAT-PROF-001 | BR-012, BR-021 | CAP-01, CAP-06 | T: omitted optional information. |
+| FR-AUTH-012 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: each required field missing and mismatch. |
+| FR-AUTH-013 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: successful rotation and attempted reuse. |
+| FR-AUTH-014 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: rotated-token replay; affected session revoked. |
+| FR-AUTH-015 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
+| FR-AUTH-016 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: duplicate case/space variants and distinct provider-alias strings. |
+| FR-AUTH-017 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
+| FR-AUTH-018 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
+| FR-PROF-001 | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 | BR-010, BR-012, BR-013, BR-023 | CAP-01, CAP-05, CAP-06, CAP-07 | D: first-use journey. |
+| FR-PROF-002 | FEAT-PROF-001 | BR-010 | CAP-01, CAP-06 | T: every defined style choice. |
+| FR-PROF-003 | FEAT-PROF-001 | BR-010, BR-014 | CAP-01, CAP-06 | T: every priority and need mapping; differing request/common occasion. |
+| FR-PROF-004 | FEAT-PROF-001, FEAT-OUT-001 | BR-010 | CAP-01, CAP-05, CAP-06 | T: differing current/common context. |
+| FR-PROF-005 | FEAT-PROF-001 | BR-012 | CAP-01, CAP-06 | T: optional-field lifecycle. |
+| FR-PROF-006 | FEAT-PROF-001 | BR-012 | CAP-01, CAP-06 | T: gender/category combinations. |
+| FR-PROF-007 | FEAT-PROF-001, FEAT-PERS-003 | BR-012, BR-021 | CAP-01, CAP-05, CAP-06 | T: subsequent request after removal. |
+| FR-PROF-008 | FEAT-AUTH-001, FEAT-PROF-001 | BR-012, BR-021 | CAP-01, CAP-06 | D: skip and return. |
+| FR-WEATHER-001 | FEAT-PROF-002 | BR-013 | CAP-01, CAP-05, CAP-07 | T: grant, deny, skip. |
+| FR-WEATHER-002 | FEAT-PROF-002 | BR-013 | CAP-01, CAP-05, CAP-07 | T: manual city after denial. |
+| FR-WEATHER-003 | FEAT-PROF-002 | BR-007, BR-013 | CAP-01, CAP-05, CAP-07 | T: age 30 minutes versus older; fresh/stale responses; usable result within 2 seconds versus unavailable fallback. |
+| FR-WEATHER-004 | FEAT-PROF-002, FEAT-OUT-001 | BR-007, BR-022 | CAP-01, CAP-05, CAP-06, CAP-07 | I/T: displayed context/timestamp matches evaluation; no invented forecast at timeout. |
+| FR-WEATHER-005 | FEAT-PROF-002, FEAT-OUT-001 | BR-007, BR-022 | CAP-01, CAP-05, CAP-06, CAP-07 | T: changed location/context and stale-weather refresh; failed refresh retains an explicit limited/outdated state. |
+| FR-AI-001 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | T: supported capture inputs and size/dimension boundaries. |
+| FR-AI-002 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | T: all formats; valid non-plain backgrounds and limit boundaries. |
+| FR-AI-003 | FEAT-AI-002 | BR-004 | CAP-02, CAP-03, CAP-04 | T: imageless/manual completion. |
+| FR-AI-004 | FEAT-AI-001 | BR-001 | CAP-02, CAP-04 | T: replace/cancel selected image. |
+| FR-AI-005 | FEAT-AI-001 | BR-001, BR-022 | CAP-02, CAP-04 | T: delayed analysis state. |
+| FR-AI-006 | FEAT-AI-001 | BR-001, BR-003 | CAP-02, CAP-04 | T/I: identifiable garment, retained major regions, reviewable background/proposals. |
+| FR-AI-007 | FEAT-AI-002 | BR-002 | CAP-02, CAP-03, CAP-04 | T: category/color correction. |
+| FR-AI-008 | FEAT-AI-002 | BR-002, BR-005 | CAP-02, CAP-03, CAP-04 | T: confirm versus draft. |
+| FR-AI-009 | FEAT-AI-001, FEAT-AI-002 | BR-001, BR-002 | CAP-02, CAP-03, CAP-04 | T: canceled draft absent. |
+| FR-AI-010 | FEAT-AI-002 | BR-005 | CAP-02, CAP-03, CAP-04 | T: successful/failed-save retry. |
+| FR-AI-011 | FEAT-AI-001 | BR-001, BR-022 | CAP-02, CAP-04 | I/D: image-entry guidance. |
+| FR-AI-012 | FEAT-AI-001, FEAT-AI-002 | BR-001, BR-004, BR-022 | CAP-02, CAP-03, CAP-04 | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
+| FR-GAR-001 | FEAT-GAR-001 | BR-003 | CAP-04 | T: defined categories only. |
+| FR-GAR-002 | FEAT-GAR-001, FEAT-AI-002 | BR-003, BR-002 | CAP-02, CAP-03, CAP-04 | T: defined vocabularies and subtype fallback saving. |
+| FR-GAR-003 | FEAT-AI-002, FEAT-GAR-001 | BR-002, BR-003 | CAP-02, CAP-03, CAP-04 | T: minimum-only profile. |
+| FR-GAR-004 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
+| FR-GAR-005 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
+| FR-GAR-006 | FEAT-GAR-001 | BR-003 | CAP-04 | T: omitted optional fields versus required applicable bulk. |
+| FR-GAR-007 | FEAT-GAR-001 | BR-003 | CAP-04 | T/I: every layer/fit value and 1–5 bulk bounds. |
+| FR-GAR-008 | FEAT-GAR-001 | BR-003 | CAP-04 | T/I: all color-family/temperature/role values and unknown handling. |
+| FR-GAR-009 | FEAT-GAR-001 | BR-003 | CAP-04 | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
+| FR-GAR-010 | FEAT-GAR-001 | BR-003 | CAP-04 | T: uncertain material case. |
+| FR-GAR-011 | FEAT-GAR-001, FEAT-AI-002 | BR-002 | CAP-02, CAP-03, CAP-04 | T: analysis after correction. |
+| FR-WAR-001 | FEAT-WAR-001 | BR-005 | CAP-03, CAP-07 | T: browse and imageless detail. |
+| FR-WAR-002 | FEAT-WAR-001, FEAT-ANL-001 | BR-005, BR-006 | CAP-03, CAP-06, CAP-07 | I: readiness and usage labels. |
+| FR-WAR-003 | FEAT-WAR-002 | BR-002, BR-005 | CAP-03, CAP-04 | T: edit/confirm/cancel. |
+| FR-WAR-004 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T: remove/confirm/cancel. |
+| FR-WAR-005 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T/I: immediate current exclusion, minimal historical fields and deletion within 30 days. |
+| FR-WAR-006 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T: affected assessment state. |
+| FR-WAR-007 | FEAT-WAR-003 | BR-005 | CAP-03 | T: match, filter, clear. |
+| FR-WAR-008 | FEAT-WAR-001, FEAT-WAR-003 | BR-005 | CAP-03, CAP-07 | T: empty/no-match/failure states. |
+| FR-OUT-001 | FEAT-OUT-001 | BR-007 | CAP-05, CAP-06 | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
+| FR-OUT-002 | FEAT-OUT-001 | BR-007, BR-010 | CAP-05, CAP-06 | T/A: context variation. |
+| FR-OUT-003 | FEAT-OUT-001 | BR-009 | CAP-05, CAP-06 | A: invalid high-preference fixture. |
+| FR-OUT-004 | FEAT-OUT-001 | BR-007, BR-009 | CAP-05, CAP-06 | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
+| FR-OUT-005 | FEAT-OUT-001 | BR-007, BR-009, BR-010, BR-011, BR-012 | CAP-05, CAP-06 | A: preference differences among valid sets; no identity-based category rejection. |
+| FR-OUT-006 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | T/A: three-valid fixture. |
+| FR-OUT-007 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | A: reordered duplicates. |
+| FR-OUT-008 | FEAT-OUT-001 | BR-008, BR-022 | CAP-05, CAP-06 | T: two, one, zero valid. |
+| FR-OUT-009 | FEAT-OUT-001 | BR-007, BR-022 | CAP-05, CAP-06 | T: attribute/context and applicable rule-version changes. |
+| FR-OUT-010 | FEAT-OUT-002 | BR-007 | CAP-04, CAP-05 | D: outfit to garment detail. |
+| FR-OUT-011 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | I/A: explanation matches fixture. |
+| FR-OUT-012 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | I: unavailable-context reasoning. |
+| FR-OUT-013 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | T/I: three presentation contexts. |
+| FR-OUT-014 | FEAT-OUT-003 | BR-008 | CAP-05 | T: fixed other identities. |
+| FR-OUT-015 | FEAT-OUT-003 | BR-007, BR-009 | CAP-05 | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
+| FR-OUT-016 | FEAT-OUT-003 | BR-008, BR-022 | CAP-05 | T: no-alternative fixture. |
+| FR-OUT-017 | FEAT-OUT-003 | BR-008 | CAP-05 | T: interaction isolation. |
+| FR-PERS-001 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: exact target, Like +1 and age-dependent influence. |
+| FR-PERS-002 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: Dislike −2; no automatic per-garment/category ban. |
+| FR-PERS-003 | FEAT-PERS-001 | BR-011, BR-021 | CAP-06 | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
+| FR-PERS-004 | FEAT-PERS-001 | BR-011 | CAP-06 | T: failed versus recorded signal. |
+| FR-PERS-005 | FEAT-PERS-001 | BR-011 | CAP-06 | T: history unchanged. |
+| FR-WEAR-001 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T: new explicit initiation versus retries; accepted-action default time. |
+| FR-WEAR-002 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | T: same-day different outfits. |
+| FR-WEAR-003 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | T: separate same-outfit/same-day initiation creates two events. |
+| FR-WEAR-004 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T/I: absolute/local correspondence and later timezone change. |
+| FR-WEAR-005 | FEAT-PERS-002 | BR-011, BR-022 | CAP-06, CAP-07 | T: available/missing context. |
+| FR-WEAR-006 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: outfit/context correction; future/cross-day rejection in original timezone. |
+| FR-WEAR-007 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T/I: immediate effective exclusion, surviving group recalculation and physical deletion by the 30-day deadline. |
+| FR-WEAR-008 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: underlying objects remain. |
+| FR-WEAR-009 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
+| FR-WEAR-010 | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003 | BR-006, BR-011 | CAP-05, CAP-06, CAP-07 | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
+| FR-WEAR-011 | FEAT-PERS-002, FEAT-PERS-003 | BR-011, BR-009 | CAP-05, CAP-06, CAP-07 | T/A: invalid/hypothetical attempts. |
+| FR-WEAR-012 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: cancel correction/removal; original event remains. |
+| FR-PERS-006 | FEAT-PERS-003, FEAT-PROF-001 | BR-010 | CAP-01, CAP-05, CAP-06 | A: no-history preference fixture. |
+| FR-PERS-007 | FEAT-PERS-003, FEAT-PERS-001 | BR-011 | CAP-05, CAP-06 | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
+| FR-PERS-008 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: equal-age +2 versus +1; normalized intentional repeats. |
+| FR-PERS-009 | FEAT-PERS-003, FEAT-ANL-001 | BR-011, BR-006 | CAP-05, CAP-06, CAP-07 | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
+| FR-PERS-010 | FEAT-PERS-003, FEAT-PROF-001 | BR-012 | CAP-01, CAP-05, CAP-06 | T/A: optional context and eligibility. |
+| FR-PERS-011 | FEAT-PERS-003, FEAT-OUT-001 | BR-009, BR-011 | CAP-05, CAP-06 | A: constrained/no-alternative fixture. |
+| FR-PERS-012 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
+| FR-PERS-013 | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002 | BR-011, BR-012 | CAP-05, CAP-06, CAP-07 | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
+| FR-ANL-001 | FEAT-ANL-001, FEAT-PERS-002 | BR-006 | CAP-06, CAP-07 | T/I: original-local history after travel; accepted in-day correction. |
+| FR-ANL-002 | FEAT-ANL-001, FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T: multiple-event history. |
+| FR-ANL-003 | FEAT-ANL-001 | BR-006, BR-011 | CAP-06, CAP-07 | A: all legitimate reports versus normalized/expired ranking evidence. |
+| FR-ANL-004 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | I: logging limitations. |
+| FR-ANL-005 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | T: empty history. |
+| FR-ANL-006 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | T/I: history after garment removal. |
+| FR-ANL-007 | FEAT-ANL-001, FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
+| FR-ANL-008 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | A: six need mappings and unique outfit counts per need. |
+| FR-ANL-009 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | I/A: visible assessment basis and disabled priority-zero needs. |
+| FR-ANL-010 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
+| FR-ANL-011 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
+| FR-ANL-012 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
+| FR-ANL-013 | FEAT-ANL-002 | BR-014 | CAP-07, CAP-08 | A: post-removal baseline. |
+| FR-ANL-014 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | T: changed priority, garment attributes and applicable rule version. |
+| FR-ANL-015 | FEAT-ANL-002 | BR-014, BR-022, BR-024 | CAP-07, CAP-08 | T/I: insufficient versus valid zero; no universal completion claim. |
+| FR-GAP-001 | FEAT-GAP-001 | BR-015 | CAP-07, CAP-08 | A: 0/1/2 versus ≥3 valid need outfits, priority-zero exclusion, capability-first evidence. |
+| FR-GAP-002 | FEAT-GAP-001 | BR-015, BR-022 | CAP-07, CAP-08 | I: gap versus product wording. |
+| FR-GAP-003 | FEAT-GAP-001 | BR-015 | CAP-07, CAP-08 | D: gap to utility evaluation. |
+| FR-GAP-004 | FEAT-GAP-001 | BR-014, BR-022, BR-024 | CAP-07, CAP-08 | T: no-gap, incomplete and valid-zero distinction. |
+| FR-GAP-005 | FEAT-GAP-001 | BR-024 | CAP-07, CAP-08 | D: commerce-independent path. |
+| FR-MULT-001 | FEAT-MULT-001 | BR-015, BR-016 | CAP-08, CAP-09 | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
+| FR-MULT-002 | FEAT-MULT-001 | BR-009, BR-016 | CAP-08, CAP-09 | A: matched context/rule-version versus mismatched comparison. |
+| FR-MULT-003 | FEAT-MULT-001 | BR-016 | CAP-08, CAP-09 | A: exact set-difference fixtures and identity permutations. |
+| FR-MULT-004 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
+| FR-MULT-005 | FEAT-MULT-001 | BR-017 | CAP-08, CAP-09 | T/I: newly enabled candidate previews; stale/incomplete previews not current exact evidence. |
+| FR-MULT-006 | FEAT-MULT-001 | BR-015, BR-017 | CAP-08, CAP-09 | T: no ingestion/wear side effect. |
+| FR-MULT-007 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | T/A: all five states; failures/timeouts/missing data never become zero. |
+| FR-MULT-008 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | T: each input/rule trigger; unchanged inputs do not expire under an invented TTL. |
+| FR-SHOP-001 | FEAT-SHOP-001 | BR-018, BR-020 | CAP-08, CAP-09, CAP-10 | I: required candidate information and supported provenance; no candidate-capture/import goal is introduced. |
+| FR-SHOP-002 | FEAT-SHOP-001, FEAT-MULT-001 | BR-016, BR-017, BR-018 | CAP-08, CAP-09, CAP-10 | T/I: exact usable utility versus all non-exact evaluation states. |
+| FR-SHOP-003 | FEAT-SHOP-001 | BR-020 | CAP-08, CAP-09, CAP-10 | I/T: source/time, age 24 hours versus older, refresh/qualification/omission, and absent optional fields; no guaranteed merchant/stock/price/durability claim. |
+| FR-SHOP-004 | FEAT-SHOP-001 | BR-020, BR-024 | CAP-08, CAP-09, CAP-10 | T/I: missing commercial data versus missing required utility data. |
+| FR-SHOP-005 | FEAT-SHOP-002 | BR-018 | CAP-10 | T: available link handoff. |
+| FR-SHOP-006 | FEAT-SHOP-002 | BR-018, BR-022 | CAP-10 | T: unavailable destination with current valid utility retained; changed basis separately becomes outdated. |
+| FR-SHOP-007 | FEAT-SHOP-002 | BR-018, BR-019 | CAP-10 | T/I: navigation side effects. |
+| FR-SHOP-008 | FEAT-SHOP-001, FEAT-SHOP-002 | BR-018, BR-024 | CAP-08, CAP-09, CAP-10 | D/I: independent core journey. |
+| FR-MET-001 | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001 | BR-019, BR-001, BR-007 | CAP-02, CAP-04, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/I: distinct interaction evidence. |
+| FR-MET-002 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/I: event lifecycle evidence. |
+| FR-MET-003 | FEAT-MET-001, FEAT-SHOP-002 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/I: exposure versus navigation. |
+| FR-MET-004 | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001 | BR-019, BR-001, BR-007, BR-006 | CAP-02, CAP-04, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
+| FR-MET-005 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/A: two intentional history events versus one preference increment; retry counted once. |
+| FR-MET-006 | FEAT-MET-001 | BR-021 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | I/T: metric contents and 90-day retention boundary; no residual user-linked information in aggregates. |
+| FR-MET-007 | FEAT-MET-001 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T: measurement dependency failure. |
+
+#### 10.2.1 Cross-Cutting Acceptance Traceability
+
+| SRS Requirement | Existing product/business intent | Capability context | Verification |
+|---|---|---|---|
+| DATA-RET-003 | FEAT-MET-001; BR-019, BR-021 — purpose-limited measurement retention distinct from ranking/history. | CAP-06, CAP-07, CAP-10 | 90-day user-linked expiry and de-identification evidence. |
+| NFR-REL-003 | FEAT-AUTH-001, FEAT-WAR-001, FEAT-OUT-001; BR-005, BR-007, BR-021, BR-022 — recoverable core access/state integrity. | CAP-01, CAP-03, CAP-05 | ≤5-minute restart recovery, accepted-state integrity and fallback. |
+| NFR-TEST-003 | FEAT-AI-001, FEAT-OUT-001, FEAT-MET-001; BR-001, BR-007, BR-019 — reproducible existing performance targets. | CAP-02, CAP-05, CAP-10 | Warm-up/measured-run manifest, p95 and recorded reference conditions. |
+| NFR-SCA-002 | FEAT-AUTH-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-PERS-002; BR-005, BR-007, BR-011, BR-021 — concurrent functional integrity. | CAP-01, CAP-03, CAP-05, CAP-06, CAP-07 | 20-user functional integrity independently of timing benchmark. |
 
 ### 10.3 PRD Feature Coverage Audit
 
@@ -1318,7 +1331,7 @@ Capabilities retain BRD identity and current PRD feature links; feature coverage
 | CAP-09 — Wardrobe Multiplier | FEAT-MULT-001, FEAT-SHOP-001, FEAT-MET-001 | Covered |
 | CAP-10 — Strategic Shopping | FEAT-SHOP-001, FEAT-SHOP-002, FEAT-MET-001 | Covered |
 
-Coverage totals: **147 functional requirements; 22/22 features; 24/24 business requirements; 10/10 capabilities**. The SRS contains 256 stable requirement IDs. BG-01–BG-04 retain the BRD mappings; verification remains planned evidence.
+Coverage totals: **147 functional requirements; 22/22 features; 24/24 business requirements; 10/10 capabilities**. The SRS contains 260 requirement IDs: 256 preserved existing IDs and four additional requirements. BG-01–BG-04 retain the BRD mappings; verification remains planned evidence.
 
 ## 11. Glossary
 
@@ -1363,62 +1376,91 @@ Coverage totals: **147 functional requirements; 22/22 features; 24/24 business r
 | Incomplete Multiplier | Required attributes/owned readiness or reliable full evaluation are insufficient; no exact +N. |
 | Unavailable Multiplier | Evaluation capability cannot operate; no exact +N or false +0. |
 | Outdated Multiplier | Relevant inputs/rules changed after assessment; reevaluation is required for current exact presentation, without an arbitrary TTL. |
+| Purpose-Limited Personal Data | Private user information used only as necessary for functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; no MVP AI training/improvement. |
+| Minimal Historical Snapshot | Only the information needed to understand past records; it does not justify retaining original removed-garment images/nonessential personal data beyond 30 days. |
+| User-Linked Measurement | Personal engagement/measurement information linked to a User, retained at most 90 days before deletion or aggregation/de-identification; distinct from necessary functional history/feedback state. |
+| Current Weather | Usable environmental evidence at age ≤30 minutes from its applicable retrieval/observation timestamp; older evidence needs refresh before current use. |
+| Current Commercial Guidance | Credible price/availability up to 24 hours from last retrieval/check, without guaranteed price/stock; older information is refreshed, marked stale/last checked, or omitted. |
 
-## 12. Software Decisions and Open Questions
+## 12. Verification and Acceptance Conditions
 
-### 12.1 Resolved Software Decisions
+### 12.1 Privacy and Data-Lifecycle Acceptance
 
-OSQ-001–OSQ-010 were resolved on 2026-10-05 and are reflected in the applicable requirements and criteria throughout this SRS. The following table records their resolution summaries and affected requirements. Sections 3, 4, 6, and 8 contain the normative details; the SRS remains Baseline Draft.
+| Boundary | Required evidence | Requirements |
+|---|---|---|
+| Necessary private processing | Authorized data is used only for necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; originating omission/correction/removal/permission controls work. No public wardrobe, user-to-user sharing, unrestricted third-party sharing or sale. | FR-AUTH-008, NFR-PRIV-001 |
+| Personal data and model training | Wardrobe images, profiles, Wear Events, feedback and corrections do not enter MVP AI training/improvement. Any future use needs separate explicit opt-in and an approved product/privacy change. | NFR-PRIV-002 |
+| Purpose-minimal external exchange | Weather receives required selected location only; recovery delivery receives email and necessary delivery information; shopping receives explicitly chosen navigation without unrelated wardrobe/profile/history disclosure. | SI-002, SI-003, COM-003 |
+| Removed garment | Immediate current ownership/recommendation/Coverage/Multiplier exclusion; only a necessary understandable historical snapshot remains. Original image and nonessential removed-garment personal data are physically deleted within 30 days. | FR-WAR-005, DATA-HIST-001, DATA-RET-002 |
+| Removed Wear Event | Immediate effective history/utilization/recency/personalization exclusion, survivor evidence recalculation and physical deletion of applicable personal event data within 30 days; unrelated reports/Outfits/Garments remain. | FR-WEAR-007, DATA-RET-001 |
+| User-linked measurement | Ordinary engagement metrics do not require raw images/sensitive profiles; user-linked engagement/measurement data is deleted or aggregated/de-identified within 90 days, with older retained information no longer user-linked. | FR-MET-006, DATA-RET-003 |
+| Product boundary | No Delete Account goal is added. Product retention limits do not constitute legal certification or statutory-compliance evidence. | Sections 1.2 and 8.5 |
 
-| ID | Resolved Decision Summary | Status | Affected Requirements |
-|---|---|---|---|
-| OSQ-001 | JPEG/JPG, PNG and HEIC/HEIF; ≤15 MB and shortest side ≥512 pixels; locked ≥200 qualified images (≥50/category), separate ≥90% overall category/color and ≥85% category floor; usable-preview criteria; processing p95 ≤5 seconds and first outfit result p95 <3 seconds on 100 confirmed garments. Reference operating configuration remains OSQ-013. | Resolved | FR-AI-001–FR-AI-002, FR-AI-006, FR-AI-012; FR-MET-004; NFR-PERF-001–NFR-PERF-002; NFR-USE-002; NFR-TEST-002; NFR-SCA-001; AI-REQ-010–AI-REQ-011, AI-REQ-014; ERR-AI-001 |
-| OSQ-002 | 15-minute JWT Access Token; maximum 30-day Refresh Session; consume/rotate refresh, session-revoking reuse detection, current-session logout, separate-session isolation and all-Refresh-Session revocation/reauthentication after reset. | Resolved | FR-AUTH-004–FR-AUTH-010, FR-AUTH-013–FR-AUTH-014; DATA-AUTH-001, DATA-AUTH-005; COM-001–COM-002; NFR-SEC-002–NFR-SEC-003; ERR-AUTH-001, ERR-AUTH-003 |
-| OSQ-003 | 12–128-character untransformed passwords without mandatory class mixtures; normalized unique email and useful conflict guidance; account-safe recovery wording; single-use 30-minute reset; successfully issuing a new reset interaction invalidates earlier unused interactions (FR-AUTH-018). | Resolved | FR-AUTH-001–FR-AUTH-004, FR-AUTH-015–FR-AUTH-018; DATA-AUTH-001–DATA-AUTH-002, DATA-AUTH-005; SI-003; COM-001–COM-002; NFR-SEC-003; ERR-AUTH-001–ERR-AUTH-002 |
-| OSQ-004 | Default ≥0.85 High / ≥0.60–<0.85 Needs Review / <0.60 Uncertain; evidence/quality guards; only stricter validated calibration; user authority and non-primary numeric presentation preserved. | Resolved | DATA-GAR-003; UI-005; AI-REQ-001–AI-REQ-002, AI-REQ-004–AI-REQ-007, AI-REQ-012–AI-REQ-013; ERR-AI-002 |
-| OSQ-005 | Bounded pattern/density/noise/layer/bulk/fit/climate/color descriptors; all-category common readiness, TOP/OUTERWEAR layering and conditional layered bulk; saveability and non-universal rich fields preserved. | Resolved | FR-GAR-002, FR-GAR-004–FR-GAR-009; FR-OUT-001, FR-OUT-004; FR-MULT-001; DATA-GAR-002–DATA-GAR-003, DATA-GAR-005; DATA-ANL-003; AI-REQ-011; ERR-GAR-002; ERR-OUT-001; ERR-SHOP-001 |
-| OSQ-006 | Exactly TOP+BOTTOM+FOOTWEAR, optional one OUTERWEAR; active confirmed ready ownership; layer/bulk/environment/severe-pattern validity and missing-weather fallback before soft color/style/occasion/behavior/body/gender ranking. | Resolved | FR-OUT-001, FR-OUT-004–FR-OUT-005, FR-OUT-009, FR-OUT-015; FR-ANL-008, FR-ANL-012, FR-ANL-014; FR-MULT-002; DATA-OUT-001–DATA-OUT-002; DATA-ANL-001; NFR-REL-002; ERR-WEATHER-001; ERR-OUT-001, ERR-OUT-003 |
-| OSQ-007 | Like +1, Dislike −2, Wear +2; 90-day 100%/50%/25%/0% decay; one Wear increment per exact outfit/local day; strong ≤2-day/mild 3–7-day/no >7-day recency penalty; optional ≥14-day overlooked boost; feedback state persists until user action. | Resolved | FR-OUT-005; FR-PERS-001–FR-PERS-003, FR-PERS-007–FR-PERS-009, FR-PERS-012–FR-PERS-013; FR-WEAR-010; FR-ANL-003, FR-ANL-007; FR-MET-005; DATA-OUT-001; DATA-WEAR-001, DATA-WEAR-003–DATA-WEAR-004; DATA-HIST-001; DATA-RET-001–DATA-RET-002; ERR-WEAR-001 |
-| OSQ-008 | One event per logical intention; new explicit initiation remains separate; absolute timestamp, original timezone/offset and local date/time; no travel re-dating; correction of applicable outfit/context/time is non-future and within original local day; individual removal preserves underlying objects. | Resolved | FR-WEAR-001–FR-WEAR-010, FR-WEAR-012; FR-PERS-012–FR-PERS-013; FR-ANL-001, FR-ANL-003, FR-ANL-007; FR-MET-005; DATA-WEAR-002–DATA-WEAR-004; DATA-INT-004; DATA-HIST-001–DATA-HIST-002; DATA-RET-001–DATA-RET-002; UI-007–UI-008; COM-002; LOC-005; ERR-WEAR-001–ERR-WEAR-002 |
-| OSQ-009 | Six-need occasion mapping and priorities 0/1/2/3; per-need valid-count/3 capped at 1; weighted 0–100 score after positive-need/ready TOP+BOTTOM+FOOTWEAR sufficiency, plus OUTERWEAR only when required; incomplete is not false zero; capability gap precedes product. | Resolved | FR-PROF-003; FR-ANL-008–FR-ANL-012, FR-ANL-014–FR-ANL-015; FR-GAP-001, FR-GAP-004; DATA-ANL-001–DATA-ANL-002; NFR-REL-002; ERR-ANL-001–ERR-ANL-002 |
-| OSQ-010 | Same-context/rule/version identity-based set difference; Exact/Evaluated Zero/Incomplete/Unavailable/Outdated; exact completeness gates; zero only for completed empty new set; freshness follows changed inputs/rules, without arbitrary TTL. | Resolved | FR-OUT-009; FR-MULT-001–FR-MULT-005, FR-MULT-007–FR-MULT-008; FR-SHOP-002, FR-SHOP-004; DATA-OUT-001–DATA-OUT-002; DATA-ANL-003–DATA-ANL-004; UI-003, UI-008; NFR-REL-002; ERR-ANL-001–ERR-ANL-002; ERR-SHOP-001–ERR-SHOP-002 |
+The 90-day ranking-influence window and the 90-day user-linked measurement limit have different purposes. Retained necessary Wear history and effective Like/Dislike state are functional product information, not engagement-metric storage; ranking expiry alone does not delete/clear them. This distinction does not permit indefinite user-linked measurement copies. Accepted event removal still takes immediate effect and applies its 30-day physical-deletion deadline.
 
-### 12.2 Remaining Open Software Questions
+### 12.2 External-Information Acceptance
 
-Only OSQ-011–OSQ-014 remain open. Retention/consent, external-information freshness/credibility, operating/test configuration and usability/accessibility criteria do not reopen settled formulas, lifetimes, vocabularies or event/domain policies.
+| Boundary | Required evidence | Requirements |
+|---|---|---|
+| Weather currentness | Information at age exactly 30 minutes is current; older information is stale and is refreshed before being treated as current, using its applicable retrieval/observation timestamp. | FR-WEATHER-003–FR-WEATHER-005, SI-002 |
+| Bounded weather wait | An external weather request delays the assessment by at most 2 seconds. Usable current weather not obtained by that boundary is unavailable for the assessment. Remaining validity applies with disclosed missing context and no invented weather or blanket outfit rejection. | ERR-WEATHER-001 |
+| Candidate evidence | Required candidate information is supported by explicit user-provided information or an identifiable configured credible source; this provenance rule does not add candidate capture/import or new actor goals. | FR-SHOP-001, DATA-ANL-003 |
+| Commercial provenance/currentness | External commercial information retains identifiable source and retrieval/last-checked time. Price/availability is current informational guidance up to 24 hours inclusive; older information is refreshed, clearly stale/last checked, or omitted. Unsupported claims are omitted/qualified. | FR-SHOP-003, ERR-SHOP-002 |
+| Destination failure | Only navigation becomes unavailable. Otherwise valid candidate information, gap, multiplier, reasons and hypothetical previews remain usable where available; failure does not imply +0, candidate invalidity, ownership, verified purchase failure or a transaction state. | FR-SHOP-006, ERR-SHOP-003 |
 
-| ID | Question | Why It Matters | Responsible Decision Area | Must Be Resolved Before |
-|---|---|---|---|---|
-| OSQ-011 | What consent, authorized access/deletion/sharing boundaries and retention periods apply to images, profiles, behavior, historical snapshots, and measurement information? | PRD Section 23 and BRD Section 24 defer detailed policy; no unrestricted training permission or legal period is established. Preserve effective individual Wear removal and understandable removed-garment history. | Product Owner + privacy/legal review + Engineering/security | Final privacy/data acceptance and any binding legal/security architecture constraints. |
-| OSQ-012 | What weather freshness, dependency outcome/time-limit criteria, candidate-information credibility/qualification, and known destination-unavailability rules define usable versus unavailable external information? | PRD Sections 11.2/20–21/25 defer provider freshness/credible-source/operating details. No merchant partnership, guaranteed stock, or retailer-response control is assumed. | Product Owner + Engineering + QA | Interface/failure acceptance; relevant Business Rules and later provider decisions. |
-| OSQ-013 | Which Android/iOS versions/devices and nominal operating conditions are supported, and what availability, recovery, capacity/concurrency, or larger-workload targets are required if any? | BRD DEP-006 and PRD Section 25 establish mobile/reliable-use direction but no OS matrix, service percentage, recovery interval, or concurrency value. | Engineering + QA + Product Owner | Final operating-quality acceptance and later Quality Attribute Analysis/ASR. |
-| OSQ-014 | What representative-user tasks, usability criteria, and Android/iOS assistive-interaction scenarios define acceptance of understandable/inclusive core journeys? | BRD stakeholder usability/accessibility expectations and PRD Section 25 supply direction without a conformance level or quantified evaluation threshold. | UX/Product + QA + Product Owner | Final usability/accessibility acceptance; later applicable quality scenarios. |
+Informational guidance does not guarantee merchant stock, price, partnership, purchase, transaction outcome or durability. Changed evaluation inputs/rules still make utility outdated independently of destination availability.
 
-OSQ-013 reference configuration includes the devices/network/nominal conditions for the specified percentile timings; it must not substitute different thresholds or a different benchmark workload. Privacy retention, weather freshness and accessibility acceptance remain governed by their own open IDs. Signing, storage and revocation implementation remain downstream architecture decisions.
+### 12.3 Operating and Performance Validation
 
-Answers must preserve stable requirement IDs and source intent. Any newly discovered business/product change follows upstream change control.
+| Parameter | MVP validation condition |
+|---|---|
+| Supported operating systems | Android 10 or later; iOS 15 or later. Support below these versions is not guaranteed. |
+| Android reference | Modern mid-range Android 10+ hardware with at least 6 GB RAM. |
+| iOS reference | iOS 15+ on an iPhone 11-class device or newer. |
+| Network reference | Stable Wi-Fi or 4G-class connectivity; download ≥20 Mbps, upload ≥5 Mbps, RTT ≤100 ms. |
+| Processing timing | p95 ≤5 seconds from accepted analysis request after image transfer completes to usable processed preview and reviewable proposals (NFR-PERF-001). |
+| Outfit timing | p95 <3 seconds from accepted request with required context available to the first complete recommendation result set, with exactly 100 confirmed garments (NFR-PERF-002). |
+| Measurement procedure | Per evaluated operation: 5 warm-up executions, then ≥100 measured executions; calculate p95 from measured runs, retain legitimate slow runs and record device/network/environment (NFR-TEST-003). |
+| Functional concurrency | 20 concurrently active authenticated users; no cross-user leakage, broken authorization, corrupted accepted state or accidental duplicate logical actions caused solely by concurrency; core operations remain functional (NFR-SCA-002). |
+| Recoverable restart | Core service restored ≤5 minutes after a recoverable application/service restart in the agreed validation environment; accepted authoritative information remains intact and optional-dependency fallback persists (NFR-REL-003). |
+
+Reference hardware/network conditions define reproducible acceptance evidence; they are not a guarantee for every device/network. Functional concurrency is a separate acceptance scenario and does not require the existing p95 targets to hold at 20 concurrent users. No production uptime percentage or additional mandatory larger-wardrobe threshold is specified. No measured result is claimed by this document.
+
+### 12.4 Usability and Accessibility Acceptance
+
+| Acceptance area | Criterion | Requirements |
+|---|---|---|
+| Representative users | At least 5 users total across current personas where practical; not 5 users per persona. | NFR-USE-001 |
+| Core task groups | Register/Log In; Add Garment; Get Outfit Recommendations with Shuffle; Record and correct/remove a Wear Event; View Coverage and Gaps; Evaluate Candidate/Multiplier. | NFR-USE-001 |
+| Task completion | For each evaluated representative core task, target ≥80% completion without facilitator intervention. | NFR-USE-001 |
+| Critical blockers | Acceptance requires zero unresolved Critical usability blockers in evaluated core journeys. | NFR-USE-001 |
+| Overall usability aid | Target average SUS ≥68; SUS is validation evidence, not a business KPI. | NFR-USE-001 |
+| Screen readers | Validate applicable core journeys with Android TalkBack and iOS VoiceOver. | NFR-ACC-002 |
+| Interactive semantics | Meaningful accessible names, roles and states for applicable core interactive elements. | NFR-ACC-002 |
+| Text scaling | Core journeys remain operable and primary actions accessible at scaling up to 200%. | NFR-ACC-002 |
+| State meaning | Confidence, readiness, Incomplete/Unavailable/Outdated, Removed from wardrobe and hypothetical states have understandable labels beyond color alone. | NFR-ACC-001 |
+| Primary touch targets | Platform-appropriate minimum targets approximately 48 dp on Android and 44 pt on iOS. | NFR-ACC-002 |
+
+These are MVP validation criteria, not WCAG, Android/iOS accessibility or legal-compliance certification. Detailed test plans and quality-attribute scenarios remain separate downstream artifacts.
 
 ## 13. SRS Exit Criteria
 
-This v0.2.1 Baseline Draft is ready for baseline review and Business Rules derivation when the Product Owner, with Requirements, Engineering, QA and relevant UX/AI/security review, confirms:
+This v0.3 Baseline Draft is ready for synchronized requirements review when Product Owner, Requirements, Engineering, QA and relevant UX/AI/security reviewers confirm:
 
-- All 22 MVP features, BR-001–BR-024 and CAP-01–CAP-10 remain covered and source-linked; existing stable SRS IDs are preserved.
-- OSQ-001–OSQ-010 are Resolved and consistently propagated into functional/data/interface/quality/AI/error requirements, glossary and verification.
-- Recognition qualification/locked-set/accuracy, preview criteria, timing boundaries/p95 targets and workload are clear; reference device/network configuration remains OSQ-013.
-- Access/session/password/email/reset policy is defined at requirement level without selecting signing, storage or revocation implementation.
-- Readiness/vocabularies, hard validity, personalization, logical Wear actions/time/correction, contextual Coverage formulas/gaps and Multiplier completeness/freshness are sufficiently defined to derive Business Rules.
-- Major failure/recovery and ownership/history/effective-removal outcomes remain explicit; optional shopping information/permissions do not become core access gates.
-- Specified rules and formulas refine previously deferred software details without changing BRD/PRD scope, personas, feature IDs, or product meaning.
-- OSQ-011–OSQ-014 remain explicit privacy/external/operating/usability refinement items with their acceptance gates; no unresolved domain-policy question blocks `business-rules.md`.
-- Traceability/reverse audits and planned verification are complete; mandatory requirements and optional behavior use consistent normative language.
-- Physical schemas, implementation topology, formal behavioral models and architecture tactics remain downstream.
+- All 22 MVP features, BR-001–BR-024 and CAP-01–CAP-10 remain source-linked; all existing requirement IDs retain their identity.
+- Image qualification, locked benchmark/accuracy floors, confidence/authority, unchanged timing boundaries and reference measurement conditions are explicit.
+- Access/session/password/email/recovery policy, garment readiness and hard-validity-before-soft-ranking remain consistent.
+- Logical Wear identity, intentional repeats, original event-local history, completed elapsed-time aging and survivor-group anchors remain deterministic after accepted correction/removal.
+- Coverage/gap sufficiency and formulas, and all five Multiplier states/unique-valid set comparisons, preserve the existing domain meaning.
+- Purpose-limited private data use, no MVP personal-data training, minimal external exchange, 30-day removed-data deletion and 90-day user-linked measurement limits reach relevant requirements/rules/use cases.
+- Weather/commercial currentness, bounded weather fallback and navigation-independent utility are reflected in failures and acceptance evidence.
+- Supported platforms, reference conditions, separate functional concurrency, recoverable restart and usability/accessibility criteria are traceable and testable.
+- Traceability/reverse coverage, interaction outcomes and corresponding focused diagrams agree; no new actor goal, native commerce or implementation design is introduced.
 
-This document remains Baseline Draft and does not record formal document approval or passed software acceptance. Business Rules will formalize named invariants, edge cases, and executable examples for the specified rules. Remaining open acceptance criteria must be addressed by their recorded gates, with revisions preserving identity and traceability.
+Baseline Draft records required behavior and review criteria, not formal approval or executed software acceptance.
 
 ## 14. Next Artifact
 
-The next artifact remains **`docs/03-requirements/business-rules.md`**, following Workflow Section 9. It will formalize the resolved garment-readiness/descriptor invariants, outfit validity, personalization contributions/decay/normalization, logical Wear/time/correction/removal, Coverage formulas/need mappings/gaps and Multiplier uniqueness/completeness/freshness into named reusable rules, decision tables, edge cases, examples and precedence with stable SRS/FEAT/BR/CAP references.
+The current SRS, [Business Rules](business-rules.md), [master Use Case Diagram](use-cases/use-case-diagram.puml), 23 detailed Use Case Specifications and their focused diagrams form the requirements baseline for review.
 
-The SRS defines required software behavior and acceptance criteria. Business Rules will formalize reusable domain rules, invariants, formulas, rule precedence, decision tables, edge cases, and examples. Formal Use Cases then refine actor–system interactions; Activity Diagrams model workflow behavior using PlantUML. Quality Attribute Analysis later examines measurable scenarios and architectural significance, with ASR/ADD/ADR downstream.
-
-Business Rules, formal behavioral models, quality analysis, architecture artifacts, the backlog, and User Stories are separate artifacts produced in workflow order.
+After review, the next workflow step is **core UML Activity Diagram modeling**, following Workflow Section 11. Activity Diagrams refine complex actor/system workflows, branches and outcomes from the Use Case Specifications while retaining SRS/BRULE/FEAT/BR/CAP traceability. Quality Attribute Analysis, ASR/ADD/ADR, delivery/backlog and design artifacts follow their separate workflow responsibilities.

@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -98,6 +98,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-002` | Normalized email identifies at most one account; duplicates receive sign-in/recovery guidance. |
 | `BRULE-AUTH-003` | Passwords preserve their entered value and follow the approved length/value policy. |
 
@@ -108,19 +109,21 @@ The following references constrain this interaction; detailed policy remains in 
 | [Journeys](../../02-product/PRD.md) | `JRN-01` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-AUTH-001` |
 | [Software Requirements — Functional](../SRS.md) | `FR-AUTH-001`, `FR-AUTH-011`, `FR-AUTH-012`, `FR-AUTH-015`, `FR-AUTH-016`, `FR-PROF-001`, `FR-PROF-008` |
-| [Software Requirements — Data](../SRS.md) | `DATA-AUTH-001`, `DATA-AUTH-002` |
+| [Software Requirements — Data](../SRS.md) | `DATA-AUTH-001`, `DATA-AUTH-002`, `DATA-RET-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-002`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-SEC-003`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-002`, `BRULE-AUTH-003` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-SEC-003`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-002`, `BRULE-AUTH-003`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-012`, `BR-021`, `BR-023` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-01` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - Passwords have 12–128 characters; spaces and Unicode are permitted without mandatory character-class mixtures or silent trimming/normalization. An approved small denylist may apply; no external password-checking actor is introduced.
 - Email comparison trims surrounding whitespace and ignores case without provider-specific alias transformations. Registration adds no mandatory email-verification, guest or social-login journey.
+
+- Account information supports the private authorized product experience, without public/user-to-user wardrobe sharing or sale of personal data. Optional profile information remains optional; necessary active-account data may remain while the account is active and needed.
 
 ## 14. Related Use Cases
 
@@ -133,8 +136,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-001-register-account.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

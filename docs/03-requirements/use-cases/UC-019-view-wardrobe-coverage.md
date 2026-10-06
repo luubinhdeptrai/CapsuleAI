@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -127,6 +127,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-COV-001` | Use the six established needs and their mapped occasions. |
 | `BRULE-COV-002` | Priorities 0/1/2/3 mean Not Relevant/Low/Medium/High; only positive weights contribute. |
@@ -146,21 +147,23 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-06` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-ANL-002`, `FEAT-PROF-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-ANL-008`, `FR-ANL-009`, `FR-ANL-010`, `FR-ANL-011`, `FR-ANL-012`, `FR-ANL-013`, `FR-ANL-014`, `FR-ANL-015`, `FR-PROF-003`, `FR-PROF-004`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-ANL-008`, `FR-ANL-009`, `FR-ANL-010`, `FR-ANL-011`, `FR-ANL-012`, `FR-ANL-013`, `FR-ANL-014`, `FR-ANL-015`, `FR-PROF-003`, `FR-PROF-004`, `FR-AUTH-008`, `FR-WEATHER-003` |
 | [Software Requirements — Data](../SRS.md) | `DATA-ANL-001`, `DATA-OUT-001`, `DATA-OUT-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-ANL-001`, `ERR-ANL-002`, `ERR-WEATHER-001`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-004`, `UI-008`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-REL-002`, `NFR-TEST-001` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-COV-001`, `BRULE-COV-002`, `BRULE-COV-003`, `BRULE-COV-004`, `BRULE-COV-005`, `BRULE-COV-006`, `BRULE-GAR-003`, `BRULE-OUT-002`, `BRULE-OUT-008`, `BRULE-OUT-006`, `BRULE-GAP-002` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-010`, `BR-014`, `BR-022`, `BR-024` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-REL-002`, `NFR-TEST-001`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-COV-001`, `BRULE-COV-002`, `BRULE-COV-003`, `BRULE-COV-004`, `BRULE-COV-005`, `BRULE-COV-006`, `BRULE-GAR-003`, `BRULE-OUT-002`, `BRULE-OUT-008`, `BRULE-OUT-006`, `BRULE-GAP-002`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-010`, `BR-014`, `BR-022`, `BR-024`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-07`, `CAP-08` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The six needs are Everyday/Casual, Work, School/University, Formal, Travel and Sport. Current request occasion and common need priorities serve different purposes.
 - Numeric coverage and per-need evidence follow the Business Rules, not the small displayed daily recommendation subset. Details of calculation implementation remain downstream.
 - No new outerwear-by-temperature mandate or fixed wardrobe quota is introduced. Available context is consumed here; external acquisition is UC-006.
+
+- Environmental evidence follows UC-006's ≤30-minute weather currentness and ≤2-second external-request delay boundary. Unavailable weather permits disclosed reduced-context coverage only when remaining sufficient-data/validity conditions hold.
 
 ## 14. Related Use Cases
 
@@ -175,9 +178,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-012` | Environmental/external-information freshness remains governed by the SRS; no numerical freshness threshold is invented. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-019-view-wardrobe-coverage.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

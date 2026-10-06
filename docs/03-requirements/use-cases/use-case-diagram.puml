@@ -1,8 +1,8 @@
 @startuml
 
-' CapsuleAI master MVP Use Case Diagram. Stable UC-* IDs are reserved for later specifications.
+' CapsuleAI master MVP Use Case Diagram. Stable UC-* IDs align with the 23 detailed specifications.
 ' Review status: Baseline Draft; this diagram does not approve or change upstream scope.
-' Sources: BRD v0.3; PRD v0.2; SRS v0.2.1; Business Rules v0.1.1.
+' Sources: BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2.
 ' Process authority: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 10 and 40.
 ' Packages group actor goals; they are not implementation modules.
 
@@ -167,7 +167,7 @@ endlegend
 ' UC-022 evaluates a candidate from documented gap/advice; no candidate capture/import goal is introduced.
 ' Viewing candidates/previews or opening links creates no owned garment, verified purchase or Wear Event.
 ' Exactness, evidence aging and other domain constraints stay in Business Rules and later UC flows.
-' ORQ-001 is resolved. OSQ-011..OSQ-014 retain their existing downstream gates; no parameter is invented.
+' Temporal grouping/aging, privacy/retention, external freshness and mobile acceptance follow the current SRS and rules.
 
 ' MVP FEAT coverage review: direct goals, embedded behavior, or intentionally cross-cutting.
 ' FEAT-AUTH-001 | direct | UC-001, UC-002, UC-003, UC-004 | Registration, login, logout and recovery; session continuity is embedded access behavior.

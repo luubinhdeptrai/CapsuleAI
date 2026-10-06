@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -98,6 +98,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-OUT-010` | One selected slot may change; all other garment identities and context remain fixed. |
 | `BRULE-OUT-002` | Only eligible current owned replacement garments are considered. |
@@ -121,16 +122,18 @@ The following references constrain this interaction; detailed policy remains in 
 | [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-OUT-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-OUT-003`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-008`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-OUT-010`, `BRULE-OUT-002`, `BRULE-GAR-003`, `BRULE-OUT-001`, `BRULE-OUT-003`, `BRULE-OUT-004`, `BRULE-OUT-005`, `BRULE-OUT-006`, `BRULE-OUT-007`, `BRULE-OUT-008`, `BRULE-OUT-009` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-008`, `BR-009`, `BR-022` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-OUT-010`, `BRULE-OUT-002`, `BRULE-GAR-003`, `BRULE-OUT-001`, `BRULE-OUT-003`, `BRULE-OUT-004`, `BRULE-OUT-005`, `BRULE-OUT-006`, `BRULE-OUT-007`, `BRULE-OUT-008`, `BRULE-OUT-009`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-008`, `BR-009`, `BR-022`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-04`, `CAP-05` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - No compatible replacement is a meaningful completed alternative, not a reason to change fixed slots, relax hard rules or invent a replacement.
 - A new context request belongs to UC-011; this use case does not acquire weather directly.
+
+- Fixed assessment context preserves the established disclosed environmental basis; a relevant context change requires new current recommendations rather than quietly changing Shuffle's basis.
 
 ## 14. Related Use Cases
 
@@ -143,8 +146,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-012-shuffle-garment-slot.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

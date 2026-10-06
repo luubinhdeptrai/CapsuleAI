@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -38,7 +38,7 @@ The User explicitly chooses removal of the identified Wear Event.
 1. The User identifies the specific event and requests its removal.
 2. CapsuleAI identifies the targeted report and explains that removal concerns that report, with the outfit/garments and other reports retained.
 3. The User proceeds with the explicit individual removal intention.
-4. CapsuleAI accepts removal and shows that the event is no longer effective in history.
+4. CapsuleAI accepts removal, shows immediate exclusion from effective history/utilization/recency/personalization and explains the 30-day deletion policy for applicable personal event data.
 5. The User reviews available history/utilization; relevant recency and normalized ranking evidence reflect surviving reports.
 
 ## 7. Alternative Flows
@@ -89,7 +89,7 @@ At Main Step 1:
 
 ## 9. Success Postconditions
 
-- The accepted removal makes only the selected event ineffective in history and derived utilization/recency/evidence.
+- Accepted removal immediately makes only the selected event ineffective in history and derived utilization/recency/evidence; applicable personal event data is physically deleted within 30 days.
 - Underlying outfits/garments and unrelated reports remain; affected daily normalized evidence and latest surviving accepted timestamp reflect survivors.
 
 ## 10. Minimal / Failure Postconditions
@@ -104,6 +104,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-WEAR-005` | Remove an individual event from effective history; physical deletion mechanics remain downstream. |
 | `BRULE-WEAR-006` | Accepted removal updates effective report-derived effects. |
@@ -122,16 +123,18 @@ The following references constrain this interaction; detailed policy remains in 
 | [Software Requirements — Data](../SRS.md) | `DATA-WEAR-003`, `DATA-WEAR-004`, `DATA-RET-001`, `DATA-INT-004` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-007`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-WEAR-005`, `BRULE-WEAR-006`, `BRULE-PERS-005`, `BRULE-PERS-006`, `BRULE-HIST-001`, `BRULE-HIST-003` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-WEAR-005`, `BRULE-WEAR-006`, `BRULE-PERS-005`, `BRULE-PERS-006`, `BRULE-HIST-001`, `BRULE-HIST-003`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-006`, `BR-011`, `BR-021`, `BR-022`, `BR-019` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-06`, `CAP-07` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
-- Removal is an effective-history outcome; this use case does not prescribe physical erasure, audit retention or persistence design.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
+- Accepted removal immediately ends effective use and requires physical deletion of applicable personal event data within 30 days. Its implementation mechanism remains downstream.
 - The withdrawal of one report must not remove all reports sharing its outfit/local day.
+
+- The removed event's deadline does not delete underlying Outfit/Garments or unrelated reports; surviving normalized group evidence recalculates immediately.
 
 ## 14. Related Use Cases
 
@@ -144,9 +147,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Final event retention/privacy/deletion policy remains at its SRS gate; effective removal behavior is specified without selecting physical deletion mechanics. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-017-remove-wear-event.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

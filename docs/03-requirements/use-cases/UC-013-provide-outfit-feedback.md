@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -111,6 +111,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-PERS-001` | Like +1 / Dislike −2 apply to the exact target with one effective state and no permanent garment ban. |
 | `BRULE-PERS-003` | Behavioral contribution ages by completed elapsed periods; feedback state is not automatically cleared at 90 days. |
@@ -123,20 +124,22 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-04`, `JRN-05` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-PERS-001`, `FEAT-PERS-003`, `FEAT-MET-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-PERS-001`, `FR-PERS-002`, `FR-PERS-003`, `FR-PERS-004`, `FR-PERS-005`, `FR-PERS-007`, `FR-PERS-011`, `FR-PERS-013`, `FR-MET-001`, `FR-MET-007`, `FR-AUTH-008` |
-| [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-WEAR-001` |
+| [Software Requirements — Functional](../SRS.md) | `FR-PERS-001`, `FR-PERS-002`, `FR-PERS-003`, `FR-PERS-004`, `FR-PERS-005`, `FR-PERS-007`, `FR-PERS-011`, `FR-PERS-013`, `FR-MET-001`, `FR-MET-007`, `FR-AUTH-008`, `FR-MET-006` |
+| [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-WEAR-001`, `DATA-RET-003` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-001`, `UI-003`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-PERS-001`, `BRULE-PERS-003`, `BRULE-PERS-006`, `BRULE-OUT-008` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-PERS-001`, `BRULE-PERS-003`, `BRULE-PERS-006`, `BRULE-OUT-008`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-011`, `BR-021`, `BR-022`, `BR-009`, `BR-019` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-06` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - Feedback state may persist after its ranking influence expires; aging is not deletion or clearing.
 - Feedback measurement distinguishes accepted changes from mere views or failed actions; measurement failure does not reverse accepted feedback.
+
+- Feedback supports private personalization without MVP personal-data model training. User-linked engagement measurement is deleted or aggregated/de-identified within 90 days; its expiry differs from effective feedback-state/ranking semantics.
 
 ## 14. Related Use Cases
 
@@ -148,9 +151,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Feedback privacy and final retention/deletion policy remain governed by the SRS; the 90-day ranking window does not settle retention. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-013-provide-outfit-feedback.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

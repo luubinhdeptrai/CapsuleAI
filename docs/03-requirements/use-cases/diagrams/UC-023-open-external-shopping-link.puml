@@ -1,0 +1,24 @@
+@startuml
+
+' Local projection of ../use-case-diagram.puml; actor goals only.
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+title UC-023 - Open External Shopping Link
+
+actor "User" as User
+actor "External Shopping Destination" as ShoppingDestination
+
+rectangle "CapsuleAI" {
+    usecase "UC-021\nView Shopping Recommendations" as UC021
+    usecase "UC-023\nOpen External Shopping Link" as UC023
+}
+
+User -- UC021
+User -- UC023
+UC023 -- ShoppingDestination
+
+' Optional only when an available shopping link is explicitly chosen.
+UC023 ..> UC021 : <<extend>>
+
+@enduml

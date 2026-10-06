@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -36,10 +36,10 @@ The User requests shopping recommendations from a supported gap/advice context.
 ## 6. Main Success Scenario
 
 1. The User requests candidate recommendations for the supported wardrobe gap/advice context.
-2. CapsuleAI presents available usable recommendations with a candidate visual, human-readable identity, category/subtype, addressed gap and relevant attributes.
+2. CapsuleAI presents available usable recommendations with candidate visual/identity, category/subtype, gap and relevant attributes supported by explicit user-provided information or an identifiable configured credible source.
 3. The User selects a candidate to inspect.
 4. CapsuleAI shows supported utility reasons, current evaluation state and exact incremental count/newly enabled hypothetical previews only when justified by the completed assessment.
-5. CapsuleAI presents credible available optional price/material/durability/retailer/destination information, qualifying estimates and marking the candidate/previews as unowned.
+5. CapsuleAI presents credible optional commercial information with identifiable external source/retrieval or last-checked time. Price/availability up to 24 hours old is current informational guidance; older values are refreshed, clearly stale/last checked, or omitted. Estimates are qualified and candidates/previews remain unowned.
 6. The User evaluates the advice and may continue browsing, request UC-022 evaluation or explicitly choose an offered external shopping link.
 
 ## 7. Alternative Flows
@@ -92,7 +92,7 @@ At Main Step 4:
 
 At Main Step 5:
 
-1. CapsuleAI omits unsupported claims or qualifies credible estimates appropriately.
+1. CapsuleAI omits unsupported claims; price/availability older than 24 hours is refreshed, clearly stale/last checked, or omitted. Credible estimates remain qualified.
 2. Supported utility remains available; merchant/stock/durability assertions are not invented.
 
 ### E4 — Advice retrieval fails
@@ -126,6 +126,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-SHOP-001` | Separate required candidate utility information from credible optional commercial guidance. |
 | `BRULE-SHOP-002` | External navigation is explicit, optional and not purchase proof. |
@@ -145,20 +146,22 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-07` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-SHOP-001`, `FEAT-MULT-001`, `FEAT-SHOP-002` |
-| [Software Requirements — Functional](../SRS.md) | `FR-SHOP-001`, `FR-SHOP-002`, `FR-SHOP-003`, `FR-SHOP-004`, `FR-SHOP-005`, `FR-SHOP-007`, `FR-SHOP-008`, `FR-MULT-004`, `FR-MULT-005`, `FR-MULT-006`, `FR-MULT-007`, `FR-MULT-008`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-SHOP-001`, `FR-SHOP-002`, `FR-SHOP-003`, `FR-SHOP-004`, `FR-SHOP-005`, `FR-SHOP-007`, `FR-SHOP-008`, `FR-MULT-004`, `FR-MULT-005`, `FR-MULT-006`, `FR-MULT-007`, `FR-MULT-008`, `FR-AUTH-008`, `FR-SHOP-006` |
 | [Software Requirements — Data](../SRS.md) | `DATA-ANL-002`, `DATA-ANL-003`, `DATA-ANL-004`, `DATA-INT-003` |
-| [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-SHOP-001`, `ERR-SHOP-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
+| [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-SHOP-001`, `ERR-SHOP-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001`, `ERR-SHOP-003` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-008`, `UI-009`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-ACC-001`, `NFR-AVL-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-SHOP-001`, `BRULE-SHOP-002`, `BRULE-SHOP-003`, `BRULE-GAP-001`, `BRULE-GAP-002`, `BRULE-MULT-003`, `BRULE-MULT-004`, `BRULE-MULT-005`, `BRULE-MULT-006`, `BRULE-MULT-007`, `BRULE-MULT-008` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-015`, `BR-016`, `BR-017`, `BR-018`, `BR-020`, `BR-022`, `BR-024` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-ACC-001`, `NFR-AVL-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-SHOP-001`, `BRULE-SHOP-002`, `BRULE-SHOP-003`, `BRULE-GAP-001`, `BRULE-GAP-002`, `BRULE-MULT-003`, `BRULE-MULT-004`, `BRULE-MULT-005`, `BRULE-MULT-006`, `BRULE-MULT-007`, `BRULE-MULT-008`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-015`, `BR-016`, `BR-017`, `BR-018`, `BR-020`, `BR-022`, `BR-024`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-10`, `CAP-08`, `CAP-09` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - This use case consumes available candidate information; it does not add catalog search/import, user-uploaded candidate ingestion or new retailer actors.
 - The extension point is the explicit optional external-link action. No mandatory evaluation/include relationship or purchase flow is introduced.
+
+- No stock, price, partnership, purchase/transaction or durability guarantee follows from informational guidance. Destination unavailability affects navigation alone, preserving otherwise valid candidate/gap/multiplier/reasons/previews where available.
 
 ## 14. Related Use Cases
 
@@ -171,9 +174,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-012` | Credibility/freshness of external candidate/commercial information remains at the SRS gate; no new merchant-data policy is chosen. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-021-view-shopping-recommendations.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -86,7 +86,7 @@ At Main Step 3:
 
 At Main Step 2:
 
-1. CapsuleAI discloses missing environmental information and uses the remaining applicable context where a valid reduced-context assessment is possible.
+1. CapsuleAI consumes context under UC-006's acquisition boundary: weather older than 30 minutes needs refresh before current use; without usable current information within the 2-second external-request delay boundary, disclose unavailable environment and use remaining context where validity is defensible.
 2. Resume at Main Step 3 only if remaining information supports validity; otherwise explain the specific limitation and allow manual context/retry through UC-006.
 
 ### E3 — Assessment inputs change or refresh fails
@@ -127,6 +127,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-003` | Only applicable ready confirmed inputs enter current recommendations. |
 | `BRULE-OUT-001` | An outfit has exactly one TOP, BOTTOM and FOOTWEAR, with zero or one OUTERWEAR. |
@@ -139,7 +140,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-OUT-008` | Hard validity precedes all soft preferences. |
 | `BRULE-OUT-009` | Garment-identity sets define distinct choices; show actual available counts. |
 | `BRULE-PROF-001` | Optional body/gender influence is soft and does not prohibit categories. |
-| `BRULE-PERS-003` | Use the resolved elapsed-time aging policy without deleting historical state. |
+| `BRULE-PERS-003` | Use the elapsed-time aging policy without deleting historical state. |
 | `BRULE-PERS-004` | Recency/diversity remain soft adjustments, not exclusion rules. |
 | `BRULE-PERS-005` | Legitimate repeated reports do not multiply same-outfit/event-local-day preference increments. |
 
@@ -149,21 +150,23 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-04` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-OUT-001`, `FEAT-OUT-002`, `FEAT-PERS-003` |
-| [Software Requirements — Functional](../SRS.md) | `FR-OUT-001`, `FR-OUT-002`, `FR-OUT-003`, `FR-OUT-004`, `FR-OUT-005`, `FR-OUT-006`, `FR-OUT-007`, `FR-OUT-008`, `FR-OUT-009`, `FR-OUT-010`, `FR-OUT-011`, `FR-OUT-012`, `FR-OUT-013`, `FR-PERS-006`, `FR-PERS-007`, `FR-PERS-008`, `FR-PERS-009`, `FR-PERS-010`, `FR-PERS-011`, `FR-PERS-012`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-OUT-001`, `FR-OUT-002`, `FR-OUT-003`, `FR-OUT-004`, `FR-OUT-005`, `FR-OUT-006`, `FR-OUT-007`, `FR-OUT-008`, `FR-OUT-009`, `FR-OUT-010`, `FR-OUT-011`, `FR-OUT-012`, `FR-OUT-013`, `FR-PERS-006`, `FR-PERS-007`, `FR-PERS-008`, `FR-PERS-009`, `FR-PERS-010`, `FR-PERS-011`, `FR-PERS-012`, `FR-AUTH-008`, `FR-WEATHER-003` |
 | [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-OUT-002`, `DATA-OUT-003`, `DATA-GAR-005` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-OUT-001`, `ERR-OUT-002`, `ERR-WEATHER-001`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-004`, `UI-008`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PERF-002`, `NFR-SCA-001`, `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-003`, `BRULE-OUT-001`, `BRULE-OUT-002`, `BRULE-OUT-003`, `BRULE-OUT-004`, `BRULE-OUT-005`, `BRULE-OUT-006`, `BRULE-OUT-007`, `BRULE-OUT-008`, `BRULE-OUT-009`, `BRULE-PROF-001`, `BRULE-PERS-003`, `BRULE-PERS-004`, `BRULE-PERS-005` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-008`, `BR-009`, `BR-010`, `BR-011`, `BR-012`, `BR-013`, `BR-022`, `BR-024` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PERF-002`, `NFR-SCA-001`, `NFR-ACC-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-TEST-003`, `NFR-SCA-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-003`, `BRULE-OUT-001`, `BRULE-OUT-002`, `BRULE-OUT-003`, `BRULE-OUT-004`, `BRULE-OUT-005`, `BRULE-OUT-006`, `BRULE-OUT-007`, `BRULE-OUT-008`, `BRULE-OUT-009`, `BRULE-PROF-001`, `BRULE-PERS-003`, `BRULE-PERS-004`, `BRULE-PERS-005`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-008`, `BR-009`, `BR-010`, `BR-011`, `BR-012`, `BR-013`, `BR-022`, `BR-024`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-04`, `CAP-05`, `CAP-06` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
-- The initial recommendation target is p95 below 3 seconds with 100 confirmed garments and required context available (NFR-PERF-002); supported test environment/capacity remains subject to OSQ-013. Eligible inputs cannot be silently omitted to achieve latency.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
+- The first complete recommendation result targets p95 <3 seconds from accepted request with required context available and exactly 100 confirmed garments (NFR-PERF-002). SRS Sections 2.3/12.3 define reference devices/network, 5 warm-ups and ≥100 measured runs with legitimate slow runs retained. Eligible inputs cannot be omitted; 20-user functional integrity is separate from this p95 workload.
 - An exact garment-identity set is one outfit regardless of ordering. Soft personalization need not visibly change the result when no useful valid alternative exists.
 - Only UC-006 acquires external location/weather context. This use case consumes available context and has no separate supporting external actor.
+
+- Available weather obeys the inclusive 30-minute freshness and 2-second acquisition boundary. Missing weather skips only unavailable environmental filtering, preserving remaining hard rules; no direct external actor is added here.
 
 ## 14. Related Use Cases
 
@@ -180,10 +183,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-012` | Environmental freshness/availability acceptance remains at the SRS external-information gate; no new freshness threshold is invented. |
-| `OSQ-013` | Operating environment/capacity for the stated recommendation target remains governed by the SRS. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-011-get-outfit-recommendations.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

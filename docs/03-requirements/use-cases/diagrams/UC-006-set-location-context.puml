@@ -1,0 +1,21 @@
+@startuml
+
+' Local projection of ../use-case-diagram.puml; actor goals only.
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+title UC-006 - Set Location Context
+
+actor "User" as User
+actor "Device Location Service" as DeviceLocation
+actor "Weather Information Provider" as WeatherProvider
+
+rectangle "CapsuleAI" {
+    usecase "UC-006\nSet Location Context" as UC006
+}
+
+User -- UC006
+UC006 -- DeviceLocation
+UC006 -- WeatherProvider
+
+@enduml

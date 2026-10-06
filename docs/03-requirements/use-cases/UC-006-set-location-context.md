@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | Device Location Service; Weather Information Provider |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -39,7 +39,7 @@ The User chooses location setup/change or retries unavailable environmental cont
 2. CapsuleAI explains device-location purpose and offers device location, manual city/location or skipping optional setup.
 3. The User chooses device location and grants the needed permission.
 4. Device Location Service supplies available consented location information; CapsuleAI identifies the selected location.
-5. When available, Weather Information Provider supplies environmental information for that selected location; CapsuleAI presents the actual location/context used.
+5. Weather Information Provider supplies available information for the selected location; CapsuleAI presents the actual context/timestamp used, treating weather as current only at age ≤30 minutes and bounding any external-request assessment delay to 2 seconds.
 6. The User reviews the selected context and continues.
 7. CapsuleAI uses the accepted location/environmental context in relevant advice and reevaluates affected assessments or marks them outdated after a relevant change.
 
@@ -86,7 +86,7 @@ At Main Step 4:
 
 At Main Step 5:
 
-1. CapsuleAI identifies unavailable/unsupported environmental information and offers context review/retry.
+1. CapsuleAI attempts refresh of weather older than 30 minutes; without usable current information within the 2-second boundary, it identifies unavailable environment and offers context review/retry.
 2. The selected location is not confused with a known forecast; other evaluations may use disclosed reduced context while retaining remaining validity rules.
 
 ### E3 — Location update or communication outcome unconfirmed
@@ -122,6 +122,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-PROF-003` | Manual/device/absent context remains explicit and relevant changes invalidate affected advice. |
 | `BRULE-OUT-006` | Missing weather does not automatically reject every outfit; remaining validity still applies. |
@@ -136,17 +137,20 @@ The following references constrain this interaction; detailed policy remains in 
 | [Product Features](../../02-product/PRD.md) | `FEAT-PROF-002` |
 | [Software Requirements — Functional](../SRS.md) | `FR-WEATHER-001`, `FR-WEATHER-002`, `FR-WEATHER-003`, `FR-WEATHER-004`, `FR-WEATHER-005`, `FR-AUTH-008` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-WEATHER-001`, `ERR-DEP-001`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
-| [Software Requirements — Interfaces](../SRS.md) | `SI-002`, `HW-003`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-001`, `NFR-AVL-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-PROF-003`, `BRULE-OUT-006`, `BRULE-COV-006`, `BRULE-MULT-008` |
-| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-013`, `BR-014`, `BR-022` |
+| [Software Requirements — Interfaces](../SRS.md) | `SI-002`, `HW-003`, `COM-001`, `COM-002`, `COM-003` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-001`, `NFR-AVL-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-PROF-003`, `BRULE-OUT-006`, `BRULE-COV-006`, `BRULE-MULT-008`, `BRULE-AUTH-007` |
+| [Business Requirements](../../01-business/BRD.md) | `BR-007`, `BR-013`, `BR-014`, `BR-022`, `BR-021` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-01`, `CAP-05`, `CAP-07` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - Consent is specific to the optional device-location route; selecting a manual city does not require device access.
-- No weather provider, continuous background tracking, precision, freshness duration or retrieval schedule is prescribed.
+- Weather is current at age ≤30 minutes from its applicable retrieval/observation timestamp. Older weather is refreshed before current use; an external request may delay the assessment at most 2 seconds. Without usable current information by that boundary, disclose unavailable environment and use valid reduced context. No provider or background-tracking schedule is prescribed.
+
+- Weather Information Provider receives only the selected location necessary for its request, not unrelated wardrobe/profile/history. Device-location permission remains optional and purpose-specific.
+- The 30-minute freshness boundary is inclusive; unusable weather at the 2-second boundary affects environmental evidence, not authenticated entry or all outfits.
 
 ## 14. Related Use Cases
 
@@ -160,10 +164,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Location-data consent/access/sharing and retention details remain governed by final privacy/data acceptance. |
-| `OSQ-012` | Weather freshness, external outcome/time-limit criteria and unavailable-information classification remain at interface/failure acceptance. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-006-set-location-context.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

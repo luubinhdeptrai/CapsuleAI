@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -112,6 +112,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-WEAR-004` | Correct an individual event within its original local day and reject future time. |
 | `BRULE-WEAR-003` | Original local meaning persists; the valid corrected absolute timestamp governs elapsed time. |
@@ -131,16 +132,18 @@ The following references constrain this interaction; detailed policy remains in 
 | [Software Requirements — Data](../SRS.md) | `DATA-WEAR-002`, `DATA-WEAR-003`, `DATA-WEAR-004`, `DATA-HIST-001`, `DATA-INT-004` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-WEAR-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-003`, `UI-007`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-005`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-WEAR-004`, `BRULE-WEAR-003`, `BRULE-WEAR-006`, `BRULE-PERS-005`, `BRULE-PERS-006`, `BRULE-PERS-003`, `BRULE-HIST-002` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `LOC-005`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-WEAR-004`, `BRULE-WEAR-003`, `BRULE-WEAR-006`, `BRULE-PERS-005`, `BRULE-PERS-006`, `BRULE-PERS-003`, `BRULE-HIST-002`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-006`, `BR-011`, `BR-021`, `BR-022`, `BR-019` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-06`, `CAP-07` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
-- The original event-local calendar day is a correction boundary; travel does not reinterpret it. The resolved aging/day-group policy is not an open issue.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
+- The original event-local calendar day is a correction boundary; travel does not reinterpret it. Completed elapsed 24-hour periods govern age/recency; original event-local day governs grouping.
 - Only supported applicable corrections are offered. No new backdated-creation, future scheduling or cross-day relocation feature is introduced.
+
+- Corrected reports remain purpose-limited private history/evidence without MVP AI training. Correction does not recreate a removed report or grant unrestricted sharing permission.
 
 ## 14. Related Use Cases
 
@@ -153,9 +156,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Event privacy and final retention/deletion policy remain open; no physical data-deletion method is prescribed. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-016-correct-wear-event.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

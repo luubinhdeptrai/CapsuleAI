@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | External Shopping Destination |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -64,7 +64,7 @@ At Main Step 1:
 
 At Main Step 3:
 
-1. CapsuleAI explains a known unavailable destination and retains available candidate/wardrobe utility.
+1. CapsuleAI explains unavailable external navigation and retains otherwise valid candidate information, gap, multiplier, utility reasons and hypothetical previews where available; destination failure changes no utility/ownership/transaction state.
 2. The User may continue core advice or retry an available action where appropriate; no substitute merchant claim or purchase is invented.
 
 ### E2 — Handoff fails or outcome cannot be established
@@ -98,6 +98,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 | Rule ID | Relevance |
 | --- | --- |
+| `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-SHOP-002` | External navigation is optional and not purchase/ownership/wear proof; known failure retains available context. |
 | `BRULE-SHOP-001` | Only credible available destination information supports the optional action. |
 | `BRULE-SHOP-003` | Core utility remains independent of merchant/affiliate participation. |
@@ -110,21 +111,24 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-07` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-SHOP-002`, `FEAT-MET-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-SHOP-005`, `FR-SHOP-006`, `FR-SHOP-007`, `FR-SHOP-008`, `FR-MET-003`, `FR-MET-007`, `FR-AUTH-008` |
-| [Software Requirements — Data](../SRS.md) | `DATA-INT-003` |
+| [Software Requirements — Functional](../SRS.md) | `FR-SHOP-005`, `FR-SHOP-006`, `FR-SHOP-007`, `FR-SHOP-008`, `FR-MET-003`, `FR-MET-007`, `FR-AUTH-008`, `FR-SHOP-003`, `FR-MET-006` |
+| [Software Requirements — Data](../SRS.md) | `DATA-INT-003`, `DATA-ANL-003`, `DATA-RET-003` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-SHOP-003`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `SI-004`, `COM-003`, `UI-003`, `UI-009`, `COM-001`, `COM-002` |
-| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-002`, `NFR-AVL-001`, `NFR-INT-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002` |
-| [Business Rules](../business-rules.md) | `BRULE-SHOP-002`, `BRULE-SHOP-001`, `BRULE-SHOP-003`, `BRULE-MULT-008`, `BRULE-AUTH-001` |
+| [Software Requirements — Quality / Localization](../SRS.md) | `NFR-PRIV-002`, `NFR-AVL-001`, `NFR-INT-001`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001` |
+| [Business Rules](../business-rules.md) | `BRULE-SHOP-002`, `BRULE-SHOP-001`, `BRULE-SHOP-003`, `BRULE-MULT-008`, `BRULE-AUTH-001`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-018`, `BR-019`, `BR-021`, `BR-022`, `BR-024` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-10` |
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the initial Android/iOS product UI, explanations and recovery guidance are Vietnamese. Translated labels preserve canonical meanings. Core action outcomes and significant states must be understandable in the agreed accessibility scenarios.
+- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - UC-023 extends UC-021 only when an available external shopping link is offered and the User explicitly chooses it. There is no include or required commerce dependency.
 - No cart, checkout, payment, order, fulfillment, purchase verification or automatic garment ingestion is part of this goal.
 - Measurement separates link attempts/known opening from verified sales; measurement failure cannot block otherwise usable navigation/core advice.
+
+- Destination/link information is supported by explicit user evidence or an identifiable configured credible source. Applicable external commercial guidance retains source/time and follows 24-hour price/availability currentness; no retailer/stock/price/transaction/durability guarantee is made.
+- Only explicitly chosen navigation is handed off; unrelated private wardrobe/profile/history is not disclosed. Personal data is not sold or used for MVP model training. User-linked link-engagement measurement is deleted or aggregated/de-identified within 90 days.
 
 ## 14. Related Use Cases
 
@@ -136,10 +140,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction. The following existing downstream acceptance gates remain governed by the [SRS](../SRS.md); they are not resolved by this specification.
+No unresolved Use Case-specific issue currently blocks this interaction.
 
-| Issue | Relevant boundary |
-| --- | --- |
-| `OSQ-011` | Final external-navigation privacy/data-sharing policy remains at the SRS gate; navigation is not unrestricted data-sharing consent. |
-| `OSQ-012` | Credibility/freshness of candidate destination information remains governed by the SRS. |
-| `OSQ-014` | Representative-user tasks, usability criteria and Android/iOS assistive-interaction acceptance remain governed by the SRS; this specification does not select new conformance or quantified thresholds. |
+## 16. Focused Use Case Diagram
+
+[Focused Use Case Diagram](diagrams/UC-023-open-external-shopping-link.puml)
+
+This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.

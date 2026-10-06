@@ -1,0 +1,17 @@
+@startuml
+
+' Local projection of ../use-case-diagram.puml; actor goals only.
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+title UC-008 - View Wardrobe
+
+actor "User" as User
+
+rectangle "CapsuleAI" {
+    usecase "UC-008\nView Wardrobe" as UC008
+}
+
+User -- UC008
+
+@enduml
