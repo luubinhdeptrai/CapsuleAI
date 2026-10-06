@@ -1,0 +1,197 @@
+@startuml
+
+' CapsuleAI master MVP Use Case Diagram. Stable UC-* IDs are reserved for later specifications.
+' Review status: Baseline Draft; this diagram does not approve or change upstream scope.
+' Sources: BRD v0.3; PRD v0.2; SRS v0.2.1; Business Rules v0.1.1.
+' Process authority: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 10 and 40.
+' Packages group actor goals; they are not implementation modules.
+
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 15
+skinparam ranksep 35
+
+title CapsuleAI - MVP Use Case Diagram
+
+' Primary role; sign-in state is a precondition where applicable, not a separate Guest actor.
+actor "User" as User
+
+' Genuine external participants; deployment boundaries of internal capabilities are not actors.
+' Email Delivery Service: SI-003 and FR-AUTH-003/004; recovery only, no invented email verification.
+actor "Email Delivery\nService" as EmailDelivery
+' Device Location Service: HW-003 and FR-WEATHER-001/002; external OS location with consent.
+actor "Device Location\nService" as DeviceLocation
+' Weather Information Provider: SI-002 and FR-WEATHER-003/004; selected-context information.
+actor "Weather Information\nProvider" as WeatherProvider
+' External Shopping Destination: SI-004, FR-SHOP-005/006/007 and BRULE-SHOP-002.
+actor "External Shopping\nDestination" as ShoppingDestination
+
+rectangle "CapsuleAI" {
+
+    package "Account & Onboarding" {
+        ' UC-001 traces to JRN-01, FEAT-AUTH-001, FR-AUTH-001, BRULE-AUTH-002, BRULE-AUTH-003.
+        usecase "UC-001\nRegister Account" as UC001
+        ' UC-002 traces to JRN-01, FEAT-AUTH-001, FR-AUTH-002, FR-AUTH-005, BRULE-AUTH-001.
+        usecase "UC-002\nLog In" as UC002
+        ' UC-003 traces to JRN-01, FEAT-AUTH-001, FR-AUTH-007, BRULE-AUTH-006.
+        usecase "UC-003\nLog Out" as UC003
+        ' UC-004 traces to JRN-01, FEAT-AUTH-001, FR-AUTH-003, FR-AUTH-004, SI-003, BRULE-AUTH-004, BRULE-AUTH-005.
+        usecase "UC-004\nReset Password" as UC004
+        ' UC-005 traces to JRN-01, FEAT-PROF-001, FR-PROF-002, FR-PROF-003, FR-PROF-005, FR-PROF-006, FR-PROF-008, BRULE-PROF-001, BRULE-PROF-002.
+        usecase "UC-005\nUpdate Personalization Profile" as UC005
+        ' UC-006 traces to JRN-01, JRN-04, FEAT-PROF-002, FR-WEATHER-001, FR-WEATHER-002, FR-WEATHER-003, SI-002, HW-003, BRULE-PROF-003, BRULE-OUT-006.
+        usecase "UC-006\nSet Location Context" as UC006
+    }
+
+    package "Digital Wardrobe" {
+        ' UC-007 traces to JRN-02, FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001, FR-AI-001, FR-AI-002, FR-AI-003, FR-AI-007, FR-AI-008, FR-GAR-003, FR-GAR-004, BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003.
+        usecase "UC-007\nAdd Garment" as UC007
+        ' UC-008 traces to JRN-03, FEAT-WAR-001, FEAT-WAR-003, FEAT-GAR-001, FR-WAR-001, FR-WAR-002, FR-WAR-007, BRULE-GAR-003, BRULE-HIST-001.
+        usecase "UC-008\nView Wardrobe" as UC008
+        ' UC-009 traces to JRN-03, FEAT-WAR-002, FEAT-GAR-001, FR-WAR-003, FR-WAR-006, FR-GAR-011, BRULE-GAR-001, BRULE-GAR-009.
+        usecase "UC-009\nEdit Garment" as UC009
+        ' UC-010 traces to JRN-03, FEAT-WAR-002, FR-WAR-004, FR-WAR-005, BRULE-GAR-009, BRULE-HIST-002.
+        usecase "UC-010\nRemove Garment" as UC010
+    }
+
+    package "Outfit Recommendation & Personalization" {
+        ' UC-011 traces to JRN-04, FEAT-OUT-001, FEAT-OUT-002, FEAT-PERS-003, FR-OUT-001, FR-OUT-003, FR-OUT-005, FR-OUT-010, FR-OUT-011, BRULE-OUT-008, BRULE-OUT-009, BRULE-PERS-003, BRULE-PERS-004.
+        usecase "UC-011\nGet Outfit Recommendations" as UC011
+        ' UC-012 traces to JRN-04, FEAT-OUT-003, FR-OUT-014, FR-OUT-015, FR-OUT-016, FR-OUT-017, BRULE-OUT-010.
+        usecase "UC-012\nShuffle Garment Slot" as UC012
+        ' UC-013 traces to JRN-04, JRN-05, FEAT-PERS-001, FEAT-PERS-003, FR-PERS-001, FR-PERS-002, FR-PERS-003, FR-PERS-005, BRULE-PERS-001, BRULE-PERS-006.
+        usecase "UC-013\nProvide Outfit Feedback" as UC013
+        ' UC-014 traces to JRN-04, JRN-05, FEAT-PERS-002, FEAT-PERS-003, FR-WEAR-001, FR-WEAR-002, FR-WEAR-003, FR-WEAR-009, FR-WEAR-011, BRULE-WEAR-001, BRULE-WEAR-002, BRULE-PERS-005.
+        usecase "UC-014\nRecord Wear Event" as UC014
+    }
+
+    package "Wear History" {
+        ' UC-015 traces to JRN-05, FEAT-ANL-001, FEAT-PERS-002, FR-ANL-001, FR-ANL-002, FR-ANL-006, BRULE-WEAR-003, BRULE-HIST-002.
+        usecase "UC-015\nView Wear History" as UC015
+        ' UC-016 traces to JRN-05, FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003, FR-WEAR-006, FR-WEAR-010, FR-ANL-007, BRULE-WEAR-004, BRULE-WEAR-006, BRULE-PERS-006.
+        usecase "UC-016\nCorrect Wear Event" as UC016
+        ' UC-017 traces to JRN-05, FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003, FR-WEAR-007, FR-WEAR-008, FR-WEAR-010, BRULE-WEAR-005, BRULE-WEAR-006, BRULE-PERS-006.
+        usecase "UC-017\nRemove Wear Event" as UC017
+    }
+
+    package "Wardrobe Intelligence" {
+        ' UC-018 traces to JRN-05, FEAT-ANL-001, FR-ANL-003, FR-ANL-004, FR-ANL-005, BRULE-HIST-001, BRULE-HIST-002.
+        usecase "UC-018\nView Wardrobe Utilization" as UC018
+        ' UC-019 traces to JRN-06, FEAT-ANL-002, FR-ANL-008, FR-ANL-009, FR-ANL-011, FR-ANL-015, BRULE-COV-001, BRULE-COV-004, BRULE-COV-005.
+        usecase "UC-019\nView Wardrobe Coverage" as UC019
+        ' UC-020 traces to JRN-06, FEAT-GAP-001, FR-GAP-001, FR-GAP-002, FR-GAP-004, BRULE-GAP-001, BRULE-GAP-002.
+        usecase "UC-020\nView Wardrobe Gaps" as UC020
+    }
+
+    package "Strategic Shopping" {
+        ' UC-021 traces to JRN-07, FEAT-SHOP-001, FR-SHOP-001, FR-SHOP-002, FR-SHOP-003, FR-SHOP-004, BRULE-SHOP-001, BRULE-SHOP-003.
+        usecase "UC-021\nView Shopping Recommendations" as UC021
+        ' UC-022 traces to JRN-07, FEAT-MULT-001, FEAT-SHOP-001, FR-MULT-001, FR-MULT-002, FR-MULT-003, FR-MULT-005, FR-MULT-006, FR-MULT-007, FR-MULT-008, BRULE-MULT-001, BRULE-MULT-003, BRULE-MULT-004, BRULE-MULT-008.
+        usecase "UC-022\nEvaluate Candidate Garment" as UC022
+        ' UC-023 traces to JRN-07, FEAT-SHOP-002, FR-SHOP-005, FR-SHOP-006, FR-SHOP-007, SI-004, BRULE-SHOP-002, BRULE-SHOP-003.
+        usecase "UC-023\nOpen External Shopping Link" as UC023
+    }
+}
+
+' Neutral solid associations identify participation, not ordering or mandatory dependency success.
+User -- UC001
+User -- UC002
+User -- UC003
+User -- UC004
+User -- UC005
+User -- UC006
+User -- UC007
+User -- UC008
+User -- UC009
+User -- UC010
+User -- UC011
+User -- UC012
+User -- UC013
+User -- UC014
+User -- UC015
+User -- UC016
+User -- UC017
+User -- UC018
+User -- UC019
+User -- UC020
+User -- UC021
+User -- UC022
+User -- UC023
+
+UC004 -- EmailDelivery
+UC006 -- DeviceLocation
+UC006 -- WeatherProvider
+UC023 -- ShoppingDestination
+
+' Location/context acquisition belongs to UC-006; other assessments consume the available context.
+' These associations do not mandate a new provider request for each assessment.
+
+' Optional handoff at the external-link action on candidate advice/detail.
+' UC-021 remains complete without navigating; the arrow points from extension to base.
+' norank affects layout only; UC-023 remains the optional extension and UC-021 the base.
+UC023 .[norank].> UC021 : <<extend>>
+
+' No include: confirmation, details, previews and validity/ranking remain behavior within their goals.
+' No generalization: assisted/manual entry are alternatives of UC-007, not separate actor goals.
+
+
+
+legend bottom
+  Add Garment: image-assisted or imageless manual entry; user review/correction and confirmation establish authority.
+  Saveable does not imply Recommendation-Ready. Garment removal preserves understandable history.
+  Candidate evaluation: Wardrobe Multiplier and hypothetical previews; no new ownership or Wear Event.
+  Device location/weather are optional; manual location remains available and reduced-context advice continues where evaluable.
+  Feedback differs from reported wear. Available shopping links open only by user choice; purchases happen outside CapsuleAI.
+endlegend
+
+' Embedded-goal boundaries for later UC specifications:
+' UC-004 covers request and completion of email reset; delivery failure never becomes completed reset.
+' UC-005 includes initial setup, revision/removal of optional context, styles and common need priorities.
+' UC-006 includes manual/device choice, optional weather retrieval, context change/retry and skip.
+' UC-007 includes camera/gallery or imageless manual input, proposals where usable, correction, confirmation.
+' UC-008 includes browse/search/filter/reset, garment detail, readiness and reported-use information.
+' UC-009 requires confirmed supported edits; UC-010 requires deliberate removal confirmation.
+' UC-011 includes current request occasion/style, valid owned choices and outfit detail/reasoning.
+' Hard validity precedes personalized ranking inside UC-011; neither is a standalone use case.
+' UC-012 preserves all non-shuffled constituents and request context; it creates no feedback or wear.
+' UC-013 covers Like/Dislike, revision and clearing; UC-014 records a separate intentional Wear Event.
+' UC-015 preserves original event-local history and labels removed garments in historical snapshots.
+' UC-016/017 change a specific report, recomputing history/evidence without deleting outfits/garments.
+' UC-018 shows reported utilization, not verified physical wear or fabricated no-history statistics.
+' UC-019/020 retain assessment context and unavailable/insufficient/outdated/no-gap distinctions.
+' UC-020 describes underserved capabilities before possible candidate characteristics.
+' UC-021 includes candidate attributes, gap/utility reasons and credible optional commercial information.
+' UC-022 includes Multiplier meaning/context, newly enabled previews and all five evaluation states.
+' UC-022 evaluates a candidate from documented gap/advice; no candidate capture/import goal is introduced.
+' Viewing candidates/previews or opening links creates no owned garment, verified purchase or Wear Event.
+' Exactness, evidence aging and other domain constraints stay in Business Rules and later UC flows.
+' ORQ-001 is resolved. OSQ-011..OSQ-014 retain their existing downstream gates; no parameter is invented.
+
+' MVP FEAT coverage review: direct goals, embedded behavior, or intentionally cross-cutting.
+' FEAT-AUTH-001 | direct | UC-001, UC-002, UC-003, UC-004 | Registration, login, logout and recovery; session continuity is embedded access behavior.
+' FEAT-PROF-001 | direct | UC-005 | Set/update style, common need priorities and optional personal context; setup may be skipped and resumed.
+' FEAT-PROF-002 | direct | UC-006 | Permission-based/manual location, retry and environmental context; used by recommendations and assessments.
+' FEAT-AI-001 | embedded | UC-007 | Camera/gallery entry and AI preview are the assisted alternative, with manual fallback.
+' FEAT-AI-002 | embedded | UC-007 | Imageless manual entry plus user review, correction and explicit confirmation.
+' FEAT-GAR-001 | embedded | UC-007, UC-008, UC-009 | Rich descriptors, uncertainty, authority and evaluation-specific readiness.
+' FEAT-WAR-001 | direct | UC-008 | Browse wardrobe and inspect garment details, including imageless entries.
+' FEAT-WAR-002 | direct | UC-009, UC-010 | Confirmed edit/remove; removal affects active ownership without erasing history.
+' FEAT-WAR-003 | embedded | UC-008 | Search, filter, inspect and reset browsing conditions.
+' FEAT-OUT-001 | direct | UC-011 | Context selection and personalized valid outfit choices; hard validity precedes ranking.
+' FEAT-OUT-002 | embedded | UC-011 | Inspect outfit garments, assessment context, compatibility and ranking reasons.
+' FEAT-OUT-003 | direct | UC-012 | Replace one slot with a compatible owned garment while holding other constituents fixed.
+' FEAT-PERS-001 | direct | UC-013 | Like/Dislike, revise/clear feedback; no implicit Wear Event.
+' FEAT-PERS-002 | direct | UC-014, UC-015, UC-016, UC-017 | Intentional Wear recording and access/correction/removal of specific events.
+' FEAT-PERS-003 | embedded | UC-011, UC-013, UC-014, UC-016, UC-017 | Behavioral ranking and evidence recalculation; not a separate calculation goal.
+' FEAT-ANL-001 | direct | UC-015, UC-016, UC-017, UC-018 | Recorded history and utilization with effective correction/removal and historical snapshots.
+' FEAT-ANL-002 | direct | UC-019 | Contextual Coverage Score and insufficient/outdated states.
+' FEAT-GAP-001 | direct | UC-020 | Evidence-backed underserved capabilities, not compulsory products.
+' FEAT-MULT-001 | embedded | UC-022 | Wardrobe Multiplier +N, context/limitations and newly enabled hypothetical outfit previews.
+' FEAT-SHOP-001 | direct | UC-021, UC-022 | Candidate advice/details and utility review independent of commercial data.
+' FEAT-SHOP-002 | direct | UC-023 | Optional external navigation and return/failure recovery; no transaction evidence.
+' FEAT-MET-001 | cross-cutting | no standalone UC | Privacy-respecting measurement of specified interactions; no actor goal or analytics actor.
+' FEAT-MET-001 sources: FR-MET-001..007; PRD Section 24. Measurement does not create a human/service actor.
+
+@enduml
