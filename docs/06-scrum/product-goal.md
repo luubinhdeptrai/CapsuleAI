@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Scrum Product Goal |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Owner / Accountability | Product Owner |
@@ -20,7 +20,7 @@ CapsuleAI primarily serves the **Indecisive Professional**, whose outfit choices
 
 ## 3. Product Goal
 
-Establish a trustworthy mobile wardrobe-intelligence experience for Indecisive Professionals in Vietnam that reduces daily outfit decision effort, increases useful wear of owned garments, and supports more informed wardrobe additions. An AI-assisted, user-confirmed digital wardrobe and learning from explicit feedback and reported wear support valid personalized outfit choices; explainable Wardrobe Coverage, Gaps, and Wardrobe Multiplier help users judge additions before optional external shopping.
+Enable Indecisive Professionals in Vietnam to understand their wardrobe with confidence, make daily outfit decisions with less effort, and gain more useful wear from owned garments. CapsuleAI connects trustworthy wardrobe understanding, personalized guidance that learns from use, and explainable wardrobe intelligence in one mobile experience so users can recognize underserved needs and judge potential additions by the new valid outfit combinations they unlock.
 
 ## 4. Desired Product Outcomes
 
@@ -44,12 +44,11 @@ Explicit Like/Dislike feedback and user-reported Wear Events inform lightweight 
 
 ## 6. Goal Boundaries
 
-- The current horizon is a private, mobile-first MVP for Vietnam, on Android/iOS with a Vietnamese interface. Supported garment categories are Top, Bottom, Outerwear, and Footwear.
-- AI assists entry; user confirmation/correction remains authoritative. Manual entry preserves continuity. A Saveable garment may still lack Recommendation-Ready information for applicable decisions.
-- Recommendations use current owned garments, with hard validity before soft personalized ranking. Historical wear remains distinct from current ownership; Wear Events are user reports separate from Like/Dislike.
-- Coverage assesses one Personalized Everyday Capsule using relevant needs, style, and climate. Gaps describe underserved capabilities. Insufficient information is disclosed; Incomplete and Unavailable evaluations remain distinct from Evaluated Zero, and changed assessments are refreshed or marked Outdated.
-- Candidates remain hypothetical until separately added and confirmed as owned. Wardrobe Multiplier is the incremental number of unique valid outfits enabled on a comparable evaluation basis. Shopping remains advisory and optionally external; core utility is independent of purchases, links, retailer contracts, and affiliates.
-- Existing privacy and user-control protections apply. Body/gender details and device-location permission remain optional, with manual location available. MVP personal data is not used for AI training. Native marketplace, cart, checkout, payment, orders/fulfillment, social networking/public wardrobe sharing, and AR/3D are outside this goal.
+- The current horizon is a private, mobile-first wardrobe-intelligence MVP for Vietnam, centered on the user's owned wardrobe, with existing privacy and user-control protections.
+- AI assists wardrobe understanding; user-confirmed or corrected information remains authoritative, and manual entry preserves continuity.
+- Outfit recommendations and wardrobe insights explain their basis and limitations, disclosing insufficient evidence without fabricated certainty.
+- Strategic Shopping remains advisory, with optional external navigation. Core wardrobe value is independent of purchases, shopping links, retailer contracts, and affiliates; native commerce is outside this goal.
+- Social networking, public wardrobe sharing, and AR/3D remain outside the current horizon.
 
 ## 7. Evidence of Progress
 
