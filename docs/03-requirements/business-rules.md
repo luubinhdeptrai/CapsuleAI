@@ -4,7 +4,7 @@
 
 | Field | Value |
 |---|---|
-| Version / Status | 0.1 / Baseline Draft |
+| Version / Status | 0.1.1 / Baseline Draft |
 | Last Updated | 2026-10-06 |
 | Primary Owner | Business Analyst / Product Owner |
 | Reviewers | Engineering / QA |
@@ -17,6 +17,7 @@
 | Version | Date | Revision |
 |---|---|---|
 | 0.1 | 2026-10-06 | Initial extraction of reusable MVP domain rules, vocabularies, formulas, precedence, decision tables, boundary cases, and source traceability. One temporal-precision clarification is recorded in Section 17; upstream documents are unchanged. |
+| 0.1.1 | 2026-10-06 | Resolved ORQ-001 by defining completed elapsed 24-hour periods for behavioral age/recency and the latest surviving Wear Event as the normalized Wear-group evidence anchor. No other rule semantics changed. |
 
 ### 1.1 Purpose
 
@@ -32,7 +33,7 @@ Observable interaction sequences and quality acceptance remain in the SRS. This 
 
 All four current source documents listed in document control were read. Business intent follows the BRD; product behavior follows the PRD; software behavior and resolved software decisions follow the SRS. The workflow governs artifact ownership, order, and change propagation. Other current material and historical proposals provide context only when consistent with these sources; illustrative workflow rules do not override current CapsuleAI domain decisions.
 
-Each rule cites defining SRS requirements. Section 16 maps those sources to FEAT-*, BR-*, and relevant CAP-* identifiers. OSQ-001–OSQ-010 remain resolved; OSQ-011–OSQ-014 remain open in SRS Section 12.2. No BRD/PRD/SRS contradiction was identified. A narrow missing temporal interpretation is recorded rather than assigned a new policy.
+Each rule cites defining SRS requirements. Section 16 maps those sources to FEAT-*, BR-*, and relevant CAP-* identifiers. OSQ-001–OSQ-010 remain resolved; OSQ-011–OSQ-014 remain open in SRS Section 12.2. No BRD/PRD/SRS contradiction was identified. ORQ-001 (Resolved) supplies the elapsed-time interpretation and normalized Wear-group anchor while preserving the SRS's contribution values, age bands, and event semantics.
 
 ### 1.4 Rule Identification Scheme
 
@@ -47,7 +48,8 @@ ORQ-* identifies a local rule clarification, not a new requirement or a replacem
 - **Unknown / unavailable** is absence of usable evidence, not a numeric zero or a fabricated compatibility value. UNKNOWN is an explicit vocabulary value only where defined.
 - **Current** denotes the active assessment basis. Historical snapshots and hypothetical candidates do not establish current ownership.
 - Decision tables use **Yes**, **No**, and **—** (irrelevant to that row). Required predicates must be established from authoritative or justified information; an unestablished required check cannot be treated as a successful check.
-- Examples are controlled fixtures, not universal wardrobe targets or product claims. Integer-day aging examples use the SRS's stated bands; fractional-day classification and normalized-group age interpretation remain ORQ-001.
+- **CompletedElapsedDays** counts fully elapsed 24-hour periods between the absolute EvaluationInstant and the applicable EvidenceAnchorInstant, as defined in BRULE-PERS-003. Original event-local calendar dates govern Wear grouping/history; absolute timestamps govern behavioral age and elapsed-day recency. Device timezone changes do not alter elapsed age.
+- Examples are controlled fixtures, not universal wardrobe targets or product claims. Temporal examples use completed elapsed days and the latest surviving accepted Wear Event anchor for a normalized group.
 - Source columns identify specification coverage, not implemented behavior or passed verification. Local rule sources and the consolidated traceability matrix must stay synchronized.
 
 ### 1.6 Rule Precedence
@@ -413,16 +415,22 @@ When environmental hard filtering applies, confirmed suitability must support th
 
 ### BRULE-PERS-003 — Ninety-Day Ranking Influence
 
-**Rule:** Effective behavioral evidence uses the most recent 90-day ranking window and the following influence:
+**Rule:** Behavioral evidence age is measured in completed elapsed 24-hour periods:
 
-| Behavioral Evidence Age | Ranking Influence |
+`CompletedElapsedDays = floor((EvaluationInstant - EvidenceAnchorInstant) / 24 hours)`
+
+EvaluationInstant is the absolute instant of personalization/evidence evaluation. EvidenceAnchorInstant is the applicable absolute evidence timestamp: the existing action-time information for effective Like/Dislike evidence, or the latest surviving accepted Wear Event timestamp for a normalized group under BRULE-PERS-005. Calculate age from absolute instants, never from current device calendar dates, displayed local-date differences, or the user's current timezone after travel. At the same EvaluationInstant, changing timezone cannot make existing evidence older or newer.
+
+The most recent 90-day behavioral ranking window uses these completed-day bands:
+
+| Behavioral Evidence Age (CompletedElapsedDays) | Ranking Influence |
 |---|---|
 | 0–30 days | 100% |
 | 31–60 days | 50% |
 | 61–90 days | 25% |
 | >90 days | 0% |
 
-Apply aging to effective contributions without deleting historical events or automatically clearing Like/Dislike state. Historical retention remains OSQ-011. ORQ-001 records the missing fractional-day interpretation and normalized Wear-group age anchor; it does not change these bands or percentages.
+For example, 30 days 23 hours 59 minutes elapsed is 30 completed days with 100% influence; exactly 31 days is 31 completed days with 50%; exactly 61 days gives 25%; exactly 91 days gives 0%. Apply aging to effective contributions without deleting historical events or automatically clearing Like/Dislike state. Historical retention remains OSQ-011.
 
 **Applies To:** feedback and normalized Wear evidence used in ranking.
 
@@ -432,16 +440,20 @@ Apply aging to effective contributions without deleting historical events or aut
 
 ### BRULE-PERS-004 — Soft Recency and Overlooked-Garment Adjustment
 
-**Rule:** Use the latest effective reported wear of the exact outfit for the stated recency situation:
+**Rule:** Exact-outfit recency uses LatestEffectiveWearInstant, the absolute timestamp of the latest effective accepted Wear Event for that exact outfit, across its surviving normalization groups:
+
+`CompletedElapsedDays = floor((EvaluationInstant - LatestEffectiveWearInstant) / 24 hours)`
+
+Apply the existing recency and optional overlooked-garment boundaries using completed elapsed days:
 
 | Recency / Diversity Situation | Ranking Effect |
 |---|---|
-| Exact outfit reported worn within the last 2 days | Strong soft diversity penalty. |
-| Exact outfit reported worn 3–7 days ago | Mild soft diversity penalty. |
-| Exact outfit last reported worn >7 days ago | No recency penalty. |
-| Recommendation-Ready garment with no recorded wear for ≥14 days | May receive a small soft utilization/diversity boost. |
+| Exact-outfit recency of 0–2 completed elapsed days | Strong soft diversity penalty. |
+| Exact-outfit recency of 3–7 completed elapsed days | Mild soft diversity penalty. |
+| Exact-outfit recency of >7 completed elapsed days | No recency penalty. |
+| Recommendation-Ready garment with no recorded wear for ≥14 completed elapsed days | May receive a small soft utilization/diversity boost. |
 
-Penalties never invalidate an outfit. The optional boost cannot override hard validity, strong explicit negative feedback, or current context relevance. No extra numerical penalty/boost magnitude is specified; the fractional-day convention is part of ORQ-001.
+The ≥14-day boundary uses the existing applicable evidence anchor. If the sources/evidence do not establish that anchor, do not invent a start date or treat garment creation as an assumed origin. This elapsed-day interpretation introduces no new garment-lifecycle event. Penalties never invalidate an outfit. The optional boost cannot override hard validity, strong explicit negative feedback, or current context relevance. No extra numerical penalty/boost magnitude is specified.
 
 **Applies To:** personalized ordering and recorded-utilization diversity.
 
@@ -451,7 +463,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-PERS-005 — Exact-Outfit / Event-Local-Day Wear Cap
 
-**Rule:** For the same user, exact outfit identity, and original event-local calendar day, legitimate Wear Events supply at most one Wear-based preference increment before time decay. This is a ranking normalization boundary, not event identity: separate explicit reports remain separate historical events. Different outfits/days are not collapsed. Do not assign an unsupported timestamp-selection convention to the normalized increment; see ORQ-001.
+**Rule:** For the same user, exact outfit identity, and original event-local calendar date, surviving accepted Wear Events form one normalization group and supply at most one Wear-based preference increment (+2) before time decay. Grouping is independent of elapsed-time aging: its EvidenceAnchorInstant is the absolute timestamp of the latest surviving accepted Wear Event in that group, using each event's currently accepted timestamp after any valid correction. This is a ranking normalization boundary, not event identity; separate explicit reports remain separate historical events, and different outfits/dates are not collapsed. If no accepted event survives, the group's Wear contribution no longer exists.
 
 **Applies To:** Wear-based ranking and prevention of repetition inflation.
 
@@ -459,7 +471,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-PERS-006 — Recalculation of Effective Evidence
 
-**Rule:** Accepted feedback revision/clearing, Wear correction/removal, or relevant context revision changes effective evidence. Reapply current feedback state, surviving events, outfit/day normalization, aging, and recency as applicable. Removing one report does not remove a surviving same-outfit/day contribution; removing the last removes that group's Wear contribution. Historical event count and normalized ranking evidence remain different quantities.
+**Rule:** Accepted feedback revision/clearing, Wear correction/removal, or relevant context revision changes effective evidence. Reapply current feedback state and surviving events. For each affected outfit/original-local-date group, recompute the latest surviving accepted absolute Wear timestamp, then recalculate its completed elapsed-day age and applicable decay. Recalculate exact-outfit recency from its latest effective accepted Wear Event. A valid timestamp or outfit correction may change a group's membership or anchor; removing its latest event moves the anchor to the latest remaining event. If none survives, remove that group's Wear contribution. Unrelated history remains unchanged; historical event count and normalized ranking evidence remain different quantities.
 
 **Applies To:** feedback/event revision, utilization and subsequent recommendations.
 
@@ -491,7 +503,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-WEAR-003 — Original Event-Local Time
 
-**Rule:** Each event retains an absolute timestamp, associated timezone or UTC offset, original local date/time, and available occasion/context. Later device-timezone changes during travel must not automatically re-date the event. Missing optional context is not fabricated; present history using the original event-local basis.
+**Rule:** Each event retains an absolute timestamp, associated timezone or UTC offset, original local date/time, and available occasion/context. Later device-timezone changes during travel must not automatically re-date the event. Missing optional context is not fabricated; present history using the original event-local basis. Original event-local date/time serves history and same-day normalization grouping; absolute timestamps serve elapsed behavioral age, decay, and elapsed-day recency. Travel changes neither the preserved grouping date nor age calculated at the same absolute EvaluationInstant.
 
 **Applies To:** Wear reports, history grouping, time interpretation.
 
@@ -501,7 +513,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-WEAR-004 — Bounded Individual Correction
 
-**Rule:** Correction targets an existing individual report's applicable outfit, occasion/context, and local time. Corrected time must not be future and must stay within the event's original local calendar day. Accepted corrections preserve that original event-local context. Invalid, failed, or canceled corrections leave the last accepted event unchanged; no unrelated record is changed.
+**Rule:** Correction targets an existing individual report's applicable outfit, occasion/context, and local time. Corrected time must not be future and must stay within the event's original local calendar day. Accepted corrections preserve that original event-local context. Invalid, failed, or canceled corrections leave the last accepted event unchanged; no unrelated record is changed. A valid accepted timestamp correction requires recomputing the affected group's latest surviving absolute anchor and applicable aging/recency under BRULE-PERS-006.
 
 **Applies To:** event-specific history correction.
 
@@ -511,7 +523,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-WEAR-005 — Individual Event Removal
 
-**Rule:** Accepted removal excludes the specific report from effective history, utilization, recency, and signals. It does not delete the underlying Outfit, Garments, or unrelated Wear Events. Canceling or failing a requested removal does not apply it. Physical retention/deletion handling remains governed by OSQ-011, without restoring the removed event to effective use.
+**Rule:** Accepted removal excludes the specific report from effective history, utilization, recency, and signals. It does not delete the underlying Outfit, Garments, or unrelated Wear Events. Canceling or failing a requested removal does not apply it. Physical retention/deletion handling remains governed by OSQ-011, without restoring the removed event to effective use. Recompute a surviving group's latest accepted absolute anchor after removal; if no event survives, its Wear contribution is removed, as defined in BRULE-PERS-006.
 
 **Applies To:** event-specific removal and canceled mutations.
 
@@ -521,7 +533,7 @@ Penalties never invalidate an outfit. The optional boost cannot override hard va
 
 ### BRULE-WEAR-006 — Accepted Report Effects
 
-**Rule:** Accepted creation/correction/removal updates applicable history, utilization, recency, and normalized aged evidence for the affected report/combination. Recompute surviving outfit/day contributions without changing unrelated events. Record meanings distinguish creation, correction, and removal; retries must not inflate accepted event counts.
+**Rule:** Accepted creation/correction/removal updates applicable history, utilization, recency, and normalized aged evidence for the affected report/combination. Recompute surviving outfit/day contributions and their latest accepted absolute anchors, then completed elapsed-day age, decay, and exact-outfit recency under BRULE-PERS-006, without changing unrelated events. Record meanings distinguish creation, correction, and removal; retries must not inflate accepted event counts.
 
 **Applies To:** history, personalization and interaction measurement.
 
@@ -867,15 +879,16 @@ No fixed TTL or output from incomplete work may replace the evidence predicates.
 
 ### 14.5 Logical Wear Actions and Effective Ranking
 
-These outcomes assume accepted actions unless a row states otherwise. The +2 cap is before aging; its age anchor remains ORQ-001.
+These outcomes assume accepted actions unless a row states otherwise. Each original-event-local-date group contributes at most one +2 increment before aging. Its age anchor is the latest surviving accepted Wear Event's absolute timestamp; correction/removal recomputes that anchor, completed elapsed-day age, and applicable decay/recency.
 
 | Situation | Effective History / State | Wear Preference Consequence |
 |---|---|---|
-| New explicit valid Wear action | One new report | Eligible for the outfit/day increment |
+| New explicit valid Wear action | One new report | Eligible for the outfit/day increment; anchor on the latest surviving accepted absolute timestamp |
 | Retry/reprocessing of the same logical action | No additional report | No additional increment |
-| New explicit same-outfit report in the same original local day | Separate legitimate report | Still at most one +2 increment for that outfit/day |
+| New explicit same-outfit report in the same original local day | Separate legitimate report | Still at most one +2 increment; use the latest surviving accepted timestamp for aging |
 | Different exact outfit or original local day | Separate report and group | Its own applicable increment before decay |
-| Remove one of multiple surviving same-outfit/day reports | Only that report removed from effective history | Recompute; surviving group can still contribute once |
+| Remove one of multiple surviving same-outfit/day reports | Only that report removed from effective history | Recompute the latest surviving absolute anchor and age; surviving group can still contribute once |
+| Valid accepted timestamp correction | The existing report retains its original local calendar day; no extra report | Recompute the group's latest surviving absolute anchor and applicable decay/recency |
 | Remove the final report for that outfit/day | No surviving effective report in that group | That group's Wear contribution is removed |
 | Like/Dislike, Shuffle, preview or external navigation | No Wear report solely from that action | No Wear increment solely from that action |
 | Invalid, failed, or canceled report mutation | Last accepted state preserved | No unaccepted mutation treated as effective |
@@ -884,9 +897,9 @@ These outcomes assume accepted actions unless a row states otherwise. The +2 cap
 
 ### 14.6 Isolated Evidence Aging Boundaries
 
-For a controlled single effective contribution at the stated integer-day age, the table gives base contribution after the SRS influence percentage. It is not a complete ranking score or an interpretation of fractional days.
+Evidence age means completed elapsed 24-hour periods calculated from absolute EvaluationInstant and EvidenceAnchorInstant under BRULE-PERS-003. For a controlled single effective contribution, the table gives its base contribution after the unchanged SRS influence percentage; it is not a complete ranking score. A normalized Wear contribution uses the latest surviving accepted event anchor.
 
-| Evidence Age | Influence | Like +1 | Dislike −2 | One Wear Increment +2 |
+| Evidence Age (CompletedElapsedDays) | Influence | Like +1 | Dislike −2 | One Wear Increment +2 |
 |---|---|---|---|---|
 | 30 days | 100% | +1 | −2 | +2 |
 | 31 days | 50% | +0.5 | −1 | +1 |
@@ -895,9 +908,9 @@ For a controlled single effective contribution at the stated integer-day age, th
 | 90 days | 25% | +0.25 | −0.5 | +0.5 |
 | 91 days | 0% | 0 | 0 | 0 |
 
-Zero influence at 91 days does not clear feedback state or delete retained history.
+Zero influence at 91 completed elapsed days does not clear feedback state or delete retained history.
 
-**Rules:** BRULE-PERS-001–BRULE-PERS-003, BRULE-HIST-003; ORQ-001 limits sub-day interpretation.
+**Rules:** BRULE-PERS-001–BRULE-PERS-003, BRULE-PERS-005, BRULE-HIST-003.
 
 ## 15. Boundary and Edge Cases
 
@@ -916,14 +929,15 @@ Fixtures specify the relevant facts only; other applicable validity predicates a
 | B09 — Weighted formula | Formula-only inputs: Everyday weight 3 with 1 valid outfit; Work weight 1 with ≥3; all other weights 0 | Need ratios 1/3 and 1; CoverageScore = 50. Zero-priority needs contribute nothing | BRULE-COV-002–BRULE-COV-004 |
 | B10 — Intentional same-day repeat | Two new accepted intentions for the same valid exact outfit on one original event-local day | Two historical reports; at most one +2 Wear increment before decay, not +4 | BRULE-WEAR-001, BRULE-WEAR-002, BRULE-PERS-005 |
 | B11 — Retry | One accepted Wear action delivered/reprocessed again | Still one event; no inflated accepted-event metric or additional Wear increment | BRULE-WEAR-002, BRULE-WEAR-006 |
-| B12 — Travel | Event originally reported at 23:50 in UTC+07:00; later device timezone changes to UTC+10:00 | Preserve the absolute timestamp and original local day/time; current device date does not re-date the historical report | BRULE-WEAR-003, BRULE-HIST-002 |
-| B13 — Correction limits | Attempt a next-original-day or future-time correction; separate valid same-original-day, non-future correction | Invalid attempt leaves accepted event unchanged; valid correction updates only the targeted report and relevant effective evidence | BRULE-WEAR-004, BRULE-WEAR-006 |
-| B14 — Removal with survivor | Remove one of two same-outfit/day reports, then the last surviving report | First removal retains the surviving group's cap; last removal eliminates its Wear evidence. Underlying Outfit/Garments and unrelated reports remain | BRULE-WEAR-005, BRULE-PERS-006 |
+| B12 — Travel | Event originally reported at 23:50 in UTC+07:00; later device timezone changes to UTC+10:00, with the same absolute EvaluationInstant | Preserve the absolute timestamp and original local day/time; neither historical grouping nor elapsed evidence age/recency changes solely because of the device timezone | BRULE-WEAR-003, BRULE-HIST-002, BRULE-PERS-003–BRULE-PERS-004 |
+| B13 — Correction limits / anchor | Attempt a next-original-day or future-time correction. Valid variant: same-group events at 08:00 and 20:00 in one original timezone; correct 20:00 to 10:00 within the original day and not in the future | Invalid attempt leaves accepted state unchanged. Valid variant keeps two reports; latest absolute group anchor becomes the corrected 10:00 event, with age/decay/recency recalculated | BRULE-WEAR-004, BRULE-WEAR-006, BRULE-PERS-005–BRULE-PERS-006 |
+| B14 — Removal with survivor | Remove the latest of two same-outfit/day reports, then the last surviving report | First removal retains the single increment and moves its absolute anchor to the survivor; recalculate age/decay/recency. Last removal eliminates the group's contribution. Underlying Outfit/Garments and unrelated reports remain | BRULE-WEAR-005, BRULE-PERS-005–BRULE-PERS-006 |
 | B15 — Removed garment in history | A garment referenced by old reports is removed from active wardrobe | History remains understandable as Removed from wardrobe; new current advice/Coverage/Multiplier exclude it and affected assessments refresh or become outdated | BRULE-GAR-009, BRULE-HIST-002, BRULE-COV-006, BRULE-MULT-008 |
 | B16 — Complete Multiplier | Complete shared-basis sets contain 41 current and 58 expanded unique valid outfits, including all current ones. Variant has identical current/expanded sets | First gives +17 New Outfits with candidate-bearing previews; completed empty difference gives Evaluated Zero and +0 | BRULE-MULT-002–BRULE-MULT-005 |
 | B17 — Non-exact Multiplier | Missing required candidate readiness; unavailable evaluation capability; or changed relevant wardrobe after a prior exact result | Respectively Incomplete, Unavailable, or prior result Outdated; none supports current exact +N or a fabricated +0; no arbitrary TTL restores exactness | BRULE-MULT-006–BRULE-MULT-009 |
 | B18 — Confidence guard | Reliable evidence at 0.85, 0.60, or below 0.60; variant has 0.99 but materially conflicting evidence | Default High Confidence, Needs Review, Uncertain respectively; guarded variant cannot be High Confidence. All still require confirmation | BRULE-GAR-001, BRULE-GAR-007, BRULE-GAR-008 |
-| B19 — Temporal precision gap | Evidence age lies between stated day bands, or multiple reports in one outfit/day group have different timestamps | Do not silently invent rounding or choose the group's earliest/latest time for decay. Record the unresolved expected-result interpretation under ORQ-001 | BRULE-PERS-003–BRULE-PERS-005, ORQ-001 |
+| B19 — Behavioral elapsed-time boundary | Anchor `2026-01-01T10:00:00Z`; evaluate at `2026-02-01T09:59:00Z` (30 days 23h59m) and `2026-02-01T10:00:00Z` (exactly 31 days) | First evaluation: 30 completed elapsed days, 100% influence. Second: 31 completed elapsed days, 50%. Local calendar-date difference does not replace absolute elapsed time | BRULE-PERS-003 |
+| B20 — Normalized group anchor | Same user/outfit/original local date and UTC+07:00 timezone: accepted events at 08:00, 13:00, 20:00; remove 20:00, then 13:00, then 08:00 | Three initial reports, one +2 increment before aging, anchor 20:00. Removal gives two reports/anchor 13:00, then one/anchor 08:00, then no surviving group contribution; each step recalculates elapsed age and applicable decay/recency | BRULE-PERS-005–BRULE-PERS-006, BRULE-WEAR-005 |
 
 ## 16. Rule Traceability
 
@@ -1013,13 +1027,21 @@ Coverage: **63 rules across 11 families**. Every rule has defining SRS sources a
 
 ## 17. Open Rule Questions
 
-One temporal-precision clarification remains. It does not reopen the resolved contributions, day bands, normalization cap, or Wear Event identity/time rules.
+### 17.1 Resolved Rule Clarifications
 
-| ID | Domain Clarification | Existing Rules Preserved | Affected Rules / Source | Owner / Resolution Gate |
-|---|---|---|---|---|
-| ORQ-001 | How is evidence age classified at sub-day boundaries: completed elapsed days or calendar-day age, and on which time basis? For multiple surviving events in one exact-outfit/event-local-day group, what age anchor applies to its single Wear increment? The SRS supplies day bands and the cap but does not specify these interpretations. | +1/−2/+2; 90-day window; 0–30/31–60/61–90/>90 influence; 2/3–7/>7 recency; optional ≥14-day boost; original event-local history and one increment per group | BRULE-PERS-003–BRULE-PERS-005, BRULE-PERS-006; SRS Section 3.12.1, FR-PERS-007, FR-PERS-009, FR-PERS-012, DATA-WEAR-001, DATA-WEAR-003 | Product Owner + Business Analyst + QA; resolve before final fractional-day/normalized-group decay fixtures and acceptance |
+ORQ-001 is Resolved. The interpretation below refines existing temporal rules without changing contributions, age bands, normalization identity/cap, or Wear Event correction/removal boundaries.
 
-Integer-band examples and rule invariants remain usable. Behavioral modeling can reference the known constraints and carry ORQ-001 at its acceptance gate; exact sub-day expected results must not be invented. A resolved interpretation requires normal source/change propagation rather than a silent local amendment.
+| ID | Status | Resolved Interpretation | Existing Rules Preserved | Affected Rules / Source | Resolution Record |
+|---|---|---|---|---|---|
+| ORQ-001 | Resolved | Behavioral age/recency uses completed elapsed 24-hour periods between absolute instants. Original event-local date/time governs history and same-day grouping. The latest surviving accepted Wear Event's absolute timestamp anchors its group's single contribution; accepted correction/removal recomputes anchors, ages, decay, and recency. | +1/−2/+2; 90-day window; 0–30/31–60/61–90/>90 influence; 0–2/3–7/>7 recency; optional ≥14-day boost; original event-local history and at most one increment per group | BRULE-PERS-003–BRULE-PERS-006, BRULE-WEAR-003–BRULE-WEAR-006; SRS Section 3.12.1, FR-PERS-007, FR-PERS-009, FR-PERS-012, DATA-WEAR-001, DATA-WEAR-003 | Resolved 2026-10-06; recorded in v0.1.1. Product Owner / Business Analyst / QA remain the review roles. |
+
+The completed-day formulas, latest-surviving-anchor rules, and temporal fixtures define the interpretation directly. Upstream SRS synchronization may reference this resolved clarification through normal change propagation; no upstream file is amended by this revision.
+
+### 17.2 Remaining Open Rule Questions
+
+No unresolved domain-rule question currently blocks downstream behavioral modeling.
+
+OSQ-011–OSQ-014 remain tracked in the SRS at their existing downstream gates.
 
 The SRS software questions remain at their existing gates:
 
@@ -1040,7 +1062,7 @@ The Business Analyst / Product Owner, with Engineering and QA review, evaluates 
 - Saving and applicable Recommendation-Readiness decisions are explicit; authoritative information and UNKNOWN behavior remain distinct.
 - Composition, ownership, layering, bulk, environment, severe-pattern rules, and hard-versus-soft precedence determine valid outcomes.
 - Shuffle preserves fixed context/constituents and never implies feedback or wear.
-- Feedback strengths, aging bands, outfit/day normalization, recency, and optional diversity effects are consistent; ORQ-001 is visible with its owner and acceptance gate. Final sub-day aging fixtures require its resolution.
+- Feedback strengths, aging bands, outfit/day normalization, recency, and optional diversity effects are consistent. Completed elapsed-day aging/recency and the latest surviving accepted Wear-group anchor are deterministic, including recalculation after accepted correction/removal.
 - Logical Wear identity, deliberate repetition, original event-local time, bounded correction, effective removal, and resulting history/signals are consistent.
 - Contextual need mapping, priorities, Coverage formulas, and insufficient-versus-zero decisions are deterministic for established inputs.
 - Gaps are capabilities backed by evaluated need evidence, not manufactured purchase obligations.
@@ -1048,6 +1070,8 @@ The Business Analyst / Product Owner, with Engineering and QA review, evaluates 
 - Decision tables and representative boundary fixtures cover high-risk combinations; resolved parameters can be turned into expected results without inventing a ranking algorithm.
 - Every BRULE-* reaches SRS/PRD/BRD/capability sources; open software acceptance questions retain their existing gates.
 - Rule clarifications and source inconsistencies are exposed rather than hidden; architecture and implementation choices remain downstream.
+
+No unresolved local domain-rule question blocks downstream Use Case Analysis. OSQ-011–OSQ-014 retain their existing SRS acceptance gates.
 
 Status remains Baseline Draft. Specification audits and examples do not constitute formal acceptance or executed software verification.
 
