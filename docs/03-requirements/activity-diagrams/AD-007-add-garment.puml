@@ -1,0 +1,122 @@
+@startuml
+' Source Use Case: UC-007 — Add Garment
+' Primary Specification: ../use-cases/UC-007-add-garment.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-AI-001, FR-AI-003, FR-AI-007, FR-AI-008, FR-GAR-003, FR-GAR-004, AI-REQ-001, ERR-AI-002, ERR-GAR-001, ERR-GAR-002
+' Rule trace: BRULE-AUTH-001, BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006, BRULE-GAR-007
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-007 - Add Garment
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Request Add Garment;
+|CapsuleAI|
+if (Authorized wardrobe access usable?) then (Yes)
+    :Offer image assistance or imageless manual entry;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    |User|
+    if (Entry route?) then (Image-assisted)
+        :Choose permitted camera/gallery route;
+        :Capture, select or replace garment image;
+        |CapsuleAI|
+        :Validate format, size, dimensions and suitability;
+        if (Image usable?) then (Yes)
+            :Show pending analysis; attempt garment assistance;
+            if (Usable preview and proposals available?) then (Yes)
+                :Present reviewable proposals,
+confidence and provenance;
+            else (No)
+                :Explain analysis/preview failure;
+                :Offer retry, replacement or manual continuation;
+            endif
+        else (No)
+            :Explain invalid/unsuitable image;
+            :Offer replacement or imageless manual entry;
+        endif
+    else (Manual)
+        |User|
+        :Enter category/color and supported optional descriptors;
+        |CapsuleAI|
+        :Prepare entered information for review without analysis;
+    endif
+    |User|
+    if (Information unavailable for review?) then (Yes)
+        if (Continue via retry/replacement/manual?) then (Yes)
+        else (Leave)
+            |CapsuleAI|
+            :End with no confirmed garment;
+            stop
+        endif
+    endif
+repeat while (Need another input attempt?) is (Yes) not (No)
+repeat
+    |User|
+    :Review, correct or complete supported information;
+    |CapsuleAI|
+    :Show reviewed values, confirmed minimum
+and missing applicable compatibility information;
+    note right
+      AI proposals never establish authoritative truth.
+      High Confidence still requires user review.
+    end note
+    |User|
+    if (Confirm garment?) then (Yes)
+        :Explicitly confirm category/color and submit;
+    else (Cancel)
+        |CapsuleAI|
+        :Discard unconfirmed work; leave wardrobe unchanged;
+        stop
+    endif
+    |CapsuleAI|
+    if (Confirmed Saveable minimum satisfied?) then (No)
+        :Identify missing/unconfirmed minimum;
+        :Retain draft for correction;
+    endif
+repeat while (Minimum needs correction?) is (Yes) not (No)
+repeat
+    :Attempt acceptance of reviewed garment creation;
+    if (Creation accepted?) then (Yes)
+    else (Failed / unconfirmed)
+        :Distinguish known failure from uncertain outcome;
+        :Preserve useful entered work where practical;
+        |User|
+        :Review whether creation was accepted before retry;
+        if (Accepted creation established by review?) then (No)
+            if (Retry intended addition?) then (Yes)
+            else (Leave)
+                |CapsuleAI|
+                :End without claiming an unconfirmed addition;
+                stop
+            endif
+        endif
+    endif
+    |CapsuleAI|
+repeat while (Accepted creation not established?) is (Yes) not (No)
+:Acknowledge one confirmed owned garment;
+:Keep confirmed/corrected values authoritative;
+:Evaluate applicable Recommendation-Readiness;
+if (Applicable readiness satisfied?) then (Yes)
+    :Show readiness for supported evaluations;
+else (No)
+    :Retain Saveable owned entry;
+    :Explain missing information for affected decisions;
+endif
+note right
+  Saveable ownership is separate from readiness.
+  Unknown compatibility fields are not fabricated.
+end note
+stop
+
+@enduml

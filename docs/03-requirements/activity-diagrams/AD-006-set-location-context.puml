@@ -1,0 +1,105 @@
+@startuml
+' Source Use Case: UC-006 — Set Location Context
+' Primary Specification: ../use-cases/UC-006-set-location-context.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-WEATHER-001, FR-WEATHER-002, FR-WEATHER-003, FR-WEATHER-004, FR-WEATHER-005, SI-002, HW-003, ERR-WEATHER-001
+' Rule trace: BRULE-AUTH-001, BRULE-PROF-003, BRULE-OUT-006, BRULE-COV-006, BRULE-MULT-008, BRULE-AUTH-007
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-006 - Set Location Context
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Request location setup, change or retry;
+|CapsuleAI|
+if (Authorized access usable?) then (Yes)
+    :Explain optional location purpose and choices;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    |User|
+    :Choose device location, manual location or skip;
+    if (Location route?) then (Device)
+        :Grant or decline device permission;
+        if (Permission granted?) then (Yes)
+            |Device Location Service|
+            :Provide available consented location;
+            |CapsuleAI|
+            if (Usable location obtained?) then (Yes)
+                :Identify proposed location;
+            else (No)
+                :Explain unavailable device location;
+            endif
+        else (No)
+            |CapsuleAI|
+            :Keep device access declined;
+        endif
+        if (Device location unavailable or declined?) then (Yes)
+            :Offer independent manual location or skip;
+            |User|
+            :Choose manual location or skip;
+        endif
+    endif
+    |User|
+    if (Manual location selected?) then (Yes)
+        :Select supported city/location;
+        |CapsuleAI|
+        :Identify proposed manual location;
+    endif
+    |CapsuleAI|
+    if (Setup skipped?) then (Yes)
+        :Disclose absent/limited environmental context;
+        :Allow remaining defensible core journeys;
+        stop
+    endif
+    if (Usable weather for selection at age <=30 minutes?) then (Yes)
+        :Identify current weather and timestamp;
+    else (No)
+        :Request current weather / refresh stale weather;
+        note right
+          Share only required selected location.
+          External request delays assessment at most 2 seconds.
+        end note
+        |Weather Information Provider|
+        :Supply available selected-location information;
+        |CapsuleAI|
+        if (Usable current weather obtained within boundary?) then (Yes)
+            :Identify actual context and timestamp;
+        else (No)
+            :Disclose unavailable environment; do not invent forecast;
+            :Offer context review/retry; preserve other hard rules;
+        endif
+    endif
+    |User|
+    if (Proceed with shown context?) then (Yes)
+    :Review selected context and continue;
+    |CapsuleAI|
+    if (Setting change accepted?) then (Yes)
+        :Use accepted context in relevant advice;
+        :Reevaluate affected assessments or mark Outdated;
+        :Confirm selected or disclosed limited context;
+        stop
+    else (Failed / unconfirmed)
+        :Distinguish known failure from uncertain outcome;
+        :Keep last accepted selection on known failure;
+        |User|
+        :Review actual context before retrying;
+    endif
+    else (Review / retry)
+        :Review or change selected context;
+    endif
+repeat while (Change selection or retry context?) is (Yes) not (No)
+|CapsuleAI|
+:End without claiming an unconfirmed context change;
+stop
+
+@enduml

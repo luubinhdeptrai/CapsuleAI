@@ -1,0 +1,83 @@
+@startuml
+' Source Use Case: UC-017 — Remove Wear Event
+' Primary Specification: ../use-cases/UC-017-remove-wear-event.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-WEAR-007, FR-WEAR-008, FR-WEAR-010, FR-WEAR-012, FR-PERS-013, DATA-RET-001, ERR-NET-001
+' Rule trace: BRULE-AUTH-001, BRULE-WEAR-005, BRULE-WEAR-006, BRULE-PERS-005, BRULE-PERS-006, BRULE-HIST-003
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-017 - Remove Wear Event
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Identify one Wear Event and request removal;
+|CapsuleAI|
+if (Authorized event access usable?) then (Yes)
+    :Identify intended report;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    if (Intended event still effective and unchanged?) then (Yes)
+        :Explain individual removal;
+        :Keep underlying outfit/garments and other reports distinct;
+        |User|
+        if (Proceed with this individual removal?) then (Yes)
+            :Express removal intention for selected event;
+        else (Cancel)
+            |CapsuleAI|
+            :Keep accepted event and effects unchanged;
+            stop
+        endif
+        |CapsuleAI|
+        :Attempt acceptance of selected-event removal;
+        if (Removal accepted?) then (Yes)
+            :Immediately exclude selected event
+from effective history, utilization, recency and personalization;
+            :Recompute history/utilization for surviving reports;
+            if (Same-outfit/original-day reports survive?) then (Yes)
+                :Retain each surviving historical report;
+                :Recompute latest surviving absolute anchor;
+                :Recompute age/decay of single group increment;
+            else (None)
+                :Remove this group's Wear-based contribution;
+            endif
+            :Recompute recency from remaining effective events;
+            :Confirm removal and explain physical deletion deadline;
+            note right
+              Applicable personal event data is physically
+              deleted within 30 days of accepted removal.
+              Underlying Outfit/Garments, unrelated reports
+              and independent feedback remain intact.
+            end note
+            |User|
+            :Review available history/utilization;
+            stop
+        else (Failed / unconfirmed)
+            |CapsuleAI|
+            :Distinguish known failure from uncertain outcome;
+            :Retain event/effects on known failure;
+            |User|
+            :Review selected event/history before safe retry;
+        endif
+    else (Already removed / changed)
+        |CapsuleAI|
+        :Show actual available history/state;
+        |User|
+        :Verify intended target; do not remove another report;
+    endif
+    |User|
+repeat while (Retry verified individual removal?) is (Yes) not (No)
+|CapsuleAI|
+:End without claiming unconfirmed removal;
+stop
+
+@enduml

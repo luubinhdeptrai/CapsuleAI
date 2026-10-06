@@ -1,0 +1,138 @@
+@startuml
+' Source Use Case: UC-022 — Evaluate Candidate Garment
+' Primary Specification: ../use-cases/UC-022-evaluate-candidate-garment.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-MULT-001, FR-MULT-002, FR-MULT-003, FR-MULT-004, FR-MULT-005, FR-MULT-006, FR-MULT-007, FR-MULT-008, DATA-ANL-004, DATA-OUT-001, ERR-ANL-001, ERR-ANL-002, ERR-SHOP-001
+' Rule trace: BRULE-AUTH-001, BRULE-MULT-001, BRULE-MULT-002, BRULE-MULT-003, BRULE-MULT-004, BRULE-MULT-005, BRULE-MULT-006, BRULE-MULT-007, BRULE-MULT-008, BRULE-MULT-009
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-022 - Evaluate Candidate Garment
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Select hypothetical candidate from supported advice;
+:Request evaluation or reevaluation;
+|CapsuleAI|
+if (Authorized wardrobe/candidate access usable?) then (Yes)
+    :Identify hypothetical candidate and authorized baseline;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+:Identify current confirmed active owned W,
+candidate descriptors and shared context/rule basis;
+if (Relevant prior result basis changed?) then (Yes)
+    :Label prior count/previews Outdated;
+endif
+:Show pending evaluation until status established;
+if (Evaluation capability can operate?) then (Yes)
+else (Unavailable)
+    :Show Unavailable; preserve useful candidate/gap context;
+    :Do not substitute +0 or restore prior Exact status;
+    |User|
+    :Retry evaluation when useful or return to available advice;
+    stop
+endif
+|CapsuleAI|
+if (Required credible inputs/readiness sufficient?) then (Yes)
+else (Insufficient)
+    :Show Incomplete; explain missing inputs/readiness;
+    :Withhold current exact count and new-outfit previews;
+    |User|
+    :Revise inputs through existing goals; request reevaluation;
+    stop
+endif
+|CapsuleAI|
+:Evaluate current unique valid outfit set O(W);
+:Evaluate hypothetical expanded set O(W union {candidate});
+:Use same context/rules and garment-identity uniqueness;
+if (Both evaluations and deduplication complete?) then (Yes)
+else (Partial / unestablished)
+    :Show Incomplete; explain partial/timed-out work;
+    :Do not claim exact +N or completed +0;
+    |User|
+    :Retry when useful or return to candidate/gap advice;
+    stop
+endif
+|CapsuleAI|
+if (Relevant evaluation basis still current?) then (Yes)
+else (Changed)
+    :Show Outdated; withhold current exact count/previews;
+    |User|
+    :Request current reevaluation when useful;
+    stop
+endif
+|CapsuleAI|
+:Compare expanded and current unique valid outfit sets;
+:Identify incremental valid outfit utility;
+note right
+  Wardrobe Multiplier is
+  |O(W union {candidate}) minus O(W)|.
+  Complete sets share one evaluation basis.
+  Optional commercial fields do not gate utility.
+end note
+if (Result information available?) then (Yes)
+else (Retrieval failure)
+    :Explain unavailable result information;
+    :Retain only established status/basis;
+    |User|
+    :Retry result/evaluation or return to available advice;
+    stop
+endif
+|CapsuleAI|
+if (Incremental set empty?) then (Yes)
+    :Show Evaluated Zero and +0 New Outfits;
+    :Explain completed zero; create no new previews;
+    |User|
+    :Review utility and return to advice;
+    stop
+else (Positive)
+    |CapsuleAI|
+    :Show Exact +N New Outfits and reasons;
+endif
+|User|
+if (Request newly enabled previews?) then (Yes)
+else (Decline)
+    :Continue core/advice without previews or shopping;
+    stop
+endif
+repeat
+    |CapsuleAI|
+    if (Preview basis still current?) then (Yes)
+        :Retrieve same-assessment candidate-bearing previews;
+    else (Changed)
+        :Mark count/previews Outdated;
+        |User|
+        :Request current reevaluation when useful;
+        stop
+    endif
+    |CapsuleAI|
+    if (Previews available?) then (Yes)
+        :Show hypothetical candidate and owned items distinctly;
+        |User|
+        :Inspect newly enabled outfits;
+        stop
+    else (Unavailable)
+        |CapsuleAI|
+        :Explain unavailable previews; retain established result;
+        |User|
+        :Choose preview retry or return;
+    endif
+repeat while (Retry preview retrieval?) is (Yes) not (No)
+|CapsuleAI|
+:Finish with established evaluation status;
+note right
+  Candidate stays unowned.
+  Evaluation/viewing creates no Wear Event or purchase.
+  Failed reevaluation does not make old results current.
+end note
+stop
+
+@enduml

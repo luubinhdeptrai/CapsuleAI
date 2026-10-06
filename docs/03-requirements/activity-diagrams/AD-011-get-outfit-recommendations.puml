@@ -1,0 +1,105 @@
+@startuml
+' Source Use Case: UC-011 — Get Outfit Recommendations
+' Primary Specification: ../use-cases/UC-011-get-outfit-recommendations.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-OUT-001, FR-OUT-003, FR-OUT-005, FR-OUT-010, FR-OUT-011, FR-OUT-012, ERR-OUT-001, ERR-OUT-002, ERR-WEATHER-001, FR-OUT-009
+' Rule trace: BRULE-AUTH-001, BRULE-GAR-003, BRULE-OUT-008, BRULE-OUT-009, BRULE-OUT-006, BRULE-PERS-003, BRULE-PERS-004
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-011 - Get Outfit Recommendations
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Request outfits; provide or accept occasion/style;
+|CapsuleAI|
+if (Authorized access usable?) then (Yes)
+    :Identify available authorized wardrobe/context;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    :Prepare wardrobe, preferences and relevant context/evidence;
+    if (Usable current weather available?) then (Yes)
+        :Use identified environmental evidence;
+    else (No / stale)
+        :Disclose missing environment;
+        :Consume UC-006 freshness/acquisition fallback;
+        note right
+          Weather currentness <=30 minutes.
+          Acquisition delay <=2 seconds.
+          Skip only unavailable environmental filtering.
+          Preserve all remaining hard validity.
+        end note
+    endif
+    :Identify confirmed, active, owned garments
+ready for applicable checks;
+    if (Remaining information supports assessment?) then (Yes)
+    else (Insufficient)
+        :Explain missing ready roles/attributes or context;
+        :Withhold a completed zero-choice claim;
+        |User|
+        :Revise existing inputs and request again when useful;
+        stop
+    endif
+    |CapsuleAI|
+    :Form candidate combinations from eligible owned garments;
+    :Apply structural, layering, bulk, pattern
+and available environmental hard validity;
+    :Determine distinct valid outfit set;
+    if (Evaluation/result available?) then (Yes)
+    else (Unavailable)
+        :Explain unavailable recommendations;
+        |User|
+        :Retry request or return to available wardrobe/context;
+        stop
+    endif
+    |CapsuleAI|
+    if (Relevant basis still current?) then (Yes)
+    else (Changed)
+        :Refresh advice or mark prior assessment Outdated;
+        :Withhold current result until established;
+        |User|
+        :Retry current request after review/recovery;
+        stop
+    endif
+    |CapsuleAI|
+    if (Any valid outfits?) then (Yes)
+        :Apply soft personalized ranking to valid outfits;
+        if (At least three distinct valid outfits?) then (Yes)
+            :Present at least three valid choices;
+        else (One or two)
+            :Present actual valid choices; explain limitation;
+        endif
+        :Show identities and supported reasons;
+        |User|
+        :Select an outfit to inspect;
+        |CapsuleAI|
+        :Show owned constituents, context and explanation;
+        :Offer separate Shuffle, feedback and Wear actions;
+        |User|
+        :Choose outfit, browse or start separate supported action;
+    else (Completed zero)
+        |CapsuleAI|
+        :Explain no valid outfit under evaluated context;
+        :Offer evidence-supported input revision;
+        |User|
+        :Review available wardrobe/context adjustments;
+    endif
+    if (Request under revised occasion/context or inputs?) then (Yes)
+        :Revise supported request inputs;
+    endif
+repeat while (Request another assessment?) is (Yes) not (No)
+|CapsuleAI|
+:Finish with actual valid choices or completed zero;
+:Viewing alone creates no feedback, Wear or ownership;
+stop
+
+@enduml

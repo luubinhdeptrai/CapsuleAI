@@ -1,0 +1,87 @@
+@startuml
+' Source Use Case: UC-016 — Correct Wear Event
+' Primary Specification: ../use-cases/UC-016-correct-wear-event.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-WEAR-006, FR-WEAR-010, FR-WEAR-012, FR-PERS-013, FR-ANL-007, DATA-WEAR-004, ERR-WEAR-002
+' Rule trace: BRULE-AUTH-001, BRULE-WEAR-003, BRULE-WEAR-004, BRULE-WEAR-006, BRULE-PERS-003, BRULE-PERS-005, BRULE-PERS-006
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-016 - Correct Wear Event
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Select individual Wear Event and request correction;
+|CapsuleAI|
+if (Authorized event access usable?) then (Yes)
+    :Identify intended historical report;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    if (Selected event still effective and identifiable?) then (Yes)
+        :Show accepted outfit/context and original event-local time;
+        repeat
+            |User|
+            if (Proceed with supported correction?) then (Yes)
+                :Change applicable outfit, context and/or local time;
+                :Submit correction;
+            else (Cancel)
+                |CapsuleAI|
+                :Retain previously accepted event and evidence;
+                stop
+            endif
+            |CapsuleAI|
+            :Validate supported fields, non-future corrected time
+and unchanged original local calendar day;
+            if (Supported fields and valid original-day time?) then (Yes)
+                :Keep unchanged fields and original local-day meaning;
+            else (Invalid)
+                :Explain unsupported, future or cross-day correction;
+                :Retain last accepted event for revision or cancel;
+            endif
+        repeat while (Correction invalid or unsupported?) is (Yes) not (No)
+        :Attempt acceptance for only selected event;
+        if (Correction accepted?) then (Yes)
+            :Show revised authoritative report;
+            :Recompute effective history and utilization;
+            :Recompute affected outfit/day memberships
+and latest surviving accepted absolute anchors;
+            :Recompute completed elapsed-day age,
+decay and exact-outfit recency;
+            note right
+              Original event-local date governs grouping.
+              Completed elapsed 24-hour periods govern aging.
+              Correction creates no new event or ownership.
+              Unrelated reports remain unchanged.
+            end note
+            |User|
+            :Review accepted correction;
+            stop
+        else (Rejected / unconfirmed)
+            |CapsuleAI|
+            :Distinguish known failure from uncertain outcome;
+            :Retain prior event/evidence on known failure;
+            |User|
+            :Review actual selected-event outcome before safe retry;
+        endif
+    else (Changed / removed)
+        |CapsuleAI|
+        :Explain changed/removed target; show available history;
+        |User|
+        :Select an applicable existing report again if desired;
+    endif
+    |User|
+repeat while (Review/reselect and retry correction?) is (Yes) not (No)
+|CapsuleAI|
+:End without claiming unconfirmed correction;
+stop
+
+@enduml

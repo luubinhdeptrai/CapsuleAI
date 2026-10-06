@@ -1,0 +1,75 @@
+@startuml
+' Source Use Case: UC-014 — Record Wear Event
+' Primary Specification: ../use-cases/UC-014-record-wear-event.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-WEAR-001, FR-WEAR-002, FR-WEAR-003, FR-WEAR-004, FR-WEAR-009, FR-WEAR-010, FR-WEAR-011, DATA-WEAR-002, DATA-INT-004, ERR-WEAR-001
+' Rule trace: BRULE-AUTH-001, BRULE-WEAR-001, BRULE-WEAR-002, BRULE-WEAR-003, BRULE-WEAR-006, BRULE-PERS-005
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-014 - Record Wear Event
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Explicitly initiate Wear This Today for owned outfit;
+|CapsuleAI|
+if (Authorized access usable?) then (Yes)
+    :Identify logical intention, outfit and available context;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    if (This logical action already accepted?) then (Yes)
+        :Return its single accepted event;
+        :Do not create another report or evidence increment;
+        stop
+    endif
+    if (Outfit currently eligible and valid?) then (Yes)
+        :Attempt acceptance of this reporting intention;
+    else (No)
+        :Explain changed ownership/readiness/validity;
+        :Create no new accepted event;
+        |User|
+        :Refresh/correct existing inputs before a new valid report;
+        stop
+    endif
+    |CapsuleAI|
+    if (Acceptance established?) then (Yes)
+        :Create one distinct user-reported Wear Event;
+        :Default time to accepted current time;
+        :Preserve absolute timestamp, original local date/time
+and event timezone/UTC offset;
+        :Update effective history and utilization;
+        :Update recency and normalized age-weighted evidence;
+        note right
+          Each new explicit intention remains a separate event,
+          including another report for the same outfit/day.
+          One outfit/original-day group supplies at most one
+          Wear increment, anchored at its latest accepted event.
+          Absolute elapsed time governs aging and recency.
+        end note
+        :Show accepted user-reported event;
+        |User|
+        :Review history or continue wardrobe use;
+        stop
+    else (Rejected / unconfirmed)
+        |CapsuleAI|
+        :Distinguish known failure from uncertain outcome;
+        :Do not claim acceptance or definite absence
+from an uncertain response;
+        |User|
+        :Review history or retry the same logical action;
+    endif
+repeat while (Retry this same intention?) is (Yes) not (No)
+|CapsuleAI|
+:End without a false acceptance or duplicate event;
+stop
+
+@enduml

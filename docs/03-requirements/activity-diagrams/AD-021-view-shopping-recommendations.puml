@@ -1,0 +1,106 @@
+@startuml
+' Source Use Case: UC-021 — View Shopping Recommendations
+' Primary Specification: ../use-cases/UC-021-view-shopping-recommendations.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-SHOP-001, FR-SHOP-002, FR-SHOP-003, FR-SHOP-004, FR-SHOP-006, FR-SHOP-007, FR-SHOP-008, DATA-ANL-003, ERR-SHOP-001, ERR-SHOP-002, ERR-SHOP-003
+' Rule trace: BRULE-AUTH-001, BRULE-SHOP-001, BRULE-SHOP-002, BRULE-SHOP-003, BRULE-MULT-004, BRULE-MULT-005, BRULE-MULT-006, BRULE-MULT-007, BRULE-MULT-008
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-021 - View Shopping Recommendations
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Request candidates from supported gap/advice context;
+|CapsuleAI|
+if (Authorized advice access usable?) then (Yes)
+    :Identify supported wardrobe gap/context;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    :Retrieve available credible candidate advice;
+    if (Advice retrieval available?) then (Yes)
+        if (Useful candidate recommendation available?) then (Yes)
+            :Present supported candidate identity/visual,
+category/subtype, gap and attributes;
+            note right
+              Descriptors need explicit user evidence
+              or an identifiable configured credible source.
+              No capture/import goal is added.
+            end note
+            |User|
+            :Select a hypothetical candidate to inspect;
+            |CapsuleAI|
+            :Identify evaluation basis and current utility status;
+            if (Relevant prior basis changed?) then (Yes)
+                :Refresh assessment or label prior result Outdated;
+                :Do not make old result current after failed refresh;
+            endif
+            switch (Established utility outcome?)
+                case (Exact)
+                    :Show exact +N and same-basis hypothetical previews;
+                case (Evaluated Zero)
+                    :Show completed +0 with reasons;
+                case (Incomplete)
+                    :Explain missing/partial evidence; withhold exact count;
+                case (Unavailable)
+                    :Explain unavailable utility; retain useful gap context;
+                case (Outdated)
+                    :Label prior count/previews Outdated;
+            endswitch
+            :Explain supported utility reasons and limitations;
+            if (Credible optional commercial information available?) then (Yes)
+                :Retain identifiable source and retrieval/last-checked time;
+                if (Price/availability older than 24 hours?) then (Yes)
+                    :Refresh, explicitly qualify stale/last checked, or omit;
+                else (No / not applicable)
+                    :Show supported current informational guidance;
+                endif
+                :Qualify estimates; omit unsupported merchant claims;
+            else (No)
+                :Omit absent/unverified commercial fields;
+            endif
+            note right
+              Commercial information is optional to utility.
+              Missing price/link or destination failure does not
+              imply +0, ownership or a transaction outcome.
+            end note
+            |User|
+            :Evaluate advice and choose next action;
+            if (Request candidate evaluation?) then (Yes)
+                :Continue through UC-022 as a separate goal;
+                stop
+            endif
+            if (Explicitly choose offered available external link?) then (Yes)
+                :Continue through optional UC-023;
+                stop
+            endif
+            :Dismiss or continue browsing without shopping;
+        else (No useful candidate)
+            |CapsuleAI|
+            :Explain honest no-useful/evaluable-candidate result;
+            |User|
+            :Continue gap/wardrobe/context work;
+            stop
+        endif
+    else (Unavailable)
+        |CapsuleAI|
+        :Explain unavailable advice; do not infer no candidate or no gap;
+        |User|
+        :Review available gap/wardrobe context;
+    endif
+    |User|
+repeat while (Continue browsing or retry advice?) is (Yes) not (No)
+|CapsuleAI|
+:Finish without ownership, purchase or Wear changes;
+stop
+
+@enduml

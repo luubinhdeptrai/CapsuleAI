@@ -1,0 +1,74 @@
+@startuml
+' Source Use Case: UC-012 — Shuffle Garment Slot
+' Primary Specification: ../use-cases/UC-012-shuffle-garment-slot.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-OUT-014, FR-OUT-015, FR-OUT-016, FR-OUT-017, ERR-OUT-003, FR-OUT-009
+' Rule trace: BRULE-AUTH-001, BRULE-OUT-008, BRULE-OUT-010
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-012 - Shuffle Garment Slot
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Select one supported slot and request Shuffle;
+|CapsuleAI|
+if (Authorized access usable?) then (Yes)
+    :Identify selected owned outfit and request context;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+repeat
+    if (Outfit/context still current?) then (Yes)
+        :Hold all other constituent identities and context fixed;
+    else (No)
+        :Explain changed/Outdated basis;
+        |User|
+        :Refresh through UC-011 before a new Shuffle;
+        stop
+    endif
+    |CapsuleAI|
+    :Identify different eligible owned alternatives
+for only the selected slot;
+    :Apply readiness and full-outfit hard compatibility;
+    if (Replacement result available?) then (Yes)
+        if (Compatible alternative exists?) then (Yes)
+            :Replace only selected slot;
+            :Present resulting valid outfit and reasons;
+        else (No)
+            :Retain current selection;
+            :Explain no compatible owned alternative;
+        endif
+        |User|
+        :Review changed outfit or retained selection;
+    else (Unavailable)
+        |CapsuleAI|
+        :Explain unavailable replacement result;
+        :Retain prior selection where available;
+        |User|
+        :Review prior selection before retry;
+    endif
+    if (Continue slot exploration?) then (Yes)
+        :Explicitly choose next Shuffle slot or retry;
+        |CapsuleAI|
+        :Identify this action's outfit and fixed context;
+    endif
+    |User|
+repeat while (Another explicit Shuffle requested?) is (Yes) not (No)
+|CapsuleAI|
+:Finish with replacement, no-alternative
+or disclosed unavailable result;
+note right
+  Other slots and assessment context stay fixed.
+  Shuffle creates no Like, Dislike or Wear Event.
+end note
+stop
+
+@enduml

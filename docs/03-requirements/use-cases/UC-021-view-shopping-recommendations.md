@@ -181,3 +181,9 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 [Focused Use Case Diagram](diagrams/UC-021-view-shopping-recommendations.puml)
 
 This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+
+## 17. Activity Diagram
+
+[Activity Diagram](../activity-diagrams/AD-021-view-shopping-recommendations.puml)
+
+This diagram visualizes the established main, alternative, and failure flows of this Use Case; the textual specification remains the normative behavioral source.

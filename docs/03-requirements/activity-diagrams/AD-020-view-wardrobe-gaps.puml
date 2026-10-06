@@ -1,0 +1,85 @@
+@startuml
+' Source Use Case: UC-020 — View Wardrobe Gaps
+' Primary Specification: ../use-cases/UC-020-view-wardrobe-gaps.md
+' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
+' Business/Product: ../../01-business/BRD.md (v0.3); ../../02-product/PRD.md (v0.2)
+' Master Actors/Scope: ../use-cases/use-case-diagram.puml
+' Process Authority: ../../../Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 11, 39–42, 46
+' Version: 0.1; Status: Baseline Draft
+' SRS trace: FR-GAP-001, FR-GAP-002, FR-GAP-003, FR-GAP-004, FR-GAP-005, ERR-ANL-001, ERR-ANL-002, ERR-WEATHER-001
+' Rule trace: BRULE-AUTH-001, BRULE-COV-002, BRULE-COV-005, BRULE-COV-006, BRULE-GAP-001, BRULE-GAP-002
+' Flow coverage: UC Sections 6–10; alternatives and failures retain their textual meaning.
+' The textual Use Case Specification remains the normative behavioral source.
+
+title AD-020 - View Wardrobe Gaps
+skinparam monochrome true
+skinparam shadowing false
+
+|User|
+start
+:Request wardrobe gap insights;
+|CapsuleAI|
+if (Authorized wardrobe/needs access usable?) then (Yes)
+    :Identify wardrobe, positive priorities and context;
+else (No)
+    :Pause protected use; require renewed access (UC-002);
+    stop
+endif
+:Obtain current Coverage basis and supporting evidence;
+if (Relevant prior basis changed?) then (Yes)
+    :Mark prior gap advice Outdated; attempt refresh;
+endif
+if (Current coverage basis/result available?) then (Yes)
+else (Unavailable / unrefreshed)
+    :Disclose unavailable evidence or prior Outdated basis;
+    :Do not assert a defensible no-gap result;
+    |User|
+    :Retry after review/recovery or return to available context;
+    stop
+endif
+|CapsuleAI|
+if (Coverage evidence sufficient?) then (Yes)
+else (Insufficient)
+    :Explain missing assessment conditions;
+    :Withhold unsupported gap and numeric-zero claims;
+    |User|
+    :Revise existing inputs and request analysis again when useful;
+    stop
+endif
+|CapsuleAI|
+:Identify positive-priority needs below full NeedCoverage;
+:Identify evidence-supported capability bottlenecks;
+if (Important supported gap exists?) then (Yes)
+    :Present underserved wardrobe capabilities;
+else (No important gap)
+    :Explain defensible no-important-gap result;
+    |User|
+    :Continue wardrobe/outfit insights without manufactured demand;
+    stop
+endif
+|User|
+:Select a gap to inspect;
+|CapsuleAI|
+:Explain need, bottleneck, context
+and useful garment characteristics;
+note right
+  A capability gap is not one specific product.
+  No mandatory purchase or ownership follows.
+end note
+if (Useful evaluable candidate available?) then (Yes)
+    :Offer optional candidate/utility exploration;
+else (No)
+    :Retain supported gap; explain candidate limitation;
+    |User|
+    :Continue insights or revise existing inputs;
+    stop
+endif
+|User|
+if (Explore candidate advice?) then (Yes)
+    :Continue to UC-021 or UC-022 as a separate goal;
+else (Decline)
+    :Continue owned-wardrobe insights without shopping;
+endif
+stop
+
+@enduml
