@@ -10,10 +10,14 @@
 > - kết nối Business → Product → Requirements → Architecture → Scrum → Code → Test → Release;
 > - mô phỏng workflow của một software team chuyên nghiệp nhưng tránh bureaucracy không cần thiết;
 > - giúp AI model đọc repository và hiểu đúng workflow cần tuân theo;
-> - giữ architecture của CapsuleAI có cấu trúc tương tự đồ án Food Delivery trước đây: **ASR + ADD + 14 Quality Attributes + 4 Architecture Views**;
+> - maintain a source-driven architecture workflow: **14 Quality Attributes → ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD → 4 Architecture Views → ADRs**;
 > - yêu cầu các sơ đồ UML như **Use Case Diagram, Activity Diagram, Sequence Diagram, State Diagram, Deployment Diagram...** phải được biểu diễn bằng **UML**, ưu tiên lưu source bằng **PlantUML** trong repository.
 >
 > **Important:** Scrum không yêu cầu Jira. CapsuleAI **không dùng Jira**. Product Backlog, User Stories, Sprint Backlog, Bugs, Spikes, Sprint Review và Retrospective được quản lý bằng Markdown ngay trong repository.
+>
+> **Process revision — 2026-10-08:** Added comparative Architecture Decision Analysis and explicit human selection before ADD; synchronized reusable order, ownership, traceability and change propagation. Existing numbered Sections 1–49 remain stable; Section 46 action numbers from 15 onward shift by two. This process revision does not approve architecture or change product requirements.
+>
+> Examples, sample IDs, stack names and Sprint outlines in this playbook illustrate the method. Current canonical requirements and the ordered Product Backlog govern CapsuleAI behavior/delivery; selected architecture comes only from the explicit selection record. Reusable workflow guidance never mandates a database, runtime, AI topology or cloud provider.
 
 ---
 
@@ -90,13 +94,31 @@ User Stories + Acceptance Criteria
       ↓
 ASR
       ↓
+Architecture Decision Analysis
+      ↓
+Selected Architecture Decisions (human gate)
+      ↓
 ADD
       ↓
-Architecture Views / ADRs
+Logical View
       ↓
-Sequence / State / API / Data Design
+Implementation View
       ↓
-Sprint Backlog
+Deployment View
+      ↓
+Data View
+      ↓
+ADRs
+      ↓
+Detailed API / Data / Sequence / State Design
+      ↓
+Test Strategy
+      ↓
+Engineering Baseline
+      ↓
+Sprint Readiness
+      ↓
+Sprint Planning / Sprint Backlog
       ↓
 Implementation
       ↓
@@ -153,6 +175,8 @@ CapsuleAI/
 │   ├── 04-architecture/
 │   │   ├── quality-attribute-analysis.md
 │   │   ├── ASR.md
+│   │   ├── architecture-decision-analysis.md
+│   │   ├── selected-architecture-decisions.md
 │   │   ├── ADD.md
 │   │   │
 │   │   ├── views/
@@ -217,6 +241,8 @@ CapsuleAI/
 ```
 
 Không tạo toàn bộ file ngay ngày đầu. Các file được tạo khi workflow thực sự cần chúng.
+
+The tree is a target structure, not evidence that every artifact exists. In particular, the selected-decision record is created only after human review/selection; ADD and views follow that gate. Stack-specific sample ADR names and code directories do not establish a selected implementation.
 
 ---
 
@@ -291,7 +317,7 @@ Ví dụ:
 
 - database cuối cùng;
 - JWT authentication approach;
-- `Spring Boot → Python AI Service → Model`;
+- core runtime, AI/CV execution boundary and interaction model;
 - CV accuracy target;
 - image-processing latency;
 - Wardrobe Multiplier formula;
@@ -299,7 +325,7 @@ Ví dụ:
 - user-preference learning scope;
 - style/occasion/body-shape scope.
 
-Không phải decision nào cũng block Sprint 1. Decision chưa cần ngay được giữ trong backlog hoặc decision log và giải quyết trước Sprint liên quan.
+Product/domain decisions are resolved in their owning requirements artifacts. Historical technology suggestions remain candidates until current constraints establish otherwise. Architecture problems go through ASR → Architecture Decision Analysis → explicit selection (Sections 17.2–17.3). Critical choices block ADD; safe Important deferrals need a stable boundary, owner and resolution point before dependent design. Later implementation details need not block the initial baseline.
 
 ---
 
@@ -743,6 +769,8 @@ Then ...
 ## Relevant Architecture
 
 - ASR-...
+- ADA-... (when relevant and available)
+- Selected Architecture Decisions: ADA-... selection
 - ADD §...
 - SEQ-...
 - ADR-...
@@ -799,7 +827,7 @@ Example:
 SPIKE-001 — Evaluate RMBG vs U2-Net
 ```
 
-Output của Spike có thể dẫn tới ADR.
+A Spike can inform an ADA comparison or reopen a selected choice. Explicit selection precedes affected ADD/views; a consequential decision is then preserved in an ADR. A Spike result is not automatic architecture selection.
 
 ---
 
@@ -948,13 +976,77 @@ Source:
 NFR-PERF-...
 
 Architectural Impact:
-Independent Python inference service, image normalization,
-model warm-up, timeout policy, deployment resource planning.
+Requires analysis of execution/resource boundaries, complete-result
+latency, dependency failure and reviewable outcomes.
+Runtime/service, sync/async and deployment choices remain open.
 ```
 
 ---
 
-# 18. Phase 12 — Architecture Design Document (ADD)
+## 17.1 ASR Handoff and Boundaries
+
+ASR answers **what architecture must be capable of satisfying**. Requirements, driver evidence and established constraints are retained; possible databases, frameworks, services, caches and topology are not requirements merely because they appear in historical proposals.
+
+The next stage is comparative analysis, followed by explicit human selection. ADD does not silently convert ASR pressure or an AI recommendation into a chosen solution.
+
+## 17.2 Phase 11a — Architecture Decision Analysis
+
+Future/reusable location:
+
+```text
+docs/04-architecture/architecture-decision-analysis.md
+```
+
+**Owner:** Architect / Tech Lead with Developer input. Backend Developers contribute feasibility, implementation and operating implications, and actual relevant experience. They do not own product scope or backlog ordering.
+
+**Purpose:** expose major architecture problems arising from ASRs, quality trade-offs and current constraints; compare realistic alternatives; recommend the strongest supported option while keeping it non-binding. It answers **what problems need solutions, what credible options exist, and why an option is recommended**.
+
+Use stable **ADA-001, ADA-002, ...** identities, distinct from ADR IDs. Each analysis records:
+
+- Problem and why a decision is needed now.
+- Related ASRs, actual QA significance and established constraints.
+- Source-derived evaluation criteria; no unsupported numerical weights.
+- Credible options, benefits, disadvantages, risks and development/operating implications.
+- Compact comparative matrix.
+- Exactly one recommendation where evidence suffices, rationale and High/Medium/Low confidence with material uncertainty.
+- **Decision Status: Proposed — Awaiting Selection**.
+- Conditional consequences if selected and deferred details.
+
+Classify importance as **Critical Before ADD**, **Important Before ADD**, or **Defer to Detailed Design / ADR**. Critical choices determine a coherent major structure/authority. Important choices can be bounded only where stable abstractions permit safe progress. Low-level implementation details stay downstream; do not invent alternatives or infrastructure merely to fill a checklist.
+
+Historical stack preferences and documentation references are candidate context unless canonical current sources impose them. Prefer sufficient simplicity against the actual ASRs, supported workload and team evidence. Recommendation confidence is not approval, test success or human preference.
+
+**Exit to review:** traceable comparisons, explicit uncertainties/dependencies and a compact proposed set. No ADD, view, selected record or ADR is generated just because analysis is complete.
+
+## 17.3 Phase 11b — Selected Architecture Decisions
+
+Future/reusable location:
+
+```text
+docs/04-architecture/selected-architecture-decisions.md
+```
+
+**Purpose:** provide the explicit human decision gate between analysis and ADD. It answers **which analyzed directions have actually been chosen, overridden or safely deferred**.
+
+**Owner:** responsible human Architect / Tech Lead, with relevant engineering review and Product/BA consultation for requirement implications. An AI can prepare analysis/record wording but cannot invent human approval or selection.
+
+Selection may accept the recommendation, choose another analyzed option with reasons, or defer an Important choice safely. A material unexamined alternative returns to ADA analysis first. Record the selecting human/review date and any uncertainty relevant to the choice.
+
+Lightweight future format:
+
+| ADA ID | Selected Option | Selection Basis | Backend Impact | Status |
+| --- | --- | --- | --- | --- |
+| ADA-... | An explicitly chosen analyzed option, or bounded deferral | Human selection/override rationale and source evidence | Responsibilities, authority, integration or operation affected | Selected / Deferred / Superseded |
+
+For a deferral, record the stable boundary, impact/risk, responsible owner, needed evidence and resolution point before dependent design. For supersession, retain prior selection/history and identify its replacement. Preserve ADA IDs and link to the analysis rather than duplicating every alternative.
+
+**ADD entry gate:** all Critical Before ADD choices are explicitly Selected, and Important choices are either Selected or safely bounded with documented deferrals. A Critical unresolved choice blocks the ADD baseline. Selection does not claim software verification or approval of the upstream draft documents.
+
+This record is **not an ADR replacement**. It supplies selected design inputs now; later ADRs preserve durable rationale/consequences for consequential choices after ADD and the four views. Create it only when the human actually selects; a proposed recommendation is not a selected row.
+
+---
+
+# 18. Phase 12 — Architecture Description Document (ADD)
 
 Tạo:
 
@@ -962,7 +1054,9 @@ Tạo:
 docs/04-architecture/ADD.md
 ```
 
-ADD mô tả **HOW architecture addresses the ASRs and quality drivers**.
+ADD answers **how the architecture is structured given the ASRs and explicitly selected architecture directions**. Its inputs are requirements/QA/ASR evidence, ADA comparisons and the human Selected Architecture Decisions record.
+
+Before creating an ADD baseline, satisfy Section 17.3's entry gate. Link each consequential design direction to its ASR(s), ADA ID and selection record. Represent safe Important deferrals as bounded open concerns; do not fill them with an assumed runtime, database or topology. ADD owns structure, responsibilities, runtime collaboration and tactics, not the pre-ADD selection gate.
 
 Recommended structure:
 
@@ -988,7 +1082,7 @@ Recommended structure:
 
 # 19. Quality Attribute Scenarios in ADD
 
-Với QA quan trọng, dùng measurable scenario format:
+QA analysis owns the source-linked six-part scenario bodies and existing acceptance measures. ADD references those scenarios and explains selected architectural tactics/realization; it does not create competing thresholds. For an important QA, the combined presentation may show:
 
 ```text
 Stimulus Source
@@ -1015,10 +1109,10 @@ Environment:
 Normal operational load
 
 Artifact:
-Mobile → Spring Boot → Python AI Service → Models
+Mobile → selected business runtime → selected analysis capability
 
 Response:
-Processed garment attributes are returned
+Both usable processed preview and reviewable proposals are available
 
 Response Measure:
 p95 within approved latency target
@@ -1121,7 +1215,7 @@ How do modules depend on each other?
 Where are adapters/repositories/interfaces?
 ```
 
-Example conceptual mapping:
+Illustrative mapping only, conditional on explicit runtime/boundary selections:
 
 ```text
 Spring Boot Backend
@@ -1171,14 +1265,14 @@ How do runtime nodes communicate?
 Which infrastructure/external services exist?
 ```
 
-Likely nodes:
+Candidate node kinds, conditional on the selected runtime/persistence/storage direction:
 
 ```text
 Mobile Device
-Spring Boot Runtime
-Python AI Runtime
-Database
-Object Storage
+Selected Business Runtime
+Selected Analysis Runtime (if separate)
+Selected Primary Store
+Private Media Resource (if selected)
 Weather Provider
 Reverse Proxy / Cloud Platform if applicable
 ```
@@ -1253,7 +1347,7 @@ Nếu dùng document database, mô tả document ownership/embedding/reference s
 
 # 25. ADR — Architecture Decision Records
 
-Tạo ADR khi có một quyết định architecture quan trọng.
+Record consequential explicitly selected decisions in ADRs **after ADD and Logical, Implementation, Deployment and Data Views** in this workflow. Link the relevant ASR, ADA comparison, selection record and affected architecture views. ADR preserves durable rationale, alternatives, consequences and later supersession; it does not replace either ADA comparison or the pre-ADD human gate.
 
 Examples:
 
@@ -1393,13 +1487,13 @@ versioning
 processing status
 ```
 
-Spring Boot không phụ thuộc trực tiếp vào output nội bộ của model.
+The selected business runtime depends on the agreed analysis contract, not ungoverned internal model output. A historical Spring Boot/Python example does not mandate either runtime.
 
 ---
 
 # 28. Test Strategy
 
-Tạo trước hoặc trong Sprint đầu:
+Create the initial Test Strategy after the relevant ADD/views/ADRs and Detailed API/Data/Sequence/State Design baseline, **before Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation**. Keep it proportionate to available scope and evolve it with increments:
 
 ```text
 docs/07-testing/test-strategy.md
@@ -1429,7 +1523,7 @@ Acceptance Criteria
 Test Case / Automated Test
 ```
 
-Quality Attribute scenarios trong ADD phải dẫn tới measurable tests khi feasible.
+Referenced QA scenarios and ADD tactics lead to measurable tests where applicable. Preserve source thresholds, complete-operation timing and protected evidence; tests/CI run continuously through implementation rather than being a final phase.
 
 ---
 
@@ -1477,9 +1571,9 @@ CI
 Local environments
 Backend skeleton
 Mobile skeleton
-AI service skeleton
-Database
-Object storage
+selected analysis skeleton (if separate)
+selected primary persistence
+selected private media resource (if applicable)
 Configuration
 Testing foundation
 ```
@@ -1511,12 +1605,18 @@ Nếu Story có architectural impact lớn:
 ```text
 Story
  ↓
-Check ASR
+Check requirements / QA / ASR impact
  ↓
-Update ASR / ADD / ADR if needed
+ADA analysis or re-analysis if a major choice changes
  ↓
-Ready
+Explicit selection / selected-record update
+ ↓
+Affected ADD → affected views → consequential ADR
+ ↓
+Detailed design / tests / readiness
 ```
+
+Update QA/ASR only when their requirement/driver truth changes. A new tactic under unchanged requirements does not automatically create another ASR. Unaffected architecture artifacts require no edits.
 
 ---
 
@@ -1622,13 +1722,19 @@ Ví dụ Story phát hiện architecture change:
 ```text
 User Story
  ↓
-Design discussion
+Design discussion / changed evidence
  ↓
-New architectural decision
+ADA comparison or re-analysis
  ↓
-ADR
+Explicit human selection / selected-record update
  ↓
-ADD / View update
+Affected ADD
+ ↓
+Affected Logical / Implementation / Deployment / Data Views
+ ↓
+Consequential ADR
+ ↓
+Affected detailed design / tests
  ↓
 Implementation
 ```
@@ -1714,6 +1820,8 @@ Action item phải được áp dụng Sprint sau.
 
 Roadmap chỉ là initial plan. Product Backlog có thể thay đổi.
 
+The Sprint outlines below are illustrative historical planning examples, not current commitment or backlog ordering. DD-001 and the current ordered Product Backlog govern CapsuleAI; technical examples apply only if later explicitly selected. Quality accompanies each increment, not only a final hardening Sprint.
+
 ## Preparation / Baseline
 
 ```text
@@ -1726,10 +1834,16 @@ Product Goal
 Initial Product Backlog
 14 QA Analysis
 ASR v0.1
+Architecture Decision Analysis v0.1
+Selected Architecture Decisions (human gate)
 ADD v0.1
-4 Architecture Views v0.1
-Initial ADRs
+Logical → Implementation → Deployment → Data Views v0.1
+Initial consequential ADRs
+Detailed API / Data / Sequence / State Design as needed
+Test Strategy baseline
 Engineering baseline
+Sprint readiness
+Sprint Planning
 ```
 
 ## Sprint 1 — Authentication + Garment Pipeline
@@ -1823,13 +1937,19 @@ Product Backlog
 Definition of Done
 14 QA Analysis baseline
 ASR v0.1
+Architecture Decision Analysis baseline
+Selected Architecture Decisions: Critical selections / safe Important deferrals
 ADD v0.1
 Logical View v0.1
 Implementation View v0.1
 Deployment View v0.1
 Data View v0.1
 major ADRs
+Detailed API / Data / Sequence / State Design as needed
 Test Strategy baseline
+Engineering baseline
+Sprint readiness
+Sprint Planning
 ```
 
 “Baseline” nghĩa là đủ dùng để bắt đầu, không phải hoàn hảo.
@@ -1844,7 +1964,8 @@ Sequence Diagram when integration is complex
 State Diagram when lifecycle matters
 API contract
 data design
-ADR when architectural decision occurs
+ADA / selected record when major choices change
+ADD / affected views then consequential ADR
 tests
 ```
 
@@ -1884,6 +2005,8 @@ Postmortem
 | Acceptance Criteria | PO / BA | Dev, QA |
 | 14 QA Analysis | Architect / Tech Lead | Dev, QA, Product |
 | ASR | Architect / Tech Lead | Engineering team |
+| Architecture Decision Analysis | Architect / Tech Lead with Developer input | Dev, QA and relevant AI/Mobile/Product contributors |
+| Selected Architecture Decisions | Responsible human Architect / Tech Lead | Relevant engineering reviewers; Product/BA for requirement implications |
 | ADD | Architect / Tech Lead | Engineering team |
 | Logical View | Architect / Tech Lead | Dev |
 | Implementation View | Tech Lead / Senior Dev | Dev |
@@ -1915,7 +2038,10 @@ Tránh duplicate cùng một thông tin ở nhiều nơi.
 | Use-case behavior | Use Case + Activity Diagram |
 | Ordered future work | `product-backlog.md` |
 | Story behavior | User Story + Acceptance Criteria |
-| Architecture drivers | ASR |
+| QA classifications/scenario evidence | Quality Attribute Analysis; normative measures remain in SRS |
+| Architecture drivers and significant requirements | ASR |
+| Architecture options/trade-offs/recommendations | Architecture Decision Analysis |
+| Explicit current architecture selections/deferrals | Selected Architecture Decisions |
 | Architecture design | ADD + Views |
 | Architectural decision history | ADR |
 | HTTP API contract | OpenAPI |
@@ -1962,23 +2088,25 @@ Synchronous
 → Asynchronous
 ```
 
-Possible updates:
+Review requirement/QA/ASR impact first; update those only if their underlying truth changes. Then follow:
 
 ```text
-ASR
-ADD
-ADR
-Logical View
-Implementation View
-Deployment View
-Data View
-Sequence Diagram
-State Diagram
-API Contract
-User Stories
-Tests
-Monitoring
+Architecture Decision Analysis (affected ADA IDs)
+ ↓
+Explicit human selection / Selected Architecture Decisions
+ ↓
+Affected ADD
+ ↓
+Affected Logical → Implementation → Deployment → Data Views
+ ↓
+Consequential ADR / supersession
+ ↓
+Affected detailed API / Data / Sequence / State Design
+ ↓
+Test Strategy / tests / operating evidence
 ```
+
+User Stories/AC change only if their scoped behavior or references genuinely change; a communication tactic alone is not new product scope.
 
 ---
 
@@ -2009,11 +2137,14 @@ Start with:
 
 ```text
 ASR v0.1
+Architecture Decision Analysis v0.1
+Selected Architecture Decisions (explicit gate)
 ADD v0.1
 Logical View v0.1
 Implementation View v0.1
 Deployment View v0.1
 Data View v0.1
+Consequential ADRs
 ```
 
 Then evolve.
@@ -2021,21 +2152,25 @@ Then evolve.
 Example:
 
 ```text
-Sprint 3
-Recommendation Engine introduces cache need
+Sprint evidence
+Measured recommendation workload suggests cache need
         ↓
-ASR updated
+Check requirements / QA / ASR impact; update only if changed
         ↓
-ADD updated
+ADA comparison against correctness/currentness and operating cost
         ↓
-ADR created
+Human selection; preserve superseded choice where applicable
         ↓
-Implementation / Deployment / Data View updated
+Affected ADD
         ↓
-Code
+Affected Logical / Implementation / Deployment / Data Views
+        ↓
+Consequential ADR
+        ↓
+Detailed design / tests / Code
 ```
 
-This is **Agile Architecture**, not Big Design Up Front.
+This is **Agile Architecture**, not Big Design Up Front. Keep baselines sufficient and iterative: the human gate controls consequential choices without requiring every low-level detail to be fixed before delivery.
 
 ---
 
@@ -2113,16 +2248,22 @@ US-005 Confirm Attributes
 Performance / Reliability / Flexibility / Interoperability
         ↓
 ASR
-AI latency + AI isolation + fallback
+Complete processing latency, authority and fallback requirements
+        ↓
+Architecture Decision Analysis
+Compare execution / interaction / resource directions
+        ↓
+Selected Architecture Decisions
+Explicitly chosen options or safe bounded deferrals
         ↓
 ADD
-Tactics and architecture
+Tactics and architecture given selected inputs
         ↓
 Logical View
 Wardrobe ↔ Garment Processing
         ↓
 Implementation View
-Spring Boot module ↔ AI adapter ↔ Python service
+Selected core implementation ↔ selected analysis adapter/runtime
         ↓
 Deployment View
 Mobile → Backend → AI Runtime → Storage/DB
@@ -2130,10 +2271,19 @@ Mobile → Backend → AI Runtime → Storage/DB
 Data View
 Garment + image + attributes + processing status
         ↓
-UML Sequence Diagram
-Runtime interaction
+Consequential ADRs
+Selected rationale / alternatives / consequences
         ↓
-Sprint Backlog
+Detailed API / Data / UML Sequence / UML State Design as needed
+Runtime and contract realization
+        ↓
+Test Strategy
+        ↓
+Engineering Baseline
+        ↓
+Sprint Readiness
+        ↓
+Sprint Planning / Sprint Backlog
         ↓
 Implementation
         ↓
@@ -2148,10 +2298,10 @@ Working Increment
 
 # 46. What the Team Should Do From Today
 
-Follow this order:
+Follow this reusable order. Current artifacts' historical handoffs do not require restarting completed preparation. Major architecture recommendations remain proposed until the responsible human selects; no downstream baseline bypasses the Section 17.3 gate.
 
 | # | Action | Main Output |
-|---:|---|---|
+| ---: | --- | --- |
 | 1 | Consolidate existing source documents | source baseline |
 | 2 | Create/normalize BRD | `BRD.md` |
 | 3 | Normalize existing PRD | `PRD.md` |
@@ -2166,23 +2316,36 @@ Follow this order:
 | 12 | Define Definition of Done | `definition-of-done.md` |
 | 13 | Analyze all 14 Quality Attributes | `quality-attribute-analysis.md` |
 | 14 | Identify ASRs and architectural drivers | `ASR.md` |
-| 15 | Create ADD baseline | `ADD.md` |
-| 16 | Draw Logical View | `logical-view.puml` |
-| 17 | Draw Implementation View | `implementation-view.puml` |
-| 18 | Draw Deployment View | `deployment-view.puml` |
-| 19 | Draw Data View | `data-view.puml` |
-| 20 | Record major decisions | ADR files |
-| 21 | Define initial API/service contracts | API docs/OpenAPI |
-| 22 | Create Test Strategy | `test-strategy.md` |
-| 23 | Prepare repository/build/CI/environments | engineering baseline |
-| 24 | Refine Sprint 1 stories | Ready stories |
-| 25 | Conduct Sprint Planning | Sprint Goal + Sprint Backlog |
-| 26 | Start Sprint 1 implementation | Working Increment |
-| 27 | Run review/test/CI continuously | quality feedback |
-| 28 | Conduct Sprint Review | `review.md` |
-| 29 | Conduct Sprint Retrospective | `retrospective.md` |
-| 30 | Update backlog/requirements/architecture | evolved baseline |
-| 31 | Start next Sprint | repeat |
+| 15 | Compare major architecture choices; recommend without selecting | `architecture-decision-analysis.md` |
+| 16 | Human review and explicit selection / safe bounded deferral | `selected-architecture-decisions.md` |
+| 17 | Create ADD baseline from ASRs and selected directions | `ADD.md` |
+| 18 | Draw Logical View | `logical-view.puml` |
+| 19 | Draw Implementation View | `implementation-view.puml` |
+| 20 | Draw Deployment View | `deployment-view.puml` |
+| 21 | Draw Data View | `data-view.puml` |
+| 22 | Preserve consequential selected rationale | ADR files |
+| 23 | Define initial detailed API/service and data design; complex interactions/lifecycles as needed | API/OpenAPI, data design, UML Sequence/State artifacts |
+| 24 | Create Test Strategy | `test-strategy.md` |
+| 25 | Prepare repository/build/CI/environments | engineering baseline |
+| 26 | Refine upcoming Sprint stories and assess dependencies/readiness | Ready stories |
+| 27 | Conduct Sprint Planning | Sprint Goal + Sprint Backlog |
+| 28 | Start Sprint implementation | Working Increment |
+| 29 | Run review/test/CI continuously | quality feedback |
+| 30 | Conduct Sprint Review | `review.md` |
+| 31 | Conduct Sprint Retrospective | `retrospective.md` |
+| 32 | Update backlog/requirements/architecture where truth changes | evolved baseline |
+| 33 | Start next Sprint | repeat |
+
+The canonical architecture-to-delivery sequence is:
+
+```text
+Requirements → Quality Attribute Analysis → ASR
+→ Architecture Decision Analysis → Selected Architecture Decisions
+→ ADD → Logical View → Implementation View → Deployment View → Data View
+→ ADRs → Detailed API / Data / Sequence / State Design
+→ Test Strategy → Engineering Baseline → Sprint Readiness
+→ Sprint Planning → Implementation
+```
 
 ---
 
@@ -2213,13 +2376,29 @@ UML Activity Diagrams
  ↓
 ASR
  ↓
-ADD
- ├─ Logical View
- ├─ Implementation View
- ├─ Deployment View
- └─ Data View
+Architecture Decision Analysis
  ↓
-ADR / UML Sequence / UML State / API / Data Design
+Selected Architecture Decisions (human gate)
+ ↓
+ADD
+ ↓
+Logical View
+ ↓
+Implementation View
+ ↓
+Deployment View
+ ↓
+Data View
+ ↓
+ADRs
+ ↓
+Detailed API / Data / UML Sequence / UML State Design
+ ↓
+Test Strategy
+ ↓
+Engineering Baseline
+ ↓
+Sprint Readiness → Sprint Planning → Implementation
 ```
 
 ## Scrum Delivery Track
@@ -2275,8 +2454,8 @@ Feedback
 2. **All project documentation is version-controlled in the codebase.**
 3. **Requirements explain what must be true; architecture explains how the system satisfies the important requirements.**
 4. **Evaluate all 14 Quality Attributes, but only significant ones need deep scenarios.**
-5. **ASR precedes ADD logically.**
-6. **ADD owns the architecture design and the four primary views.**
+5. **ASR precedes comparative Architecture Decision Analysis; explicit human selection precedes ADD. Recommendation is not selection.**
+6. **ADD consumes ASRs and the Selected Architecture Decisions record; it owns architecture design and the four primary views. ADRs follow those views and preserve consequential rationale.**
 7. **Logical, Implementation, Deployment and Data Views are mandatory architecture views for CapsuleAI.**
 8. **Use Case, Activity, Sequence and State diagrams use UML, stored preferably as PlantUML source.**
 9. **Do not draw diagrams merely for documentation volume.**
@@ -2301,16 +2480,18 @@ When an AI model is asked to help continue CapsuleAI, it should:
 1. Read this workflow first.
 2. Identify the current project phase and Sprint.
 3. Inspect existing documents before creating new ones.
-4. Preserve IDs such as `FR-*`, `NFR-*`, `BR-*`, `UC-*`, `US-*`, `ASR-*`, `QA-*`, `ADR-*`.
+4. Preserve IDs such as `FR-*`, `NFR-*`, `BR-*`, `UC-*`, `US-*`, `ASR-*`, `QA-*`, `ADA-*`, `ADR-*`.
 5. Follow the source-of-truth rules.
 6. Do not duplicate information across files unnecessarily.
 7. Maintain traceability among requirements, stories, architecture and tests.
 8. Use UML/PlantUML for UML diagrams.
 9. Keep the four ADD architecture views synchronized with the actual system.
-10. Update ASR/ADD/ADR only when the corresponding architectural concern changes.
+10. Update only affected QA/ASR, ADA, selected-decision record, ADD/views and ADRs when their underlying truth changes. Preserve the analysis → human selection → ADD → four views → ADR order; do not edit ASRs merely because a tactic changes.
 11. Do not over-engineer the system.
 12. Do not introduce a technology unless a requirement, ASR or engineering constraint justifies it.
 13. Preserve Scrum's iterative nature rather than turning the workflow into Waterfall.
 14. Prioritize a working Increment every Sprint.
 15. Treat this document as the high-level process authority for CapsuleAI unless the team explicitly revises it.
-
+16. Never invent a human preference/approval or promote a proposed recommendation into a Selected decision. Preserve stable ADA IDs and analyzed alternatives.
+17. Create the selected-decision record only after actual human selection; create ADD/views only after the major-choice gate. Later detailed design, Test Strategy, engineering preparation and Sprint artifacts follow their own stages.
+18. Keep reusable process guidance generic. A historical technology or another project's architecture is not a mandate.

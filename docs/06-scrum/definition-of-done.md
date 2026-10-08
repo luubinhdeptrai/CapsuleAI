@@ -5,12 +5,12 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Project-wide Definition of Done |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Ownership | Scrum Team; Developers are accountable for adhering to the DoD |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 29, 33 and 38–43 |
-| Revision Note | Initial shared completion standard derived from the current baseline; no change to product scope or acceptance thresholds. |
+| Revision Note | v0.1: initial shared completion standard. v0.1.1: synchronized architecture change-propagation/navigation with ADA and explicit selection; completion criteria and acceptance thresholds are unchanged. |
 
 ## 2. Purpose
 
@@ -52,7 +52,7 @@ Review these triggers for each change. Every triggered criterion is mandatory. R
 | --- | --- |
 | HTTP API or service contract changes | Synchronize the affected OpenAPI/API contract or AI service contract and its consumers. Verify changed success, validation, failure and recovery semantics through relevant contract/integration tests; implementation and documented behavior agree. |
 | Database schema changes | Include the executable migration/schema change and relevant migration/integrity tests. Verify the supported transition with existing data; synchronize affected Data View relationships/ownership and related contract documentation where changed. Migration and recovery approach follows the applicable design. |
-| Architectural concern or decision changes | Synchronize only affected ASR, ADD, architecture views and ADR records, following workflow change propagation. Relevant detailed models are updated when their underlying behavior changes. A story with no architectural change requires no architecture-document edit. |
+| Architectural concern or decision changes | Synchronize only affected ASR (when requirement/driver truth changes), Architecture Decision Analysis and explicit Selected Architecture Decisions, then affected ADD, architecture views and consequential ADR records, following workflow change propagation. Relevant detailed models are updated when their underlying behavior changes. A story with no architectural change requires no architecture-document edit. |
 | Authorization, sensitive-data use, retention or measurement changes | Verify the affected security/privacy boundaries, minimal disclosure, accepted removal and applicable deletion/retention behavior against the SRS. Measurement preserves core-action outcomes and uses privacy-safe evidence. No new privacy policy or training consent is inferred from user correction/feedback. |
 | AI assistance, recommendation, personalization or wardrobe-intelligence behavior changes | Verify affected domain invariants and trustworthy output/state explanations. Meet applicable AI acceptance conditions; distinguish attribute quality from preview usability and preserve confirmation/manual continuity. Recognition-quality claims use the SRS locked benchmark, without training/tuning on its evaluation corpus. |
 | Performance, reliability, concurrency or availability behavior is affected | Demonstrate the applicable SRS requirements under their defined validation conditions. Formal timing evidence uses the prescribed start/end boundaries, reference conditions and sampling. Functional concurrency and restart recovery retain their separate acceptance meanings; unrelated paths require no new benchmark. |
@@ -96,4 +96,6 @@ Revise the version and rationale when the quality baseline genuinely changes, pr
 
 ## 11. Status
 
-**Baseline Draft.** This initial DoD is prepared for Scrum Team review; formal adoption and executed software verification are not claimed. The next workflow activity is analysis of all 14 Quality Attributes, following Workflow Section 46, Step 13.
+**Version 0.1.1 — Baseline Draft.** Prepared for Scrum Team review; formal adoption and executed software verification are not claimed. This revision updates architecture-process references without changing the completion standard.
+
+**Original v0.1 handoff:** analysis of all 14 Quality Attributes (Workflow Section 46, Step 13). Current progression is maintained in [Delivery Decisions](delivery-decisions.md), DD-006: human review of ADA → Selected Architecture Decisions before ADD/views. The historical DoD handoff does not restart completed analysis.

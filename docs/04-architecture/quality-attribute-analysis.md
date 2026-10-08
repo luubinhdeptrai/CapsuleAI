@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Quality Attribute Analysis |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-08 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
@@ -17,6 +17,7 @@
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-08 | Initial analysis of all 14 workflow attributes, source-linked scenarios, constraints and preliminary ASR candidates; no change to upstream scope, requirements or delivery decisions. |
+| 0.1.1 | 2026-10-08 | Synchronized current architecture-process navigation with ADA and explicit human selection before ADD; all classifications, scenarios, thresholds and analysis remain unchanged. |
 
 ## 2. Purpose
 
@@ -441,7 +442,7 @@ Sources: SRS NFR-SUP-001/002, NFR-TEST-002, NFR-SEC-003, FR-WAR-008, FR-MET-006 
 
 ## 20. Cross-Quality Trade-offs
 
-These tensions need later ASR/ADD reasoning. Current obligations remain in force; the analysis selects no resolution.
+These tensions inform ASR identification → Architecture Decision Analysis → explicit human selection → ADD/views and later ADR rationale. Current obligations remain in force; the analysis selects no resolution.
 
 | Potential tension | CapsuleAI consequence to examine later |
 | --- | --- |
@@ -501,7 +502,7 @@ These are concerns to examine in formal ASR identification, without ASR IDs or c
 - Treat Coverage and Multiplier as evidence-based assessments. Exact utility needs complete consistent sets; incomplete/unavailable/outdated is never a fabricated zero.
 - Measure complete operations under existing SRS conditions. Keep nominal p95, concurrent integrity and restart recovery separate; do not introduce general API or Multiplier timing promises.
 - Make required dependency outcomes and diagnostic evidence inspectable with minimal private content. Work with mobile/AI/QA on real integration, accessibility and validation evidence under the DoD.
-- Bring feasibility and implementation concerns into later architecture/refinement work. Database, topology, communication, caching and JWT realization follow ASR/ADD/ADR; backlog order and product-scope decisions remain with their responsible roles.
+- Bring feasibility and implementation concerns into later architecture/refinement work. Database, topology, communication, caching and JWT realization follow ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD/views → ADRs; backlog order and product-scope decisions remain with their responsible roles.
 
 ## 24. Traceability
 
@@ -509,7 +510,7 @@ Detailed scenario source lines and attribute drivers are the primary traceabilit
 
 | Source | Role in this analysis |
 | --- | --- |
-| [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 | Exact 14-QA taxonomy, significance from actual requirements, ASR/ADD boundaries, ownership, evolution and next-step order. |
+| [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 | Exact 14-QA taxonomy, significance from actual requirements, ASR/ADA/Selected Architecture Decisions/ADD boundaries, ownership, evolution and next-step order. |
 | [Architecture reference](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md), slides 4–16 and 18–22 | QA definition/classification, requirement/constraint distinctions, six-part scenarios and architecture reasoning categories; methodology only. |
 | [BRD v0.3](../01-business/BRD.md) | BG-01–04; BR-001–024; CAP-01–10; personas, trust, scope, metrics, risks and dependencies. Highest-ranked drivers particularly reach BR-002/004/009/011/014–017/021–024 and MET-Q01–Q07. |
 | [PRD v0.2](../02-product/PRD.md), Sections 21–29 and 34 | Complete FEAT/JRN experience, state/explanation/privacy/quality expectations and resolved OPQ-001–010. |
@@ -525,10 +526,12 @@ Detailed scenario source lines and attribute drivers are the primary traceabilit
 
 **Source interpretation and issues.** No blocking contradiction in current quality obligations was found. FR-MET-004 contains an incomplete benchmark cross-reference, already noted in Product Backlog Section 11. Recognition/preview evidence uses explicit SRS Section 8.1/3.4.1; timing uses Section 12.3 and NFR-TEST-003. The editorial defect does not remove those acceptance criteria. Historical directions that conflict with normalized scope/thresholds remain historical under Section 21; no upstream artifact is repaired or overridden here.
 
-Older artifacts' “next artifact” statements describe their own handoff point. Current progression follows Workflow Section 46, DoD Section 11 and DD-006 rather than restarting requirements or backlog work. All sources remain drafts where so marked; resolved business/product decisions do not imply formal artifact approval.
+Older artifacts' “next artifact” statements describe their own handoff point. Current progression follows Workflow Section 46 and DD-006: QA → ASR → ADA → explicit human selection → ADD/views → ADRs → detailed design and delivery preparation. Initial artifact-specific handoffs do not restart completed preparation. All sources remain drafts where so marked; resolved business/product decisions do not imply formal artifact approval.
 
 ## 25. Status
 
-**Version 0.1 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. No architecture solution or downstream artifact is selected or created, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
+**Version 0.1.1 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. No architecture solution or downstream artifact is selected or created, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
 
-The next workflow step is **formal ASR identification and architectural-driver selection**, following Workflow Section 17 and Section 46, Step 14, and DD-006. That work should evaluate the preliminary concerns above and retain their source/scenario evidence before ADD and architecture views are developed.
+**Original v0.1 handoff:** formal ASR identification and architectural-driver selection (Workflow Section 17 and Section 46, Step 14). The preliminary candidates and source/scenario evidence above preserve that analysis stage.
+
+**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts now exist. Human review → Selected Architecture Decisions is the current handoff in DD-006; ADD and the four views follow explicit major-choice selection, then ADRs, detailed design and delivery preparation. This v0.1.1 process/navigation revision changes no QA classification, scenario body or acceptance measure.

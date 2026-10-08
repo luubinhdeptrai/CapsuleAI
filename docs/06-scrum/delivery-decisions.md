@@ -5,19 +5,24 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Delivery Decision Log |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Primary Audience | Backend Developer / Development Team |
 | Ownership | Product Owner / BA, with team input within workflow responsibilities |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
-| Revision Note | Initial handoff record of existing ordering, refinement and story boundaries, role responsibilities and the next workflow activity. |
+| Revision Note | v0.1.1 extends DD-006 with ADA and explicit human selection before ADD; updates current handoff and shifted action references. DD IDs, product order, story boundaries and Sprint commitment rules are preserved. |
+
+| Version | Date | Revision |
+| --- | --- | --- |
+| 0.1 | 2026-10-08 | Initial six-entry handoff log, including DD-006's original QA preparation handoff. |
+| 0.1.1 | 2026-10-08 | Extended DD-006 for ADA/human selection before ADD; current handoff and shifted Step references only. |
 
 ## 2. Purpose
 
 This lightweight CapsuleAI convention explains delivery decisions that affect developer handoff. It records what the current repository establishes and the responsibility for later refinement; it does not claim historical meetings or approvals.
 
-Exact business/product behavior remains in BRD/PRD, software obligations in SRS, invariants in Business Rules, interactions in Use Cases/Activity Diagrams, ordering in the Product Backlog and near-term behavior in stories/AC. Architecture design and technical decision history belong in the later ADD/views and ADRs. This log references those authorities rather than overriding them; Scrum does not prescribe this file.
+Exact business/product behavior remains in BRD/PRD, software obligations in SRS, invariants in Business Rules, interactions in Use Cases/Activity Diagrams, ordering in the Product Backlog and near-term behavior in stories/AC. Architecture options/recommendations belong in ADA; explicit human choices belong in Selected Architecture Decisions; design and durable rationale belong in later ADD/views and ADRs. This log references those authorities rather than overriding them; Scrum does not prescribe this file.
 
 ## 3. How to Use This File
 
@@ -90,21 +95,25 @@ Keep DD IDs stable. When guidance changes, update its authoritative source first
 
 **Reason:** Refined Baseline Draft stories are potential delivery slices, not a capacity-based Sprint commitment. Planning follows the intervening preparation stages and must reflect the actual team and technical baseline.
 
-**Authoritative Basis:** [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 31–32, 38–40 and 46, Steps 24–26; [Product Backlog](product-backlog.md), Sections 10–11; [Product Goal](product-goal.md), Section 8; all current [stories](stories/README.md), Section 11.
+**Authoritative Basis:** [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 31–32, 38–40 and 46, Steps 26–28; [Product Backlog](product-backlog.md), Sections 10–11; [Product Goal](product-goal.md), Section 8; all current [stories](stories/README.md), Section 11.
 
 **Backend Developer Impact:** Participate as a Developer in feasibility/capacity and Sprint planning. At implementation time, follow the resulting Sprint Goal, selected stories/AC, DoD, relevant architecture/contracts/data design and team-agreed backend tasks. This record supplies no Sprint assignment, estimate or individual task assignment.
 
-### DD-006 — Proceed next to Quality Attribute Analysis
+### DD-006 — Preserve architecture analysis and human selection before ADD
 
 **Status:** Active
 
-**Decision:** After review of the initial stories and this DoD baseline, the next activity is **analysis of all 14 Quality Attributes**. Preserve Workflow Section 46's subsequent order: ASR/architectural drivers; ADD baseline; Logical, Implementation, Deployment and Data Views; major ADRs; initial API/service contracts; Test Strategy; repository/build/CI/environment engineering baseline; Sprint-story readiness refinement; then Sprint Planning and implementation. Relevant detailed sequence/state models follow the workflow's feature-level need criteria.
+**Decision:** Preserve Workflow Section 46's preparation sequence: Quality Attribute Analysis → ASR/architectural drivers → Architecture Decision Analysis → **explicit human Selected Architecture Decisions** → ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-**Reason:** Requirements already describe the full MVP, while the initial stories and DoD provide near-term outcomes and shared completion expectations. Quality drivers must inform architecture and engineering preparation; a story batch alone cannot select those designs or start a committed Sprint.
+QA, ASR and ADA drafts now exist. The current next action is **human review of the proposed ADA options and explicit selection**, not automatic ADD generation. The future selected-decision record is created only after actual selection; all Critical choices must be selected and Important deferrals safely bounded before ADD. Draft analysis is not architecture approval.
 
-**Authoritative Basis:** [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–28, 30, 38 and 46, Steps 11–26; [SRS](../03-requirements/SRS.md), Sections 6 and 12; [Definition of Done](definition-of-done.md), Sections 5 and 11; [Product Backlog](product-backlog.md), Section 11.
+**History / Extension:** DD-006 v0.1 handed the initial stories/DoD to analysis of all 14 QAs. Version 0.1.1 naturally extends the same preparation/handoff decision with the new workflow stages and current progress. DD-006 remains Active; no prior DD entry is deleted or superseded.
 
-**Backend Developer Impact:** Next, contribute requirement-linked risks and measurable scenarios to Quality Attribute Analysis under Tech Lead/Architect ownership. Later contribute to contracts, Data View and implementation feasibility within their respective stages. No architecture, API, schema or provider choice is made here; current documents remain drafts for review.
+**Reason:** Requirements cover the whole MVP; stories/DoD supply near-term behavior and completion expectations. QA/ASR define the architectural needs, ADA explains alternatives, and the human gate prevents an AI recommendation from silently determining design. The full 41-PBI horizon remains relevant; none of these preparation artifacts commits Sprint work.
+
+**Authoritative Basis:** [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–28 (especially 17.2–17.3), 30, 38 and 46, Steps 11–28; [ASR](../04-architecture/ASR.md), Section 13; [Architecture Decision Analysis](../04-architecture/architecture-decision-analysis.md), Sections 4/8/11; [SRS](../03-requirements/SRS.md), Sections 6 and 12; [Definition of Done](definition-of-done.md), Sections 5 and 11; [Product Backlog](product-backlog.md), Section 11.
+
+**Backend Developer Impact:** Review ADA trade-offs, confidence and dependencies; contribute actual runtime/model/database feasibility, implementation and operating implications to human selection under Architect/Tech Lead responsibility. Keep product decisions with PO/BA/team. Later contribute to ADD/views, contracts, Data View and engineering work in order. No architecture option, provider, API or schema is selected by this delivery log.
 
 ## 5. Superseded Decisions
 
@@ -112,10 +121,10 @@ None currently.
 
 ## 6. Backend Developer Handoff Summary
 
-**Current stage:** An initial Product Goal and globally ordered backlog exist, with eight Baseline Draft stories from four PBIs. The project-wide DoD is now drafted for team review. No Sprint Goal, Sprint Backlog or implementation commitment is recorded.
+**Current stage:** Product Goal, the globally ordered 41-PBI backlog, eight stories from four PBIs and the project-wide DoD exist as drafts for review. QA/ASR drafts and the ADA v0.1 Baseline Draft now cover the full MVP; every ADA recommendation is Proposed — Awaiting Selection. No selected-decision record, ADD/views/ADRs, Sprint Goal, Sprint Backlog or implementation commitment is recorded.
 
-**Next focus:** Review the story boundaries and [DoD](definition-of-done.md), then support Quality Attribute Analysis with source-linked backend risks and validation needs. Product order stays in the backlog; exact behavior stays in requirements and AC. Architecture/contracts, engineering preparation and Sprint selection follow DD-006 and DD-005 at their appropriate stages.
+**Next focus:** Human review of [ADA](../04-architecture/architecture-decision-analysis.md) → Selected Architecture Decisions, then ADD/views and ADRs. Current draft review needs remain; earlier handoffs do not restart completed preparation. Product order stays in the backlog and exact behavior in requirements/AC. Detailed design, Test Strategy, engineering/readiness and Sprint Planning follow DD-006/DD-005.
 
 ## 7. Status
 
-**Baseline Draft.** Six Active entries summarize supported current guidance, with no Superseded entries. Active means applicable handoff guidance, not formal artifact approval. No upstream artifact, existing story, PBI order, estimate or Sprint assignment is changed by this log.
+**Version 0.1.1 — Baseline Draft.** Six Active entries, with no Superseded entries. DD-006 is extended and DD-005's action references are synchronized; other decisions are preserved. Active means applicable process guidance, not formal artifact approval or selected architecture. No product/requirement content, existing story, PBI order, estimate or Sprint assignment is changed.

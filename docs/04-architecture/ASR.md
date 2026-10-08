@@ -5,17 +5,17 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Formal Architecturally Significant Requirements (ASR) |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Product / Horizon | CapsuleAI — complete approved MVP scope |
 | Ownership | Architect / Tech Lead; review with Developers, QA and Product/BA |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17–19, 39–43 and 46 |
 | Primary Analysis Input | [Quality Attribute Analysis](quality-attribute-analysis.md), v0.1 — Baseline Draft |
-| Revision Note | Initial selective ASR baseline derived from current requirements and QA scenarios; no change to upstream scope, policies, IDs or acceptance measures. |
+| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. |
 
 ## 2. Purpose
 
-This document identifies requirement clusters that materially influence CapsuleAI's later architecture: responsibilities and boundaries, runtime coordination, authoritative information, integration, resource use, recovery and inspectable evidence. An ASR states what the architecture must be capable of satisfying. The ADD and ADRs will determine how to satisfy it.
+This document identifies requirement clusters that materially influence CapsuleAI's later architecture: responsibilities and boundaries, runtime coordination, authoritative information, integration, resource use, recovery and inspectable evidence. An ASR states what the architecture must be capable of satisfying. Architecture Decision Analysis compares solutions; explicit human selection precedes ADD/views describing their realization. Later ADRs preserve consequential rationale.
 
 The analysis covers the connected AI Digital Closet, Context-Aware Styling, and Wardrobe Intelligence & Strategic Shopping MVP. The complete 41-PBI backlog defines the delivery horizon; the eight currently refined stories describe the first batch. They do not narrow architectural analysis to PBI-004–PBI-007.
 
@@ -26,7 +26,9 @@ The analysis covers the connected AI Digital Closet, Context-Aware Styling, and 
 | SRS / Business Rules | Authoritative software obligations, measures and domain invariants. ASRs select clusters without replacing their detail. |
 | Quality Attribute Analysis | Analysis of all 14 attributes, their significance, 17 scenarios and preliminary candidates; the immediate analytical input. Scenario bodies remain there. |
 | ASR | Selective architecture-driving requirements, drivers, rationale and source/evidence links. |
-| ADD / architecture views | Later responsibility, runtime, implementation, deployment and data design against these drivers. |
+| Architecture Decision Analysis | Comparative options and proposed recommendations against these drivers; no automatic selection. |
+| Selected Architecture Decisions | Explicit human selection or safe bounded deferral before ADD. |
+| ADD / architecture views | Later responsibility, runtime, implementation, deployment and data design given these drivers and explicitly selected directions. |
 | ADR | Later consequential solution decisions, alternatives, rationale and consequences. |
 
 Source-defined policies remain binding even when they are not standalone ASRs. Current canonical CapsuleAI documents override historical proposals and reference examples. Baseline Draft does not claim artifact approval or implemented satisfaction.
@@ -525,7 +527,7 @@ No blocking contradiction was found in the current baseline. **FR-MET-004 has an
 
 **Focused Use Case Diagram references do not match the current inventory.** SRS Section 14 and the UC specifications refer to focused diagrams under `use-cases/diagrams/`, but those files are absent. The existing master Use Case Diagram, complete 23 UC specifications and 12 Activity Diagrams supply this analysis's interaction evidence. No missing diagram content is assumed, and no additional diagram artifact is created.
 
-Older documents' “next artifact” statements record their own handoff point. Current progression follows Workflow Section 46 and DD-006 after QA and this ASR identification, rather than restarting product/requirements work. The Food Delivery example's later architecture and different documentation responsibilities do not alter CapsuleAI's source ownership or placement of QA scenarios.
+Older documents' “next artifact” statements record their own handoff point. Current progression follows Workflow Section 46 and DD-006: ASR → Architecture Decision Analysis → explicit human Selected Architecture Decisions → ADD/views → ADRs, followed by detailed design and delivery preparation. Earlier handoffs do not restart product/requirements work. The Food Delivery example's later architecture and different documentation responsibilities do not alter CapsuleAI's source ownership or placement of QA scenarios.
 
 ## 12. Backend Developer Takeaways
 
@@ -538,6 +540,8 @@ Older documents' “next artifact” statements record their own handoff point. 
 
 ## 13. Status and Next Step
 
-**Version 0.1 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
+**Version 0.1.1 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
 
-The next workflow step is **Architecture Description Document (ADD) baseline and architecture views**: Workflow Section 46, Steps 15–19, covers ADD followed by Logical, Implementation, Deployment and Data Views. Later major ADRs, initial API/service contracts, Test Strategy, engineering preparation and Sprint readiness/planning retain the order in DD-006. This task creates only ASR.md; it selects no architecture style, database, cache, messaging or deployment solution.
+The ASR handoff is **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). The [decision-analysis draft](architecture-decision-analysis.md) now exists with proposed recommendations; the current next action is human review and explicit selection. It does not establish selected architecture.
+
+Only after all Critical choices are selected and Important deferrals safely bounded should ADD and Logical, Implementation, Deployment and Data Views proceed (Steps 17–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.1 changes current handoff/navigation only; it creates no selected-decision record or downstream design.
