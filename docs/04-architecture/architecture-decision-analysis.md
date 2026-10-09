@@ -5,10 +5,10 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Decision Analysis |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 | Decision State | All recommendations Proposed — Awaiting Selection |
-| Last Updated | 2026-10-08 |
+| Last Updated | 2026-10-10 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
@@ -17,10 +17,13 @@
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-08 | Initial comparison of 14 architecture decision problems across the whole MVP; recommendations await human selection. No product requirement, QA measure or ASR content changes. |
+| 0.2 | 2026-10-10 | Added ADA-015–018 for internal module architecture, context data ownership, inter-context communication and model isolation/ACL; reconciled existing recommendations, dependencies, deferrals and human-review gates around service-extractable modularity. Corrected the Business Analysis source location. No product, QA or ASR change; all 18 recommendations remain proposed. |
 
 ## 2. Purpose
 
 Expose the major choices between required architectural capability and a coherent design. The analysis covers the complete three-pillar mobile MVP: confirmed wardrobe, valid personalized styling and reported behavior, and contextual Coverage/Gaps plus hypothetical candidate utility. The first eight stories are implementation/refinement context, not the architecture boundary.
+
+The current architecture intent is a modular monolith for the business core with **service-extractable modularity**. ADA-001/015–018 analyze that coherent direction; no authoritative Selected Architecture Decisions record or implementation exists. System-level modularity, internal dependency direction, logical data ownership, interaction semantics and model isolation answer different questions. Preparing boundaries for possible extraction does not establish microservices as current product scope.
 
 | Artifact | Responsibility |
 | --- | --- |
@@ -49,10 +52,10 @@ The current workflow was read first, followed by the complete relevant repositor
 | [All 12 Activity Diagrams](../03-requirements/activity-diagrams/) | AD-004/006/007/011/012/014/016/017/019/020/021/022 visualize the normative UC behavior; they do not add requirements. |
 | [Product Goal](../06-scrum/product-goal.md); [Product Backlog](../06-scrum/product-backlog.md); [all eight stories and index](../06-scrum/stories/README.md) | Whole 41-PBI horizon and concrete near-term AC; existing order/refinement boundaries are preserved. |
 | [DoD](../06-scrum/definition-of-done.md), Sections 4–6; [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006 | Integrated conditional evidence, source synchronization and preparation/handoff; no Sprint commitment. |
-| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline and Business Analysis.docx under Initial files | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
+| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline under Initial files and [Business Analysis.docx](../../Business%20Analysis.docx) at the repository root | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
 | [Quality-attribute learning reference](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md), ASR_FoodDelivery.md and ADD_FoodDelivery.md in the same reference directory | Methodology and artifact-boundary/structure reference only. No Food Delivery stack, event architecture or deployment decision is adopted. |
 
-Technical capability claims were checked on **2026-10-08** through Context7 and the linked official documentation. Those sources explain option feasibility; they do not create product requirements, prove benchmark results, or select versions/providers.
+Existing technical capability claims retain their **2026-10-08** Context7/official-documentation checks. The v0.2 expansion checked Spring event/transaction behavior and PostgreSQL schemas/privileges through Context7 on **2026-10-10**, and consulted primary Clean Architecture/DDD explanations linked in ADA-015/018. These references explain capabilities and concepts; CapsuleAI-specific judgments derive from current ASRs and requirements. They do not create product requirements, prove benchmark results, or select versions/providers.
 
 ### 3.2 Evaluation Principles and Importance
 
@@ -89,7 +92,7 @@ No current root README, legacy standalone PRD or older referenced Food Delivery 
 
 ## 4. Decision Summary
 
-All 14 entries retain the full status shown below. Persistence model and technology are one problem; avoiding a dedicated cache/broker is a positive architecture recommendation, not an omitted analysis.
+All 18 entries retain the full status shown below. Persistence model and technology are one problem; avoiding a dedicated cache/broker is a positive architecture recommendation, not an omitted analysis.
 
 | ID | Decision Problem | Importance | Recommendation | Confidence | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -107,6 +110,10 @@ All 14 entries retain the full status shown below. Persistence model and technol
 | ADA-012 | Messaging and background coordination | Important Before ADD | Explicit core coordination with no broker initially | High | Proposed — Awaiting Selection |
 | ADA-013 | Initial deployment and resource separation | Important Before ADD | Small controlled deployment with supervised core/AI processes and durable resources | Medium | Proposed — Awaiting Selection |
 | ADA-014 | Protected observability and validation evidence | Important Before ADD | Minimal protected structured logs, metrics and health/recovery evidence | High | Proposed — Awaiting Selection |
+| ADA-015 | Internal Module Architecture | Important Before ADD | Pragmatic Clean Architecture inside each business module | Medium | Proposed — Awaiting Selection |
+| ADA-016 | Context Data Ownership | Critical Before ADD | One PostgreSQL database initially with explicit context-owned logical persistence boundaries | High | Proposed — Awaiting Selection |
+| ADA-017 | Inter-Context Communication | Critical Before ADD | Explicit published module contracts; synchronous local or event-based interaction follows business semantics | High | Proposed — Awaiting Selection |
+| ADA-018 | Context Model Isolation and Anti-Corruption | Important Before ADD | Published contracts + Anti-Corruption Layer translation at meaningful semantic boundaries | High | Proposed — Awaiting Selection |
 
 ## 5. Major Architecture Decision Analyses
 
@@ -176,9 +183,19 @@ Proposed — Awaiting Selection
 
 ADD would describe one coordinated business core with explicit responsibilities, plus any separately selected analysis boundary. Releases of the core would remain coupled and boundary discipline would become ongoing work.
 
+#### Service-Extractable Modularity
+
+The proposed modular monolith favors local consistency, simpler operation, lower distributed-system complexity and cohesive business-rule realization. ADA-015–018 make its boundaries deliberate: cohesive business responsibility, accountable ownership, private internals, published contracts, controlled dependencies, context-owned logical data and explicit synchronous/asynchronous semantics.
+
+Determine boundaries from the business domain and cohesive responsibilities, then establish ownership/contracts. Only afterward use a future extraction thought experiment to test whether those boundaries remain sensible. A bounded context is a semantic/model boundary; a module is a local implementation boundary. Their mapping belongs to the Logical/Implementation Views, not a pre-invented list of future services. A possible future service may realize one or more healthy responsibilities; **one module does not imply one future microservice**, and some modules may remain local permanently.
+
+Reconsider extraction only when evidence shows materially different independent scaling/resource profiles, measurable independent-deployment value, separate teams with independent domain ownership, release coupling as a demonstrated bottleneck, or diverging failure-isolation/availability requirements. Review affected ASRs and ADA dependencies before human selection and design changes. No migration date, extraction obligation or new availability target is set.
+
+**Microservices are not an MVP requirement.** Prepare ownership and contracts rather than introducing internal HTTP, brokers, API Gateway, service mesh, service discovery, separate database servers, Saga or Kubernetes for a hypothetical future.
+
 #### Deferred Details
 
-Module/component maps, internal interfaces, layering conventions and dependency enforcement belong in ADD and Logical/Implementation Views; consequential rationale belongs in later ADRs.
+ADA-015–018 analyze internal dependency, ownership, communication and model-isolation policies now. Exact bounded-context/module maps, public interfaces, packages and dependency-enforcement realization belong in ADD and Logical/Implementation Views; consequential rationale belongs in later ADRs.
 
 ### ADA-002 — Backend application runtime
 
@@ -313,6 +330,10 @@ Proposed — Awaiting Selection
 #### Consequence If Selected
 
 ADD would use a single primary authority for related business/session state, with separate media storage if ADA-007 is selected. Cross-resource image work would need explicit recoverable coordination; database transactions would not make object-storage operations atomic.
+
+#### Relationship to Context Ownership
+
+ADA-003 compares the primary persistence model/database family; **ADA-016** analyzes logical ownership inside the proposed shared model. One PostgreSQL database does not imply that every module may freely access every table. Owned mutations, lifecycle and permitted reads remain behind published boundaries; exact schemas/tables are downstream. Local transactions can coordinate owner operations without permitting direct cross-context repository/entity/schema access.
 
 #### Deferred Details
 
@@ -522,6 +543,12 @@ Proposed — Awaiting Selection
 #### Consequence If Selected
 
 ADD would separate provider translation from business outcome decisions. UC-006 would remain location/weather acquisition authority; consuming assessments would not become new independent external acquisition goals. SDK use would remain possible within an adapter.
+
+#### Semantic Translation and Anti-Corruption
+
+An adapter also acts as an **Anti-Corruption Layer** when provider meaning differs from CapsuleAI's. The port defines the needed interaction, the adapter realizes access/transport, and the ACL translates semantics; they are related responsibilities, not synonyms. Illustrative translations include weather responses to CapsuleAI environmental evidence (possibly named WeatherSnapshot), Python analysis responses to GarmentAnalysisProposal, optional shopping responses to qualified commercial evidence, and object-storage behavior to a private media abstraction.
+
+External DTOs, SDK types, provider exceptions and vocabulary stay at the boundary rather than spreading through domain/application decisions. Translation must preserve confidence/provenance, currentness, absence/failure and access/lifecycle meaning. **ADA-018** analyzes internal and external model isolation, including why ACL does not imply a stored snapshot. These names are examples, not final classes or additional integration scope.
 
 #### Deferred Details
 
@@ -736,6 +763,14 @@ Proposed — Awaiting Selection
 
 ADD would make accepted identity/outcome and coherent consumer state explicit. A new same-outfit/day report would remain a separate event; normalization would cap only ranking contribution using the latest surviving accepted absolute anchor.
 
+#### Transaction Boundary and Future Extraction Coupling
+
+The current proposed modular monolith may legitimately use local PostgreSQL ACID transactions where correctness requires them. Do not avoid useful local transactions to imitate microservices. ADA-016 assigns data owners; ADA-017 governs explicit collaboration. An application coordinator can invoke owned operations through public contracts in a deliberately shared local transaction, without directly importing another owner's repository/entity or treating all tables as public.
+
+A transaction that changes multiple contexts' owned state creates **future extraction coupling**. Later design must identify the participating owners, required invariant, acceptance boundary, concurrency/failure behavior and why their coordinated commit is needed. This is a design trade-off, not a ban or a finalized transaction map. Some effects can instead be coherent authoritative derived reads; exact realization stays downstream. Database atomicity does not include object storage or email.
+
+If those responsibilities are later extracted, the same business guarantees may require redesigned local service transactions, reliable events, an Outbox, eventual consistency where permitted, or Saga/compensation where justified. Those are potential future mechanisms, not current selections. Immediate removal/revocation and truthful accepted outcomes cannot become eventual merely to ease extraction. Re-analysis may conclude that tightly coupled responsibilities should remain together.
+
 #### Deferred Details
 
 Client/action identity mechanism, request fields, reuse conflicts, transaction boundaries, locks, representation/retention of retry evidence and external-side-effect recovery protocols follow detailed design.
@@ -768,7 +803,7 @@ One validity/identity meaning; coherent basis despite concurrent change; complet
 
 #### Option A — Request-time evaluation from authoritative inputs with shared semantics
 
-Evaluate current inputs through consistent validity/identity responsibilities and establish completion/basis before claiming a result. It reduces stored-result invalidation surfaces and keeps evidence close to the request. Computation can be expensive, especially full hypothetical sets, and concurrent changes still require basis validation. Shared semantics does not mean Daily and Multiplier must use the same algorithm or compute every possible outfit in the Daily path.
+Evaluate current inputs through consistent validity/identity responsibilities and establish completion/basis before claiming a result. It reduces stored-result invalidation surfaces and keeps evidence close to the request. Computation can be expensive, especially full hypothetical sets, and concurrent changes still require basis validation. Shared semantics does not mean Daily and Multiplier must use the same algorithm or compute every possible outfit in the Daily path. Under ADA-016–018, authoritative inputs would normally arrive through published local owner contracts, with coherent basis checks. Consistent validity/identity needs explicit semantic ownership, not unrestricted table access, a universal entity library or independently drifting copies of the rules.
 
 #### Option B — Broad precomputation of advice and intelligence
 
@@ -910,7 +945,7 @@ Coherent acceptance; recoverable deadline work; safe retries; independent option
 
 #### Option A — Explicit core coordination with no broker initially
 
-Keep required acceptance and current effects directly coordinated, using durable recoverable tracking for housekeeping where needed. This minimizes transport/state surfaces while permitting scheduled cleanup and independent measurement handling. Developers must still design resumption, retry and inspectable deadline completion; an ephemeral timer or fire-and-forget callback alone is insufficient for required lifecycle work.
+Keep required acceptance and current effects directly coordinated, using durable recoverable tracking for housekeeping where needed. This minimizes transport/state surfaces while permitting scheduled cleanup and independent measurement handling. Developers must still design resumption, retry and inspectable deadline completion; an ephemeral timer or fire-and-forget callback alone is insufficient for required lifecycle work. Direct coordination may include local domain/application events where their semantics fit ADA-017; explicit acceptance and recovery remain the governing design.
 
 #### Option B — In-process events as the main effect-coordination mechanism
 
@@ -948,6 +983,14 @@ Proposed — Awaiting Selection
 #### Consequence If Selected
 
 ADD would include durable/resumable required housekeeping and clear optional-effect failure boundaries, while omitting a broker dependency. Necessary deletion could not rely solely on in-memory events.
+
+#### Domain Events and Future Integration Events
+
+A Domain Event expresses a business fact in its owning model; an application event can coordinate a local reaction. Neither implies asynchronous delivery, durable publication or an independently deployed consumer. In-memory events may serve permitted local reactions while required acceptance remains coherent and deadline work remains durably recoverable. Domain meaning must not depend on a Spring event class or broker type (ADA-015).
+
+A future **Integration Event** is a deliberately published cross-service contract, not the same internal event object moved onto a wire. It may require event identity, schema/versioning, serialization, backward compatibility, delivery/failure semantics, consumer idempotency and replay rules. ADA-017/018 keep transport separate from published meaning; a Java/Spring event object cannot be assumed to become an unchanged Kafka payload.
+
+Kafka, RabbitMQ or another broker becomes a candidate only if independent service communication or measured operating needs justify it. An Outbox is a possible future reliable-publication mechanism, not a component selected here. No-broker operation today still needs recoverable required work; if a concrete current guarantee later requires stronger publication, compare that mechanism on its own evidence rather than adopting Outbox everywhere.
 
 #### Deferred Details
 
@@ -1095,6 +1138,352 @@ ADD would allocate privacy-safe operating/validation evidence responsibilities. 
 
 Event/metric fields, log access/retention, correlation realization, health interfaces, instrumentation libraries, monitoring vendor and executable harness/reporting belong in detailed design, Test Strategy and engineering preparation.
 
+### ADA-015 — Internal Module Architecture
+
+#### Problem
+
+How should each business module organize its internals so domain rules and application decisions remain independent of Spring, persistence, HTTP, message transport, provider SDKs, object storage and AI runtime details?
+
+#### Why This Decision Is Needed Now
+
+**Important Before ADD.** The shared validity, authority and evidence obligations need a dependency direction before the Implementation View can establish module internals. ASR-CON-001 and ASR-TEST-001 justify isolation; they do not mandate a textbook layering scheme or make every folder a Critical architectural choice. A bounded deferral must preserve inward dependencies and private internals as explicit open design constraints, with Architect/Backend ownership and resolution before the dependent Implementation View.
+
+#### Related ASRs
+
+ASR-CON-001, ASR-TEST-001, ASR-INT-001, ASR-REL-001, ASR-USE-001.
+
+#### Relevant Quality Attributes
+
+Reliability — Critical; Conceptual Integrity, Testability and Interoperability — High; Maintainability and Flexibility — Medium. No change-cost target or High Maintainability classification is inferred.
+
+#### Relevant Constraints
+
+DATA-INT-001–004, NFR-REL-002, NFR-TEST-001/002 and LOC-002/003; BRULE-GAR-001/003, BRULE-OUT-008/009 and BRULE-MULT-004–009. Business meaning spans the full MVP and must survive dependency failure, label changes and accepted mutations. ADA-002's Java/Spring recommendation remains proposed; the dependency principle is useful independently of runtime selection.
+
+#### Evaluation Criteria
+
+Inspectable domain behavior without infrastructure; clear ownership and dependency direction; controlled provider/model translation; coherent transaction orchestration; contributor learning and mapping cost; sufficient structure without speculative abstractions.
+
+#### Option A — Traditional Layered Architecture
+
+Within each module, use presentation/controller, service and repository layers. This is familiar, supports local transactions and can be economical for simple behavior. Disciplined implementations can isolate rules and satisfy the ASRs. If services directly consume persistence entities, HTTP or provider types, domain tests and changes become coupled to infrastructure. Horizontal layers across the entire core would also weaken ADA-001's module boundaries; this option compares internal organization, not removal of modularity.
+
+#### Option B — Pragmatic Clean Architecture inside each business module
+
+Keep domain meaning inward, application orchestration around it and inbound/outbound adapters outside those contracts. Configuration assembles concrete implementations at the edge. Domain decisions remain testable independently of framework and provider details; application ports expose only genuine boundaries. The costs are maintaining useful translations, learning dependency inversion and ensuring transaction coordination remains explicit.
+
+The dependency rule follows [Robert C. Martin's Clean Architecture explanation](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html). CapsuleAI's proposed application of that rule is deliberately small; the source does not mandate this project's packages.
+
+| Conceptual Role | Responsibility / Dependency Direction |
+| --- | --- |
+| Domain | Confirmed authority, validity, identity and other rules belonging to the module; independent of application orchestration and outer implementation details. |
+| Application, including needed ports | Coordinates owned use cases and acceptance; depends on domain meaning and narrow boundary contracts, not adapter implementations. |
+| Inbound adapters | Translate user/module entry into application operations; depend inward. |
+| Outbound adapters | Implement needed persistence, external/provider or neighboring-module ports; depend inward. |
+| Configuration | Wires concrete implementations outside the domain/application core. |
+
+This is a conceptual responsibility shape, not a finalized folder tree. Domain/application logic must not import JPA entities, Spring controllers, RestClient/WebClient, AWS/S3 SDK types, Python AI DTOs or provider-specific DTOs. Persistence entities and transport types remain adapter concerns. Framework transaction realization can surround application acceptance without moving transaction-dependent business policy into controllers or repositories.
+
+Do not create an interface for every class, a generic repository unrelated to domain needs, excessive mapper chains or empty ceremonial layers. Keep simple behavior simple and place actual domain decisions where their responsibility belongs; do not make the domain anemic to fit a diagram.
+
+#### Option C — Framework-centric feature organization without a strict inward dependency rule
+
+Group each feature's framework components, services and persistence access together. This can be the smallest readable solution for a limited team and straightforward behavior, with fewer mappings and direct use of framework facilities. It remains credible with focused tests and disciplined private module contracts. CapsuleAI's richer shared semantics would depend more heavily on conventions and infrastructure-aware tests, and provider/model changes could spread into business decisions.
+
+#### Comparative Trade-off Matrix
+
+| Criterion | Option A | Option B | Option C |
+| --- | --- | --- | --- |
+| Domain/infrastructure isolation | Possible with extra discipline | Explicit inward rule | Convention-dependent |
+| Controlled boundary/model changes | Moderate; avoid entity leakage | Strong at meaningful ports/translation | More direct framework coupling |
+| Initial development effort | Familiar, modest | Moderate; keep only useful boundaries | Lowest for simple features |
+| Rule/evidence testing | Good if rules isolated | Strong independently of adapters | More framework-coupled |
+| Possible later extraction | Depends on existing seams | Core can survive changed adapters | More infrastructure disentangling |
+
+#### Recommendation
+
+Option B — Pragmatic Clean Architecture inside each business module
+
+#### Why Recommended
+
+ADA-001 governs the business-core organization/deployment direction; this choice governs dependencies inside its modules. They complement each other. The substantial domain fixtures and provider distinctions justify an inward rule, while Medium Maintainability/Flexibility and Low Reusability argue against elaborate frameworks. ADA-006 defines external seams and ADA-018 governs semantic translation at those seams.
+
+#### Recommendation Confidence
+
+Medium — the source-derived isolation benefit is clear, but contributor proficiency, final domain boundaries and the smallest useful mapping/port granularity are unverified. Review representative confirmation and assessment responsibilities before fixing the Implementation View; do not infer team familiarity.
+
+#### Decision Status
+
+Proposed — Awaiting Selection
+
+#### Consequence If Selected
+
+ADD/Implementation View would allocate domain/application responsibilities and inward adapter dependencies within domain-oriented modules. A later justified extraction could retain much of the domain/application core while changing a local port/facade adapter to HTTP/gRPC, or local event delivery to broker integration. Extraction would still require contract, authorization, consistency, data migration, failure and operating redesign; it is neither automatic nor cost-free.
+
+#### Deferred Details
+
+Exact bounded contexts, module/package names, source folders, Java classes/interfaces, mapper count, transaction wiring and dependency-enforcement tooling follow ADD/Logical/Implementation Views and detailed design. No framework extension or new library is selected.
+
+### ADA-016 — Context Data Ownership
+
+#### Problem
+
+How should bounded contexts/modules own and access persisted business information while sharing ADA-003's proposed primary PostgreSQL database?
+
+#### Why This Decision Is Needed Now
+
+**Critical Before ADD.** ADD must assign authoritative mutation, privacy/lifecycle and current-state responsibilities before coherent interactions can be designed. An unspecified free-for-all store would undermine those boundaries. The Critical choice is the ownership policy, not exact context decomposition, schema names or access tooling.
+
+#### Related ASRs
+
+ASR-SEC-001, ASR-SEC-002, ASR-REL-001, ASR-CON-001, ASR-REL-002, ASR-TEST-001.
+
+#### Relevant Quality Attributes
+
+Security and Reliability — Critical; Conceptual Integrity and Testability — High; Maintainability, Flexibility and Manageability — Medium.
+
+#### Relevant Constraints
+
+SRS Sections 4.1–4.9, especially DATA-AUTH-005, DATA-GAR-001/003/005, DATA-WEAR-003/004, DATA-INT-001–004 and DATA-RET-001–003; BRULE-GAR-009, BRULE-WEAR-005/006 and BRULE-HIST-002/003. Logical information domains and Use Case packages are requirement groupings, not a final bounded-context map. Necessary minimal historical snapshots remain supported; current authority and retained history have different purposes.
+
+#### Evaluation Criteria
+
+Unambiguous authority and lifecycle ownership; coherent accepted changes; private persistence models; usable current reads through contracts; local integrity and recovery; enforcement/change cost; future extraction coupling.
+
+#### Option A — Shared database with unrestricted cross-module table access
+
+Any module reads or updates any useful table. Queries and multi-object local transactions are initially convenient, and one store remains economical. It is credible for a small conventional application where all information intentionally belongs to one responsibility. In CapsuleAI's proposed modular core, authority, retention and representation changes would have hidden consumers/writers. This weakens module ownership and increases the risk that removed data remains influential or provider proposals bypass confirmation.
+
+#### Option B — Shared PostgreSQL with explicit context-owned persistence boundaries
+
+Use one physical primary database initially, with an accountable context owning each business persistence model and its mutations/lifecycle. Other contexts request permitted information or operations through published contracts, ports/facades or semantically appropriate events. Repository/entity ownership, table groups, schemas or privileges may later help realize the boundary; none is finalized here.
+
+PostgreSQL schemas can organize logical object groups, but are not inherently isolated databases. Access depends on schema/object privileges; a single broadly privileged application identity does not automatically enforce module discipline. See the [PostgreSQL schema and privilege documentation](https://www.postgresql.org/docs/18/ddl-schemas.html). Implementation dependency controls and authorized public contracts still matter; this reference selects no database version or schema policy.
+
+One PostgreSQL database does not permit another context to import an owner's repository, persistence entity, internal tables or private schema representation. A justified exception must identify the owning/consuming responsibilities, access purpose, affected invariant/lifecycle, coupling, evidence and review point in the owning design/ADR. Convenience is not an implicit exception.
+
+Owner operations may participate in a deliberately coordinated local ACID transaction through their public boundaries (ADA-009/017). Physical sharing permits useful transactions without surrendering logical ownership; it does not make media/email resources atomic.
+
+#### Option C — Physically separate database per context immediately
+
+Provides stronger physical isolation and independent storage/migration operation, useful if security, recovery, organizational autonomy or workloads warrant it. It can be justified even without microservices. Here it adds credentials, recovery/deletion surfaces and cross-database consistency work to immediate exclusions and accepted effects. No present requirement establishes independent database operation, so the added burden is not offset by current evidence.
+
+#### Comparative Trade-off Matrix
+
+| Criterion | Option A | Option B | Option C |
+| --- | --- | --- | --- |
+| Authority/lifecycle responsibility | Hidden cross-module writers | Explicit owner and contracts | Strong physical boundary; coordination still needed |
+| Local coherent acceptance | Convenient, tightly coupled | Supported through owner operations | Harder across stores |
+| Persistence change isolation | Weak | Good with enforced ownership | Strong physically |
+| Initial operation/recovery | One database | One database plus boundary discipline | Multiple recovery/access surfaces |
+| Future extraction | Hidden data dependencies | Visible logical ownership/coupling | Data separation already present; workflow redesign remains |
+
+#### Recommendation
+
+Option B — One PostgreSQL database initially with explicit context-owned logical persistence boundaries
+
+#### Why Recommended
+
+This separates two decision questions: ADA-003 compares the primary persistence model/database family; ADA-016 compares ownership inside that proposed shared model. It preserves local coordination and manageable operation while making authority and lifecycle accountable. If ADA-003 is overridden, revisit physical realization without discarding the ownership analysis.
+
+#### Recommendation Confidence
+
+High — current privacy, accepted-state and same-basis obligations support explicit owners, while no driver presently requires physical database separation. Final context boundaries and enforcement strength still require design/evidence.
+
+#### Decision Status
+
+Proposed — Awaiting Selection
+
+#### Consequence If Selected
+
+ADD/Logical/Data Views would assign ownership and permitted contracts without unrestricted cross-context persistence access. Today that is logical ownership inside one proposed database; future justified extraction may make it physical ownership, possibly Database-per-Service. It does not imply one module per service or separate database servers today.
+
+#### Cross-Context Foreign Keys
+
+Within-context relational integrity may use ordinary foreign keys. Cross-context foreign keys are an architectural trade-off: they can enforce useful current integrity but also couple migration/deletion, schema changes and possible physical extraction. They are not absolutely banned or approved wholesale here. Data View/detailed data design must record which integrity belongs within an owner, which dependencies cross boundaries and how accepted removal/minimal history remain correct. Their existence never authorizes another module's direct persistence access.
+
+#### Deferred Details
+
+Exact context map, PostgreSQL schemas/table groups, roles/permissions, tables, repositories, cross-schema foreign-key policy, cross-context joins/exceptions, migrations and transaction participation follow the views and detailed design. Possible physical separation requires new evidence and renewed analysis/selection.
+
+### ADA-017 — Inter-Context Communication
+
+#### Problem
+
+How should modules communicate inside the proposed modular monolith while preserving ownership, business outcome/consistency semantics and a realistic extraction path?
+
+#### Why This Decision Is Needed Now
+
+**Critical Before ADD.** Accepted removal, session revocation, Wear survivor effects and current exact assessments cannot be coherent if their interactions are arbitrarily asynchronous or bypass owners. The communication/acceptance policy shapes ADD collaboration; exact interfaces and transports remain downstream.
+
+#### Related ASRs
+
+ASR-REL-001, ASR-SEC-001, ASR-SEC-002, ASR-CON-001, ASR-INT-001, ASR-PERF-001, ASR-REL-002, ASR-TEST-001.
+
+#### Relevant Quality Attributes
+
+Reliability and Security — Critical; Conceptual Integrity, Interoperability, Performance and Testability — High; Maintainability, Flexibility and Manageability — Medium.
+
+#### Relevant Constraints
+
+DATA-INT-001–004, DATA-WEAR-003/004, FR-WEAR-010, FR-PERS-013, DATA-RET-001/002 and FR-MULT-008; BRULE-GAR-009, BRULE-WEAR-005/006, BRULE-PERS-006 and BRULE-MULT-004–009; UC-010/014/016/017/019/022 and their available activities. Optional measurement failure does not change core acceptance (FR-MET-007); physical deletion can follow its deadline while effective exclusion is immediate.
+
+#### Evaluation Criteria
+
+Owned public interactions; immediate invariant preservation; truthful accepted/failed/uncertain outcomes; same-basis current reads; explicit transaction and failure behavior; event durability/idempotency where required; local operating simplicity.
+
+#### Option A — Direct internal access
+
+Modules freely invoke neighboring internal services, repositories or entities. This is quick and offers efficient local calls and joins; it can work when the responsibilities truly form one module. Across declared contexts it makes private implementation a de facto public API, hides authority and transaction dependencies and permits lifecycle/currentness shortcuts. A shared database does not eliminate these risks.
+
+#### Option B — Explicit published module contracts with semantic choice of synchronous or event-based communication
+
+Use a narrow local contract/facade/port when the caller needs current authoritative information, a result or coordinated acceptance before completing its operation. Ownership and authorization apply through that boundary. Use domain/application events for facts and reactions whose semantics fit an event model; asynchronous work is appropriate only when delayed effects are permitted or a deliberate visibility/recovery mechanism preserves every immediate obligation.
+
+Business semantics determine interaction style, then technology/transport. An event is not automatically asynchronous: delivery may be synchronous within an explicitly coordinated local operation. For example, Spring application listeners are synchronous by default, while transaction-bound listeners can target commit phases. Neither API choice establishes durable delivery after restart. See [Spring application events](https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html) and [transaction-bound events](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html). These are feasibility examples, not chosen event classes/configuration.
+
+| Existing Semantic Need | Proposed Local Interaction Direction |
+| --- | --- |
+| Recommendation/Coverage/Multiplier needs current wardrobe/context | Published authorized read contracts, with coherent evaluated basis/currentness checks; not a new copied-state store. |
+| Accept garment removal or Wear correction/removal | Explicitly coordinate owned mutation and effective consumers before claiming the required accepted outcome, using coherent derived reads or required coordinated changes. |
+| Logout/reset affects protected use | Preserve the relevant usable-authority checks and revocation boundary; a later optional listener cannot authorize stale access. |
+| Optional measurement reaction | May be independent/event-based; failure cannot undo or fabricate core acceptance. |
+| Required physical deletion by its deadline | Recoverable, idempotent tracked work as needed under ADA-012; an in-memory signal alone is insufficient. |
+
+These examples allocate interaction principles, not final modules or runtime sequences. A contract must not return mutable private entities or hand the caller unrestricted repository/schema access (ADA-016/018). A successful local call alone does not prove coherent multi-call reads under concurrency; assessment basis and transaction/concurrency design remain explicit ADA-009/010 responsibilities.
+
+#### Option C — Simulate distributed services now
+
+Use internal HTTP or broker hops between modules in the same application/deployment to mimic possible future services. Explicit wire contracts can be useful if an independently deployed consumer or real process boundary already requires them. Used solely within this local business core, they add serialization, latency, retries, private-data flow and partial failure without demonstrated scaling/deployment benefit. This comparison does not reject ADA-004's genuinely analyzed separate AI process.
+
+#### Comparative Trade-off Matrix
+
+| Criterion | Option A | Option B | Option C |
+| --- | --- | --- | --- |
+| Ownership/contract clarity | Weak across contexts | Explicit and controlled | Explicit wire interface, extra failure semantics |
+| Immediate accepted effects | Possible, hidden coupling | Deliberate local coordination | More partial-failure/consistency work |
+| Current-state reads | Fast, private persistence exposed | Local authorized contract; coherent basis required | Added remote/wire cost |
+| Events/recovery | Ad hoc | Semantics and durability made explicit | Transport does not solve application obligations |
+| MVP operation/evolution | Simple now, harder boundary recovery | Local simplicity with visible seams | Distributed complexity before a driver |
+
+#### Recommendation
+
+Option B — Explicit published module contracts, choosing synchronous local interaction or event-based interaction according to business semantics
+
+#### Why Recommended
+
+It makes acceptance and ownership reviewable while retaining local speed and useful transactions. Removal must immediately stop current influence; replacing that invariant with eventual consistency merely to prepare for microservices would contradict existing sources. ADA-016 prevents the shared-database shortcut, ADA-018 protects meanings and ADA-012 keeps recoverable later work explicit.
+
+#### Recommendation Confidence
+
+High — the current immediate/coherent effects and bounded optional reactions provide clear selection criteria. Actual contracts, transaction participation, dependency cycles and concurrent-basis handling still need design and tests.
+
+#### Decision Status
+
+Proposed — Awaiting Selection
+
+#### Consequence If Selected
+
+ADD/Logical/Implementation Views would describe published interactions, controlled dependency direction and deliberately coordinated immediate versus later work. Future extraction could replace a local Java contract/port/facade with an HTTP/REST/gRPC adapter, or an appropriate local event with a separately designed Integration Event and broker delivery. Remote timeout, authorization, compatibility, reliable publication and consistency would require fresh analysis; current guarantees remain binding.
+
+#### Deferred Details
+
+Exact contracts, DTOs, call graphs, domain/application event classes, listener execution/transaction phases, timeout/retry rules, any reliable publication mechanism and detailed sequences follow downstream design. No internal HTTP, Kafka/RabbitMQ, Saga or Outbox is selected.
+
+### ADA-018 — Context Model Isolation and Anti-Corruption
+
+#### Problem
+
+How can CapsuleAI prevent neighboring context internals, external provider models and infrastructure DTOs from becoming a universal domain model throughout the application?
+
+#### Why This Decision Is Needed Now
+
+**Important Before ADD.** Conceptual Integrity and Interoperability need a model-isolation direction alongside public boundaries. The semantic policy normally precedes ADD/Implementation View; final translations/classes are not Critical choices. A safe deferral must retain private internal models and explicit public language, with Architect/Backend ownership and resolution before affected contracts/Implementation View are baselined.
+
+#### Related ASRs
+
+ASR-CON-001, ASR-INT-001, ASR-SEC-002, ASR-REL-001, ASR-USE-001, ASR-TEST-001.
+
+#### Relevant Quality Attributes
+
+Reliability and Security — Critical; Conceptual Integrity, Interoperability, Usability and Testability — High; Maintainability and Flexibility — Medium.
+
+#### Relevant Constraints
+
+DATA-GAR-003, DATA-OUT-001–003, DATA-ANL-003/004, DATA-HIST-001/002, DATA-INT-001–003, SI-001–004 and LOC-002/003; BRULE-GAR-001/007/008, BRULE-HIST-002, BRULE-MULT-004–009 and BRULE-SHOP-001–003. AI proposal versus confirmed truth, current versus historical/hypothetical information, and qualified commercial evidence must retain different meanings.
+
+#### Evaluation Criteria
+
+Private internal models; narrow published meanings and necessary disclosure; consistent identity/validity despite distinct representations; provider/context translation tests; explicit ownership of shared semantics; mapping cost without speculative stored copies.
+
+#### Option A — Share internal entities/models directly
+
+Let a recommendation responsibility import a wardrobe owner's internal Garment/JPA entity, or propagate provider DTOs into business decisions. This avoids mappings and can fit a deliberately unified small responsibility. Across declared boundaries it ties consumers to persistence fields, mutability and provider vocabulary; unconfirmed, historical or hypothetical information can be mistaken for current authoritative ownership. A later internal representation change becomes a broad integration change.
+
+#### Option B — Published contracts plus Anti-Corruption Layer translation
+
+Keep each context's internal domain/persistence model private. Publish only the meanings required by permitted consumers; translate between that contract and the consumer's model when semantics differ. An ACL protects interpretation, while a port defines the interaction dependency and an adapter implements access/transport. One small adapter may perform both access and semantic translation, but those responsibilities are distinct.
+
+[Eric Evans's DDD Reference](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf), Anticorruption Layer and Published Language, describes model translation across boundaries; [Martin Fowler's bounded-context explanation](https://martinfowler.com/bliki/BoundedContext.html) supports explicit models and relationships. Applying these ideas to CapsuleAI is an architecture recommendation, not evidence that any context map has been approved.
+
+Illustratively, an owned internal Garment might yield a narrower recommendation-facing garment representation carrying relevant identity, confirmed attributes, readiness and authority/currentness evidence. Names such as RecommendationGarment, GarmentAnalysisProposal and WeatherSnapshot describe possible meanings only; no DTO/class is prescribed.
+
+| Boundary Example | Meaning Protected by Translation |
+| --- | --- |
+| Wardrobe-owned model to a recommendation-facing contract | Relevant current owned information; no internal persistence entity/repository or unrelated profile fields exposed. |
+| Python AI response to a garment-analysis proposal | Preview/proposal, confidence and provenance remain assistance; no automatic confirmation or provider-specific DTO leakage. |
+| Weather response to CapsuleAI environmental evidence | Source/time, actual usable context and unavailable/stale meaning; WeatherSnapshot as an example name does not require a stored projection. |
+| Shopping provider model to commercial evidence | Credible source/last-checked time, qualified optional values and external navigation; no invented purchase or ownership. |
+| Object-storage SDK to media abstraction | Private authorized access, lifecycle and copy/version outcomes; object existence is not user authority. |
+
+The cost is maintaining focused mappings and contract fixtures. Small intentional duplication of boundary representations can be preferable to coupling every context to one object. Do not duplicate canonical outfit identity/validity rules independently: assign an explicit semantic owner/published capability or deliberately governed narrow shared rule responsibility in later design (ADA-010/015). Shared meaning does not require a universal User/Garment/Wear entity library.
+
+#### Option C — Shared universal domain model/common library
+
+A common package of User, Garment, Wear and other models reduces mapping and can keep compatible simple representations aligned. A small stable shared concept can be justified where ownership and change control are clear. Making every context depend on the full common model creates coordinated releases, persistence/provider leakage and conflicting purposes for the same object. Shared vocabulary or identity alone does not justify a universal domain package.
+
+#### Comparative Trade-off Matrix
+
+| Criterion | Option A | Option B | Option C |
+| --- | --- | --- | --- |
+| Internal/provider isolation | Weak across meaningful boundaries | Explicit narrow contracts/translation | Weak if the model is universal |
+| Semantic preservation | Dependent on imported model assumptions | Focused and testable | One model may conflate different purposes |
+| Mapping effort | Lowest initially | Small intentional boundary cost | Low initially, broad change coordination |
+| Shared validity/identity | Reuse can leak internals | Governed meaning with private representations | Consistency possible, ownership easily blurred |
+| Future extraction/change | Broad representation dependencies | Visible contract/translation seams | Common model couples services/releases |
+
+#### Recommendation
+
+Option B — Published contracts + Anti-Corruption Layer translation at meaningful semantic boundaries
+
+#### Why Recommended
+
+The actual differences in authority, evidence and lifecycle justify explicit language at provider and neighboring boundaries. Avoid unnecessary mappers when meanings already align; translate real semantic differences and preserve required evidence. This complements ADA-006's ports/adapters and ADA-015's inward dependencies without defining new modules or exposing every model as shared.
+
+#### Recommendation Confidence
+
+High — confirmed/proposed, current/historical/hypothetical and optional commerce distinctions are established sources. Exact translation granularity and domain ownership still need the views and contract evidence.
+
+#### Decision Status
+
+Proposed — Awaiting Selection
+
+#### ACL Is Not a Snapshot or Projection
+
+An ACL translates meaning; it does not require storage, replay or a copied read model. Under ADA-010/016/017, current authoritative information should normally come through direct published local contracts, with coherent basis checks. No Recommendation wardrobe/behavior snapshot stores or user snapshots everywhere are introduced.
+
+This does not remove the **existing required minimal historical snapshots** (DATA-HIST-001/002 and BRULE-HIST-002). Preserving past meaning is a different purpose from maintaining a copied current read model.
+
+Future extraction might justify projections when remote-call latency, autonomy, read/change imbalance, availability needs or measured chatty interactions warrant local copies and eventual consistency is acceptable for the affected behavior. Such a proposal must address reliable publication (possibly Outbox), delivery, idempotent consumers, ordering, replay, rebuild, ownership/privacy and stale-state semantics. Immediate current exclusions still need a solution; a projection cannot weaken them.
+
+#### Consequence If Selected
+
+ADD/views would separate owned internal models, published language and necessary translations. Contract/semantic regressions would protect authority, identity, evidence, missing/outdated states and necessary disclosure. Model isolation would reduce avoidable extraction coupling without requiring duplicate authoritative stores.
+
+#### Deferred Details
+
+Exact DTO/class names, public language, context map, mapper placement, shared-rule governance, any snapshot/projection tables, integration-event schemas and contract/version details follow ADD/views/ADRs and detailed design. Projections, CQRS, Event Sourcing and distributed mechanisms need evidence and separate re-analysis when justified.
+
 ## 6. Decisions That Do NOT Need to Be Made Yet
 
 These are **Defer to Detailed Design / ADR** concerns unless new evidence makes a major boundary change necessary. Deferral is not permission to omit required behavior.
@@ -1102,14 +1491,18 @@ These are **Defer to Detailed Design / ADR** concerns unless new evidence makes 
 | Deferred Concern | Why not selected here / later responsibility |
 | --- | --- |
 | Mobile implementation framework | Supported platforms, accessible Vietnamese outcomes and canonical meanings are fixed; framework is open. Mobile/Architect contributors should compare compatibility and integration feasibility before the dependent Implementation View baseline. No React Native preference or supported-version assumption is made. |
-| Exact core modules/classes/packages | ADA-001 concerns organization direction; Logical/Implementation Views define actual responsibilities/dependencies after selection. |
+| Exact bounded-context decomposition, module names and package structure | ADA-001/015–018 analyze organization, dependencies, ownership, communication and isolation policies; ADD/Logical/Implementation Views define the domain-first map and actual source organization after human selection. No one-module/one-service mapping is assumed. |
+| Exact Java classes/interfaces and boundary DTOs | Implementation View/detailed design choose the smallest useful public contracts, ports and translations; no textbook folder layout or universal domain library is prescribed. |
 | Exact inference model/framework, licenses and CPU/GPU | AI contributors must establish packaging, quality and full-result feasibility. If findings overturn ADA-004/005/013, revisit analysis/selection before dependent design. |
-| Database tables, types, indexes, ORM and isolation/locking details | Data View and detailed data design implement the selected authority and prove invariants; no schema is created here. |
-| Endpoint DTOs, transport payloads, error contracts and retry/action keys | Detailed API/service design realizes current behavior and durable logical-action semantics after ADD/views. |
+| Exact PostgreSQL schemas, tables, types, indexes, ORM, isolation/locking and cross-schema FK policy | ADA-003/016 distinguish primary persistence from logical ownership. Data View/detailed design realize integrity, controlled exceptions and transaction participation; no schema name, table or blanket cross-context FK ban is defined here. |
+| Exact local contracts, HTTP/gRPC payloads, errors and retry/action keys | Views and detailed API/service design realize current behavior, inward dependencies, published language and durable logical-action semantics after selection. Future remote transport is not a current internal-module requirement. |
+| Exact domain/application-event classes and integration-event schemas | ADA-012/017 analyze semantics; views/detailed design decide any needed local events. Future integration identities, schema evolution, delivery/idempotency and replay need evidence before a wire contract is designed. |
+| Outbox implementation, Saga design and snapshot/projection tables | Not adopted for hypothetical extraction or because an ACL exists. Required historical snapshots remain governed by SRS/rules; copied current read models and reliable distributed workflows need justified current or future re-analysis. |
 | Enumeration/ranking optimizations and derived caches | Profile relevant workloads and preserve identity, basis and completeness. No arbitrary cut-off or Multiplier latency is added. |
 | Object-storage provider, image delivery and deletion mechanisms | Views/design must realize private effective access and applicable physical purge. Necessary copy/version control is a required design concern even though provider is open. |
-| Broker technology, CQRS, event sourcing and orchestration | No current need establishes these mechanisms. Reconsider only when a concrete requirement or operating evidence warrants their coordination cost. |
-| Monitoring vendor, log fields/retention and tracing implementation | Detailed design/Test Strategy/engineering preparation define protected evidence. No ordinary diagnostic store may become an indefinite user-linked measurement copy. |
+| Kafka/RabbitMQ or other broker, CQRS and Event Sourcing | No current need selects these mechanisms. Reconsider only when concrete semantic/workload evidence warrants their coordination cost; a local Domain Event is not a selected Integration Event platform. |
+| API Gateway, service discovery, service mesh and Kubernetes | No speculative distributed topology is selected. A future extraction proposal must demonstrate relevant operating/availability drivers before re-analysis, selection and views/design. |
+| Distributed tracing vendor/platform, local log fields/retention and correlation realization | ADA-014 remains minimal protected evidence. Detailed design/Test Strategy/engineering preparation define needed observation; no ordinary diagnostic store may become an indefinite user-linked measurement copy. |
 | Host counts/sizes, network layout and operating commands | Deployment View resolves resources and recovery from evidence. No cloud provider, production SLA or mandatory multi-host topology is set. |
 | Detailed sequences/states, executable test strategy and CI tooling | Follow their downstream stages; this analysis does not create them or claim software verification. |
 
@@ -1119,6 +1512,13 @@ A major alternative that affects authoritative state, security, exactness or run
 
 | Interaction | Consequence for human review and later design |
 | --- | --- |
+| ADA-001 ↔ ADA-015 ↔ ADA-016 ↔ ADA-017 ↔ ADA-018 | Together establish the proposed service-extractable modularity: domain-first responsibility boundaries, inward dependencies, owned data, public semantic interactions and protected models. They preserve a local business core rather than select a distributed system. |
+| ADA-003 ↔ ADA-016 | Database family and ownership are separate choices. One PostgreSQL database permits useful coordinated local transactions, not unrestricted cross-context persistence access; physical enforcement/schema policy follows Data View. |
+| ADA-006 ↔ ADA-018 | Ports/adapters isolate actual external dependencies; an ACL protects meaning when models differ. An adapter may implement both, but neither requires a copied-state projection. |
+| ADA-009 ↔ ADA-016/017 | Durable action identity, owned mutation contracts and coordinated accepted effects determine transaction boundaries. Multi-context local commits can be useful while documenting future extraction coupling; media/email still need recoverable cross-resource handling. |
+| ADA-012 ↔ ADA-017/018 | Local domain/application events must fit permitted effect timing. Future Integration Events need explicit published semantics, identity/version/delivery and consumer recovery; no broker or automatic event-object-to-payload conversion is implied. |
+| ADA-015 ↔ ADA-006/018 | Clean Architecture supplies inward dependency direction; ports/adapters supply access seams and ACL supplies semantic translation. Avoid ceremonial interfaces/mappings where no real boundary exists. |
+| ADA-010 ↔ ADA-016/017/018 | Current owner contracts and explicit semantic ownership preserve validity/identity and evaluated basis across distinct models. No universal entity library, unrestricted joins or default wardrobe/behavior projection stores. |
 | ADA-001 ↔ ADA-003/008/009 | Modular local coordination relies on a coherent authoritative persistence direction. Selecting distributed business services changes mutation/session/recovery costs and requires renewed analysis; it is not a harmless code-organization substitution. |
 | ADA-002 ↔ ADA-004/005/013 | Core runtime, model compatibility, analysis communication and resources must fit together. Python in another process does not require separate hosts; co-location does not remove resource contention. Review complete processing evidence and contributor effort as a set. |
 | ADA-003 ↔ ADA-007/008/009/012 | Primary transactions can coordinate sensitive business state, but media/email and physical cleanup remain cross-resource responsibilities. No cache/broker recommendation eliminates durable recovery or lifecycle deadlines. |
@@ -1129,17 +1529,50 @@ A major alternative that affects authoritative state, security, exactness or run
 
 If the human overrides an option, evaluate these dependent recommendations rather than mixing incompatible assumptions. No individual High-confidence recommendation makes the whole set selected.
 
+### 7.1 Conditional Evolution Map
+
+This map tests boundary quality; it is not a module decomposition, migration commitment or deployment plan. Extract only where a real driver justifies the added consistency, security and operating work; cohesive contexts need not map one-to-one to modules or services.
+
+| Proposed Local Boundary / Responsibility | Possible Future Realization if Extraction Is Justified |
+| --- | --- |
+| Cohesive context/module with private internals | Candidate service boundary, possibly grouping responsibilities that must remain coordinated. |
+| Public Java module contract / local port or facade | Published HTTP/REST/gRPC contract and remote adapter with explicit failure/authorization semantics. |
+| Domain/application fact and permitted in-memory reaction | Separately designed Integration Event; broker delivery such as Kafka/RabbitMQ only if justified. |
+| Context-owned logical data in shared primary persistence | Physical service-owned data, possibly Database-per-Service, with deliberate migration/lifecycle handling. |
+| Local ACID acceptance / multi-context coordinated workflow | Local service transactions; cross-service guarantees may need reliable events or Saga/compensation where business semantics permit. |
+| Needed reliable cross-service event publication | Outbox or another evidenced mechanism; not selected simply for modularity. |
+| Protected local evidence and necessary core/AI correlation | Cross-service correlation/observability if independent runtimes require it; no tracing vendor selected. |
+| Deliberate module boundaries and inward adapters | Incremental extraction, potentially Strangler or Branch-by-Abstraction techniques, with explicit data/contract/consistency transition work. |
+
 ## 8. Proposed Decision Set for Human Review
 
-**Not yet selected.** Section 4 is the compact proposed set: ADA-001–014 each recommend Option A, whose meaning differs for each problem. Option letters indicate presentation order, not a scoring or automatic-selection rule. The option analyses explain when credible alternatives could be preferable.
+**Not yet selected.** Section 4 is the compact proposed set: ADA-001–014 recommend Option A and ADA-015–018 recommend Option B; each letter's meaning differs by problem. Option letters indicate presentation order, not a scoring or automatic-selection rule. The option analyses explain when credible alternatives could be preferable.
 
-Resolve **ADA-001/003/004/008/009/010 (Critical Before ADD)** explicitly. Review Important decisions together with their dependencies; any safe deferral must name the responsible role, known boundary/impact, evidence needed and resolution point before dependent architecture/design. Do not defer a Critical decision merely because it is difficult.
+Resolve **ADA-001/003/004/008/009/010/016/017 (Critical Before ADD)** explicitly. The added Critical choices establish ownership and interaction/acceptance policies, not exact schemas or a finalized context map. Review Important decisions together with their dependencies; any safe deferral must name the responsible role, known boundary/impact, evidence needed and resolution point before dependent architecture/design. Do not defer a Critical decision merely because it is difficult.
 
-The most material evidence gaps are runtime/team suitability (ADA-002), actual model packaging/quality/resource demand (ADA-004/005/013), computation cost (ADA-010), and private media access/deletion/cost feasibility (ADA-007). Selection does not claim that required benchmarks have passed. Later design and Test Strategy establish how to demonstrate them.
+Review ADA-001/015–018 as one boundary philosophy, with ADA-003/006/009/012 supplying persistence, external integration, acceptance and event/recovery implications. Clean Architecture is Important because dependency direction can be bounded without fixing packages; ACL/model isolation is Important because public semantics can be bounded without final DTOs. Neither classification upgrades Maintainability/Flexibility from Medium or creates another ASR.
+
+| New Analysis | Review / Safe Important Deferral Boundary | Responsible Role and Resolution Point |
+| --- | --- | --- |
+| ADA-015 | Evaluate contributor understanding and a representative domain/application boundary; if deferred, explicitly bound dependency isolation and avoid assuming framework entities as domain contracts. | Architect/Tech Lead with Backend; resolve before dependent Implementation View baseline. |
+| ADA-016 | Select an ownership policy before ADD; logical sharing, owner operations and exceptions must fit ADA-003/009/017. Exact decomposition/schema/FK design follows views. | Architect/Tech Lead with Backend/Data and privacy review; Critical policy blocks ADD if unresolved. |
+| ADA-017 | Select public-contract and immediate/later-effect policy before ADD; check concurrency/basis, retry and recovery against UC-010/014/016/017/022. | Architect/Tech Lead with Backend/QA; Critical collaboration policy blocks ADD if unresolved. |
+| ADA-018 | Establish public language/model-isolation direction; a bounded deferral identifies private models and real translation points without choosing DTOs or projection stores. | Architect/Tech Lead with Backend/AI/Mobile as relevant; resolve before affected Implementation View/contracts. |
+
+These are criteria for a future human-recorded deferral, not deferrals granted by this analysis.
+
+The most material evidence gaps are runtime/team suitability (ADA-002), actual model packaging/quality/resource demand (ADA-004/005/013), computation cost (ADA-010), and private media access/deletion/cost feasibility (ADA-007). The new boundary policies also need contributor proficiency, representative contract/translation reviews and final domain responsibility evidence; these gaps principally limit ADA-015 confidence and later realization detail. Selection does not claim that required benchmarks have passed. Later design and Test Strategy establish how to demonstrate them.
 
 The future `selected-architecture-decisions.md` should record ADA ID, selected analyzed option, selection basis/override reason, Backend Impact and status (Selected, Deferred or Superseded), plus selecting human/review date and bounded-deferral details where applicable. It should link to these analyses, not repeat them, and is not an ADR replacement. That artifact is deliberately **not created here**.
 
 ## 9. Backend Developer Takeaways
+
+- The current intended business-core direction is a modular monolith, still Proposed — Awaiting Selection; there is no implemented deployment baseline. Service-extractable module boundaries start with domain responsibilities rather than a list of future services.
+- Pragmatic Clean Architecture governs inward dependencies inside modules; use meaningful ports/adapters and keep Spring/JPA/provider/transport details outside domain decisions. No interface-per-class or empty-layer ceremony.
+- Each context would logically own its persisted information even in one PostgreSQL database. Reach another owner through public contracts, not its private repositories, entities, tables or schemas.
+- Synchronous versus asynchronous interaction follows business semantics. Immediate exclusion/revocation and accepted effects stay coherent; local events can be useful without requiring a broker.
+- ACL protects neighboring/provider meanings through focused translation. It does not automatically create a snapshot/projection; required minimal historical snapshots have a separate purpose.
+- Local ACID transactions remain useful. Coordinated cross-context transactions create future extraction coupling to review; Kafka/RabbitMQ, Outbox and Saga are potential later mechanisms, not present requirements.
 
 - The proposed modular core and relational authority reduce coordination surfaces; they still require deliberate transaction, ownership and concurrency design.
 - Framework JWT validation does not replace current-session/account authority. Reset, logout and refresh reuse have different effects.
@@ -1156,22 +1589,33 @@ This matrix maps each existing formal ASR to decision problems. It adds no requi
 
 | Formal ASR | Relevant ADA Problems | Main Existing Evidence Anchors |
 | --- | --- | --- |
-| ASR-SEC-001 | ADA-001/002/003/006/007/008/011 | QA-SEC-01/02; FR-AUTH-004/007/009/013/014/017/018; DATA-AUTH-005 |
-| ASR-SEC-002 | ADA-003/004/006/007/009/011/012/013/014 | QA-SEC-03; NFR-PRIV-001/002; DATA-RET-001–003; SI/COM purpose boundaries |
-| ASR-REL-001 | ADA-001/002/003/004/005/007/008/009/010/011/012 | QA-REL-01/02, QA-SCA-01; DATA-INT-001–004; BRULE-WEAR/PERS |
-| ASR-CON-001 | ADA-001/002/003/009/010/011/014 | QA-CON-01; BRULE-OUT/COV/MULT; DATA-OUT-001/002; DATA-ANL-004 |
-| ASR-PERF-001 | ADA-002/004/005/007/010/011/013/014 | QA-PERF-01/02; NFR-PERF-001/002; NFR-TEST-003; SRS Section 12.3 |
-| ASR-INT-001 | ADA-004/005/006/012/013 | QA-INT-01, QA-AVL-01; SI-001–004; UC-004/006/007/023 |
-| ASR-REL-002 | ADA-001/003/004/007/008/009/012/013/014 | QA-REL-03, QA-SUP-01; NFR-REL-003; applicable DoD operational criteria |
-| ASR-USE-001 | ADA-005/006/010/014; outcome semantics across all choices | QA-USE-01/02, QA-MNT-01; NFR-USE/ACC; LOC-001–005 |
-| ASR-TEST-001 | ADA-001/002/004/005/006/008/009/010/012/013/014 | QA-TEST-01, QA-SUP-01; NFR-TEST-001–003; AI-REQ-010/011/014; DoD Sections 4–6 |
+| ASR-SEC-001 | ADA-001/002/003/006/007/008/011/016/017 | QA-SEC-01/02; FR-AUTH-004/007/009/013/014/017/018; DATA-AUTH-005 |
+| ASR-SEC-002 | ADA-003/004/006/007/009/011/012/013/014/016/017/018 | QA-SEC-03; NFR-PRIV-001/002; DATA-RET-001–003; SI/COM purpose boundaries |
+| ASR-REL-001 | ADA-001/002/003/004/005/007/008/009/010/011/012/015/016/017/018 | QA-REL-01/02, QA-SCA-01; DATA-INT-001–004; BRULE-WEAR/PERS |
+| ASR-CON-001 | ADA-001/002/003/009/010/011/014/015/016/017/018 | QA-CON-01; BRULE-OUT/COV/MULT; DATA-OUT-001/002; DATA-ANL-004 |
+| ASR-PERF-001 | ADA-002/004/005/007/010/011/013/014/017 | QA-PERF-01/02; NFR-PERF-001/002; NFR-TEST-003; SRS Section 12.3 |
+| ASR-INT-001 | ADA-004/005/006/012/013/015/017/018 | QA-INT-01, QA-AVL-01; SI-001–004; UC-004/006/007/023 |
+| ASR-REL-002 | ADA-001/003/004/007/008/009/012/013/014/016/017 | QA-REL-03, QA-SUP-01; NFR-REL-003; applicable DoD operational criteria |
+| ASR-USE-001 | ADA-005/006/010/014/015/018; outcome semantics across all choices | QA-USE-01/02, QA-MNT-01; NFR-USE/ACC; LOC-001–005 |
+| ASR-TEST-001 | ADA-001/002/004/005/006/008/009/010/012/013/014/015/016/017/018 | QA-TEST-01, QA-SUP-01; NFR-TEST-001–003; AI-REQ-010/011/014; DoD Sections 4–6 |
 
 For all 14 QA classifications, use QA analysis Section 5; the per-ADA tables name the attributes relevant to that comparison. Availability/Scalability and other Medium attributes remain real obligations without automatically requiring redundancy or distributed infrastructure. Reusability is Low and supplies no separate reusable-platform decision.
 
+The inverse mapping below makes the new decision problems reviewable without creating new ASRs or QA scenarios.
+
+| New ADA | Existing Formal ASRs | Existing QA / Requirement / Interaction Evidence |
+| --- | --- | --- |
+| ADA-015 | ASR-CON-001, ASR-TEST-001, ASR-INT-001, ASR-REL-001, ASR-USE-001 | QA-CON-01, QA-TEST-01, QA-REL-01/02, QA-INT-01, QA-MNT-01; DATA-INT-001–004, NFR-REL-002, NFR-TEST-001/002, LOC-002/003; UC-007/011/019/022 and corresponding activities; DoD Sections 4–6. |
+| ADA-016 | ASR-SEC-001/002, ASR-REL-001/002, ASR-CON-001, ASR-TEST-001 | QA-SEC-01–03, QA-REL-02/03, QA-CON-01, QA-SCA-01; DATA-AUTH-005, DATA-GAR and DATA-WEAR information domains (SRS Sections 4.3/4.5), DATA-INT-001–004, DATA-RET-001–003; UC-010/014/016/017 and AD-014/016/017. |
+| ADA-017 | ASR-REL-001/002, ASR-SEC-001/002, ASR-CON-001, ASR-INT-001, ASR-PERF-001, ASR-TEST-001 | QA-REL-01–03, QA-SEC-01–03, QA-CON-01, QA-INT-01, QA-PERF-01/02, QA-SCA-01; DATA-INT and DATA-WEAR families, FR-WEAR-010, FR-PERS-013, FR-MULT-008, DATA-RET-001/002, FR-MET-007; UC-010/014/016/017/019/022 and available activities. |
+| ADA-018 | ASR-CON-001, ASR-INT-001, ASR-SEC-002, ASR-REL-001, ASR-USE-001, ASR-TEST-001 | QA-CON-01, QA-INT-01, QA-SEC-03, QA-REL-01/02, QA-MNT-01, QA-USE-02; DATA-GAR-003, DATA-OUT-001–003, DATA-ANL-003/004, DATA-HIST-001/002, SI-001–004, LOC-002/003; UC-006/007/011/015/021–023 and available activities. |
+
+Reliability/Security remain Critical; Conceptual Integrity/Interoperability/Testability and other High concerns remain High; Maintainability/Flexibility/Manageability remain Medium. Shared semantic preservation, isolation and evidence support these recommendations; no independent microservices, generic-reuse or change-effort requirement is inferred.
+
 ## 11. Status and Next Step
 
-**Version 0.1 — Baseline Draft. All recommendations Proposed — Awaiting Selection.** Prepared for human Architect/Tech Lead review with Developers and relevant AI/Mobile/QA/Product contributors. No preference, approval, software implementation or passed benchmark is inferred.
+**Version 0.2 — Baseline Draft. All 18 recommendations Proposed — Awaiting Selection.** Prepared for human Architect/Tech Lead review with Developers and relevant AI/Mobile/QA/Product contributors. No preference, approval, software implementation or passed benchmark is inferred.
 
-Next: **human review → Selected Architecture Decisions**. ADD begins only after the Critical decisions are explicitly selected and any Important deferrals have a safe documented boundary. Then follow Workflow Section 46: ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
+Next: **human review of ADA-001–018 → Selected Architecture Decisions → ADD**. ADD begins only after the Critical decisions are explicitly selected and any Important deferrals have a safe documented boundary. Then follow Workflow Section 46: ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-This task creates the analysis and updates current process handoffs only. It creates no selected decision record, ADD/views, ADR, detailed contract/schema/sequence/state artifact, Test Strategy, Sprint artifact or implementation code.
+This revision expands the existing analysis and synchronizes only genuinely affected current-facing handoff references. It creates no selected decision record, ADD/views, ADR, detailed contract/schema/sequence/state artifact, Test Strategy, Sprint artifact or implementation code.

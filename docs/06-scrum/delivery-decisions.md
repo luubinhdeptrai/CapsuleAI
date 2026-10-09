@@ -5,18 +5,19 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Delivery Decision Log |
-| Version | 0.1.1 |
+| Version | 0.1.2 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Primary Audience | Backend Developer / Development Team |
 | Ownership | Product Owner / BA, with team input within workflow responsibilities |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
-| Revision Note | v0.1.1 extends DD-006 with ADA and explicit human selection before ADD; updates current handoff and shifted action references. DD IDs, product order, story boundaries and Sprint commitment rules are preserved. |
+| Revision Note | v0.1.2 synchronizes the current handoff with ADA v0.2 and its 18 proposed analyses. The v0.1.1 DD-006 extension and action references remain; DD bodies/IDs, product order, story boundaries and Sprint commitment rules are preserved. |
 
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-08 | Initial six-entry handoff log, including DD-006's original QA preparation handoff. |
 | 0.1.1 | 2026-10-08 | Extended DD-006 for ADA/human selection before ADD; current handoff and shifted Step references only. |
+| 0.1.2 | 2026-10-10 | Updated the current handoff to ADA v0.2 / 18 proposed analyses; no delivery decision, story/PBI boundary, order or Sprint commitment change. |
 
 ## 2. Purpose
 
@@ -121,10 +122,10 @@ None currently.
 
 ## 6. Backend Developer Handoff Summary
 
-**Current stage:** Product Goal, the globally ordered 41-PBI backlog, eight stories from four PBIs and the project-wide DoD exist as drafts for review. QA/ASR drafts and the ADA v0.1 Baseline Draft now cover the full MVP; every ADA recommendation is Proposed — Awaiting Selection. No selected-decision record, ADD/views/ADRs, Sprint Goal, Sprint Backlog or implementation commitment is recorded.
+**Current stage:** Product Goal, the globally ordered 41-PBI backlog, eight stories from four PBIs and the project-wide DoD exist as drafts for review. QA/ASR drafts and the ADA v0.2 Baseline Draft (ADA-001–018) now cover the full MVP; every ADA recommendation is Proposed — Awaiting Selection. No selected-decision record, ADD/views/ADRs, Sprint Goal, Sprint Backlog or implementation commitment is recorded.
 
 **Next focus:** Human review of [ADA](../04-architecture/architecture-decision-analysis.md) → Selected Architecture Decisions, then ADD/views and ADRs. Current draft review needs remain; earlier handoffs do not restart completed preparation. Product order stays in the backlog and exact behavior in requirements/AC. Detailed design, Test Strategy, engineering/readiness and Sprint Planning follow DD-006/DD-005.
 
 ## 7. Status
 
-**Version 0.1.1 — Baseline Draft.** Six Active entries, with no Superseded entries. DD-006 is extended and DD-005's action references are synchronized; other decisions are preserved. Active means applicable process guidance, not formal artifact approval or selected architecture. No product/requirement content, existing story, PBI order, estimate or Sprint assignment is changed.
+**Version 0.1.2 — Baseline Draft.** Six Active entries, with no Superseded entries. The current handoff references ADA v0.2 / 18 proposed analyses; DD-001–006 retain their v0.1.1 bodies, including DD-006's extended gate and DD-005's synchronized action references. Active means applicable process guidance, not formal artifact approval or selected architecture. No product/requirement content, existing story, PBI order, estimate or Sprint assignment is changed.
