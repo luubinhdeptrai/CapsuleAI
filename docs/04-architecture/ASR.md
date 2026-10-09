@@ -5,13 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Formal Architecturally Significant Requirements (ASR) |
-| Version | 0.1.1 |
+| Version | 0.1.2 |
 | Status | Baseline Draft |
 | Product / Horizon | CapsuleAI — complete approved MVP scope |
 | Ownership | Architect / Tech Lead; review with Developers, QA and Product/BA |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17–19, 39–43 and 46 |
 | Primary Analysis Input | [Quality Attribute Analysis](quality-attribute-analysis.md), v0.1 — Baseline Draft |
-| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. |
+| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges completed selection and ADD next; ASR/driver/constraint content remains unchanged. |
 
 ## 2. Purpose
 
@@ -540,8 +540,8 @@ Older documents' “next artifact” statements record their own handoff point. 
 
 ## 13. Status and Next Step
 
-**Version 0.1.1 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
+**Version 0.1.2 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
 
-The ASR handoff is **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). The [decision-analysis draft](architecture-decision-analysis.md) now exists with proposed recommendations; the current next action is human review and explicit selection. It does not establish selected architecture.
+The preparation sequence remains **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). [Selected Architecture Decisions v0.1](selected-architecture-decisions.md) now records the Project Owner / Backend Developer's 2026-10-10 acceptance of all 18 current [ADA](architecture-decision-analysis.md) recommendations exactly as analyzed. All are Selected, with no override or deferral; the selection gate is satisfied. The selected record supplies solution choices separately from these requirement pressures.
 
-Only after all Critical choices are selected and Important deferrals safely bounded should ADD and Logical, Implementation, Deployment and Data Views proceed (Steps 17–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.1 changes current handoff/navigation only; it creates no selected-decision record or downstream design.
+**Next: Selected Architecture Decisions → ADD**, followed by Logical, Implementation, Deployment and Data Views (Steps 17–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.2 changes current handoff/navigation only; all seven drivers, nine ASRs, constraints, traceability and acceptance measures remain unchanged. No downstream design is created.

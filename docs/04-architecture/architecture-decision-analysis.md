@@ -5,9 +5,9 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Decision Analysis |
-| Version | 0.2 |
+| Version | 0.2.1 |
 | Status | Baseline Draft |
-| Decision State | All recommendations Proposed — Awaiting Selection |
+| Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
 | Last Updated | 2026-10-10 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
@@ -18,12 +18,13 @@
 | --- | --- | --- |
 | 0.1 | 2026-10-08 | Initial comparison of 14 architecture decision problems across the whole MVP; recommendations await human selection. No product requirement, QA measure or ASR content changes. |
 | 0.2 | 2026-10-10 | Added ADA-015–018 for internal module architecture, context data ownership, inter-context communication and model isolation/ACL; reconciled existing recommendations, dependencies, deferrals and human-review gates around service-extractable modularity. Corrected the Business Analysis source location. No product, QA or ASR change; all 18 recommendations remain proposed. |
+| 0.2.1 | 2026-10-10 | Synchronized current decision statuses and handoff with explicit human acceptance of all 18 v0.2 recommendations in Selected Architecture Decisions v0.1. Analytical options, trade-offs, confidence, importance and historical revision entries remain unchanged. |
 
 ## 2. Purpose
 
 Expose the major choices between required architectural capability and a coherent design. The analysis covers the complete three-pillar mobile MVP: confirmed wardrobe, valid personalized styling and reported behavior, and contextual Coverage/Gaps plus hypothetical candidate utility. The first eight stories are implementation/refinement context, not the architecture boundary.
 
-The current architecture intent is a modular monolith for the business core with **service-extractable modularity**. ADA-001/015–018 analyze that coherent direction; no authoritative Selected Architecture Decisions record or implementation exists. System-level modularity, internal dependency direction, logical data ownership, interaction semantics and model isolation answer different questions. Preparing boundaries for possible extraction does not establish microservices as current product scope.
+The selected business-core direction is a modular monolith with **service-extractable modularity**, recorded in [Selected Architecture Decisions](selected-architecture-decisions.md). ADA-001/015–018 supply the unchanged analysis of that coherent direction; no implementation baseline is established. System-level modularity, internal dependency direction, logical data ownership, interaction semantics and model isolation answer different questions. Preparing boundaries for possible extraction does not establish microservices as current product scope.
 
 | Artifact | Responsibility |
 | --- | --- |
@@ -33,7 +34,7 @@ The current architecture intent is a modular monolith for the business core with
 | ADD and its views | Architecture structure and realization given ASRs and explicitly selected directions. |
 | ADR | Durable rationale, alternatives and consequences for consequential selected decisions, recorded later in this workflow. |
 
-**Recommendation is not selection.** Every ADA entry is **Proposed — Awaiting Selection**. No runtime, database, AI process, storage provider or topology is established by this document. Conditional consequences describe what ADD would inherit if the option were selected. Selection can accept a recommendation, choose another analyzed option, or defer a non-blocking decision with an owner, boundary and resolution point. A material new alternative requires analysis before selection.
+**Recommendation is not selection.** The Project Owner / Backend Developer explicitly accepted every current ADA-001–018 recommendation on 2026-10-10; all are now **Selected**, without override or deferral. The separate [selection record](selected-architecture-decisions.md) governs the chosen options. The analytical comparisons and conditional consequences below retain their v0.2 wording, importance, confidence and evidence gaps; selection does not prove conformance or benchmarks. Detailed providers, versions and topology remain downstream. A material new alternative still requires analysis and explicit selection.
 
 ## 3. Inputs and Decision Method
 
@@ -92,30 +93,32 @@ No current root README, legacy standalone PRD or older referenced Food Delivery 
 
 ## 4. Decision Summary
 
-All 18 entries retain the full status shown below. Persistence model and technology are one problem; avoiding a dedicated cache/broker is a positive architecture recommendation, not an omitted analysis.
+All 18 entries are Selected through the separate human [selection record](selected-architecture-decisions.md); the recommendation/importance/confidence columns retain the v0.2 analytical summary. Full recommended Option wording is recorded in Section 5 and the selection record. Persistence model and technology are one problem; avoiding a dedicated cache/broker is a positive architecture recommendation, not an omitted analysis.
 
 | ID | Decision Problem | Importance | Recommendation | Confidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| ADA-001 | Business-core architecture style | Critical Before ADD | Modular monolith for the business core | High | Proposed — Awaiting Selection |
-| ADA-002 | Backend application runtime | Important Before ADD | Java with Spring Boot for the business application | Medium | Proposed — Awaiting Selection |
-| ADA-003 | Authoritative persistence model and database | Critical Before ADD | One relational primary database: PostgreSQL | High | Proposed — Awaiting Selection |
-| ADA-004 | AI/CV execution boundary | Critical Before ADD | Separate private Python analysis runtime | Medium | Proposed — Awaiting Selection |
-| ADA-005 | Backend-to-AI interaction | Important Before ADD | Bounded synchronous complete-result interaction | Medium | Proposed — Awaiting Selection |
-| ADA-006 | External integration boundaries | Important Before ADD | Narrow explicit ports/adapters for real dependencies | High | Proposed — Awaiting Selection |
-| ADA-007 | Private image persistence and access | Important Before ADD | Private object storage with application-controlled authorized delivery | Medium | Proposed — Awaiting Selection |
-| ADA-008 | Session, refresh and reset authority | Critical Before ADD | Primary database as persistent session/reset authority | High | Proposed — Awaiting Selection |
-| ADA-009 | Logical-action idempotency and accepted effects | Critical Before ADD | Database-backed logical-action coordination and coherent effects | High | Proposed — Awaiting Selection |
-| ADA-010 | Advice and wardrobe-intelligence computation | Critical Before ADD | Request-time evaluation from authoritative inputs with shared semantics | Medium | Proposed — Awaiting Selection |
-| ADA-011 | Dedicated cache strategy | Important Before ADD | No dedicated cache initially | High | Proposed — Awaiting Selection |
-| ADA-012 | Messaging and background coordination | Important Before ADD | Explicit core coordination with no broker initially | High | Proposed — Awaiting Selection |
-| ADA-013 | Initial deployment and resource separation | Important Before ADD | Small controlled deployment with supervised core/AI processes and durable resources | Medium | Proposed — Awaiting Selection |
-| ADA-014 | Protected observability and validation evidence | Important Before ADD | Minimal protected structured logs, metrics and health/recovery evidence | High | Proposed — Awaiting Selection |
-| ADA-015 | Internal Module Architecture | Important Before ADD | Pragmatic Clean Architecture inside each business module | Medium | Proposed — Awaiting Selection |
-| ADA-016 | Context Data Ownership | Critical Before ADD | One PostgreSQL database initially with explicit context-owned logical persistence boundaries | High | Proposed — Awaiting Selection |
-| ADA-017 | Inter-Context Communication | Critical Before ADD | Explicit published module contracts; synchronous local or event-based interaction follows business semantics | High | Proposed — Awaiting Selection |
-| ADA-018 | Context Model Isolation and Anti-Corruption | Important Before ADD | Published contracts + Anti-Corruption Layer translation at meaningful semantic boundaries | High | Proposed — Awaiting Selection |
+| ADA-001 | Business-core architecture style | Critical Before ADD | Modular monolith for the business core | High | Selected |
+| ADA-002 | Backend application runtime | Important Before ADD | Java with Spring Boot for the business application | Medium | Selected |
+| ADA-003 | Authoritative persistence model and database | Critical Before ADD | One relational primary database: PostgreSQL | High | Selected |
+| ADA-004 | AI/CV execution boundary | Critical Before ADD | Separate private Python analysis runtime | Medium | Selected |
+| ADA-005 | Backend-to-AI interaction | Important Before ADD | Bounded synchronous complete-result interaction | Medium | Selected |
+| ADA-006 | External integration boundaries | Important Before ADD | Narrow explicit ports/adapters for real dependencies | High | Selected |
+| ADA-007 | Private image persistence and access | Important Before ADD | Private object storage with application-controlled authorized delivery | Medium | Selected |
+| ADA-008 | Session, refresh and reset authority | Critical Before ADD | Primary database as persistent session/reset authority | High | Selected |
+| ADA-009 | Logical-action idempotency and accepted effects | Critical Before ADD | Database-backed logical-action coordination and coherent effects | High | Selected |
+| ADA-010 | Advice and wardrobe-intelligence computation | Critical Before ADD | Request-time evaluation from authoritative inputs with shared semantics | Medium | Selected |
+| ADA-011 | Dedicated cache strategy | Important Before ADD | No dedicated cache initially | High | Selected |
+| ADA-012 | Messaging and background coordination | Important Before ADD | Explicit core coordination with no broker initially | High | Selected |
+| ADA-013 | Initial deployment and resource separation | Important Before ADD | Small controlled deployment with supervised core/AI processes and durable resources | Medium | Selected |
+| ADA-014 | Protected observability and validation evidence | Important Before ADD | Minimal protected structured logs, metrics and health/recovery evidence | High | Selected |
+| ADA-015 | Internal Module Architecture | Important Before ADD | Pragmatic Clean Architecture inside each business module | Medium | Selected |
+| ADA-016 | Context Data Ownership | Critical Before ADD | One PostgreSQL database initially with explicit context-owned logical persistence boundaries | High | Selected |
+| ADA-017 | Inter-Context Communication | Critical Before ADD | Explicit published module contracts; synchronous local or event-based interaction follows business semantics | High | Selected |
+| ADA-018 | Context Model Isolation and Anti-Corruption | Important Before ADD | Published contracts + Anti-Corruption Layer translation at meaningful semantic boundaries | High | Selected |
 
 ## 5. Major Architecture Decision Analyses
+
+The following comparisons retain the v0.2 preselection analysis, including conditional wording and evidence gaps. Only Decision Status fields are synchronized here; exact selections are authoritative in [Selected Architecture Decisions](selected-architecture-decisions.md).
 
 ### ADA-001 — Business-core architecture style
 
@@ -177,7 +180,7 @@ High — the integrity pressures and absence of independent business-service req
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -254,7 +257,7 @@ Medium — current team experience, runtime versions and representative benchmar
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -325,7 +328,7 @@ High — the source-derived consistency needs strongly support one relational au
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -400,7 +403,7 @@ Medium — no current model/package compatibility, licensing, compute sizing or 
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -471,7 +474,7 @@ Medium — model duration, interruption frequency and resource contention are un
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -538,7 +541,7 @@ High — the boundaries are concrete and shared across current journeys.
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -615,7 +618,7 @@ Medium — expected image volume, provider cost and the authorized-delivery real
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -686,7 +689,7 @@ High — clear state-coordination needs support one persistent authority; lookup
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -757,7 +760,7 @@ High — the relevant failure and retry flows directly support durable coordinat
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -836,7 +839,7 @@ Medium — combinatorial cost and the daily benchmark are not yet measured. If p
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -907,7 +910,7 @@ High — no current evidence requires a dedicated cache; confidence is in this i
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -978,7 +981,7 @@ High — the current MVP has no independent event-consumer or sustained queue re
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1057,7 +1060,7 @@ Medium — environment capacity, model memory/compute demand, cost and operating
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1128,7 +1131,7 @@ High — current sources explicitly require inspectable outcomes and evidence, w
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1214,7 +1217,7 @@ Medium — the source-derived isolation benefit is clear, but contributor profic
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1292,7 +1295,7 @@ High — current privacy, accepted-state and same-basis obligations support expl
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1380,7 +1383,7 @@ High — the current immediate/coherent effects and bounded optional reactions p
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### Consequence If Selected
 
@@ -1466,7 +1469,7 @@ High — confirmed/proposed, current/historical/hypothetical and optional commer
 
 #### Decision Status
 
-Proposed — Awaiting Selection
+Selected
 
 #### ACL Is Not a Snapshot or Projection
 
@@ -1510,6 +1513,8 @@ A major alternative that affects authoritative state, security, exactness or run
 
 ## 7. Cross-Decision Interactions
 
+These v0.2 analytical interactions and conditional evolution possibilities remain unchanged. All current recommended options are now Selected in the [selection record](selected-architecture-decisions.md); this section selects no additional infrastructure.
+
 | Interaction | Consequence for human review and later design |
 | --- | --- |
 | ADA-001 ↔ ADA-015 ↔ ADA-016 ↔ ADA-017 ↔ ADA-018 | Together establish the proposed service-extractable modularity: domain-first responsibility boundaries, inward dependencies, owned data, public semantic interactions and protected models. They preserve a local business core rather than select a distributed system. |
@@ -1544,7 +1549,13 @@ This map tests boundary quality; it is not a module decomposition, migration com
 | Protected local evidence and necessary core/AI correlation | Cross-service correlation/observability if independent runtimes require it; no tracing vendor selected. |
 | Deliberate module boundaries and inward adapters | Incremental extraction, potentially Strangler or Branch-by-Abstraction techniques, with explicit data/contract/consistency transition work. |
 
-## 8. Proposed Decision Set for Human Review
+## 8. Human Selection and Historical Review Guidance
+
+**Current state — 2026-10-10:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions v0.1](selected-architecture-decisions.md) records the exact choices and Backend Developer handoff; ADD is next. All eight Critical choices and ten Important choices are selected. Evidence gaps below remain realization/verification work, not pending selections.
+
+### Historical v0.2 Review Guidance
+
+The following text preserves the review guidance written before this human selection. References to pending selection or a future record describe that historical state, not the current handoff.
 
 **Not yet selected.** Section 4 is the compact proposed set: ADA-001–014 recommend Option A and ADA-015–018 recommend Option B; each letter's meaning differs by problem. Option letters indicate presentation order, not a scoring or automatic-selection rule. The option analyses explain when credible alternatives could be preferable.
 
@@ -1567,21 +1578,21 @@ The future `selected-architecture-decisions.md` should record ADA ID, selected a
 
 ## 9. Backend Developer Takeaways
 
-- The current intended business-core direction is a modular monolith, still Proposed — Awaiting Selection; there is no implemented deployment baseline. Service-extractable module boundaries start with domain responsibilities rather than a list of future services.
+- The selected business-core direction is a modular monolith, governed by [Selected Architecture Decisions](selected-architecture-decisions.md); there is no implemented deployment baseline. Service-extractable module boundaries start with domain responsibilities rather than a list of future services.
 - Pragmatic Clean Architecture governs inward dependencies inside modules; use meaningful ports/adapters and keep Spring/JPA/provider/transport details outside domain decisions. No interface-per-class or empty-layer ceremony.
-- Each context would logically own its persisted information even in one PostgreSQL database. Reach another owner through public contracts, not its private repositories, entities, tables or schemas.
+- Each context logically owns its persisted information even in one PostgreSQL database. Reach another owner through public contracts, not its private repositories, entities, tables or schemas.
 - Synchronous versus asynchronous interaction follows business semantics. Immediate exclusion/revocation and accepted effects stay coherent; local events can be useful without requiring a broker.
 - ACL protects neighboring/provider meanings through focused translation. It does not automatically create a snapshot/projection; required minimal historical snapshots have a separate purpose.
 - Local ACID transactions remain useful. Coordinated cross-context transactions create future extraction coupling to review; Kafka/RabbitMQ, Outbox and Saga are potential later mechanisms, not present requirements.
 
-- The proposed modular core and relational authority reduce coordination surfaces; they still require deliberate transaction, ownership and concurrency design.
+- The selected modular core and relational authority reduce coordination surfaces; they still require deliberate transaction, ownership and concurrency design.
 - Framework JWT validation does not replace current-session/account authority. Reset, logout and refresh reuse have different effects.
 - A durable logical-action identity protects retries; it must not collapse new same-outfit/day Wear intentions. Original local grouping and absolute elapsed aging remain separate.
-- AI is proposed as a private analysis boundary; user confirmation remains authoritative. Synchronous interaction fits the short complete-result target provisionally, subject to measurement.
+- AI is selected as a private analysis boundary; user confirmation remains authoritative. Synchronous interaction fits the short complete-result target provisionally, subject to measurement.
 - Request-time intelligence avoids premature invalidation machinery. Shared validity/identity is necessary, while different consumers may use different algorithms. Exact Multiplier needs complete same-basis sets.
 - Redis, a broker and orchestration add correctness/operating work; measured need can justify them later. Required cleanup and recovery exist even without those services.
 - Private media and operating evidence need purpose, authority and lifecycle design. Object existence, a deletion marker or a successful telemetry response cannot establish business acceptance.
-- Product ordering remains PO-accountable. Developers contribute feasibility and operating implications; this draft commits no Sprint work or technology choice.
+- Product ordering remains PO-accountable. Developers contribute feasibility and operating implications; the separate selection record fixes architecture directions, while this draft commits no Sprint work.
 
 ## 10. Traceability
 
@@ -1614,8 +1625,8 @@ Reliability/Security remain Critical; Conceptual Integrity/Interoperability/Test
 
 ## 11. Status and Next Step
 
-**Version 0.2 — Baseline Draft. All 18 recommendations Proposed — Awaiting Selection.** Prepared for human Architect/Tech Lead review with Developers and relevant AI/Mobile/QA/Product contributors. No preference, approval, software implementation or passed benchmark is inferred.
+**Version 0.2.1 — Baseline Draft. ADA-001–018 Selected.** Explicit human acceptance by the Project Owner / Backend Developer on 2026-10-10 is recorded in [Selected Architecture Decisions v0.1](selected-architecture-decisions.md). Selection changes current statuses/handoff, not the analytical recommendations, trade-offs, importance, confidence or evidence gaps. Formal artifact approval, implementation and passed benchmarks are not claimed.
 
-Next: **human review of ADA-001–018 → Selected Architecture Decisions → ADD**. ADD begins only after the Critical decisions are explicitly selected and any Important deferrals have a safe documented boundary. Then follow Workflow Section 46: ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
+Next: **Selected Architecture Decisions → ADD**. The major-choice gate is satisfied: all Critical and Important recommendations are Selected, with no override or deferral. Follow Workflow Section 46: ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-This revision expands the existing analysis and synchronizes only genuinely affected current-facing handoff references. It creates no selected decision record, ADD/views, ADR, detailed contract/schema/sequence/state artifact, Test Strategy, Sprint artifact or implementation code.
+This revision synchronizes affected status/navigation only. Historical revision entries and preselection review guidance remain visible; no product requirement, QA scenario or ASR obligation changes. No ADD/view, ADR, detailed design, Test Strategy, Sprint artifact or implementation is created.
