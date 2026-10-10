@@ -1,0 +1,145 @@
+@startuml
+' Artifact: CapsuleAI Deployment View
+' Version: 0.1; Status: Baseline Draft; Date: 2026-10-11
+' Primary Sources: ADD v0.1.2, Selected Architecture Decisions v0.1.3 (ADA-001-018 Selected),
+' approved Logical View v0.1 and approved Implementation View v0.1.
+' Human acceptance of both existing views is explicit in this Deployment View task.
+' Source versions are authoring inputs; subsequent navigation-only patches preserve meaning.
+' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 23/39-43/46.
+' Scope: runtime processes, deployment nodes, durable resources, external systems, communication
+' and trust boundaries. Controlled environment denotes control, not a physical host or cloud.
+' Not Scope: physical schema, exact cloud topology, infrastructure-as-code, network configuration,
+' source-code internals, detailed sequences/states, provider contracts or a Data View.
+' Repository inspection: 68 existing documentation/reference files; no source/build/config baseline.
+' Current requirements: BRD v0.3, PRD v0.2, SRS v0.3, Business Rules v0.1.2;
+' master Use Case Diagram, all 23 UC specifications and 12 Activity Diagrams.
+' QA/ASR/ADA/ADD, Scrum sources and historical/reference context were re-read;
+' complete current Implementation View re-read immediately before drawing; no owner redesign.
+'
+' Traceability: Core/PG authority -> ADA-001/002/003/008/009/016; ASR-SEC-001, REL-001/002.
+' AI/media -> ADA-004/005/007/012/013; ASR-PERF-001, SEC-002, INT-001; UC-007/010.
+' Providers/navigation -> ADA-006/010/018; ASR-INT-001; UC-004/006/021-023, SI-002-004.
+' Supervision/protected evidence -> ADA-013/014; ASR-REL-002/TEST-001; QA-REL-03/SUP-01.
+' Internal boundaries remain those accepted in Logical/Implementation Views (ADA-015-018).
+'
+' Validation evidence remains required, not achieved by this view (SRS Sections 2.3/12.3):
+' NFR-PERF-001: p95 <=5 s from accepted post-transfer analysis to BOTH usable preview/proposals;
+' include actual core/AI/media/result overhead, exclude initial upload and user review time.
+' NFR-PERF-002: p95 <3 s from accepted request with context to FIRST COMPLETE daily result,
+' exactly 100 confirmed garments; evaluation runs in Core using current authoritative inputs.
+' NFR-TEST-003: 5 warm-ups, >=100 measured runs, legitimate slow runs retained, reference
+' device/network/environment recorded. NFR-SCA-002: 20 active users is separate integrity evidence.
+' NFR-REL-003: restore authorized core operation <=5 minutes after recoverable validation restart,
+' accepted state intact and applicable fallbacks available; no production SLA, disaster RPO or pass.
+' No timeout is inferred from a p95 target; numeric AI waiting policy remains downstream.
+'
+' PostgreSQL tracks restart-surviving required owner work: association/physical deletion/retention/
+' recovery where applicable. Local in-memory events/timers and optional measurement are insufficient.
+' Immediate effective withdrawal is distinct from later physical purge (DATA-RET-001-003).
+' Applicable copies/versions follow the same lifecycle; exact work scheduling/retry remains open.
+' PG and private media are separate durable resources; no cross-resource atomicity is claimed.
+' Python has no direct confirmed business-state or PG access; analysis never confirms a garment.
+' AI image transfer/access and temporary authorized media delivery mechanics remain unresolved;
+' therefore there is no direct AI or Mobile -> Object Storage path in this baseline.
+'
+' Commercial evidence and External Shopping Destination are distinct external roles, possibly
+' supplied by the same system; this does not require two vendors or new shopping integration.
+' Core qualifies available evidence/link information; Mobile carries the explicit UC-023 handoff.
+' The navigation arrow allocates client interaction, not a browser/deep-link/redirect mechanism.
+' No purchase/ownership/Wear acceptance or unrelated private-data disclosure follows navigation.
+' Weather acquisition retains UC-006 authority; consuming assessments use its resulting context.
+' Personal selected-image assistance is purpose-limited; no MVP personal-data training/improvement.
+'
+' Open: physical hosts/counts/co-location, resource sizing/model compute, runtime versions,
+' providers/hosting, process supervisor, protocols/ports, AI image transfer, media delivery,
+' operating evidence tooling, durable-work/recovery mechanics; resolve from actual evidence.
+' Process separation establishes neither host separation nor immunity to shared-resource failure.
+' No dedicated cache, broker, independently deployed business modules or cloud platform is added.
+' Notation checked against official PlantUML documentation via Context7, 2026-10-11:
+' https://plantuml.com/deployment-diagram and https://plantuml.com/command-line
+
+title CapsuleAI - Deployment View\nVersion 0.1 | Baseline Draft | Accepted Logical and Implementation Views preserved
+top to bottom direction
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam defaultFontSize 14
+skinparam ArrowFontSize 12
+skinparam defaultFontColor #0F172A
+skinparam ArrowColor #64748B
+skinparam nodesep 45
+skinparam ranksep 65
+skinparam rectangle {
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam node {
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam artifact {
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam legend {
+  BackgroundColor #FFFFFF
+  BorderColor #CBD5E1
+  FontColor #334155
+  FontSize 13
+}
+
+rectangle "User-Controlled Environment" as UserBoundary <<trust boundary>> #EFF6FF {
+    node "Mobile Device\nAndroid 10+ / iOS 15+" as Device <<device>> #DBEAFE {
+        artifact "CapsuleAI Mobile App\nInteraction / capture / review\nAccount-scoped results / recovery" as Mobile #EFF6FF
+    }
+}
+
+rectangle "CapsuleAI Controlled / Private Environment\nSupervised Core and AI; physical host placement unresolved" as PrivateBoundary <<trust boundary>> #F0FDFA {
+    node "Spring Boot Business Core\nONE supervised Java application process" as Core <<process>> #CCFBF1 {
+        artifact "Modular Monolith\nIdentity\nPersonal Context\nWardrobe\nOutfit Advice and Use\nWardrobe Intelligence\nProduct Measurement (supporting)" as BusinessApp #F0FDFA
+    }
+    node "Private Python AI Runtime\nSeparate supervised analysis process" as AI <<process>> #E0E7FF {
+        artifact "Selected-Image Assistance\nUsable preview\nAttribute proposals / uncertainty" as Analysis #EEF2FF
+    }
+    database "PostgreSQL\nONE primary durable authority" as DB <<durable resource>> #DCFCE7
+    storage "Private Object Storage\nOriginals / previews where applicable" as Media <<durable resource>> #FEF3C7
+}
+
+rectangle "External Systems - Outside CapsuleAI Trust\nProviders/vendors unselected" as ExternalBoundary <<trust boundary>> #F1F5F9 {
+    rectangle "Weather Provider" as Weather <<external service>> #E2E8F0
+    rectangle "Recovery Email Provider" as Email <<external service>> #E2E8F0
+    rectangle "Optional Commercial /\nShopping Evidence Provider" as Commerce <<external service>> #FFEDD5
+    rectangle "External Shopping Destination\nOptional user-chosen navigation" as Destination <<external system>> #FFEDD5
+}
+
+' Communication arrows show initiation direction; returned evidence/results are implicit.
+' Registration/login/recovery also use Mobile-Core; JWT/session/ownership gates protected use.
+Mobile --> Core : application requests / results\nprotected use and private media via Core
+Core --> AI : bounded synchronous analysis\ncomplete preview + proposals / uncertainty
+Core --> DB : authoritative persistence\nbusiness / session / actions / required work
+Core --> Media : private media association / retrieval\nauthorized lifecycle / purge
+Core --> Weather : necessary selected location\nenvironmental evidence / actual timestamp
+Core --> Email : necessary recovery delivery\ndelivery outcome, not reset completion
+Core --> Commerce : optional credible evidence\nqualified guidance / link information
+Mobile -[norank]-> Destination : explicit UC-023 navigation only\nno purchase / ownership / Wear acceptance
+
+legend bottom
+  |= Element / Concern |= Deployment interpretation |
+  | Device / contained artifact | Client software executes on the user device; mobile framework remains open. |
+  | Process / contained artifact | Software executes in that supervised process; business modules stay in ONE Core. |
+  | Trust group | Control/access boundary; neither a physical host nor a selected cloud/network topology. |
+  | Directed communication | Initiator -> runtime/resource/system; returned result implicit; protocol unselected. |
+  | Protected Core boundary | Valid JWT + usable account/session + affected-information authorization; no stale bypass. |
+  | PostgreSQL durability | Core-only authority under logical ownership; accepted state and required resumable work survive restart. |
+  | Private media | Core controls access/association/purge; object existence is not authorization or ownership evidence. |
+  | Python failure | Proposal-only analysis cannot overwrite confirmed truth; imageless manual wardrobe entry remains usable. |
+  | Weather failure | Disclosed reduced context only where defensible; remaining hard validity and sufficient inputs still apply. |
+  | Commerce/navigation failure | Supported Coverage / Gaps / Multiplier remain usable under their own valid inputs; no false +0. |
+  | Measurement failure | Cannot block/reverse core acceptance or fabricate recorded evidence; stays inside Core. |
+  | Recovery readiness | Restore usable authority before protected use; media unavailability does not mean ownership absence. |
+  Both processes require supervision and protected structured logs / metrics / health / recovery evidence.
+  Supervisor/evidence tooling, providers, protocols, physical placement and capacity remain unresolved.
+  AI image transfer/access and media delivery mechanics remain open; Core governs private access.
+  Shared-resource failure/contention risks need evidence; no timing, capacity or recovery pass claimed.
+  Next: Deployment View review -> Data View.
+endlegend
+@enduml
