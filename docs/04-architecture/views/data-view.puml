@@ -1,78 +1,39 @@
 @startuml
 ' Artifact: CapsuleAI Data View
-' Version: 0.1; Status: Baseline Draft; Date: 2026-10-11.
-' Primary Sources: SRS v0.3; Business Rules v0.1.2; ADD v0.1.3;
-' Selected Architecture Decisions v0.1.4 (ADA-001-018 Selected).
-' Approved Logical, Implementation and Deployment Views: v0.1.
-' Their human acceptance is explicit in the current Data View task.
-' Source versions are authoring inputs; navigation-only patches preserve their meaning.
-' Process Authority: Initial files/CapsuleAI_Scrum_Development_Workflow.md,
-' Sections 4.3/24/25/39-43/46. Data View review precedes ADRs.
-' Scope: logical information concepts, ownership, authority, lifecycle, major relationships,
-' conceptual stores and permitted published references; four focused panels, ONE artifact.
-' Not Scope: physical SQL schema/DDL, ORM, detailed API/event design, transaction algorithms,
-' formal sequence/state diagrams, storage-provider configuration or new architecture choices.
-' Repository inspection: all 69 existing documents/diagrams/reference files read, including
-' the DOCX; no source/build/configuration implementation exists in the current checkout.
-' BRD v0.3 / PRD v0.2, master UC, all 23 UC specs / 12 activities, QA/ASR/ADA,
-' accepted views, Scrum and historical/reference material supply context under current authority.
+' Version: 0.1; Status: Baseline Draft; Presentation refactor: 2026-10-11.
+' Purpose: Simple logical data ownership overview; concepts are NOT physical tables.
+' Primary Sources: SRS v0.3; Business Rules v0.1.2; ADD v0.1.4;
+' Selected Architecture Decisions v0.1.5 (ADA-001-018 unchanged);
+' accepted Logical, Implementation and Deployment Views v0.1.
+' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 4.3/24/40/42/46.
+' Scope: ownership, major information relationships and conceptual stores; no schema/API design.
 '
-' Per-concept requirements and owning view reviewed before allocation:
-' Identity: Account / Session / Reset / accepted actions -> SRS 3.1.1, DATA-AUTH-001/002/005;
-' BRULE-AUTH-001-006; UC-001-004 / AD-004; ADA-003/008/009/016.
-' Personal Context: declared profile / location / request context / translated environment /
-' accepted actions and required withdrawal work -> SRS 3.2/3.3, DATA-AUTH-003/004;
-' BRULE-PROF-001-003; UC-005/006 / AD-006; accepted Context owner and persistence boundary.
-' Wardrobe: garment / confirmed profile / review draft / readiness / media / actions-work ->
-' SRS 3.4-3.6, DATA-GAR-001-005, DATA-INT-001/002/004, DATA-HIST-001/002, DATA-RET-002;
-' BRULE-GAR-001-009; UC-007-010 / AD-007; ADA-004/005/007/009/012/016.
-' Outfit Advice and Use: representation / published evaluation policy / Daily-Shuffle advice /
-' feedback / Wear / minimal history / derived use-evidence / actions-work ->
-' SRS 3.7-3.13, DATA-OUT-001-003, DATA-WEAR-001-004, DATA-HIST-001/002, DATA-RET-001/002;
-' BRULE-OUT-001-010, PERS-001-006, WEAR-001-006, HIST-001-003;
-' UC-011-018 / AD-011/012/014/016/017; ADA-009/010/016-018.
-' Wardrobe Intelligence: basis / Coverage / Gap / Candidate / Multiplier / hypothetical
-' previews / shopping advice / qualified commerce -> SRS 3.14-3.17, DATA-ANL-001-004;
-' BRULE-COV-001-006, GAP-001/002, MULT-001-009, SHOP-001-003;
-' UC-019-023 / AD-019/020/021/022; ADA-010/016-018.
-' Product Measurement: distinct minimal facts / retention work / optional unlinked aggregates ->
-' FR-MET-001-007, DATA-RET-003, SRS 12.1; BRULE-HIST-003; ADA-012/014/016/017.
-' Cross-cutting: ASR-SEC-001/002, REL-001/002, CON-001, INT-001, TEST-001;
-' QA-SEC-01-03, REL-01-03, CON-01, SCA-01, INT-01, SUP-01; ADD 8.4/9.1-9.9/10/12.
-'
-' One accountable owner per concept. Grouping is logical, never a physical PostgreSQL schema.
-' Authoritative accepted state, necessary functional history, durable logical-action outcomes,
-' accepted media associations and required resumable lifecycle work use ONE PostgreSQL.
-' Durable work belongs to the responsible mutation/lifecycle owner, not optional measurement.
-' No universal LogicalAction / LifecycleWork entity or shared write repository is selected.
-' Derived ownership defines meaning, not a mandate to persist results, versions or projections.
-' Draft/proposal, acquired evidence, candidate/guidance and computed-result persistence is open.
-' Wardrobe/Context input boxes in panels 2 and 3 reference panel 1 owners, not copied stores.
-' Panel 3's evaluation-policy reference belongs to Outfit Advice and Use in panel 2.
-' Historical snapshots belong to Outfit Advice and Use and retain only necessary past meaning.
-' Garment removal does not call that owner back or require a Wardrobe->Outfit dependency.
-' Current owner queries exclude removed inputs; necessary history remains independently intelligible.
-' New Wear acceptance coordinates current Wardrobe ownership/readiness and published validity
-' through public operations; correction/removal targets an existing historical event.
-' A historical outfit correction cannot restore current ownership. No physical cascade is chosen.
-' Session/reset, logical actions, mutation outcomes and necessary effects remain coherent;
-' exact local ACID participants, isolation/locking and concurrency/basis validation remain open.
-' Cross-owner identity/value references select neither FK nor joins nor private persistence access.
-' Any justified access exception needs invariant/lifecycle/coupling evidence and design/ADR review.
-' External analysis/weather/commerce is translated evidence, never independent business authority.
-' No MVP personal-data training, ownership/Wear from candidates, or native commerce is introduced.
-'
-' Open detailed decisions: exact physical relationships/types/constraints, history content,
-' action-key representation/retention, secret representation, version/basis encoding, draft and
-' external-evidence persistence, result persistence only if justified, work scheduling/retry,
-' media association/copy/version purge, safe evidence aggregation and transaction participation.
-' No new blocking contradiction or unselected consequential architecture choice is resolved here.
-' Known source issues: incomplete FR-MET-004 benchmark reference and absent focused UC diagrams;
-' use explicit SRS 3.4.1/8.1.1/12.3 plus master UC/specifications/available activities.
-' Notation checked via Context7 against https://plantuml.com/class-diagram
-' and https://plantuml.com/command-line on 2026-10-11.
+' Grouped labels summarize related concepts, not merged entities or policies:
+' Identity retains distinct account/session/reset authority (ADD 9.1; SRS 3.1.1).
+' Profile includes declared needs/preferences and selected location; request/environment inputs
+' remain distinct (SRS 3.2/3.3; Logical View's Personal Context and UC-006 authority).
+' Garment includes its confirmed profile; readiness remains derived Wardrobe policy, not ownership
+' or a second garment (DATA-GAR-001-005; BRULE-GAR-001-003; ADD 9.5).
+' Advice and utilization/effective evidence are separate derived meanings under the same owner
+' (SRS 3.7-3.13; ADD 9.2/9.7); Feedback never implies Wear.
+' Outfit/Evaluation groups representation and owner-controlled published policy; Intelligence's
+' reference consumes ONLY the policy, never a private Outfit entity or Daily's displayed subset.
+' Assessment Basis governs complete same-basis Coverage/Multiplier meaning and hypothetical
+' previews; five result states and incremental unique-set utility remain in ADD 9.7 / DATA-ANL-004.
+' Coverage/Gaps remain distinct contextual assessments/capability needs; Candidate/Preview remain
+' distinct hypothetical meanings (BRULE-COV/GAP/MULT); Shopping retains optional qualified commerce.
+' Weather/commercial evidence denotes separate sources, not one provider; each owner translates it.
+' Accepted media associations, minimal history, logical-action outcomes and required resumable
+' work remain owner-held in ONE PostgreSQL (ADD 8.4/9.2/9.3/9.9; accepted views).
+' Measurement retains its own work and optional unlinked aggregates (FR-MET-001-007/DATA-RET-003);
+' its representative fact arrow does not transfer business authority or erase other measured facts.
+' Detailed lifecycle, authorization, correction/retry/time and source-freshness rules stay in
+' SRS / Business Rules / ADD; this refactor removes no rule from those authoritative homes.
+' Draft/evidence/result persistence, physical references/transactions and cleanup realization remain
+' unresolved detailed design (ADD 9.2-9.9); no shared action/work entity or new decision is selected.
+' Next: Data View review -> ADRs.
 
-title CapsuleAI - Data View\n1 / 4 - Account, Context and Wardrobe\nVersion 0.1 | Baseline Draft | Logical information, not tables
+title CapsuleAI - Data Ownership Overview\nData View v0.1 | Baseline Draft
 allowmixing
 top to bottom direction
 hide empty members
@@ -80,296 +41,102 @@ hide circle
 skinparam backgroundColor #F8FAFC
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam defaultFontSize 14
+skinparam defaultFontSize 15
 skinparam ArrowFontSize 12
 skinparam defaultFontColor #0F172A
 skinparam ArrowColor #64748B
-skinparam nodesep 40
-skinparam ranksep 50
+skinparam nodesep 25
+skinparam ranksep 35
 skinparam classBorderColor #94A3B8
 skinparam packageBorderColor #94A3B8
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #CBD5E1
+skinparam noteFontSize 13
 skinparam legendBackgroundColor #FFFFFF
 skinparam legendBorderColor #CBD5E1
 skinparam legendFontSize 13
 
-package "Identity - sole mutation / lifecycle owner" as Identity #DBEAFE {
-    class "Account\nNormalized email identity\nProtected credential authority" as Account <<authoritative>> #EFF6FF
-    class "Session / Refresh Authority\nSeparate login contexts\nConsumption, revocation, lifetime" as Session <<authoritative>> #EFF6FF
-    class "Password Reset Authority\nAccount, expiry, replacement\nSingle successful use" as Reset <<authoritative>> #EFF6FF
-    class "Identity Action Outcomes\nOwned authority transitions\nDurable identity / accepted outcome" as IdentityAction <<durable>> #EFF6FF
-    Account "1" --> "0..*" Session : account association
-    Account --> Reset : recovery authority
-    IdentityAction --> Account : coherent owned changes
+package "Identity" as Identity #EFF6FF {
+    class "Account / Session / Reset" as Access #DCFCE7
 }
 
-package "Personal Context - sole mutation / lifecycle owner" as Context #CCFBF1 {
-    class "Personalization Profile\nStyles; common need priorities\nOptional body / gender" as Profile <<authoritative>> #F0FDFA
-    class "Selected Location\nManual or consented selection\nAbsent / limited is meaningful" as Location <<authoritative>> #F0FDFA
-    class "Current Request Context\nOccasion and available context\nDoes not overwrite common needs" as RequestContext <<request input>> #F0FDFA
-    class "Translated Environmental Evidence\nActual location / timestamp used\nCurrent, stale or unavailable" as Environment <<evidence>> #F0FDFA
-    class "Context Actions / Withdrawal Work\nAccepted changes; effective absence\nRequired work durable / resumable" as ContextWork <<durable>> #F0FDFA
-    Profile --> RequestContext : supplies declared meaning
-    Location --> Environment : acquired for selection
-    RequestContext --> Environment : applicable context
-    ContextWork --> Profile : accepted revision / withdrawal
+package "Personal Context" as Context #F0FDFA {
+    class "Profile / Selected Location\nNeeds / preferences" as Profile #DCFCE7
+    class "Current Context\nRequest / translated environment" as CurrentContext #DBEAFE
+    Profile --> CurrentContext : declared inputs
 }
 
-package "Wardrobe - sole mutation / lifecycle owner" as Wardrobe #DCFCE7 {
-    class "Garment\nStable identity; account ownership\nActive / removed membership" as Garment <<authoritative>> #F0FDF4
-    class "Confirmed Garment Profile\nClassification / appearance\nCompatibility; provenance / unknowns" as GarmentProfile <<authoritative>> #F0FDF4
-    class "Review Draft / AI Proposals\nUnconfirmed values / review state\nConfidence distinct from provenance" as Draft <<unconfirmed>> #F0FDF4
-    class "Evaluation-Specific Readiness\nSaveable is not Ready\nApplicable known / justified inputs" as Readiness <<derived>> #F0FDF4
-    class "Garment Media Association\nOptional original / preview reference\nAccepted association is durable" as MediaReference <<media reference>> #F0FDF4
-    class "Garment Actions / Lifecycle Work\nDurable acceptance / retry outcome\nRemoval and recoverable media work" as GarmentWork <<durable>> #F0FDF4
-    Garment --> GarmentProfile : confirmed description
-    Draft ..> GarmentProfile : explicit user review\nand confirmation only
-    Readiness --> GarmentProfile : evaluates applicable inputs
+package "Wardrobe" as Wardrobe #F0FDF4 {
+    class "Garment\nConfirmed profile" as Garment #DCFCE7
+    class "AI Proposal / Review Draft\nPython output; unconfirmed" as Draft #E2E8F0
+    class "Media Reference" as MediaReference #DCFCE7
+    Draft --> Garment : user confirmation / correction
     Garment --> MediaReference : optional media
-    Draft --> MediaReference : applicable review media
-    GarmentWork --> Garment : owned changes / lifecycle
 }
 
-package "Evidence and storage resources - not business owners" as Resources #F1F5F9 {
-    class "Python Analysis Output\nPreview + proposals / uncertainty\nNo confirmation authority" as AIOutput <<analysis evidence>> #E2E8F0
-    class "Weather Source Evidence\nSelected-location information\nProvider representation stays outside" as WeatherEvidence <<external evidence>> #E2E8F0
-    database "ONE PostgreSQL Primary Store\nOwner-controlled durable information\nPhysical layout unresolved" as DB #DCFCE7
-    storage "Private Object Storage\nOriginal images / processed previews\nApplicable copies / versions" as Media #FEF3C7
+package "Outfit Advice and Use" as Outfits #FFFBEB {
+    class "Outfit Evaluation Semantics\nOutfit identity / hard validity" as Evaluation #DBEAFE
+    class "Daily / Shuffle Advice\nUtilization / effective evidence" as Advice #FEF3C7
+    class "Feedback (Like / Dislike)" as Feedback #DCFCE7
+    class "Wear Event" as Wear #DCFCE7
+    class "Minimal History" as History #DBEAFE
+    Advice -up-> Evaluation
+    Feedback -up-> Evaluation : outfit target
+    Wear -up-> Evaluation : reported outfit
+    Wear -down-> History
+    Feedback -[hidden]right-> Wear
 }
 
-' Cross-owner associations are identity references, not foreign keys or unrestricted reads.
-Profile -[norank,dashed]-> Account : account identity reference
-Garment -[norank,dashed]-> Account : owning account reference
-AIOutput -[norank,dashed]-> Draft : proposal evidence only
-WeatherEvidence -[norank,dashed]-> Environment : translated evidence
-MediaReference -[norank]-> Media : private associated resource
-' Hidden links only arrange groups/resources; they do not add a data relationship.
-Account -[hidden]right-> Profile
-Profile -[hidden]right-> Garment
-GarmentProfile -[hidden]down-> AIOutput
-Environment -[hidden]down-> WeatherEvidence
-AIOutput -[hidden]right-> WeatherEvidence
-WeatherEvidence -[hidden]down-> DB
-DB -[hidden]right-> Media
+package "Wardrobe Intelligence" as Intelligence #F5F3FF {
+    class "Assessment Basis" as Basis #FEF3C7
+    class "Coverage / Gaps" as Coverage #FEF3C7
+    class "Candidate Garment / Preview\nHypothetical" as Hypothetical #EDE9FE
+    class "Multiplier Assessment" as Multiplier #FEF3C7
+    class "Shopping Recommendation" as Shopping #FEF3C7
+    Basis -down-> Coverage
+    Basis -down-> Multiplier : same basis
+    Coverage -down-> Hypothetical : candidate needs
+    Multiplier -down-> Hypothetical : candidate / new outfits
+    Multiplier -down-> Shopping : supported utility
+}
+
+package "Product Measurement" as Measurement #FDF2F8 {
+    class "Interaction Evidence" as Evidence #FCE7F3
+}
+
+class "External Evidence\nWeather / commercial" as ExternalEvidence #E2E8F0
+database "ONE PostgreSQL\nPrimary store" as DB #E2E8F0
+storage "Private Object Storage" as Media #E2E8F0
+
+' Arrows show conceptual meaning, not runtime calls, SQL joins or execution order.
+' Cross-owner arrows reference published identities/values/policy, not private entities or writes.
+Basis -[dashed]right-> Evaluation : shared policy only
+ExternalEvidence -[dashed]-> CurrentContext : translated weather
+ExternalEvidence -[dashed]-> Shopping : optional commerce
+Wear ..[#BE185D]> Evidence : independent measurement
+MediaReference --> Media : private media
+
+' Layout aids only; they introduce no information or ownership relationship.
+Access -[hidden]down-> Profile
+CurrentContext -[hidden]down-> Basis
+MediaReference -[hidden]down-> Evaluation
+History -[hidden]down-> DB
+Evidence -[hidden]down-> DB
+Media -[hidden]down-> DB
+
+note as Boundaries
+  All owners retain necessary state in ONE PostgreSQL.
+  Derived / input information does not imply permanent storage.
+  Hypothetical previews create no ownership, purchase or Wear.
+  History preserves past meaning, never current ownership.
+  Published Wardrobe / Context inform Advice and Intelligence.
+  Lifecycle / authority / retention: SRS, Business Rules and ADD.
+end note
+DB -[hidden]down-> Boundaries
 
 legend bottom
-  |= Notation / resource |= Meaning across all four panels |
-  | Owner package | One accountable mutation and lifecycle owner; no physical schema or table layout. |
-  | <<authoritative>> / <<durable>> | Accepted state and required owner work persist in ONE PostgreSQL. |
-  | <<historical>> | Necessary minimal functional history in PostgreSQL; never current ownership. |
-  | <<derived>> / <<request input>> | Evaluated meaning / active input; a permanent store is not mandated. |
-  | <<unconfirmed>> / <<evidence>> | Draft or interpreted source information; persistence remains open. |
-  | <<hypothetical>> | Candidate / preview; no ownership, Wear or verified purchase follows. |
-  | <<media reference>> / storage | Business association differs from private binary media. |
-  | <<measurement>> | Retained owner-held evidence uses PostgreSQL; its purpose and lifecycle differ from business truth. |
-  | Solid association | Named conceptual relationship; neither runtime call nor SQL join/cascade. |
-  | Dotted reference | Published identity/value meaning or labeled evidence; no shared mutable entity. |
-  Every personal concept is account-scoped: valid JWT + usable session/account + affected-information authorization.
-  Logout revokes the current session; rotated-refresh reuse revokes the affected session.
-  Completed password reset revokes all account refresh sessions; replacement invalidates earlier unused reset authority.
-  Profile removal means absent current input; all consuming advice must respect effective withdrawal.
-  Manual garment saving needs confirmed category/color, with no image or successful AI required.
-  Confidence never authorizes AI overwrite; readiness is a derived Wardrobe policy, not a second owned garment.
-  Object existence grants no access. Wardrobe governs authorized association, delivery and purge.
-  PostgreSQL / media are separate resources; association and cleanup require recoverable coordination.
-endlegend
-@enduml
-
-@startuml
-title CapsuleAI - Data View\n2 / 4 - Outfit Advice, Feedback and History\nVersion 0.1 | Baseline Draft | Current use differs from historical meaning
-top to bottom direction
-hide empty members
-hide circle
-skinparam backgroundColor #F8FAFC
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontSize 14
-skinparam ArrowFontSize 12
-skinparam defaultFontColor #0F172A
-skinparam ArrowColor #64748B
-skinparam nodesep 35
-skinparam ranksep 50
-skinparam classBorderColor #94A3B8
-skinparam packageBorderColor #94A3B8
-skinparam legendBackgroundColor #FFFFFF
-skinparam legendBorderColor #CBD5E1
-skinparam legendFontSize 13
-
-package "Outfit Advice and Use - sole mutation / semantic / lifecycle owner" as Outfits #FEF3C7 {
-    class "Outfit Representation\nExact garment-identity set\nCurrent owned or historical meaning" as Outfit <<value>> #FFFBEB
-    class "Outfit Evaluation Semantics\nShared identity and hard validity\nCaller-supplied published inputs" as Evaluation <<published policy>> #FDE68A
-    class "Daily / Shuffle Advice\nEvaluated basis, reasons, currentness\nValid choices before soft ranking" as Advice <<derived>> #FFFBEB
-    class "Outfit Feedback\nCurrent Like / Dislike; action time\nRevise / clear; no reported Wear" as Feedback <<authoritative>> #FFFBEB
-    class "Wear Event\nDistinct accepted report\nAbsolute + original local time / context" as Wear <<authoritative>> #FFFBEB
-    class "Minimal Outfit / Garment History\nNecessary understandable snapshot\nRemoved labeling; no active ownership" as History <<historical>> #FFFBEB
-    class "Utilization / Effective Evidence\nDistinct reported-event counts\nNormalized, aged ranking meaning" as UseEvidence <<derived>> #FFFBEB
-    class "Use Actions / Removal Work\nDurable logical identity / outcome\nCoherent effects; resumable purge" as UseWork <<durable>> #FFFBEB
-    Advice --> Outfit : proposes owned combination
-    Advice ..> Evaluation : validity before ranking
-    Feedback --> Outfit : exact preference target
-    Wear --> Outfit : reported combination
-    Wear --> History : necessary past meaning
-    UseEvidence --> Wear : surviving accepted reports
-    UseEvidence --> Feedback : current preference evidence
-    UseWork --> Wear : accept / correct / remove
-    UseWork -[norank]-> Feedback : accepted preference change
-}
-
-
-package "Published inputs - references to panel 1 owners; no replicas" as Inputs #F1F5F9 {
-    class "Wardrobe Published Meaning\nCurrent confirmed identities / values\nOwnership and readiness" as WardrobeInput <<published reference>> #DCFCE7
-    class "Personal Context Published Meaning\nCurrent profile / needs / selection\nActual / limited environment" as ContextInput <<published reference>> #CCFBF1
-}
-
-
-Advice ..> WardrobeInput : current eligible inputs
-Advice ..> ContextInput : declared / current context
-Wear -[norank,dashed]-> WardrobeInput : new acceptance needs\ncurrent ownership / readiness
-WardrobeInput -[hidden]right-> ContextInput
-
-legend bottom
-  |= Concern |= Interpretation |
-  | Shared outfit policy | Owned by Outfit Advice and Use; Wardrobe Intelligence consumes it, independent of Daily's displayed subset. |
-  | Published input references | Owner identities / permitted value meaning; no shared entity, FK or direct-read permission selected. |
-  | Outfit representation | Exact garment-identity-set value; no standalone Outfit table or universal shared model is mandated. |
-  | Wear vs preference | New intentions have distinct accepted events; retry of one action does not add another. |
-  | Historical representation | Necessary minimal past meaning survives garment removal; it never restores current eligibility. |
-  | Derived results | Request-time evaluation; no permanent advice or utilization-result store is mandated. |
-  Original event-local date groups history; absolute elapsed 24-hour periods govern evidence age.
-  One exact-outfit/original-day group contributes at most one Wear increment, anchored on its latest survivor.
-  Corrections preserve the original local day, reject future time, and recompute membership / anchors / effects.
-  Feedback state and necessary history survive ranking expiry; utilization counts differ from ranking normalization.
-  Current ownership / readiness and published validity govern new Wear acceptance through owner contracts.
-  Required source/action/lifecycle state remains durable; derived ownership alone does not mandate persistence.
-endlegend
-@enduml
-
-@startuml
-title CapsuleAI - Data View\n3 / 4 - Wardrobe Intelligence and Hypothetical Utility\nVersion 0.1 | Baseline Draft | Same-basis evaluation, no automatic ownership
-top to bottom direction
-hide empty members
-hide circle
-skinparam backgroundColor #F8FAFC
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontSize 14
-skinparam ArrowFontSize 12
-skinparam defaultFontColor #0F172A
-skinparam ArrowColor #64748B
-skinparam nodesep 35
-skinparam ranksep 50
-skinparam classBorderColor #94A3B8
-skinparam packageBorderColor #94A3B8
-skinparam legendBackgroundColor #FFFFFF
-skinparam legendBorderColor #CBD5E1
-skinparam legendFontSize 13
-
-package "Wardrobe Intelligence - sole assessment-meaning / lifecycle owner" as Intelligence #EDE9FE {
-    class "Assessment Basis\nCurrent wardrobe / context / rules\nCompletion, uniqueness, currentness" as Basis <<derived>> #F5F3FF
-    class "Coverage Assessment\nPositive-priority weighted needs\nValid counts; sufficient / incomplete" as Coverage <<derived>> #F5F3FF
-    class "Wardrobe Gap\nUnderserved capability / bottleneck\nEvidence, need and useful characteristics" as Gap <<derived>> #F5F3FF
-    class "Candidate Garment\nCredible identity / visual / attributes\nDistinct from an owned garment" as Candidate <<hypothetical>> #F5F3FF
-    class "Multiplier Assessment\nIncremental unique valid count\nExact / Evaluated Zero / Incomplete\nUnavailable / Outdated" as Multiplier <<derived>> #F5F3FF
-    class "Hypothetical Outfit Preview\nNewly enabled candidate-bearing set\nSame evaluated basis as the count" as Preview <<hypothetical>> #F5F3FF
-    class "Shopping Recommendation\nCandidate, gap, utility and reasons\nOptional chosen destination" as Shopping <<derived>> #F5F3FF
-    class "Qualified Commercial Evidence\nCredible optional values; source / time\nTranslated guidance, no guarantees" as Commercial <<evidence>> #F5F3FF
-    Coverage --> Basis : evaluated basis
-    Gap --> Coverage : supported need evidence
-    Candidate -[norank]-> Gap : may address capability
-    Multiplier --> Candidate : evaluates hypothetical addition
-    Multiplier -[norank]-> Basis : same complete basis
-    Preview --> Multiplier : supported newly enabled result
-    Shopping --> Candidate : explains candidate
-    Shopping --> Multiplier : supported utility
-    Shopping --> Commercial : optional enrichment
-}
-
-
-package "Published inputs - references to panel 1 owners; no replicas" as Inputs #F1F5F9 {
-    class "Wardrobe Published Meaning\nCurrent confirmed identities / values\nOwnership and readiness" as WIWardrobeInput <<published reference>> #DCFCE7
-    class "Personal Context Published Meaning\nCurrent profile / needs / selection\nActual / limited environment" as WIContextInput <<published reference>> #CCFBF1
-}
-
-
-class "Outfit Evaluation Published Policy\nIdentity and hard-validity meaning\nOwned by Outfit Advice and Use" as EvaluationInput <<published reference>> #FEF3C7
-class "Optional Commercial Source\nIdentifiable source / last-checked time" as CommercialSource <<external evidence>> #E2E8F0
-Basis ..> WIWardrobeInput : current owned baseline
-Basis ..> WIContextInput : needs / relevant context
-Basis ..> EvaluationInput : shared identity / validity
-CommercialSource -[norank,dashed]-> Commercial : qualified translation
-WIWardrobeInput -[hidden]right-> WIContextInput
-WIContextInput -[hidden]right-> EvaluationInput
-
-legend bottom
-  |= Concern |= Interpretation |
-  | Published policy | Reference to Outfit Advice and Use's owner-controlled meaning; caller supplies allowed inputs. |
-  | Multiplier basis | Current and expanded valid unique sets share context, rules and identity semantics. |
-  | Incremental utility | Count of unique valid outfits newly enabled by adding the hypothetical candidate. |
-  | Honest result states | +0 requires completed empty difference; partial/unavailable/outdated is never zero. |
-  | Derived assessments | Coverage, Gaps, Multiplier, previews and guidance are not mandated permanent result stores. |
-  Relevant authoritative inputs / candidate attributes / rules changing require reevaluation or Outdated.
-  Weather freshness and commercial source-age are separate policies; no arbitrary assessment TTL is introduced.
-  Coverage is contextual and needs sufficient inputs; a Gap is neither a product nor a compulsory purchase.
-  Candidates, previews and shopping navigation create no ownership, purchase or Wear.
-  Utility does not require commercial enrichment; absent optional values / destinations do not erase it.
-  Published inputs reference panel 1 owners; Evaluation references panel 2's owner, with no replicas or write access.
-endlegend
-@enduml
-
-@startuml
-title CapsuleAI - Data View\n4 / 4 - Measurement and Owner-Accountable Lifecycle\nVersion 0.1 | Baseline Draft | Purpose and retention remain distinct
-left to right direction
-hide empty members
-hide circle
-skinparam backgroundColor #F8FAFC
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontSize 14
-skinparam ArrowFontSize 12
-skinparam defaultFontColor #0F172A
-skinparam ArrowColor #64748B
-skinparam nodesep 40
-skinparam ranksep 60
-skinparam classBorderColor #94A3B8
-skinparam packageBorderColor #94A3B8
-skinparam legendBackgroundColor #FFFFFF
-skinparam legendBorderColor #CBD5E1
-skinparam legendFontSize 13
-
-class "Permitted Owner-Published Facts\nNamed interactions and actual outcomes\nNo mutable owner entity exposure" as Facts <<published meaning>> #F1F5F9
-package "Product Measurement - supporting evidence / lifecycle owner" as Measurement #FCE7F3 {
-    class "Purpose-Minimal Interaction Evidence\nExposures, actions and actual outcomes\nSeparate Wear / feedback / Shuffle / navigation" as Evidence <<measurement>> #FDF2F8
-    class "Measurement Retention Work\nUser-linked lifetime enforcement\nRequired work durable / resumable" as MeasurementWork <<durable>> #FDF2F8
-    class "Optional Unlinked Aggregates\nOlder retained summaries have\nno user-linked personal behavior" as Aggregates <<derived>> #FDF2F8
-    MeasurementWork --> Evidence : delete or remove user linkage
-    Aggregates --> Evidence : optional qualified aggregation
-}
-Facts ..[#BE185D]> Evidence : independent permitted facts\nno business-authority transfer
-
-legend bottom
-  |= Lifecycle / boundary |= Required data meaning |
-  | Account / session / reset | Identity owns persistent validity and distinct revocation/consumption effects; JWT alone is insufficient. |
-  | Optional profile withdrawal | Personal Context makes accepted removal absent immediately; consumers stop using it. |
-  | Garment removal | Wardrobe excludes current ownership / advice / Coverage / Multiplier immediately. |
-  | Removed garment data / media | Original images and nonessential personal data physically deleted within 30 days; necessary minimal history separate. |
-  | Individual Wear removal | Outfit Advice and Use excludes effective use immediately, recalculates survivors; applicable personal data deleted within 30 days. |
-  | History / feedback vs ranking | Necessary functional records may remain after 90-day ranking influence ends; expiry is not deletion. |
-  | User-linked measurement | At most 90 days, then delete or aggregate/de-identify so older evidence is no longer user-linked. |
-  | Weather evidence | Actual age <=30 minutes is current; refresh older evidence, bound external assessment delay to 2 seconds. |
-  | Commercial price / availability | Current informational guidance through 24 hours inclusive; older values refreshed, stale-qualified or omitted. |
-  | Measurement failure | Core acceptance remains intact; no fabricated successful recording, Wear, purchase or sales attribution. |
-  | Owner work / action outcomes | Each responsible owner retains its own durable tracking in ONE PostgreSQL; no shared universal work/action entity. |
-  | Cross-owner coherence | Public owner operations and permitted identity/value references; exact FK/joins/transactions remain detailed design. |
-  Physical deletion covers applicable copies / versions, including media; effective withdrawal cannot wait for purge.
-  Wear removal does not delete underlying Outfit / Garments or unrelated reports. No cascade strategy is selected.
-  Required purge cannot depend on optional facts, process memory or an in-memory timer surviving restart.
-  Local facts are not automatically asynchronous, durable or replayable; they introduce no broker or event schema.
-  Product Measurement never mutates functional truth; ordinary metrics need no raw images or sensitive profile detail.
-  Functional history, engagement, protected operating evidence and locked AI validation have separate purposes.
-  All data remains purpose-limited; MVP personal information is excluded from AI training / improvement.
-  No physical schema, DDL, ORM, cache, broker, DB-per-service, projection store or new business owner is selected.
-  Open: physical integrity, transaction / concurrency / basis checks, historical fields, action retention,
-  draft / evidence / justified result persistence, work / media purge and aggregation realization.
-  Consequential changes or access exceptions need later design / ADR / human review under existing selections.
-  Next: Data View review -> ADRs -> necessary detailed API / Data / Sequence / State Design.
+  |<#DCFCE7> Authoritative |<#FEF3C7> Derived / evaluated |<#EDE9FE> Hypothetical |
+  |<#DBEAFE> History / reference / input |<#E2E8F0> Unconfirmed / external evidence / resource |<#FCE7F3> Measurement |
+  Boxes represent logical information concepts, not database tables.
 endlegend
 @enduml
