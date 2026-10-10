@@ -5,12 +5,12 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Project-wide Definition of Done |
-| Version | 0.1.2 |
+| Version | 0.1.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Ownership | Scrum Team; Developers are accountable for adhering to the DoD |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 29, 33 and 38–43 |
-| Revision Note | v0.1: initial shared completion standard. v0.1.1: synchronized architecture change-propagation/navigation with ADA and explicit selection; completion criteria and acceptance thresholds are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges all 18 ADA recommendations Selected and ADD next; completion criteria remain unchanged. |
+| Revision Note | v0.1: initial shared completion standard. v0.1.1: synchronized architecture change-propagation/navigation with ADA and explicit selection; completion criteria and acceptance thresholds are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges all 18 ADA recommendations Selected and ADD next; completion criteria remain unchanged. v0.1.3 (2026-10-10): ADD v0.1 exists and Logical View is next; completion criteria remain unchanged. |
 
 ## 2. Purpose
 
@@ -96,6 +96,6 @@ Revise the version and rationale when the quality baseline genuinely changes, pr
 
 ## 11. Status
 
-**Version 0.1.2 — Baseline Draft.** Prepared for Scrum Team review; formal adoption and executed software verification are not claimed. This revision updates architecture-process references without changing the completion standard.
+**Version 0.1.3 — Baseline Draft.** Prepared for Scrum Team review; formal adoption and executed software verification are not claimed. This revision updates architecture-process references without changing the completion standard.
 
-**Original v0.1 handoff:** analysis of all 14 Quality Attributes (Workflow Section 46, Step 13). Current progression is maintained in [Delivery Decisions](delivery-decisions.md), DD-006: [Selected Architecture Decisions v0.1](../04-architecture/selected-architecture-decisions.md) records all 18 ADA recommendations Selected by the human on 2026-10-10; **ADD** is next, then the ordered views and ADRs. The historical DoD handoff does not restart completed analysis.
+**Original v0.1 handoff:** analysis of all 14 Quality Attributes (Workflow Section 46, Step 13). Current progression is maintained in [Delivery Decisions](delivery-decisions.md), DD-006: [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) retains all 18 human-selected recommendations; [ADD v0.1](../04-architecture/ADD.md) now exists and **Logical View** is next, then the ordered views and ADRs. The historical DoD handoff does not restart completed analysis.

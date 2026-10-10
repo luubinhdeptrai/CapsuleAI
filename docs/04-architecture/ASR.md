@@ -5,13 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Formal Architecturally Significant Requirements (ASR) |
-| Version | 0.1.2 |
+| Version | 0.1.3 |
 | Status | Baseline Draft |
 | Product / Horizon | CapsuleAI — complete approved MVP scope |
 | Ownership | Architect / Tech Lead; review with Developers, QA and Product/BA |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17–19, 39–43 and 46 |
 | Primary Analysis Input | [Quality Attribute Analysis](quality-attribute-analysis.md), v0.1 — Baseline Draft |
-| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges completed selection and ADD next; ASR/driver/constraint content remains unchanged. |
+| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges completed selection and ADD next; ASR/driver/constraint content remains unchanged. v0.1.3 (2026-10-10): ADD now exists and Logical View is next; historical requirement-source discussion is explicitly framed, without changing ASR/driver/constraint meaning. |
 
 ## 2. Purpose
 
@@ -430,6 +430,8 @@ An **ASR** is a selected requirement cluster with substantial architectural infl
 
 Session/lifecycle/evidence limits above are existing policies, not newly chosen tactics. Accepted event identity/time, contextual Coverage and complete same-basis Multiplier semantics are preserved through ASR-REL-001/CON-001 and their source rules.
 
+**Historical requirement-source boundary:** the following paragraph preserves the preselection analysis. Current solution choices are governed separately by [Selected Architecture Decisions](selected-architecture-decisions.md) and [ADD](ADD.md); they do not turn those technologies into new product requirements or ASRs.
+
 React Native, Java/Spring Boot, Python AI services, MongoDB/PostgreSQL, AWS/S3 and Redis are **not established current architectural constraints**. Historical or reference mentions do not mandate them. The Implementation Summary's older “option B” and projected stack remain historical under SRS Section 1.5 and the normalized PRD/QA source interpretation. JWT differs because the current PRD/SRS explicitly retain that direction. No current implementation or ADD/ADR establishes further style, database, cache, messaging, provider or deployment choices.
 
 ## 8. Cross-Cutting Architectural Concerns
@@ -540,8 +542,8 @@ Older documents' “next artifact” statements record their own handoff point. 
 
 ## 13. Status and Next Step
 
-**Version 0.1.2 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
+**Version 0.1.3 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
 
-The preparation sequence remains **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). [Selected Architecture Decisions v0.1](selected-architecture-decisions.md) now records the Project Owner / Backend Developer's 2026-10-10 acceptance of all 18 current [ADA](architecture-decision-analysis.md) recommendations exactly as analyzed. All are Selected, with no override or deferral; the selection gate is satisfied. The selected record supplies solution choices separately from these requirement pressures.
+The preparation sequence remains **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). [Selected Architecture Decisions](selected-architecture-decisions.md) records the Project Owner / Backend Developer's 2026-10-10 acceptance of all 18 current [ADA](architecture-decision-analysis.md) recommendations exactly as analyzed. All are Selected, with no override or deferral; the selection gate is satisfied. The selected record supplies solution choices separately from these requirement pressures.
 
-**Next: Selected Architecture Decisions → ADD**, followed by Logical, Implementation, Deployment and Data Views (Steps 17–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.2 changes current handoff/navigation only; all seven drivers, nine ASRs, constraints, traceability and acceptance measures remain unchanged. No downstream design is created.
+[ADD v0.1 — Baseline Draft](ADD.md) now realizes the selected directions against these pressures. **Next: ADD → Logical View**, then Implementation, Deployment and Data Views (Steps 18–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.3 changes current navigation and frames historical source analysis; all seven drivers, nine ASRs, constraints, traceability and acceptance measures remain unchanged. ADD exists separately; no view/ADR or further detailed design is created.

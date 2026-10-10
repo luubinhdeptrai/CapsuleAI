@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Quality Attribute Analysis |
-| Version | 0.1.2 |
+| Version | 0.1.3 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-10 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
@@ -19,6 +19,7 @@
 | 0.1 | 2026-10-08 | Initial analysis of all 14 workflow attributes, source-linked scenarios, constraints and preliminary ASR candidates; no change to upstream scope, requirements or delivery decisions. |
 | 0.1.1 | 2026-10-08 | Synchronized current architecture-process navigation with ADA and explicit human selection before ADD; all classifications, scenarios, thresholds and analysis remain unchanged. |
 | 0.1.2 | 2026-10-10 | Synchronized current navigation with completed human selection of all 18 ADA recommendations and ADD next; all classifications, scenarios, thresholds and analysis remain unchanged. |
+| 0.1.3 | 2026-10-10 | Current navigation acknowledges ADD v0.1 and Logical View next; classifications, source scenarios, thresholds and analysis remain unchanged. |
 
 ## 2. Purpose
 
@@ -531,8 +532,8 @@ Older artifacts' “next artifact” statements describe their own handoff point
 
 ## 25. Status
 
-**Version 0.1.2 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. No downstream design is created, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
+**Version 0.1.3 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. ADD now exists separately; no separate view/further detailed design is created, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
 
 **Original v0.1 handoff:** formal ASR identification and architectural-driver selection (Workflow Section 17 and Section 46, Step 14). The preliminary candidates and source/scenario evidence above preserve that analysis stage.
 
-**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions v0.1](selected-architecture-decisions.md) records all ADA-001–018 as Selected exactly as recommended by explicit human acceptance on 2026-10-10. The selection gate is complete; DD-006 now hands off to **ADD**, followed by Logical, Implementation, Deployment and Data Views, ADRs, detailed design and delivery preparation. This v0.1.2 navigation revision changes no QA classification, scenario body or acceptance measure.
+**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions](selected-architecture-decisions.md) records all ADA-001–018 as Selected exactly as recommended by explicit human acceptance on 2026-10-10. The selection gate remains complete; [ADD v0.1](ADD.md) now includes source scenarios and selected tactics. DD-006 hands off to **Logical View**, then Implementation, Deployment and Data Views, ADRs, detailed design and delivery preparation. This v0.1.3 navigation revision changes no QA classification, scenario body or acceptance measure.
