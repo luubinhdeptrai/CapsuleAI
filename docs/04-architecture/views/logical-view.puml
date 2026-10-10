@@ -3,7 +3,8 @@
 ' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
 ' Source: ADD v0.1 + Selected Architecture Decisions v0.1.1 (ADA-001-018 Selected)
 ' Source versions are authoring baselines; navigation-only patches leave their meaning unchanged.
-' Scope: logical/domain responsibilities only; proposed boundaries for human review.
+' Scope: logical/domain responsibilities only; decomposition accepted by the human, 2026-10-10.
+' Navigation update only: Implementation View v0.1 exists; logical owners/dependencies unchanged.
 ' Note: not deployment, source-code/package, physical-data or detailed-contract design.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 21/39-43/46.
 ' Requirements: BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2.
@@ -112,7 +113,7 @@ Advice ..> Measurement : <<local application event>>
 
 legend bottom
   |= Notation |= Logical meaning |
-  | Package <<logical context>> | Proposed accountable domain owner; internal models stay private. |
+  | Package <<logical context>> | Human-accepted accountable domain owner; internal models stay private. |
   | Component <<published contract>> | Owner-controlled semantic responsibility, not a code interface or separate context. |
   | Solid arrow | Consumer -> published owner/system; immediate query or coherent collaboration as labeled. |
   | Dotted event arrow | Independent local reaction; scheduling/delivery design remains downstream. |
@@ -134,8 +135,8 @@ legend bottom
   Measurement reacts independently; failure cannot block/undo core acceptance or fabricate evidence.
   Its lifecycle differs from functional history. A local event implies neither async nor durability.
   No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
-  Derived-result ownership does not select a permanent store; Clean realization follows in the next view.
-  Next: Logical View review -> Implementation View.
+  Derived-result ownership does not select a permanent store; Clean realization is in Implementation View.
+  Next: Implementation View review -> Deployment View.
 endlegend
 
 @enduml

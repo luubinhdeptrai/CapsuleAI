@@ -1,0 +1,294 @@
+@startuml
+' Artifact: CapsuleAI Implementation View
+' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
+' Source: ADD v0.1 (authoring input navigation v0.1.1); Selected Architecture Decisions v0.1.2,
+' ADA-001-018 Selected; approved Logical View v0.1, re-read immediately before drawing.
+' Later navigation-only patches leave these design/selection inputs unchanged.
+' Logical acceptance: explicit human statement in the Implementation View task, 2026-10-10.
+' Scope: source modules/components, Clean roles, dependency direction, ports/adapters/contracts.
+' Not in scope: deployment nodes, physical DB schema, endpoint details or full class design.
+' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md Sections 22/39-43/46.
+' Requirements: BRD v0.3, PRD v0.2, SRS v0.3, Business Rules v0.1.2; all 23 UCs/12 ADs.
+' Drivers: existing seven AD-01-07 and nine ASRs; ADD Sections 7-10/12-13; no new obligation.
+'
+' Logical -> proposed Java package relative to an unresolved application root:
+' Identity -> identity; UC-001-004, FR-AUTH, BRULE-AUTH, ADA-008/009.
+' Personal Context -> personalcontext; UC-005/006, FR-PROF/WEATHER, BRULE-PROF.
+' Wardrobe -> wardrobe; UC-007-010, FR-AI/GAR/WAR, BRULE-GAR, ADA-004/005/007.
+' Outfit Advice and Use -> outfitadviceanduse; UC-011-018, BRULE-OUT/PERS/WEAR/HIST.
+' Outfit Evaluation Semantics -> outfitadviceanduse.api policy contract + private domain realization.
+' Wardrobe Intelligence -> wardrobeintelligence; UC-019-023, BRULE-COV/GAP/MULT/SHOP.
+' Product Measurement -> productmeasurement; supporting only, FR-MET-001-007/DATA-RET-003.
+' Packages represent source boundaries, not separate build artifacts, JPMS modules or services.
+' The diagram proposes role-level names, not a finalized catalogue of Java interfaces/classes.
+'
+' Each module: api is its narrow framework-free public collaboration surface.
+' application coordinates use cases, implements API and depends on private domain + needed ports.
+' application.ports describes required persistence/integration/neighbor outcomes, not generic CRUD.
+' adapter.in translates mobile/local-event input; adapter.out implements needed ports.
+' Neighbor adapters import only supplier api, translate only genuine differences in meaning.
+' Each module's configuration wires its own private implementations; root bootstrap delegates
+' assembly to those configurations. Spring transaction/client/security integration stays outer,
+' with no domain policy or bootstrap imports of another owner's private implementation.
+' Grouped adapters represent several focused implementations, not one universal adapter class.
+' Public contract models are owner-controlled language; no private aggregate/entity exposure.
+'
+' Immediate coordination: current authority, garment exclusion/readiness, profile withdrawal,
+' new Wear ownership validation, survivor effects and same-basis assessments use public owners.
+' Application owns invariant participants and durable logical-action outcome; outer transaction
+' wiring may coordinate local ACID through public operations, never another owner's repository.
+' New Wear: Outfit Advice and Use coordinates Wardrobe current ownership/readiness participation.
+' Garment removal does not call back into Outfit Advice and Use; current owner queries exclude
+' removed inputs, and minimal historical snapshots preserve necessary past meaning independently.
+' Wardrobe detail composition belongs to inbound use-case coordination: public Wardrobe and
+' reported-use APIs, no Wardrobe domain/application dependency on Outfit private internals.
+' Identity owns persisted session/reset authority; usable JWT is necessary but insufficient.
+' Protected callers consume usable authority and owners enforce affected-information ownership.
+' Repeated security/measurement arrows omitted; omission grants no authorization bypass.
+'
+' Evaluation policy receives caller-supplied published inputs including Wardrobe readiness meaning.
+' It does not fetch a Daily ranked subset or current owner state; Intelligence owns full-set
+' orchestration and uses the same policy without duplicating identity/hard-validity rules.
+' Outfit identity uses garment-identity sets; owned/historical/hypothetical meaning stays distinct.
+' Same-basis current/expanded completeness governs Exact/Evaluated Zero and candidate previews;
+' Incomplete/Unavailable/Outdated remain honest outcomes. No assessment TTL or projection store.
+' Candidates, previews and chosen navigation create neither garment ownership nor Wear.
+'
+' Independent measurement: one representative local Domain/Application Event relationship.
+' This is a notification dependency, not a requirement to import private listener implementations.
+' The supporting public intake contract defines permitted outcome meaning; payload/dispatch open.
+' Failure cannot block/reverse accepted core action or claim successful evidence recording.
+' No automatic async/durability/replay claim; required physical lifecycle work is owner-accountable,
+' durable/resumable and reached through owner application/ports, not optional measurement.
+' Product Measurement persistence covers its limited-purpose evidence/lifecycle, not core history.
+' Intelligence persistence covers only justified owned source/action/work state; derived results
+' remain request-time and do not require a permanent result store or replicated owner data.
+'
+' Boundary enforcement: allow imports only to other modules' api; deny private domain/application/
+' ports/adapter/repository/entity imports. Inside modules, domain imports no Spring/persistence/
+' HTTP/JSON/provider models; application uses domain + its own ports/public contract language.
+' Wiring is outer and one-way. Reviews and later dependency checks enforce these rules;
+' Java public visibility/component scanning alone is not enforcement. Exact tooling unselected.
+' Audit: no business-context cycle; the use-case composition component is an inbound consumer,
+' not a reverse domain collaboration. Realization arrows implement ports, not runtime call order.
+' Extraction: each owner retains public API, policy and owned persistence/provider boundaries.
+' Remote authority/freshness calls, new-Wear owner participation and coherent assessed bases
+' would require explicit distributed consistency/failure redesign; no extraction driver found.
+' Pure published evaluation avoids Intelligence -> Daily -> owner call chains.
+'
+' Review uncertainty: exact package root/names/build split, persistence framework, Spring/JDK,
+' enforcement tooling, event dispatch/payload/phase, transaction/locking/action keys/retention,
+' provider clients/protocols/timeouts, work scheduling and Python internal source organization.
+' No JPA/Hibernate, external provider/version, build tool or deployment placement selected here.
+' Current-doc checks (Context7, 2026-10-10) explain capabilities, not project version selection:
+' https://docs.spring.io/spring-boot/reference/using/structuring-your-code.html
+' https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html
+' https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html
+' https://plantuml.com/component-diagram and https://plantuml.com/command-line
+' Default Spring listeners are synchronous; transaction phase alone does not provide durable replay.
+
+title CapsuleAI - Implementation View\nVersion 0.1 | Baseline Draft | Approved Logical View preserved
+top to bottom direction
+skinparam backgroundColor #F8FAFC
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam componentStyle uml2
+skinparam defaultFontSize 14
+skinparam ArrowFontSize 12
+skinparam defaultFontColor #0F172A
+skinparam ArrowColor #64748B
+skinparam nodesep 35
+skinparam ranksep 55
+skinparam package {
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam component {
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam rectangle {
+  BorderColor #94A3B8
+  FontColor #0F172A
+}
+skinparam legend {
+  BackgroundColor #FFFFFF
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+
+rectangle "Mobile Client" as Mobile <<external client>> #E2E8F0
+rectangle "Recovery Email Provider" as Email <<external system>> #E2E8F0
+rectangle "Weather Provider" as Weather <<external system>> #E2E8F0
+rectangle "Python AI Runtime\nPrivate preview + proposals" as AI <<external analysis>> #E2E8F0
+rectangle "Private Object Storage" as Media <<external resource>> #E2E8F0
+rectangle "Optional Commercial Provider /\nExternal Shopping Destination" as Shopping <<external system>> #E2E8F0
+rectangle "One PostgreSQL Primary Store\nLogical owner access only" as DB <<persistence resource>> #E2E8F0
+
+package "Spring Boot Business Core - ONE Modular Monolith application" as Core #FFFFFF {
+
+    component "Bootstrap / Configuration\nRoot + <module>.configuration\nSpring wiring, access, transactions\nProtected logs / metrics / health" as Wiring <<framework edge>> #F1F5F9
+
+    package "Identity : identity" as Identity #DBEAFE {
+        component "api\nIdentity Public Contract\nUsable account / session authority" as IdentityAPI <<public>> #BFDBFE
+        component "adapter.in\nAccess / Recovery API Adapter" as IdentityIn <<private adapter>> #F8FAFF
+        component "application\nAccount / Session / Reset use cases\nCoherent transitions + action outcomes" as IdentityApp <<private core>> #EFF6FF
+        component "domain\nCredentials / Session / Reset policy" as IdentityDomain <<private core>> #EFF6FF
+        component "application.ports\nOwned Authority Persistence\nRecovery Delivery" as IdentityPorts <<private ports>> #EFF6FF
+        component "adapter.out.persistence\nIdentity Persistence Adapter\nAccount / session / reset / actions" as IdentityStore <<private adapter>> #F8FAFF
+        component "adapter.out.integration\nRecovery Email Adapter" as IdentityExternal <<private adapter>> #F8FAFF
+    }
+
+    package "Personal Context : personalcontext" as Context #CCFBF1 {
+        component "api\nPersonal Context Public Contract\nDeclared / current / limited context" as ContextAPI <<public>> #99F6E4
+        component "adapter.in\nProfile / Location API Adapter" as ContextIn <<private adapter>> #FAFFFE
+        component "application\nProfile / Selected Context use cases\nEffective withdrawal; UC-006 acquisition" as ContextApp <<private core>> #F0FDFA
+        component "domain\nPreferences / Needs / Context policy" as ContextDomain <<private core>> #F0FDFA
+        component "application.ports\nOwned Context Persistence\nWeather Evidence" as ContextPorts <<private ports>> #F0FDFA
+        component "adapter.out.persistence\nPersonal Context Persistence Adapter" as ContextStore <<private adapter>> #FAFFFE
+        component "adapter.out.integration\nWeather Provider Adapter / ACL" as ContextExternal <<private adapter>> #FAFFFE
+    }
+
+    package "Wardrobe : wardrobe" as Wardrobe #DCFCE7 {
+        component "api\nWardrobe Public Contract\nConfirmed inputs / ownership / readiness" as WardrobeAPI <<public>> #BBF7D0
+        component "adapter.in\nGarment / Wardrobe API Adapter" as WardrobeIn <<private adapter>> #FAFFFA
+        component "application\nConfirm / Correct / Maintain use cases\nAccepted actions; media lifecycle work" as WardrobeApp <<private core>> #F0FDF4
+        component "domain\nGarment truth / Membership\nSaveable; evaluation readiness" as WardrobeDomain <<private core>> #F0FDF4
+        component "application.ports\nOwned Wardrobe Persistence\nGarment Analysis / Media Storage" as WardrobePorts <<private ports>> #F0FDF4
+        component "adapter.out.persistence\nWardrobe Persistence Adapter\nConfirmed state / actions / durable work" as WardrobeStore <<private adapter>> #FAFFFA
+        component "adapter.out.integration\nPython AI Adapter / ACL\nObject Storage Adapter" as WardrobeExternal <<private adapter>> #FAFFFA
+    }
+
+    package "Outfit Advice and Use : outfitadviceanduse" as Outfits #FEF3C7 {
+        component "api\nOutfit Advice / Use Public Contract\nAdvice, feedback, Wear, reported-use" as OutfitsAPI <<public>> #FDE68A
+        component "api\nOutfit Evaluation Semantics\nCaller-input identity / hard validity\nOwned / historical / hypothetical" as Evaluation <<public policy>> #FDE68A
+        component "adapter.in\nAdvice / Feedback / Wear API Adapter" as OutfitsIn <<private adapter>> #FFFEF8
+        component "application\nDaily / Shuffle / Use coordination\nWear actions + coherent survivor effects" as OutfitsApp <<private core>> #FFFBEB
+        component "domain\nOutfit evaluation / Ranking / Feedback\nWear / History / Effective evidence" as OutfitsDomain <<private core>> #FFFBEB
+        component "application.ports\nOwned Use Persistence\nCurrent Wardrobe / Personal Context" as OutfitsPorts <<private ports>> #FFFBEB
+        component "adapter.out.persistence\nOutfit Advice and Use Persistence Adapter\nFeedback / Wear / history / actions / work" as OutfitsStore <<private adapter>> #FFFEF8
+        component "adapter.out.local\nWardrobe / Personal Context Adapters" as OutfitsLocal <<private adapter>> #FFFEF8
+    }
+
+    package "Wardrobe Intelligence : wardrobeintelligence" as Intelligence #EDE9FE {
+        component "api\nWardrobe Intelligence Public Contract\nCoverage / Gaps / Utility / Shopping" as IntelligenceAPI <<public>> #DDD6FE
+        component "adapter.in\nIntelligence / Shopping API Adapter" as IntelligenceIn <<private adapter>> #FDFBFF
+        component "application\nAssess / Preview / Advise use cases\nCurrent complete same-basis evaluation" as IntelligenceApp <<private core>> #F5F3FF
+        component "domain\nCoverage / Gap / Multiplier policy\nHypothetical utility and result states" as IntelligenceDomain <<private core>> #F5F3FF
+        component "application.ports\nOwned Persistence; Wardrobe / Context\nEvaluation Policy / Commercial Evidence" as IntelligencePorts <<private ports>> #F5F3FF
+        component "adapter.out.persistence\nWardrobe Intelligence Persistence Adapter\nJustified owned state; no result-store mandate" as IntelligenceStore <<private adapter>> #FDFBFF
+        component "adapter.out.local / integration\nPublished Owner / Evaluation Adapters\nCommercial / Shopping Adapter / ACL" as IntelligenceExternal <<private adapter>> #FDFBFF
+    }
+
+    package "Product Measurement : productmeasurement" as Measurement <<supporting capability>> #FCE7F3 {
+        component "api\nMeasurement Public Intake Contract\nPermitted facts / actual outcomes" as MeasurementAPI <<public>> #FBCFE8
+        component "adapter.in\nIndependent Local Fact Listener" as MeasurementIn <<private adapter>> #FFFAFD
+        component "application / domain\nPurpose-minimal evidence + lifecycle\nIndependent of core acceptance" as MeasurementApp <<private core>> #FDF2F8
+        component "application.ports\nOwned Measurement Persistence" as MeasurementPorts <<private ports>> #FDF2F8
+        component "adapter.out.persistence\nProduct Measurement Persistence Adapter\nUser-linked evidence / retention work" as MeasurementStore <<private adapter>> #FFFAFD
+    }
+
+    component "adapter.in : Garment Detail Composition\nPublic garment + reported-use queries\nNo new context or domain owner" as Detail <<private adapter>> #F1F5F9
+}
+
+' Source dependencies: consumer -> contract/policy; realization: implementation -> abstraction.
+IdentityIn --> IdentityAPI
+IdentityApp .up.|> IdentityAPI
+IdentityApp --> IdentityDomain
+IdentityApp --> IdentityPorts
+IdentityStore .up.|> IdentityPorts
+IdentityExternal .up.|> IdentityPorts
+IdentityStore -[norank]-> DB : own authority
+IdentityExternal --> Email : delivery only
+
+ContextIn --> ContextAPI
+ContextApp .up.|> ContextAPI
+ContextApp --> ContextDomain
+ContextApp --> ContextPorts
+ContextStore .up.|> ContextPorts
+ContextExternal .up.|> ContextPorts
+ContextStore -[norank]-> DB : own context
+ContextExternal --> Weather : evidence / limits
+
+WardrobeIn --> WardrobeAPI
+WardrobeApp .up.|> WardrobeAPI
+WardrobeApp --> WardrobeDomain
+WardrobeApp --> WardrobePorts
+WardrobeStore .up.|> WardrobePorts
+WardrobeExternal .up.|> WardrobePorts
+WardrobeStore -[norank]-> DB : own state / work
+WardrobeExternal --> AI : bounded complete result
+WardrobeExternal --> Media : authorized media / purge
+
+OutfitsIn --> OutfitsAPI
+OutfitsApp .up.|> OutfitsAPI
+OutfitsApp --> OutfitsDomain
+OutfitsApp --> OutfitsPorts
+OutfitsApp --> Evaluation : shared policy
+OutfitsDomain .up.|> Evaluation
+OutfitsStore .up.|> OutfitsPorts
+OutfitsLocal .up.|> OutfitsPorts
+OutfitsStore -[norank]-> DB : own use / actions
+OutfitsLocal -[norank]-> WardrobeAPI : current inputs / Wear participation
+OutfitsLocal -[norank]-> ContextAPI : current context
+
+IntelligenceIn --> IntelligenceAPI
+IntelligenceApp .up.|> IntelligenceAPI
+IntelligenceApp --> IntelligenceDomain
+IntelligenceApp --> IntelligencePorts
+IntelligenceStore .up.|> IntelligencePorts
+IntelligenceExternal .up.|> IntelligencePorts
+IntelligenceStore -[norank]-> DB : own state only
+IntelligenceExternal -[norank]-> WardrobeAPI : baseline / readiness
+IntelligenceExternal -[norank]-> ContextAPI : needs / context
+IntelligenceExternal -[norank]-> Evaluation : caller-input policy
+IntelligenceExternal --> Shopping : optional evidence / chosen handoff
+
+MeasurementIn --> MeasurementAPI
+MeasurementApp .up.|> MeasurementAPI
+MeasurementApp --> MeasurementPorts
+MeasurementStore .up.|> MeasurementPorts
+MeasurementStore -[norank]-> DB : own minimal evidence
+OutfitsApp ..[#BE185D]> MeasurementAPI : <<local application event>>\nindependent reaction
+
+' Technical edge dependencies implement cross-cutting access and composition, not new owners.
+Wiring --> IdentityAPI : usable authority
+Mobile --> Core : inbound user intentions
+Detail -[norank]-> WardrobeAPI : garment query
+Detail -[norank]-> OutfitsAPI : reported-use query
+' Module configuration assembles its own adapters/ports/applications; root delegates assembly.
+' Repetitive construction arrows are omitted; bootstrap does not import private owner internals.
+' Local measurement dispatch -> private inbound listener is edge wiring, not a business dependency.
+' Hidden layout aids impose no imports/collaboration.
+OutfitsIn -[hidden]right-> IntelligenceIn
+IntelligenceIn -[hidden]right-> MeasurementIn
+OutfitsStore -[hidden]down-> WardrobeIn
+IntelligenceStore -[hidden]down-> ContextIn
+MeasurementStore -[hidden]down-> IdentityIn
+WardrobeIn -[hidden]right-> ContextIn
+ContextIn -[hidden]right-> IdentityIn
+WardrobeStore -[hidden]down-> DB
+
+
+legend bottom
+  |= Notation |= Source-architecture meaning |
+  | Soft module color | Approved logical owner -> proposed Java package; one core application. |
+  | Stronger tint; <<public>> / <<public policy>> | Owner-controlled, framework-free published contract language. |
+  | Pale tint; <<private core>> / <<private ports>> | Application -> domain / needed ports; private owner policy. |
+  | Near-white; <<private adapter>> | Inbound translation or outbound port implementation; framework/provider edge. |
+  | Solid arrow | Consumer depends on named public contract, own policy/port, or external resource. |
+  | Dotted triangle | Private implementation realizes contract/port; not runtime call direction. |
+  | Pink dotted event | Independent local notification; not automatically async, durable or an Integration Event. |
+  Consumers import supplier api only; module configuration wires its private implementations.
+  Grouped port/adapter roles do not mandate one interface/class or an interface for every class.
+  All protected owners use current Identity authority and enforce affected-information ownership.
+  Application coordinates public owners / durable action outcomes; local ACID is allowed.
+  Immediate withdrawal, Wear survivor effects and assessment basis remain coherent at acceptance.
+  External media/email effects and owner-required resumable lifecycle work are explicit.
+  Evaluation policy stays inside Outfit Advice and Use; caller inputs, no Daily subset dependency.
+  Measurement failure cannot block/reverse core acceptance or fabricate recorded evidence.
+  No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
+  Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
+  Next: Implementation View review -> Deployment View.
+endlegend
+@enduml

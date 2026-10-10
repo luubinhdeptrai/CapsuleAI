@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Quality Attribute Analysis |
-| Version | 0.1.4 |
+| Version | 0.1.5 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-10 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
@@ -21,6 +21,7 @@
 | 0.1.2 | 2026-10-10 | Synchronized current navigation with completed human selection of all 18 ADA recommendations and ADD next; all classifications, scenarios, thresholds and analysis remain unchanged. |
 | 0.1.3 | 2026-10-10 | Current navigation acknowledges ADD v0.1 and Logical View next; classifications, source scenarios, thresholds and analysis remain unchanged. |
 | 0.1.4 | 2026-10-10 | Linked Logical View v0.1 and advanced current navigation to Implementation View; classifications, scenarios, measures and historical revision entries remain unchanged. |
+| 0.1.5 | 2026-10-10 | Linked Implementation View v0.1 and recorded explicit human acceptance of the Logical decomposition; review precedes Deployment View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 
 ## 2. Purpose
 
@@ -533,8 +534,8 @@ Older artifacts' “next artifact” statements describe their own handoff point
 
 ## 25. Status
 
-**Version 0.1.4 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. ADD and Logical View now exist separately; further views/detailed design remain downstream, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
+**Version 0.1.5 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. ADD, the accepted Logical View and proposed Implementation View exist separately; Deployment/Data Views and detailed design remain downstream, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
 
 **Original v0.1 handoff:** formal ASR identification and architectural-driver selection (Workflow Section 17 and Section 46, Step 14). The preliminary candidates and source/scenario evidence above preserve that analysis stage.
 
-**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions](selected-architecture-decisions.md) records all ADA-001–018 as Selected exactly as recommended by explicit human acceptance on 2026-10-10. The selection gate remains complete; [ADD v0.1](ADD.md) now includes source scenarios and selected tactics. [Logical View v0.1](views/logical-view.puml) now proposes domain ownership for review. DD-006 hands off to **Implementation View**, then Deployment and Data Views, ADRs, detailed design and delivery preparation. This v0.1.4 navigation revision changes no QA classification, scenario body or acceptance measure.
+**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions](selected-architecture-decisions.md) records all ADA-001–018 as Selected by explicit human acceptance on 2026-10-10; the gate remains complete. [ADD](ADD.md) includes source scenarios and selected tactics. **Implementation View review → Deployment View** is the current handoff. [Logical View v0.1](views/logical-view.puml) is the human-accepted canonical decomposition; [Implementation View v0.1 — Baseline Draft](views/implementation-view.puml) proposes its source realization for review. Then follow Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation. This v0.1.5 navigation revision changes no QA classification, scenario body or acceptance measure.
