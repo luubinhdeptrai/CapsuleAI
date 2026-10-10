@@ -5,13 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Formal Architecturally Significant Requirements (ASR) |
-| Version | 0.1.3 |
+| Version | 0.1.4 |
 | Status | Baseline Draft |
 | Product / Horizon | CapsuleAI — complete approved MVP scope |
 | Ownership | Architect / Tech Lead; review with Developers, QA and Product/BA |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17–19, 39–43 and 46 |
 | Primary Analysis Input | [Quality Attribute Analysis](quality-attribute-analysis.md), v0.1 — Baseline Draft |
-| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges completed selection and ADD next; ASR/driver/constraint content remains unchanged. v0.1.3 (2026-10-10): ADD now exists and Logical View is next; historical requirement-source discussion is explicitly framed, without changing ASR/driver/constraint meaning. |
+| Revision Note | v0.1: initial selective ASR baseline. v0.1.1: current handoff/navigation now includes decision analysis and human selection before ADD; seven drivers, nine ASRs, sources, constraints and acceptance measures are unchanged. v0.1.2 (2026-10-10): current navigation acknowledges completed selection and ADD next; ASR/driver/constraint content remains unchanged. v0.1.3 (2026-10-10): ADD now exists and Logical View is next; historical requirement-source discussion is explicitly framed, without changing ASR/driver/constraint meaning. v0.1.4 (2026-10-10): linked Logical View v0.1 and advanced current navigation to Implementation View; requirement content remains unchanged. |
 
 ## 2. Purpose
 
@@ -542,8 +542,8 @@ Older documents' “next artifact” statements record their own handoff point. 
 
 ## 13. Status and Next Step
 
-**Version 0.1.3 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
+**Version 0.1.4 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product/BA. This artifact selects seven drivers and nine traceable ASRs across the full MVP; it claims no approval, implemented satisfaction or executed benchmark. Upstream requirements, rules, Scrum artifacts and QA scenarios retain their authority.
 
 The preparation sequence remains **Architecture Decision Analysis → Selected Architecture Decisions → ADD** (Workflow Sections 17.2–17.3 and 46, Steps 15–17). [Selected Architecture Decisions](selected-architecture-decisions.md) records the Project Owner / Backend Developer's 2026-10-10 acceptance of all 18 current [ADA](architecture-decision-analysis.md) recommendations exactly as analyzed. All are Selected, with no override or deferral; the selection gate is satisfied. The selected record supplies solution choices separately from these requirement pressures.
 
-[ADD v0.1 — Baseline Draft](ADD.md) now realizes the selected directions against these pressures. **Next: ADD → Logical View**, then Implementation, Deployment and Data Views (Steps 18–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.3 changes current navigation and frames historical source analysis; all seven drivers, nine ASRs, constraints, traceability and acceptance measures remain unchanged. ADD exists separately; no view/ADR or further detailed design is created.
+[ADD](ADD.md) realizes the selected directions against these pressures; [Logical View v0.1 — Baseline Draft](views/logical-view.puml) now proposes domain ownership for review. **Next: Logical View → Implementation View**, then Deployment and Data Views (Steps 19–21). ADRs follow at Step 22; detailed API/Data/Sequence/State Design, Test Strategy, Engineering Baseline, Sprint Readiness, Sprint Planning and implementation retain the subsequent order in DD-006. Version 0.1.4 changes current navigation only; all seven drivers, nine ASRs, constraints, traceability and acceptance measures remain unchanged. Further views, ADRs and detailed design remain downstream.

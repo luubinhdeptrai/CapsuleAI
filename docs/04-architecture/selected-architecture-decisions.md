@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Selected Architecture Decisions |
-| Version | 0.1.1 |
+| Version | 0.1.2 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected |
 | Selection Date | 2026-10-10 |
@@ -19,6 +19,7 @@
 | --- | --- | --- |
 | 0.1 | 2026-10-10 | Recorded explicit human acceptance of all 18 current ADA recommendations exactly as analyzed; no override, deferral, supersession or scope change. |
 | 0.1.1 | 2026-10-10 | Navigation/status synchronization after ADD v0.1 creation; Logical View is next. All selected options, bases, impacts and selection date/human remain unchanged. |
+| 0.1.2 | 2026-10-10 | Linked Logical View v0.1 and advanced current navigation to Implementation View; all selections and historical revision entries remain unchanged. |
 
 ## 2. Purpose and Selection Authority
 
@@ -267,12 +268,12 @@ Workflow Section 46 ordering remains: **ADD → Logical View → Implementation 
 - **Selected direction:** Use the combined directions above as ADD inputs. Selection is complete; confidence/evidence gaps still require design and verification rather than another pending selection gate.
 - **Preserve during realization:** Owner authority, private-data lifecycle, coherent accepted effects and retries, validity before ranking, consistent outfit identity, exact same-basis intelligence, truthful missing/outdated states, purpose-minimal integration and inspectable evidence. Public contracts and inward dependencies must preserve these obligations.
 - **Still intentionally unspecified:** Final context/module map, packages/classes/interfaces, schemas/tables/FKs/ORM/indexes, transaction/concurrency mechanisms, API/event payloads, protocols/numeric timeouts, runtime/model versions, providers, resource placement and tooling. Downstream realization detail is not a Deferred ADA decision.
-- **Next step:** [ADD v0.1](ADD.md) now realizes these selected inputs; create the **Logical View** next, then follow Section 5's ordered views/design workflow. [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006, continue to govern product ordering/refinement and later Sprint commitment.
+- **Next step:** [ADD](ADD.md) realizes these selected inputs and [Logical View v0.1](views/logical-view.puml) now proposes the domain decomposition for review; **Implementation View** is next, then follow Section 5's ordered views/design workflow. [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006, continue to govern product ordering/refinement and later Sprint commitment.
 
 Known non-blocking source issues remain recorded in ADA Section 3.4: the incomplete FR-MET-004 benchmark cross-reference and absent focused UC diagram files. Existing explicit SRS benchmark authorities and the master diagram/textual specifications/activities remain usable; this selection neither repairs those sources nor infers missing content.
 
 ## 7. Status and Next Step
 
-**Version 0.1.1 — Baseline Draft; ADA-001–018 Selected.** No override, deferred decision or superseded decision is recorded. No business/product/requirement, ASR obligation, QA measure, backlog/story or Sprint commitment changes.
+**Version 0.1.2 — Baseline Draft; ADA-001–018 Selected.** No override, deferred decision or superseded decision is recorded. No business/product/requirement, ASR obligation, QA measure, backlog/story or Sprint commitment changes.
 
-**ADD → Logical View.** [ADD v0.1 — Baseline Draft](ADD.md) now exists. This revision synchronizes current navigation only and leaves all 18 selections unchanged; no separate architecture view, ADR, detailed design, Test Strategy, engineering baseline, Sprint artifact or implementation is created.
+**Logical View → Implementation View.** [ADD](ADD.md) and the separately created [Logical View v0.1 — Baseline Draft](views/logical-view.puml) exist. This revision synchronizes current navigation only and leaves all 18 selections unchanged. Further views, ADRs, detailed design, Test Strategy, engineering baseline, Sprint artifacts and implementation remain downstream.

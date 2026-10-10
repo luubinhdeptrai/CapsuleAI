@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Decision Analysis |
-| Version | 0.2.2 |
+| Version | 0.2.3 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
 | Last Updated | 2026-10-10 |
@@ -20,6 +20,7 @@
 | 0.2 | 2026-10-10 | Added ADA-015–018 for internal module architecture, context data ownership, inter-context communication and model isolation/ACL; reconciled existing recommendations, dependencies, deferrals and human-review gates around service-extractable modularity. Corrected the Business Analysis source location. No product, QA or ASR change; all 18 recommendations remain proposed. |
 | 0.2.1 | 2026-10-10 | Synchronized current decision statuses and handoff with explicit human acceptance of all 18 v0.2 recommendations in Selected Architecture Decisions v0.1. Analytical options, trade-offs, confidence, importance and historical revision entries remain unchanged. |
 | 0.2.2 | 2026-10-10 | Current navigation acknowledges ADD v0.1 and advances to Logical View; analyses, selected statuses, importance/confidence and historical revision entries remain unchanged. |
+| 0.2.3 | 2026-10-10 | Linked Logical View v0.1 and advanced current navigation to Implementation View; analytical content, selected statuses and historical revision entries remain unchanged. |
 
 ## 2. Purpose
 
@@ -1552,7 +1553,7 @@ This map tests boundary quality; it is not a module decomposition, migration com
 
 ## 8. Human Selection and Historical Review Guidance
 
-**Current state — 2026-10-10:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD v0.1](ADD.md) now realizes them and the Logical View is next. All eight Critical choices and ten Important choices are selected. Evidence gaps below remain realization/verification work, not pending selections.
+**Current state — 2026-10-10:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD](ADD.md) realizes them and [Logical View v0.1](views/logical-view.puml) now proposes domain ownership for review; Implementation View is next. All eight Critical choices and ten Important choices are selected. Evidence gaps below remain realization/verification work, not pending selections.
 
 ### Historical v0.2 Review Guidance
 
@@ -1626,8 +1627,8 @@ Reliability/Security remain Critical; Conceptual Integrity/Interoperability/Test
 
 ## 11. Status and Next Step
 
-**Version 0.2.2 — Baseline Draft. ADA-001–018 Selected.** Explicit human acceptance by the Project Owner / Backend Developer on 2026-10-10 is recorded in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges [ADD v0.1](ADD.md); this changes the handoff, not the analytical recommendations, trade-offs, importance, confidence or evidence gaps. Formal artifact approval, implementation and passed benchmarks are not claimed.
+**Version 0.2.3 — Baseline Draft. ADA-001–018 Selected.** Explicit human acceptance by the Project Owner / Backend Developer on 2026-10-10 is recorded in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges [ADD](ADD.md) and [Logical View v0.1](views/logical-view.puml); this changes the handoff, not the analytical recommendations, trade-offs, importance, confidence or evidence gaps. Formal artifact approval, implementation and passed benchmarks are not claimed.
 
-Next: **ADD → Logical View**. ADD v0.1 now exists, and all Critical/Important recommendations remain Selected without override or deferral. Follow Workflow Section 46: Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
+Next: **Logical View → Implementation View**. Logical View v0.1 now exists as a decomposition proposal for review, and all Critical/Important recommendations remain Selected without override or deferral. Follow Workflow Section 46: Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-This revision synchronizes current navigation only; ADD exists separately. Historical revision entries and preselection review guidance remain visible, and all ADA analytical content/statuses are unchanged. No product requirement, QA scenario or ASR obligation changes; no separate view, ADR, detailed design, Test Strategy, Sprint artifact or implementation is created.
+This revision synchronizes current navigation only; ADD and Logical View exist separately. Historical revision entries and preselection review guidance remain visible, and all ADA analytical content/statuses are unchanged. No product requirement, QA scenario or ASR obligation changes; further views, ADRs, detailed design, Test Strategy, Sprint artifacts and implementation remain downstream.

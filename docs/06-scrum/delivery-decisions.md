@@ -5,13 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Delivery Decision Log |
-| Version | 0.1.4 |
+| Version | 0.1.5 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Primary Audience | Backend Developer / Development Team |
 | Ownership | Product Owner / BA, with team input within workflow responsibilities |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
-| Revision Note | v0.1.4 synchronizes DD-006/current handoff after ADD v0.1 creation; Logical View is next. All 18 ADA selections, DD-001–005, stable IDs, product order, story boundaries and Sprint commitment rules remain unchanged. |
+| Revision Note | v0.1.5 links Logical View v0.1 and advances DD-006/current navigation to Implementation View. All 18 ADA selections, DD-001–005, stable IDs, product order, story boundaries and Sprint commitment rules remain unchanged. |
 
 | Version | Date | Revision |
 | --- | --- | --- |
@@ -20,6 +20,7 @@
 | 0.1.2 | 2026-10-10 | Updated the current handoff to ADA v0.2 / 18 proposed analyses; no delivery decision, story/PBI boundary, order or Sprint commitment change. |
 | 0.1.3 | 2026-10-10 | Recorded the completed human-selection gate in DD-006/current navigation; Selected Architecture Decisions v0.1 records all 18 choices, ADD is next. No product/refinement/Sprint commitment change. |
 | 0.1.4 | 2026-10-10 | Acknowledged ADD v0.1 and advanced DD-006/current navigation to Logical View; no selection, delivery-order, refinement or Sprint commitment change. |
+| 0.1.5 | 2026-10-10 | Linked Logical View v0.1 and advanced DD-006/current navigation to Implementation View; no selection, delivery-order, refinement or Sprint commitment change. |
 
 ## 2. Purpose
 
@@ -108,15 +109,15 @@ Keep DD IDs stable. When guidance changes, update its authoritative source first
 
 **Decision:** Preserve Workflow Section 46's preparation sequence: Quality Attribute Analysis → ASR/architectural drivers → Architecture Decision Analysis → **explicit human Selected Architecture Decisions** → ADD → Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-QA, ASR and ADA drafts exist, and [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) records the Project Owner / Backend Developer's explicit acceptance of all ADA-001–018 recommendations on 2026-10-10. All choices are **Selected**, without override or deferral; the human-selection gate is satisfied. [ADD v0.1 — Baseline Draft](../04-architecture/ADD.md) now realizes those choices. The current next action is **Logical View**, followed by Implementation, Deployment and Data Views and ADRs. Decision selection does not claim formal artifact approval, implemented conformance or passed benchmarks.
+QA, ASR and ADA drafts exist, and [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) records the Project Owner / Backend Developer's explicit acceptance of all ADA-001–018 recommendations on 2026-10-10. All choices are **Selected**, without override or deferral; the human-selection gate is satisfied. [ADD v0.1 — Baseline Draft](../04-architecture/ADD.md) now realizes those choices. [Logical View v0.1 — Baseline Draft](../04-architecture/views/logical-view.puml) now proposes domain ownership for review. The current next action is **Implementation View**, followed by Deployment and Data Views and ADRs. Decision selection does not claim formal artifact approval, implemented conformance or passed benchmarks.
 
-**History / Extension:** DD-006 v0.1 handed the initial stories/DoD to analysis of all 14 QAs. Version 0.1.1 naturally extends the same preparation/handoff decision with the new workflow stages and current progress. DD-006 remains Active; no prior DD entry is deleted or superseded. On 2026-10-10, v0.1.3 records the completed selection gate and advances the current handoff to ADD; the preparation sequence remains unchanged. Version 0.1.4 acknowledges ADD v0.1 creation and advances to Logical View on 2026-10-10, without changing that sequence.
+**History / Extension:** DD-006 v0.1 handed the initial stories/DoD to analysis of all 14 QAs. Version 0.1.1 naturally extends the same preparation/handoff decision with the new workflow stages and current progress. DD-006 remains Active; no prior DD entry is deleted or superseded. On 2026-10-10, v0.1.3 records the completed selection gate and advances the current handoff to ADD; the preparation sequence remains unchanged. Version 0.1.4 acknowledges ADD v0.1 creation and advances to Logical View on 2026-10-10, without changing that sequence. Version 0.1.5 acknowledges Logical View v0.1 and advances to Implementation View on 2026-10-10, preserving the same sequence.
 
 **Reason:** Requirements cover the whole MVP; stories/DoD supply near-term behavior and completion expectations. QA/ASR define the architectural needs, ADA explains alternatives, and the human gate prevents an AI recommendation from silently determining design. The full 41-PBI horizon remains relevant; none of these preparation artifacts commits Sprint work.
 
 **Authoritative Basis:** [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–28 (especially 17.2–17.3), 30, 38 and 46, Steps 11–28; [ASR](../04-architecture/ASR.md), Section 13; [Architecture Decision Analysis](../04-architecture/architecture-decision-analysis.md), Sections 4/8/11; [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md), Sections 2–6; [ADD](../04-architecture/ADD.md), Sections 12–14; [SRS](../03-requirements/SRS.md), Sections 6 and 12; [Definition of Done](definition-of-done.md), Sections 5 and 11; [Product Backlog](product-backlog.md), Section 11.
 
-**Backend Developer Impact:** Read the selected record and ADD's tactics/risks/traceability before the Logical View; preserve all chosen directions and authoritative behavior. Contribute ownership, collaboration, runtime/model/data feasibility and operating evidence through the ordered views under Architect/Tech Lead responsibility, keeping product decisions with PO/BA/team. Detailed contracts/design and engineering follow in order. This log selects no additional provider, API or schema.
+**Backend Developer Impact:** Read the selected record and ADD's tactics/risks/traceability and review [Logical View v0.1](../04-architecture/views/logical-view.puml) before Implementation View; preserve all chosen directions and authoritative behavior. Contribute ownership, collaboration, runtime/model/data feasibility and operating evidence through the ordered views under Architect/Tech Lead responsibility, keeping product decisions with PO/BA/team. Detailed contracts/design and engineering follow in order. This log selects no additional provider, API or schema.
 
 ## 5. Superseded Decisions
 
@@ -124,10 +125,10 @@ None currently.
 
 ## 6. Backend Developer Handoff Summary
 
-**Current stage:** Product Goal, the globally ordered 41-PBI backlog, eight stories from four PBIs and the project-wide DoD exist as drafts for review. QA/ASR and ADA cover the full MVP; [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) records all ADA-001–018 as Selected exactly as recommended. [ADD v0.1](../04-architecture/ADD.md) is now created; both remain Baseline Draft. No separate views/ADRs, Sprint Goal, Sprint Backlog or implementation commitment is recorded.
+**Current stage:** Product Goal, the globally ordered 41-PBI backlog, eight stories from four PBIs and the project-wide DoD exist as drafts for review. QA/ASR and ADA cover the full MVP; [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) records all ADA-001–018 as Selected exactly as recommended. [ADD](../04-architecture/ADD.md) and [Logical View v0.1](../04-architecture/views/logical-view.puml) now exist as Baseline Drafts. Further views/ADRs, Sprint Goal, Sprint Backlog and implementation commitment remain downstream.
 
-**Next focus:** [ADD](../04-architecture/ADD.md) → **Logical View**, then Implementation, Deployment and Data Views and ADRs. Current draft review/evidence needs remain; earlier handoffs do not restart completed preparation. Product order stays in the backlog and exact behavior in requirements/AC. Detailed design, Test Strategy, engineering/readiness and Sprint Planning follow DD-006/DD-005.
+**Next focus:** review [Logical View v0.1](../04-architecture/views/logical-view.puml) → **Implementation View**, then Deployment and Data Views and ADRs. Current draft review/evidence needs remain; earlier handoffs do not restart completed preparation. Product order stays in the backlog and exact behavior in requirements/AC. Detailed design, Test Strategy, engineering/readiness and Sprint Planning follow DD-006/DD-005.
 
 ## 7. Status
 
-**Version 0.1.4 — Baseline Draft.** Six Active entries, with no Superseded entries. DD-006/current navigation now reflects ADD v0.1 and Logical View next; all 18 ADA selections and DD-001–005 remain unchanged. Active means applicable process guidance, not formal artifact approval. The separate selection record governs architecture choices. No product/requirement content, existing story, PBI order, estimate or Sprint assignment is changed.
+**Version 0.1.5 — Baseline Draft.** Six Active entries, with no Superseded entries. DD-006/current navigation now reflects Logical View v0.1 and Implementation View next; all 18 ADA selections and DD-001–005 remain unchanged. Active means applicable process guidance, not formal artifact approval. The separate selection record governs architecture choices. No product/requirement content, existing story, PBI order, estimate or Sprint assignment is changed.

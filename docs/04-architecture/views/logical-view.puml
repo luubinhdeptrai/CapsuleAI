@@ -1,0 +1,141 @@
+@startuml
+' Artifact: CapsuleAI Logical View
+' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
+' Source: ADD v0.1 + Selected Architecture Decisions v0.1.1 (ADA-001-018 Selected)
+' Source versions are authoring baselines; navigation-only patches leave their meaning unchanged.
+' Scope: logical/domain responsibilities only; proposed boundaries for human review.
+' Note: not deployment, source-code/package, physical-data or detailed-contract design.
+' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 21/39-43/46.
+' Requirements: BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2.
+' Architecture: ADD Sections 3/5-10/12-13; ASR-SEC-001/002, REL-001/002,
+' CON-001, PERF-001, INT-001, USE-001, TEST-001; existing QA scenarios unchanged.
+' Whole repository re-read; per-boundary SRS/rules and all 23 UCs re-read before allocation.
+'
+' Domain reasoning: capabilities -> invariants -> language -> owners -> boundaries -> contracts.
+' Identity: CAP-01; UC-001-004/AD-004; FR-AUTH; BRULE-AUTH; DATA-AUTH-001/002/005.
+' Separate access/recovery from optional advice context; profile completeness never gates access.
+' Personal Context: CAP-01; UC-005/006/AD-006; FR-PROF/WEATHER; BRULE-PROF.
+' Keep selected environmental acquisition with personal context; no Weather bounded context.
+' Wardrobe: CAP-02-04; UC-007-010/AD-007; FR-AI/GAR/WAR; BRULE-GAR; DATA-GAR.
+' AI assistance and media lifecycle stay inside the confirmed-garment owner's responsibility.
+' Outfit Advice and Use: CAP-05/06 + reported-use CAP-07; UC-011-018;
+' AD-011/012/014/016/017; BRULE-OUT/PERS/WEAR/HIST; DATA-OUT/WEAR/HIST.
+' Combine styling and behavior to keep exact targets, survivor effects and ranking coherent,
+' avoiding mutual context calls; semantic evaluation is published separately within this owner.
+' Wardrobe Intelligence: Coverage CAP-07 + CAP-08-10; UC-019-023;
+' AD-019/020/021/022; BRULE-COV/GAP/MULT/SHOP; DATA-ANL-001-004.
+' Keep capability gaps and complete candidate utility together; no separate Catalog/Commerce BC.
+' Product Measurement: supporting responsibility, FR-MET-001-007/DATA-RET-003; no actor goal.
+' Extraction review: Identity adds current-authority remote coupling; Context adds freshness/
+' withdrawal coupling; Wardrobe adds confirmation/removal/media coherence; Outfit adds current
+' wardrobe/context acceptance and basis coupling; Intelligence adds same-basis contract coupling.
+' These are local collaborators today, not service assignments; no independent extraction driver.
+' Review uncertainty: combined Outfit Advice and Use may merit later separation only with real
+' change/ownership evidence; preserve one identity/validity owner and immediate survivor effects.
+
+title CapsuleAI - Logical View\nVersion 0.1 | Baseline Draft
+left to right direction
+skinparam monochrome false
+skinparam shadowing false
+skinparam backgroundColor #F8FAFC
+skinparam ArrowColor #64748B
+skinparam defaultFontColor #0F172A
+skinparam rectangle {
+  BackgroundColor #F1F5F9
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam package {
+  BorderColor #475569
+  FontColor #0F172A
+}
+skinparam component {
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam legend {
+  BackgroundColor #FFFFFF
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+skinparam packageStyle rectangle
+skinparam componentStyle uml2
+skinparam defaultFontSize 14
+skinparam ArrowFontSize 12
+skinparam nodesep 60
+skinparam ranksep 90
+
+rectangle "Mobile Client\nPrivate user intentions and results" as Mobile <<external client>> #DBEAFE
+rectangle "Recovery Email Provider" as Email <<external system>> #FEE2E2
+rectangle "Weather Provider" as Weather <<external system>> #CFFAFE
+rectangle "Python AI Runtime\nPrivate proposal/preview execution" as AI <<analysis system>> #E0E7FF
+rectangle "Private Object Storage\nMedia resource" as Media <<external resource>> #E2E8F0
+rectangle "Optional Commercial Provider /\nExternal Shopping Destination" as Shopping <<external system>> #FFEDD5
+
+rectangle "CapsuleAI Business Core - Modular Monolith" as Core #FFFFFF {
+    package "Identity" as Identity <<logical context>> #DBEAFE {
+        component "Account / Session Authority\nRegistration, credentials, refresh, revocation\nSingle-use recovery and accepted outcomes\nAll protected owners consume usable authority\nRecovery delivery is not reset completion" as Access #EFF6FF
+    }
+    package "Personal Context" as Context <<logical context>> #CCFBF1 {
+        component "Personalization Profile / Selected Context\nDeclared styles, common need priorities\nOptional body/gender and effective withdrawal\nLocation choice; UC-006 environmental acquisition\nConsumers share current / limited context" as Personal #F0FDFA
+    }
+    package "Wardrobe" as Wardrobe <<logical context>> #DCFCE7 {
+        component "Confirmed Garment / Wardrobe Authority\nGarment identity; confirmation / correction truth\nSaveable minimum; eligibility / readiness policy\nBrowse, search, edit, remove; private media\nAnalysis drafts never establish ownership" as Garments #F0FDF4
+    }
+    package "Outfit Advice and Use" as Outfits <<logical context>> #FEF3C7 {
+        component "Owned-Outfit Advice / Reported Use\nDaily choices, Shuffle and soft ranking\nOutfit-targeted feedback; distinct Wear Events\nHistory, utilization, effective aged evidence\nCoherent survivor effects; minimal history\nOriginal local grouping / absolute elapsed aging" as Advice #FFFBEB
+        component "Outfit Evaluation Semantics\nGarment-identity-set outfit identity\nHard validity; uses Wardrobe readiness meaning\nOwned / historical / hypothetical distinction\nCaller-supplied inputs; independent of Daily" as Evaluation <<published contract>> #FDE68A
+    }
+    package "Wardrobe Intelligence" as Intelligence <<logical context>> #EDE9FE {
+        component "Coverage / Gaps / Candidate Utility\nWeighted needs; capability gaps; sufficient data\nHypothetical candidates; complete Multiplier\nSame-basis count, states and new-outfit previews\nQualified optional shopping advice\nCandidates/previews create no ownership or Wear" as Assessments #F5F3FF
+    }
+    component "Product Measurement\nPurpose-minimal interaction evidence\nOwn user-linked measurement lifecycle" as Measurement <<supporting capability>> #FCE7F3
+}
+
+' Dependencies point from consumer to the owner/system whose published meaning it needs.
+Mobile --> Core : user intentions / outcomes
+Access --> Email : recovery delivery
+Personal --> Weather : environmental evidence / ACL
+Garments --> AI : bounded assistance / ACL
+Garments --> Media : authorized media / lifecycle
+
+Advice --> Garments : current garments / readiness
+Advice --> Personal : declared context
+Advice --> Evaluation : identity / validity
+Assessments --> Garments : baseline / readiness
+Assessments --> Personal : needs / context
+Assessments --> Evaluation : shared outfit semantics
+Assessments --> Shopping : optional evidence / navigation; ACL
+
+' One representative event dependency; other FR-MET interactions use the same supporting owner.
+Advice ..> Measurement : <<local application event>>
+
+legend bottom
+  |= Notation |= Logical meaning |
+  | Package <<logical context>> | Proposed accountable domain owner; internal models stay private. |
+  | Component <<published contract>> | Owner-controlled semantic responsibility, not a code interface or separate context. |
+  | Solid arrow | Consumer -> published owner/system; immediate query or coherent collaboration as labeled. |
+  | Dotted event arrow | Independent local reaction; scheduling/delivery design remains downstream. |
+  | External rectangle | Client, provider, analysis execution or resource boundary; not a business context. |
+  Published contracts only; private persistence/models remain isolated. ACL is not a snapshot store.
+  Repeated authorization dependencies and other specified measurement-fact arrows are omitted.
+  Provider exchanges are purpose-minimal; ACL protects proposals/environment/commercial meaning.
+  AI returns preview + proposals, never confirmation. Private media association/purge is recoverable.
+  Current request occasion stays separate from common needs; manual location does not need permission.
+  Wardrobe detail combines published garment and reported-use queries without mutual owner calls.
+  Wardrobe publishes readiness for owned/candidate evaluation without adding hypothetical ownership.
+  Intelligence applies the published policy to complete sets, never to Daily's displayed subset.
+  Relevant inputs/rules changing require reevaluation or Outdated before current advice is claimed.
+  Revocation, effective removal, Wear effects and current assessment basis need immediate coherence.
+  New Wear acceptance coordinates current Wardrobe ownership/readiness with Outfit Advice and Use.
+  Owners coordinate locally; later design may use local ACID. Exact transactions remain unresolved.
+  Mutation owners retain durable logical-action outcomes; retry differs from a new Wear intention.
+  Required physical deletion is owner-accountable, durable/resumable work after effective removal.
+  Measurement reacts independently; failure cannot block/undo core acceptance or fabricate evidence.
+  Its lifecycle differs from functional history. A local event implies neither async nor durability.
+  No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
+  Derived-result ownership does not select a permanent store; Clean realization follows in the next view.
+  Next: Logical View review -> Implementation View.
+endlegend
+
+@enduml

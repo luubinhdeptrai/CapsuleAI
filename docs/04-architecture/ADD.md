@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Design Document (ADD) |
-| Version | 0.1 |
+| Version | 0.1.1 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-10 |
 | Owner | Architect / Tech Lead, with Backend, AI, Mobile and QA input; Product/BA for requirement implications |
@@ -20,6 +20,7 @@
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-10 | Initial integrated architecture baseline realizing all 18 selected directions against seven existing drivers, nine ASRs and source-linked QA scenarios; four views and detailed design remain downstream. |
+| 0.1.1 | 2026-10-10 | Linked Logical View v0.1 and advanced current navigation to Implementation View; architectural tactics, selected directions, source scenarios and historical revision remain unchanged. |
 
 Input versions identify the baselines re-read for authoring. Subsequent navigation-only revisions do not change those obligations or selections. Baseline Draft records pending artifact review, not software conformance or benchmark success.
 
@@ -34,7 +35,7 @@ This ADD explains **how the selected architecture addresses CapsuleAI's signific
 | QA analysis / ASR | Source-owned measurable scenarios, seven drivers and nine architecture-significant requirement clusters. |
 | Selected Architecture Decisions | Controls the chosen directions; all ADA-001–018 remain Selected. |
 | ADA | Supplies existing comparisons, accepted trade-offs, confidence and evidence gaps; this ADD does not repeat option analysis. |
-| ADD / four later views | This baseline integrates responsibilities/tactics. Logical, Implementation, Deployment and Data Views provide the canonical detailed representations in workflow order. |
+| ADD / four primary views | This baseline integrates responsibilities/tactics. Logical, Implementation, Deployment and Data Views provide the canonical detailed representations in workflow order. |
 | Later ADRs / detailed design / Test Strategy | Preserve consequential rationale after views, realize necessary contracts/data/behavior, then define executable verification. |
 
 The current repository contains documentation, with no implementation/configuration baseline establishing executable behavior. Historical proposal/implementation notes and the Food Delivery ADD inform methodology only. They do not add CapsuleAI domains, infrastructure or targets. Creating this draft claims neither artifact approval nor completed software validation.
@@ -56,7 +57,7 @@ The architecture connects private mobile use to one coordinated business core. A
 
 ### 3.2 Business Responsibility Obligations
 
-These are cohesive **responsibility concerns, not a finalized module/context list**. The Logical View will assign owners and dependencies from the domain rather than a proposed future service catalog.
+These are cohesive **responsibility concerns, not a finalized module/context list**. The separate [Logical View v0.1](views/logical-view.puml) now proposes domain owners and dependencies for review, rather than a future service catalog.
 
 | Responsibility Concern | Obligation to Allocate |
 | --- | --- |
@@ -362,13 +363,13 @@ These responsibilities are allocated by meaning and ownership. Healthy boundarie
 
 ## 8. Architectural Representation
 
-These summaries define what the four later canonical views must resolve. No separate view or final context/package/schema/topology is produced in this task. Their order remains Logical → Implementation → Deployment → Data.
+These summaries define the responsibilities of the four canonical views. [Logical View v0.1 — Baseline Draft](views/logical-view.puml) now exists separately; Implementation, Deployment and Data Views remain downstream in that order.
 
 ### 8.1 Logical View — Summary / Intended Responsibility
 
 Allocate the cohesive responsibility concerns in §3.2 to domain-first owners. Show authority, dependencies, public collaborations and the semantic ownership of validity/identity, accepted-action effects, personal lifecycle and evaluated context. Distinguish current ownership from history and hypothetical candidates, and environmental acquisition from its consumers. Identify immediate/coherent interactions versus independent reactions, including any invariant coordinated across owners.
 
-The next artifact is `views/logical-view.puml`, governed by Workflow Section 21. Its detailed decomposition is canonical; this ADD does not finalize an arbitrary bounded-context list or infer boundaries from future services.
+[Logical View v0.1 — Baseline Draft](views/logical-view.puml), governed by Workflow Section 21, is now the canonical decomposition proposal for human review. This ADD retains its responsibility obligations and does not duplicate that owner map. The next architecture artifact is `views/implementation-view.puml` (Workflow Section 22).
 
 ### 8.2 Implementation View — Summary / Intended Responsibility
 
@@ -575,12 +576,12 @@ Workflow realization remains ADD → Logical View → Implementation View → De
 - **Avoid premature implementation:** This task commits no code or Sprint work and introduces no internal HTTP, Redis, broker, Saga/universal Outbox, copied-state/ACL projection, Kubernetes or distributed platform. Future extraction needs real evidence and renewed design, not a simulated service topology.
 - **Keep delivery authority and evidence intact:** [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006, preserve 41 ordered PBIs, PBI-001–007's first refinement horizon and eight existing stories for PBI-004–007. No estimate, split/merge, order or Sprint selection changes. Applicable AC plus [DoD](../06-scrum/definition-of-done.md) remain completion criteria; a document audit does not prove working software.
 
-**Next: Logical View.** Carry this ADD's selected constraints/tactics and §§10/12 evidence responsibilities into that representation. Do not reopen a selected ADA to fill an unresolved implementation detail.
+**Next: Implementation View.** Review [Logical View v0.1](views/logical-view.puml), then carry its proposed ownership/collaboration and this ADD's selected constraints/tactics and §§10/12 evidence responsibilities into source-level realization. Do not reopen a selected ADA to fill an unresolved implementation detail.
 
 ## 14. Status and Next Step
 
-**Version 0.1 — Baseline Draft.** The ADD baseline is created for Architect/Tech Lead review with Backend, AI, Mobile, QA and relevant Product/BA input. It realizes all 18 selected directions against the seven existing drivers and nine ASRs, with 15 measurable source scenarios plus two linked validation obligations. No selected option is reopened; business/product/requirements and source scenario/ASR bodies remain unchanged.
+**Version 0.1.1 — Baseline Draft.** This navigation revision links the separately created Logical View; the ADD baseline is created for Architect/Tech Lead review with Backend, AI, Mobile, QA and relevant Product/BA input. It realizes all 18 selected directions against the seven existing drivers and nine ASRs, with 15 measurable source scenarios plus two linked validation obligations. No selected option is reopened; business/product/requirements and source scenario/ASR bodies remain unchanged.
 
-**ADD → Logical View** is the current handoff. Then follow **Logical View → Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation**.
+**Logical View → Implementation View** is the current handoff. [Logical View v0.1](views/logical-view.puml) proposes the domain decomposition for review. Then follow **Implementation View → Deployment View → Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation**.
 
-The four separate view artifacts, ADRs, API/database schemas, sequence/state diagrams, Test Strategy, engineering baseline, Sprint artifacts and implementation code are not created by this task. Known source issues and feasibility gaps are recorded in §10; artifact approval, benchmark success and software conformance remain unclaimed.
+Only the Logical View has been created separately. Implementation/Deployment/Data Views, ADRs, API/database schemas, sequence/state diagrams, Test Strategy, engineering baseline, Sprint artifacts and implementation code remain downstream. Known source issues and feasibility gaps are recorded in §10; artifact approval, benchmark success and software conformance remain unclaimed.
