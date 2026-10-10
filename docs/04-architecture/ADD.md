@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Design Document (ADD) |
-| Version | 0.1.3 |
+| Version | 0.1.4 |
 | Status | Baseline Draft |
 | Last Updated | 2026-10-11 |
 | Owner | Architect / Tech Lead, with Backend, AI, Mobile and QA input; Product/BA for requirement implications |
@@ -23,6 +23,7 @@
 | 0.1.1 | 2026-10-10 | Linked Logical View v0.1 and advanced current navigation to Implementation View; architectural tactics, selected directions, source scenarios and historical revision remain unchanged. |
 | 0.1.2 | 2026-10-10 | Linked Implementation View v0.1 and recorded explicit human acceptance of the Logical decomposition; review precedes Deployment View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.3 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
+| 0.1.4 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 
 Input versions identify the baselines re-read for authoring. Subsequent navigation-only revisions do not change those obligations or selections. Baseline Draft records pending artifact review, not software conformance or benchmark success.
 
@@ -59,7 +60,7 @@ The architecture connects private mobile use to one coordinated business core. A
 
 ### 3.2 Business Responsibility Obligations
 
-These are cohesive **responsibility concerns, not a duplicate module/context list**. [Logical View v0.1](views/logical-view.puml) and [Implementation View v0.1](views/implementation-view.puml) are human-accepted baselines; [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml) is available for review.
+These are cohesive **responsibility concerns, not a duplicate module/context list**. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines; [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review.
 
 | Responsibility Concern | Obligation to Allocate |
 | --- | --- |
@@ -365,13 +366,13 @@ These responsibilities are allocated by meaning and ownership. Healthy boundarie
 
 ## 8. Architectural Representation
 
-These summaries define the responsibilities of the four canonical views. [Logical View v0.1](views/logical-view.puml) and [Implementation View v0.1](views/implementation-view.puml) are human-accepted baselines; [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml) is available for review. Data View remains downstream after Deployment View review.
+These summaries define the responsibilities of the four canonical views. **Data View review → ADRs** is the current handoff. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines in the current Data View instruction. [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review. Then follow ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
 ### 8.1 Logical View — Summary / Intended Responsibility
 
 Allocate the cohesive responsibility concerns in §3.2 to domain-first owners. Show authority, dependencies, public collaborations and the semantic ownership of validity/identity, accepted-action effects, personal lifecycle and evaluated context. Distinguish current ownership from history and hypothetical candidates, and environmental acquisition from its consumers. Identify immediate/coherent interactions versus independent reactions, including any invariant coordinated across owners.
 
-[Logical View v0.1](views/logical-view.puml), governed by Workflow Section 21, is the canonical decomposition accepted by the human for this handoff on 2026-10-10. This ADD retains its responsibility obligations and does not duplicate that owner map. [Implementation View v0.1](views/implementation-view.puml) is the accepted source realization with unchanged boundaries. [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml) now provides the runtime representation for review (Workflow Section 23).
+[Logical View v0.1](views/logical-view.puml), governed by Workflow Section 21, is the canonical decomposition accepted by the human for this handoff on 2026-10-10. This ADD retains its responsibility obligations and does not duplicate that owner map. [Implementation View v0.1](views/implementation-view.puml) is the accepted source realization with unchanged boundaries. [Deployment View v0.1](views/deployment-view.puml) provides the human-accepted runtime representation (Workflow Section 23).
 
 ### 8.2 Implementation View — Summary / Intended Responsibility
 
@@ -383,13 +384,13 @@ Workflow Section 22 governs the human-accepted [Implementation View v0.1](views/
 
 Represent mobile clients, the Spring Boot business process, private Python analysis process, PostgreSQL authority, private media and genuine external dependencies. Distinguish software responsibility, process, resource and deployment node; show protected access/trust boundaries, process supervision, durable-resource survival and optional-dependency behavior.
 
-Resolve placement from measured timing/resource/recovery evidence. Separate core/AI processes do not require separate hosts; co-location remains conditional and carries contention/shared-failure risk. Workflow Section 23 governs [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml), now available for review. Providers, machine/container counts, CPU/GPU, network/protocol and operating configuration remain unresolved; Kubernetes is not selected.
+Resolve placement from measured timing/resource/recovery evidence. Separate core/AI processes do not require separate hosts; co-location remains conditional and carries contention/shared-failure risk. Workflow Section 23 governs the human-accepted [Deployment View v0.1](views/deployment-view.puml). Providers, machine/container counts, CPU/GPU, network/protocol and operating configuration remain unresolved; Kubernetes is not selected.
 
 ### 8.4 Data View — Summary / Intended Responsibility
 
 Show major business/session/action/media/evaluation information, logical owners, authority and necessary relationships/lifecycle. Include account/session/reset validity, confirmed garment information, exact outfit identity, individual Wear records and effective survivor evidence, optional personal context, Coverage/candidate basis and minimal history. Separate authoritative state, media, permitted derived information and user-linked measurement.
 
-Represent permitted cross-owner references/operations, effective exclusion versus physical deletion, necessary copies/versions and recoverable media association. One PostgreSQL remains compatible with logical ownership; schema names, tables, ORM, indexes, exact FK/joins/access exceptions and isolation are not finalized. Workflow Section 24 governs the later Data View; no DDL or snapshot/projection store is selected here.
+Represent permitted cross-owner references/operations, effective exclusion versus physical deletion, necessary copies/versions and recoverable media association. One PostgreSQL remains compatible with logical ownership; schema names, tables, ORM, indexes, exact FK/joins/access exceptions and isolation are not finalized. Workflow Section 24 governs [Data View v0.1 — Baseline Draft](views/data-view.puml), now available for logical information/ownership/lifecycle review; no DDL or snapshot/projection store is selected here.
 
 ### 8.5 Conditional Architecture Evolution
 
@@ -578,12 +579,12 @@ Workflow realization remains ADD → Logical View → Implementation View → De
 - **Avoid premature implementation:** This task commits no code or Sprint work and introduces no internal HTTP, Redis, broker, Saga/universal Outbox, copied-state/ACL projection, Kubernetes or distributed platform. Future extraction needs real evidence and renewed design, not a simulated service topology.
 - **Keep delivery authority and evidence intact:** [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006, preserve 41 ordered PBIs, PBI-001–007's first refinement horizon and eight existing stories for PBI-004–007. No estimate, split/merge, order or Sprint selection changes. Applicable AC plus [DoD](../06-scrum/definition-of-done.md) remain completion criteria; a document audit does not prove working software.
 
-**Next: Deployment View review → Data View.** Review [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml) against the accepted Logical and Implementation Views and this ADD's selected constraints/tactics and Sections 10/12 evidence responsibilities. Do not reopen a selected ADA to fill an unresolved implementation detail.
+**Next: Data View review → ADRs.** Review [Data View v0.1 — Baseline Draft](views/data-view.puml) against all three accepted views, authoritative requirements/rules and this ADD's selected constraints/tactics and Sections 10/12 evidence responsibilities. Do not reopen a selected ADA to fill an unresolved detailed data decision.
 
 ## 14. Status and Next Step
 
-**Version 0.1.3 — Baseline Draft.** This navigation revision links the Deployment View and records explicit human acceptance of both Logical and Implementation Views on 2026-10-11. ADD review still involves Architect/Tech Lead with Backend, AI, Mobile, QA and relevant Product/BA input. All 18 selections, seven drivers, nine ASRs, 15 source scenarios and two linked validation obligations remain unchanged; no business/product/requirement change.
+**Version 0.1.4 — Baseline Draft.** This navigation revision links the Data View and records explicit human acceptance of Logical, Implementation and Deployment Views on 2026-10-11. ADD review still involves Architect/Tech Lead with Backend, AI, Mobile, QA and relevant Product/BA input. All 18 selections, seven drivers, nine ASRs, 15 source scenarios and two linked validation obligations remain unchanged; no business/product/requirement change.
 
-**Deployment View review → Data View** is the current handoff. [Logical View v0.1](views/logical-view.puml) and [Implementation View v0.1](views/implementation-view.puml) are human-accepted baselines; [Deployment View v0.1 — Baseline Draft](views/deployment-view.puml) is available for review. Then follow Data View → ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
+**Data View review → ADRs** is the current handoff. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines in the current Data View instruction. [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review. Then follow ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation.
 
-Logical, Implementation and Deployment Views now exist separately. Data View, ADRs, API/database schemas, sequence/state diagrams, Test Strategy, engineering baseline, Sprint artifacts and code remain downstream. Known source issues and feasibility gaps remain in Section 10; Deployment View approval, benchmark success and software conformance are not claimed.
+All four architecture views now exist separately. Data View review, ADRs, API/database schemas, sequence/state diagrams, Test Strategy, engineering baseline, Sprint artifacts and code remain downstream. Known source issues and feasibility gaps remain in Section 10; Data View approval, benchmark success and software conformance are not claimed.

@@ -5,8 +5,8 @@
 ' ADA-001-018 Selected; approved Logical View v0.1, re-read immediately before drawing.
 ' Later navigation-only patches leave these design/selection inputs unchanged.
 ' Logical acceptance: explicit human statement in the Implementation View task, 2026-10-10.
-' Navigation update only, 2026-10-11: both existing views human-accepted; Deployment v0.1 exists.
-' Accepted source/module structure unchanged; Deployment review precedes Data View.
+' Navigation update only, 2026-10-11: all three preceding views human-accepted; Data v0.1 exists.
+' Accepted source/module structure unchanged; Data View review precedes ADRs.
 ' Scope: source modules/components, Clean roles, dependency direction, ports/adapters/contracts.
 ' Not in scope: deployment nodes, physical DB schema, endpoint details or full class design.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md Sections 22/39-43/46.
@@ -291,6 +291,6 @@ legend bottom
   Measurement failure cannot block/reverse core acceptance or fabricate recorded evidence.
   No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
   Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
-  Next: Deployment View review -> Data View.
+  Next: Data View review -> ADRs.
 endlegend
 @enduml

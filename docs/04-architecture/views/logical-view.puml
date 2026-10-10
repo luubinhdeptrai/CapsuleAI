@@ -4,8 +4,8 @@
 ' Source: ADD v0.1 + Selected Architecture Decisions v0.1.1 (ADA-001-018 Selected)
 ' Source versions are authoring baselines; navigation-only patches leave their meaning unchanged.
 ' Scope: logical/domain responsibilities only; decomposition accepted by the human, 2026-10-10.
-' Navigation update only, 2026-10-11: both existing views human-accepted; Deployment v0.1 exists.
-' Logical owners/dependencies unchanged; Deployment review precedes Data View.
+' Navigation update only, 2026-10-11: all three preceding views human-accepted; Data v0.1 exists.
+' Logical owners/dependencies unchanged; Data View review precedes ADRs.
 ' Note: not deployment, source-code/package, physical-data or detailed-contract design.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 21/39-43/46.
 ' Requirements: BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2.
@@ -137,7 +137,7 @@ legend bottom
   Its lifecycle differs from functional history. A local event implies neither async nor durability.
   No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
   Derived-result ownership does not select a permanent store; Clean realization is in Implementation View.
-  Next: Deployment View review -> Data View.
+  Next: Data View review -> ADRs.
 endlegend
 
 @enduml
