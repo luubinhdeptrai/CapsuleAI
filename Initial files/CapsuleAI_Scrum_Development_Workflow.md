@@ -7,15 +7,19 @@
 >
 > - giúp team biết **nên làm gì trước, làm gì sau**;
 > - xác định **tài liệu nào cần tạo, ai tạo, khi nào cập nhật**;
-> - kết nối Business → Product → Requirements → Architecture → Scrum → Code → Test → Release;
+> - connect Business → Product → Requirements → Architecture → Scrum → Automated Test + Implementation → Release;
 > - mô phỏng workflow của một software team chuyên nghiệp nhưng tránh bureaucracy không cần thiết;
 > - giúp AI model đọc repository và hiểu đúng workflow cần tuân theo;
-> - maintain a source-driven architecture workflow: **14 Quality Attributes → ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD → 4 Architecture Views → ADRs**;
+> - maintain a source-driven architecture baseline: **14 Quality Attributes → ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD + 4 Architecture Views**, followed by engineering preparation and iterative Sprint delivery;
 > - yêu cầu các sơ đồ UML như **Use Case Diagram, Activity Diagram, Sequence Diagram, State Diagram, Deployment Diagram...** phải được biểu diễn bằng **UML**, ưu tiên lưu source bằng **PlantUML** trong repository.
 >
 > **Important:** Scrum không yêu cầu Jira. CapsuleAI **không dùng Jira**. Product Backlog, User Stories, Sprint Backlog, Bugs, Spikes, Sprint Review và Retrospective được quản lý bằng Markdown ngay trong repository.
 >
 > **Process revision — 2026-10-08:** Added comparative Architecture Decision Analysis and explicit human selection before ADD; synchronized reusable order, ownership, traceability and change propagation. Existing numbered Sections 1–49 remain stable; Section 46 action numbers from 15 onward shift by two. This process revision does not approve architecture or change product requirements.
+>
+> **Process revision — 2026-10-20:** Removed the mandatory standalone ADR phase; ADA and Selected Architecture Decisions retain current decision authority/history. Test Strategy and Engineering Baseline precede Sprint 1 implementation. Refinement prepares candidates, Sprint Planning selects work, and one story-specific JIT / Just-Enough Detailed Design loop occurs inside Sprint execution with automated testing. Sections 1–49 remain stable; Section 46 actions 22–29 now reflect this order. No product, selected architecture, backlog order or Sprint scope changes.
+>
+> Numbered sections describe artifact guidance as well as execution order: Sections 25–27 are not mandatory pre-Sprint phases. Sections 1, 38 and 46–47 define the preparation/delivery timing.
 >
 > Examples, sample IDs, stack names and Sprint outlines in this playbook illustrate the method. Current canonical requirements and the ordered Product Backlog govern CapsuleAI behavior/delivery; selected architecture comes only from the explicit selection record. Reusable workflow guidance never mandates a database, runtime, AI topology or cloud provider.
 
@@ -23,119 +27,80 @@
 
 # 1. Development Philosophy
 
-CapsuleAI không triển khai theo kiểu:
+CapsuleAI uses iterative, incremental Scrum delivery with enough system-wide architecture to guide implementation.
+
+> **Architecture early, Detailed Design late.**
+>
+> Stable system boundaries are decided early; implementation details are decided as late as responsibly possible, when the Sprint actually needs them.
+
+The system-wide baseline covers requirements, Business Rules, Use Cases/Activities, the Product Backlog and initial stories/AC, QA/ASR, architecture decision analysis and selection, ADD and the four architecture views. It establishes responsibilities, authority, constraints and traceability without freezing implementation details for the whole MVP.
 
 ```text
-Viết toàn bộ tài liệu
-→ khóa requirements
-→ thiết kế hoàn chỉnh
-→ code toàn bộ
-→ test cuối cùng
+System-wide Requirements / Backlog / Architecture Baseline
+        ↓
+Test Strategy
+        ↓
+Pre-Sprint Engineering Baseline
+        ↓
+Backlog Refinement
+        ↓
+Sprint Planning: Goal + selected PBIs + initial Sprint Backlog
+        ↓
+Sprint Execution: for each selected Story
+  JIT Detailed Design → Automated Test + Implementation
+  → Refactor → Integration Verification → PR / CI / Review → Done
+        ↓
+Working Increment
+        ↓
+Sprint Review → Sprint Retrospective
+        ↓
+Update Backlog / Requirements / Architecture where truth changes
+        ↓
+Next Sprint
 ```
 
-Đó là cách làm gần Waterfall.
+Refinement continues as an ongoing activity; the sequence identifies the preparation needed before selection, not a once-only refinement phase. Sprint Planning initiates the Sprint. Detailed Design belongs inside execution, after selection, and repeats in small steps with tests and implementation.
 
-CapsuleAI dùng **iterative / incremental development theo Scrum**:
-
-```text
-Initial Requirements & Architecture Baseline
-                    ↓
-           Product Backlog
-                    ↓
-            Backlog Refinement
-                    ↓
-             Sprint Planning
-                    ↓
-                Sprint
-   ┌────────────────────────────────┐
-   │ Analyze → Design → Code → Test │
-   │        → Review → Integrate    │
-   └────────────────────────────────┘
-                    ↓
-             Working Increment
-                    ↓
-              Sprint Review
-                    ↓
-           Sprint Retrospective
-                    ↓
-       Update Backlog / Documents
-                    ↓
-               Next Sprint
-```
-
-Requirements, architecture và documentation được **evolve cùng software**.
+Avoid both designing and freezing the whole MVP before coding and starting feature implementation without sufficient architecture and story clarity. Requirements, architecture, contracts, schemas and diagrams evolve with working software.
 
 ---
 
 # 2. Master Traceability Chain
 
-Mọi công việc kỹ thuật quan trọng nên có khả năng trace ngược về lý do tồn tại của nó.
+Important engineering work must trace back to its purpose. This chain connects authorities and delivery evidence; it does not require a new document for every link or every Story.
 
 ```text
-Business Problem
-      ↓
-BRD
-      ↓
-PRD
-      ↓
-SRS
-      ↓
-Business Rules
-      ↓
-Use Cases
-      ↓
-Activity Diagrams
-      ↓
-Product Backlog
-      ↓
-User Stories + Acceptance Criteria
-      ↓
-14 Quality Attribute Analysis
-      ↓
-ASR
-      ↓
-Architecture Decision Analysis
-      ↓
-Selected Architecture Decisions (human gate)
-      ↓
-ADD
-      ↓
-Logical View
-      ↓
-Implementation View
-      ↓
-Deployment View
-      ↓
-Data View
-      ↓
-ADRs
-      ↓
-Detailed API / Data / Sequence / State Design
-      ↓
-Test Strategy
-      ↓
-Engineering Baseline
-      ↓
-Sprint Readiness
-      ↓
-Sprint Planning / Sprint Backlog
-      ↓
-Implementation
-      ↓
-Tests
-      ↓
-Pull Request / Code Review
-      ↓
-Working Increment
-      ↓
-Release / Deployment
-      ↓
-Monitoring / Feedback / Bugs
-      ↓
-Product Backlog
+Business Problem → BRD → PRD → SRS → Business Rules
+        ↓
+Use Cases / Activity Diagrams
+        ↓
+Product Goal → Product Backlog → Initial User Stories / Acceptance Criteria
+        ↓
+14 Quality Attribute Analysis → ASR
+        ↓
+Architecture Decision Analysis → Selected Architecture Decisions
+        ↓
+ADD → Logical View → Implementation View → Deployment View → Data View
+        ↓
+Test Strategy → Engineering Baseline
+        ↓
+Backlog Refinement → Sprint Planning / Sprint Backlog
+        ↓
+Sprint Execution, per selected Story:
+JIT Detailed Design, only where necessary
+→ Automated Test + Implementation → Refactor / Integration Verification
+→ Pull Request / CI / Code Review → Done
+        ↓
+Working Increment → Release / Deployment when appropriate
+        ↓
+Monitoring / Review / Retrospective / Feedback / Bugs
+        ↓
+Product Backlog and affected authoritative documents
 ```
 
-Không phải mọi User Story đều cần tất cả artifact ở trên. Chỉ tạo artifact khi nó truyền đạt thông tin thực sự có giá trị.
+ADA records decision problems, alternatives, trade-offs, recommendations and confidence. Selected Architecture Decisions records authoritative selections, rationale, developer impact and supersession history. ADD and the four views realize the selected architecture. These artifacts already preserve the current decision baseline; separate ADR files are optional for future consequential evolution, not a mandatory link before implementation.
+
+Detailed API/Data/Sequence/State artifacts are conditional, story-specific outputs of Sprint execution (Section 26). They are not a whole-MVP prerequisite for Test Strategy, Engineering Baseline, refinement or Sprint Planning.
 
 ---
 
@@ -185,10 +150,8 @@ CapsuleAI/
 │   │   │   ├── deployment-view.puml
 │   │   │   └── data-view.puml
 │   │   │
-│   │   ├── adr/
-│   │   │   ├── ADR-001-database.md
-│   │   │   ├── ADR-002-jwt-authentication.md
-│   │   │   └── ADR-003-python-ai-service.md
+│   │   ├── adr/                         # optional future consequential changes only
+│   │   │   └── ADR-xxx-consequential-change.md
 │   │   │
 │   │   ├── sequence-diagrams/
 │   │   │   └── SEQ-01-garment-processing.puml
@@ -242,7 +205,7 @@ CapsuleAI/
 
 Không tạo toàn bộ file ngay ngày đầu. Các file được tạo khi workflow thực sự cần chúng.
 
-The tree is a target structure, not evidence that every artifact exists. In particular, the selected-decision record is created only after human review/selection; ADD and views follow that gate. Stack-specific sample ADR names and code directories do not establish a selected implementation.
+The tree is a target structure, not evidence that every artifact exists. The selected-decision record follows actual human selection; ADD and views follow that gate. No ADR directory/files are needed for the current baseline. Detailed API/data/Sequence/State artifacts are conditional Sprint outputs for selected Stories, not documents to create for the whole MVP in advance. Code directories do not establish an implemented baseline.
 
 ---
 
@@ -279,13 +242,9 @@ Không dùng flowchart tùy ý nếu mục đích là một UML Activity Diagram
 
 ## 4.3 Data View
 
-Data View có thể dùng:
+The baseline Data View shows logical information concepts, accountable owners, major relationships, stores and boundaries. Use a conceptual UML/Class-style or other suitable PlantUML representation without requiring physical tables/columns.
 
-- UML Class Diagram nếu mô hình hóa domain/data structure;
-- ERD notation nếu mục tiêu là relational schema;
-- PlantUML ER-style notation nếu phù hợp.
-
-Điều quan trọng là Data View phải thể hiện **data ownership, relationships, stores và boundaries**, không chỉ danh sách field.
+Physical data detail and an ERD, where useful, belong to the selected Story's JIT Detailed Design during Sprint execution (Section 26). A logical Data View is not a requirement to complete the whole MVP's relational schema before Sprint Planning.
 
 ---
 
@@ -772,8 +731,8 @@ Then ...
 - ADA-... (when relevant and available)
 - Selected Architecture Decisions: ADA-... selection
 - ADD §...
-- SEQ-...
-- ADR-...
+- Existing relevant SEQ-/STATE-... only when needed for selected Sprint work
+- Optional future ADR-... only when justified under Section 25
 
 ## Implementation Checklist
 
@@ -827,7 +786,7 @@ Example:
 SPIKE-001 — Evaluate RMBG vs U2-Net
 ```
 
-A Spike can inform an ADA comparison or reopen a selected choice. Explicit selection precedes affected ADD/views; a consequential decision is then preserved in an ADR. A Spike result is not automatic architecture selection.
+A bounded Spike can inform feasibility or an ADA comparison/re-analysis. Explicit human selection precedes affected ADD/views if an architecture choice changes; an optional future ADR is justified only under Section 25. A Spike result is not automatic selection or a full production-design packet.
 
 ---
 
@@ -1012,7 +971,7 @@ Use stable **ADA-001, ADA-002, ...** identities, distinct from ADR IDs. Each ana
 - **Decision Status: Proposed — Awaiting Selection**.
 - Conditional consequences if selected and deferred details.
 
-Classify importance as **Critical Before ADD**, **Important Before ADD**, or **Defer to Detailed Design / ADR**. Critical choices determine a coherent major structure/authority. Important choices can be bounded only where stable abstractions permit safe progress. Low-level implementation details stay downstream; do not invent alternatives or infrastructure merely to fill a checklist.
+Classify importance as **Critical Before ADD**, **Important Before ADD**, or **Defer to Just-In-Time Detailed Design**. Critical choices determine a coherent major structure/authority. Important choices can be bounded only where stable abstractions permit safe progress. Low-level implementation details stay downstream; do not invent alternatives or infrastructure merely to fill a checklist.
 
 Historical stack preferences and documentation references are candidate context unless canonical current sources impose them. Prefer sufficient simplicity against the actual ASRs, supported workload and team evidence. Recommendation confidence is not approval, test success or human preference.
 
@@ -1042,7 +1001,7 @@ For a deferral, record the stable boundary, impact/risk, responsible owner, need
 
 **ADD entry gate:** all Critical Before ADD choices are explicitly Selected, and Important choices are either Selected or safely bounded with documented deferrals. A Critical unresolved choice blocks the ADD baseline. Selection does not claim software verification or approval of the upstream draft documents.
 
-This record is **not an ADR replacement**. It supplies selected design inputs now; later ADRs preserve durable rationale/consequences for consequential choices after ADD and the four views. Create it only when the human actually selects; a proposed recommendation is not a selected row.
+Together with ADA, this is the authoritative current architecture decision record: preserve selected options, rationale, developer impact and supersession history without duplicating the baseline in separate ADR files. Standalone ADRs are optional only for significant future evolution (Section 25), never one per ADA or a prerequisite to implementation. Create/update selected rows only after actual human selection.
 
 ---
 
@@ -1339,191 +1298,89 @@ Processed Transparent Images
 
 Data View phải thể hiện ownership/boundary chứ không chỉ field.
 
-Nếu dùng relational database, có thể bổ sung ERD.
-
-Nếu dùng document database, mô tả document ownership/embedding/reference strategy.
+Keep this system-wide view at logical ownership/relationship/store level. A relational ERD or document embedding/reference detail may be added only where selected Sprint work needs JIT physical data design (Section 26); a complete MVP schema is not a baseline gate.
 
 ---
 
-# 25. ADR — Architecture Decision Records
+# 25. Optional ADRs for Future Architecture Evolution
 
-Record consequential explicitly selected decisions in ADRs **after ADD and Logical, Implementation, Deployment and Data Views** in this workflow. Link the relevant ASR, ADA comparison, selection record and affected architecture views. ADR preserves durable rationale, alternatives, consequences and later supersession; it does not replace either ADA comparison or the pre-ADD human gate.
+The current architecture decision records are already authoritative:
 
-Examples:
+| Artifact | Responsibility |
+| --- | --- |
+| `architecture-decision-analysis.md` | Decision problems, alternatives, trade-offs, recommendations, confidence and evidence gaps. |
+| `selected-architecture-decisions.md` | Selected options, human selection rationale, developer impact, bounded deferrals and retained supersession history. |
+| ADD + Logical / Implementation / Deployment / Data Views | Realization of the selected architecture. |
 
-```text
-ADR-001 Database Selection
-ADR-002 JWT Authentication
-ADR-003 Separate Python AI Service
-ADR-004 Object Storage Strategy
-ADR-005 AI Processing Sync vs Async
-```
+**No separate ADR phase is required for the current baseline or before implementation. There is no one-to-one ADA-to-ADR requirement.** Do not duplicate the 18 selected decisions into new files merely to complete a checklist.
 
-Template:
+A standalone ADR is optional and may be introduced only when a future consequential architectural evolution/change benefits from a dedicated durable historical record. For example, measured recommendation latency might justify reconsidering the selected no-cache direction; if a cache is later analyzed and explicitly selected, an ADR may help preserve that transition. This example selects no cache or other technology.
 
-```text
-# ADR-xxx — Title
-
-Status:
-Proposed / Accepted / Superseded
-
-Context:
-...
-
-Decision:
-...
-
-Alternatives:
-...
-
-Consequences:
-Positive:
-...
-
-Negative:
-...
-
-Related ASRs:
-...
-
-Related Views:
-...
-```
-
-ADR không thay ADD.
-
-ADD mô tả architecture tổng thể; ADR lưu history của các quyết định quan trọng.
+When justified, keep an ADR concise: Status; Context and evidence; Decision; Alternatives; Consequences; related ASR/ADA IDs; selection-record link; affected ADD/views; and supersession links where applicable. Preserve existing history and update the current selection authority and affected realization. An optional ADR neither becomes a competing current selection record nor replaces explicit human selection.
 
 ---
 
-# 26. Detailed Behavioral / Technical Diagrams
+# 26. Just-In-Time / Just-Enough Detailed Design
 
-Không vẽ mọi diagram có thể vẽ.
+Detailed Design is **part of Sprint execution**, performed story by story **only after the PBI has actually been selected into the Sprint Backlog**. Sprint Planning comes first. Design only the details needed for the selected outcome and its complexity/risk; do not batch-design all Sprint stories or the whole MVP before implementation.
 
-## Sequence Diagram
+| Conditional design work | When it adds value |
+| --- | --- |
+| API Design | The selected Story introduces or changes a consumer/provider contract; define only the affected request, response, validation, failure and recovery behavior. |
+| Detailed Data Design | Persisted state or integrity changes; resolve necessary owner-scoped representation, migrations and relationships. The baseline Data View remains a logical ownership overview. |
+| UML Sequence Diagram | Multi-component interaction, coordination or failure behavior is complex enough to require a reviewable model. |
+| UML State Machine Diagram | Lifecycle/state transitions materially affect correctness or security. |
+| Transaction / concurrency design | Acceptance, retries, revocation, currentness or concurrent effects require explicit coordination. |
+| Algorithm / policy detail | The selected behavior needs precise implementation reasoning while preserving the authoritative Business Rules. |
+| External integration contract detail | A real dependency requires agreed payload, meaning, disclosure, failure or compatibility behavior. |
 
-Tạo khi interaction giữa nhiều component đủ phức tạp.
+These are conditional artifacts, not a four-document checklist. A simple profile read may need no Sequence or State Diagram. Refresh Token Rotation may need API and persistence design, a Sequence Diagram, session lifecycle reasoning and transaction/security analysis. Neither example selects Sprint scope.
 
-Examples:
+Use UML Sequence/State notation, preferably PlantUML source, when those diagrams are needed. Keep the smallest useful explanation in an existing story, contract, diagram, migration or PR where appropriate; a separate design document per Story is unnecessary.
 
-```text
-SEQ-01 Garment Processing
-SEQ-02 Outfit Generation
-SEQ-03 Gap Analysis
-```
-
-Phải dùng **UML Sequence Diagram** bằng PlantUML.
-
-## State Machine Diagram
-
-Tạo khi domain object có lifecycle quan trọng.
-
-Example:
-
-```text
-UPLOADED
-→ PROCESSING
-→ AWAITING_CONFIRMATION
-→ CONFIRMED
-```
-
-Failure path:
-
-```text
-PROCESSING
-→ PROCESSING_FAILED
-→ MANUAL_ENTRY
-```
-
-Phải dùng **UML State Machine Diagram** bằng PlantUML.
+Resolve the necessary decisions before dependent tests/code, then iterate design, automated tests, implementation and refactoring in small steps. There is no second generic implementation-level “Design” phase afterward. A newly selected item added through Sprint adaptation follows the same rule.
 
 ---
 
-# 27. API and Service Contracts
+# 27. Living API and Service Contracts
 
-Sau khi architecture baseline đủ rõ:
-
-```text
-docs/05-api/
-```
+Create or update implementation-level contracts during the selected Story's JIT Detailed Design (Sections 26 and 33). Architecture-level boundary agreements can exist early; final endpoints, DTOs and complete future-feature contracts are not refinement or pre-Sprint gates.
 
 ## Backend API
 
-OpenAPI nên là source of truth cho HTTP contract.
-
-Document:
-
-```text
-api-conventions.md
-```
-
-chỉ chứa convention:
-
-```text
-versioning
-error format
-pagination
-authentication
-idempotency when relevant
-naming
-HTTP status behavior
-```
+OpenAPI is the HTTP contract source of truth when an API is introduced or changed. Keep any `docs/05-api/api-conventions.md` focused on shared conventions: versioning, errors, pagination, authentication, naming, HTTP outcomes and idempotency where relevant. Shared conventions do not require designing every MVP endpoint.
 
 ## AI Service Contract
 
-```text
-ai-service-contract.md
-```
+When a selected Story requires the analysis boundary, update `docs/05-api/ai-service-contract.md` for the necessary request/response meaning, confidence, errors, timeouts, compatibility and completion/status behavior. The business runtime consumes that agreed contract, not ungoverned internal model output.
 
-Phải xác định rõ:
-
-```text
-request format
-response format
-error model
-confidence
-timeouts
-versioning
-processing status
-```
-
-The selected business runtime depends on the agreed analysis contract, not ungoverned internal model output. A historical Spring Boot/Python example does not mandate either runtime.
+Keep contracts, consumers, implementation and contract/integration tests synchronized as understanding changes. Use the selected architecture and authoritative requirements; this guidance selects no new provider, protocol, payload or tool.
 
 ---
 
 # 28. Test Strategy
 
-Create the initial Test Strategy after the relevant ADD/views/ADRs and Detailed API/Data/Sequence/State Design baseline, **before Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation**. Keep it proportionate to available scope and evolve it with increments:
+Test Strategy is **project-wide engineering preparation after the architecture baseline and before Engineering Baseline and Sprint 1 implementation**. It does not wait for ADRs, complete API contracts, physical schemas or all Sequence/State Diagrams.
+
+The initial artifact, when its creation is authorized, is:
 
 ```text
 docs/07-testing/test-strategy.md
 ```
 
-Cover:
+Use requirements, Business Rules, Use Cases/Activities, existing stories/AC, QA scenarios, ASRs, selected decisions, ADD/views and the Definition of Done to establish proportionate coverage and evidence responsibilities.
+
+Cover the applicable unit/domain, integration, API/contract, AI evaluation, end-to-end, security, performance and regression testing approaches, including environments, fixtures, privacy-safe evidence, automation and CI expectations. Preserve source thresholds and complete-operation measurement boundaries. Exact story-level cases and fixtures evolve during Sprint delivery as necessary contracts and data details emerge.
 
 ```text
-Unit Tests
-Integration Tests
-API Tests
-Contract Tests
-AI Evaluation Tests
-End-to-End Tests
-Security Tests
-Performance Tests
-Regression Tests
+Requirement / Business Rule / QA obligation
+        ↓
+Story Acceptance Criteria + applicable DoD
+        ↓
+Automated tests and other required verification evidence
 ```
 
-Traceability:
-
-```text
-Requirement
-   ↓
-Acceptance Criteria
-   ↓
-Test Case / Automated Test
-```
-
-Referenced QA scenarios and ADD tactics lead to measurable tests where applicable. Preserve source thresholds, complete-operation timing and protected evidence; tests/CI run continuously through implementation rather than being a final phase.
+Testing starts with implementation and continues through review/CI and integration. Selective TDD may use RED → GREEN → REFACTOR for suitable domain/business logic; strict TDD is not required for every code change. A test strategy is a living approach to verification, not a claim that tests or benchmarks have passed.
 
 ---
 
@@ -1559,201 +1416,119 @@ Definition of Done áp dụng cho toàn project.
 
 # 30. Pre-Sprint Engineering Baseline
 
-Scrum Guide không định nghĩa “Sprint 0”, vì vậy CapsuleAI nên coi bước này là **Pre-Sprint Engineering Baseline**, ngắn và có timebox.
+Prepare a short, timeboxed **project-wide Engineering Baseline after Test Strategy and before Sprint 1 implementation**. This is preparation, not a Scrum “Sprint 0” or implementation of product features.
 
-Mục tiêu:
+Typical readiness work includes:
 
-```text
-Repository
-Git workflow
-Build
-CI
-Local environments
-Backend skeleton
-Mobile skeleton
-selected analysis skeleton (if separate)
-selected primary persistence
-selected private media resource (if applicable)
-Configuration
-Testing foundation
-```
+- Repository structure, Git/PR workflow, build tooling and supported runtime versions.
+- Spring Boot Modular Monolith skeleton consistent with the selected architecture; only necessary module/wiring boundaries.
+- Local PostgreSQL development environment and a versioned migration foundation.
+- Docker development setup where adopted, configuration/environment conventions and secret handling.
+- Mobile and private-analysis skeletons where needed for the agreed foundation.
+- Automated-test infrastructure, representative smoke checks and a CI baseline.
 
-Không kéo dài thành nhiều tuần chỉ để setup.
+Flyway may supply the migration baseline if selected; Docker/tooling/version choices are engineering preparation decisions under the existing architecture, not new product scope mandated by this playbook. Use current selected directions rather than historical stack examples.
 
-Sau baseline, Sprint 1 phải tạo ra **usable Increment**.
+Establish enough reproducibility to begin integrated delivery, then improve the foundation as increments require. Do not implement authentication, garment or other product outcomes here, predesign all tables/endpoints, or grow a prolonged setup phase. Existing Enabler PBIs retain their ordering and scope; preparation does not mark them Done or select Sprint work.
+
+After preparation, refine candidate work and conduct Sprint Planning. Sprint 1 must aim for a usable Increment.
 
 ---
 
 # 31. Backlog Refinement
 
-Backlog Refinement không phải một Scrum Event chính thức độc lập nhưng là ongoing activity.
+Backlog Refinement is an ongoing activity, not a separate formal Scrum event. It prepares candidate PBIs before Sprint Planning and continues as learning changes the backlog.
 
-Team chọn các upcoming stories và kiểm tra:
+The objective is to make a candidate Story **sufficiently understood, feasible, testable and estimable/selectable to be considered Ready**. “Ready” is a lightweight project working agreement, not an additional Scrum artifact or a guarantee of selection.
 
-```text
-Is the requirement clear?
-Are Acceptance Criteria testable?
-Are dependencies known?
-Are important business rules linked?
-Is architecture impact understood?
-Is a Spike needed?
-Can this fit within one Sprint?
-```
+Refinement may:
 
-Nếu Story có architectural impact lớn:
+- Clarify the user/delivery outcome, Story boundaries and testable Acceptance Criteria.
+- Verify relevant requirements and Business Rules.
+- Identify dependencies, architecture constraints and technical risks.
+- Identify testability concerns and unresolved unknowns.
+- Perform lightweight technical investigation sufficient for feasibility and selection.
+- Create a timeboxed Spike when a major unknown must be resolved before responsible selection; keep the dependent Story unselected until there is enough evidence.
 
-```text
-Story
- ↓
-Check requirements / QA / ASR impact
- ↓
-ADA analysis or re-analysis if a major choice changes
- ↓
-Explicit selection / selected-record update
- ↓
-Affected ADD → affected views → consequential ADR
- ↓
-Detailed design / tests / readiness
-```
+Refinement does **not normally finalize** endpoint/DTO contracts, complete physical schemas, transaction implementation, full Sequence/State Diagrams or class-level design. A Spike investigates a bounded unknown; it is not permission to design the entire future feature or MVP.
 
-Update QA/ASR only when their requirement/driver truth changes. A new tactic under unchanged requirements does not automatically create another ASR. Unaffected architecture artifacts require no edits.
+If evidence reveals a consequential architecture change, review requirement/QA/ASR impact, analyze the affected ADA problem, obtain explicit human selection and synchronize only affected ADD/views. A future standalone ADR is optional under Section 25. Resolve necessary stable-boundary uncertainty before selecting dependent work; leave implementation details to the selected Story's JIT design.
+
+Refinement creates no Sprint Goal, Sprint assignment or capacity commitment. Product Owner accountability for backlog ordering and PO/BA ownership of Story/AC behavior remain unchanged.
 
 ---
 
 # 32. Sprint Planning
 
-Mỗi Sprint nên khoảng **2 tuần** nếu phù hợp với lịch học.
+Sprint Planning initiates the Sprint. Use a consistent Sprint length (for example, two weeks when appropriate to the team's schedule); this playbook fixes no capacity or scope.
 
-Sprint Planning tạo:
+Planning establishes:
 
-```text
-Sprint Goal
-+
-Sprint Backlog
-```
+1. **Why:** a coherent Sprint Goal shaped collaboratively by the Scrum Team.
+2. **What:** Product Backlog Items selected by Developers through discussion with the Product Owner, considering order, readiness, dependencies, capacity and the DoD.
+3. **How:** an initial Sprint Backlog and enough implementation thinking to understand how the selected work may proceed. Developers own and adapt this plan.
 
-Folder:
+For a possible Refresh Token Story, initial thinking might identify the Identity module, persistent refresh-session authority, JWT operations and integration tests. It need not finalize DTOs, database columns, transaction mechanics, complete sequences, all state transitions or class-level design.
 
-```text
-docs/06-scrum/sprints/sprint-01/
-```
+**Selection precedes full JIT Detailed Design.** Do not require the API/Data/Sequence/State artifact set for every candidate before Planning, or design the whole Sprint before starting a Story.
 
-## sprint-goal.md
-
-Ví dụ:
+Use the existing Sprint artifact locations when Planning is authorized:
 
 ```text
-An authenticated user can upload a garment,
-send it through the backend and AI pipeline,
-and view the processed result.
+docs/06-scrum/sprints/sprint-01/sprint-goal.md
+docs/06-scrum/sprints/sprint-01/sprint-backlog.md
 ```
 
-## sprint-backlog.md
+A Sprint Backlog may track Item ID, work, responsible contributor, estimate and status. Status labels such as Ready, In Progress, In Review and Done describe work visibility; testing accompanies development throughout. No extra generic Design phase or final-only Testing phase is implied.
 
-Recommended table:
-
-| ID | Item | Owner | Estimate | Status |
-|---|---|---|---:|---|
-
-Status:
-
-```text
-Ready
-In Progress
-Code Review
-Testing
-Done
-```
+The selected work and initial plan evolve with learning. Developers and Product Owner renegotiate scope where necessary without endangering the Sprint Goal; current draft stories and illustrative roadmap examples are not automatic Sprint 1 selections.
 
 ---
 
 # 33. Sprint Execution
 
-Một User Story đi qua:
+For each selected Story, use one implementation-level design concept:
 
 ```text
-Ready
- ↓
-In Progress
- ↓
-Implementation
- ↓
-Local Tests
- ↓
-Commit
- ↓
-Push
- ↓
-Pull Request
- ↓
-CI
- ↓
-Code Review
- ↓
-Testing
- ↓
-Done
+Selected Story in Sprint Backlog
+        ↓
+Just-In-Time / Just-Enough Detailed Design
+        ↓
+Automated Test + Implementation
+        ↓
+Refactor
+        ↓
+Integration / API Verification where applicable
+        ↓
+Pull Request → CI → Code Review
+        ↓
+Done: Story AC + applicable Definition of Done
+        ↓
+Integrated, usable Working Increment
 ```
 
-Recommended branch:
+These are short feedback loops, not isolated handoff phases. Write and run relevant automated tests alongside implementation from the start. Use selective RED → GREEN → REFACTOR where helpful; strict TDD is not universal. Address review/CI failures and repeat affected checks before Done.
 
-```text
-feat/US-003-upload-garment
-```
+Design only what the selected Story's complexity/risk needs (Section 26). Do not finish all Sprint design before any implementation, introduce a second “Design → Code → Test” phase, or delay testing until code review. Integrate completed work throughout the Sprint.
 
-Recommended commits:
+Use small reviewable commits and branches linked to existing Story/PBI IDs, with implementation, tests and affected contracts/design documentation evolving together. Open a Draft PR when useful for early feedback. Do not push directly to `main`.
 
-```text
-feat(wardrobe): add garment upload endpoint
-test(wardrobe): cover garment upload validation
-docs(api): update garment upload contract
-```
-
-Không direct push vào `main`.
+The Sprint Backlog is adapted by Developers as work becomes understood. New or changed work follows the same selection/JIT rule and preserves the Sprint Goal and authoritative requirements. Incomplete work does not become part of the Done Increment merely because the Sprint ends.
 
 ---
 
 # 34. Documentation During a Sprint
 
-Documentation không dừng lại khi Sprint bắt đầu.
+API contracts, physical schemas/migrations, diagrams and other necessary detailed designs are living artifacts created or updated with selected Sprint work. Keep them synchronized when implementation or validated understanding changes; create documentation for useful communication and traceability.
 
-Ví dụ Story phát hiện architecture change:
+- Update requirements/rules and affected Use Cases/Activities/Story AC only when requirement truth changes.
+- Update ADA and the human selection record only when a consequential choice changes; update ADD/views only when architectural truth changes.
+- Update affected contracts, data detail, Sequence/State models and tests when their implementation-level meaning changes.
+- Preserve stable IDs and links. Unaffected artifacts require no edits.
 
-```text
-User Story
- ↓
-Design discussion / changed evidence
- ↓
-ADA comparison or re-analysis
- ↓
-Explicit human selection / selected-record update
- ↓
-Affected ADD
- ↓
-Affected Logical / Implementation / Deployment / Data Views
- ↓
-Consequential ADR
- ↓
-Affected detailed design / tests
- ↓
-Implementation
-```
+A newly discovered architecture concern follows analysis → explicit human selection → affected ADD/views; an optional future ADR may preserve significant evolution under Section 25. Resume the selected Story's same JIT/test/implementation loop after resolving the affected boundary; this is not another full design phase.
 
-Nếu requirement thay đổi:
-
-```text
-Requirement
- ↓
-SRS
- ↓
-Use Case / Activity Diagram
- ↓
-Story / Acceptance Criteria
- ↓
-Implementation
- ↓
-Tests
-```
+A requirement change may update the backlog and selected work through PO/BA/Developer collaboration. Keep the Sprint Goal and DoD intact. Documentation volume and formal approval claims are not evidence of working software.
 
 ---
 
@@ -1838,13 +1613,11 @@ Architecture Decision Analysis v0.1
 Selected Architecture Decisions (human gate)
 ADD v0.1
 Logical → Implementation → Deployment → Data Views v0.1
-Initial consequential ADRs
-Detailed API / Data / Sequence / State Design as needed
 Test Strategy baseline
-Engineering baseline
-Sprint readiness
-Sprint Planning
+Pre-Sprint Engineering Baseline
 ```
+
+After this shared preparation, repeat Backlog Refinement → Sprint Planning → Sprint execution, with JIT design and automated tests/implementation per selected Story. The historical outlines below remain examples, not current Sprint scope or design prerequisites.
 
 ## Sprint 1 — Authentication + Garment Pipeline
 
@@ -1922,71 +1695,33 @@ polish
 
 # 38. Document Creation Order
 
-## Must Exist Before Sprint 1
+## System-Wide Baseline Before Sprint 1
+
+Maintain sufficient baselines for BRD, PRD, SRS, Business Rules, the master Use Case Diagram/core specifications and Activities, Product Goal, ordered Product Backlog, initial near-term stories/AC, DoD, all 14 QA assessments, ASR, ADA, explicit Selected Architecture Decisions, ADD and all four architecture views.
+
+Critical architecture choices must be selected and Important choices selected or safely bounded under Section 17.3. “Baseline” means sufficient for responsible delivery, not frozen or perfect.
+
+## Engineering Preparation Before Sprint 1 Implementation
 
 ```text
-BRD baseline
-PRD baseline
-SRS baseline
-Business Rules baseline
-Use Case Diagram
-core Use Cases
-core Activity Diagrams
-Product Goal
-Product Backlog
-Definition of Done
-14 QA Analysis baseline
-ASR v0.1
-Architecture Decision Analysis baseline
-Selected Architecture Decisions: Critical selections / safe Important deferrals
-ADD v0.1
-Logical View v0.1
-Implementation View v0.1
-Deployment View v0.1
-Data View v0.1
-major ADRs
-Detailed API / Data / Sequence / State Design as needed
-Test Strategy baseline
-Engineering baseline
-Sprint readiness
-Sprint Planning
+Architecture Baseline → Test Strategy → Engineering Baseline
 ```
 
-“Baseline” nghĩa là đủ dùng để bắt đầu, không phải hoàn hảo.
+Separate ADR files, complete MVP API/Data design, and all Sequence/State Diagrams are **not** entry requirements. No separate full-design or Sprint Readiness documentation phase is added.
 
-## Created / Updated Per Feature
+## Every Sprint: Refinement and Selection
 
-```text
-User Story
-Acceptance Criteria
-Activity Diagram when behavior is complex
-Sequence Diagram when integration is complex
-State Diagram when lifecycle matters
-API contract
-data design
-ADA / selected record when major choices change
-ADD / affected views then consequential ADR
-tests
-```
+Refine candidate Story/AC, dependencies, constraints, risk and testability enough for readiness. Sprint Planning establishes the Sprint Goal, selected PBIs and initial Sprint Backlog; it precedes full implementation-level design.
 
-## Created / Updated Per Sprint
+## During Sprint Execution, Per Selected Story
 
-```text
-Sprint Goal
-Sprint Backlog
-Review
-Retrospective
-Product Backlog
-```
+Create/update only necessary API contracts, data detail/migrations, UML Sequence/State Diagrams, transaction/concurrency, algorithms or integration detail through JIT design, alongside automated tests and implementation. Reuse existing artifact locations; no separate design packet is required for every Story.
 
-## Created / Updated Per Release / Operation
+Activity models, requirements and architecture records change only where their owning truth changes. A standalone ADR remains optional for significant future evolution.
 
-```text
-Deployment
-Rollback
-Monitoring
-Postmortem
-```
+## Per Sprint / Release
+
+Maintain Sprint Goal, evolving Sprint Backlog, Review, Retrospective and Product Backlog. Maintain deployment, rollback, monitoring and postmortem material when release/operation needs it. A usable Increment and its evidence remain the focus.
 
 ---
 
@@ -2012,10 +1747,12 @@ Postmortem
 | Implementation View | Tech Lead / Senior Dev | Dev |
 | Deployment View | Tech Lead / DevOps | Dev |
 | Data View | Backend / Data owner / Tech Lead | Team |
-| ADR | Decision proposer / Tech Lead | Engineering team |
-| UML Sequence Diagram | Developer / Tech Lead | Relevant developers |
-| UML State Diagram | Developer / Tech Lead / Analyst | QA, Dev |
+| Optional future ADR | Decision proposer / Tech Lead | Relevant engineering reviewers when a significant evolution warrants the record |
+| Story-specific JIT Detailed Design | Developers / Tech Lead | Relevant Developers, QA and data/integration contributors, proportional to risk |
+| UML Sequence Diagram, if needed | Developer / Tech Lead | Relevant developers |
+| UML State Diagram, if needed | Developer / Tech Lead / Analyst | QA, Dev |
 | Test Strategy | QA/engineering lead | Dev, PO |
+| Engineering Baseline | Developers / Tech Lead | Relevant engineering contributors |
 | Sprint Goal | Product Owner + Developers | Scrum Team |
 | Sprint Backlog | Developers | Scrum Team |
 | Sprint Review Notes | Scrum Team | Stakeholders |
@@ -2027,10 +1764,10 @@ Với team sinh viên nhỏ, một người có thể giữ nhiều role.
 
 # 40. Source-of-Truth Rules
 
-Tránh duplicate cùng một thông tin ở nhiều nơi.
+Avoid duplicate authorities. Later artifacts link to their sources rather than restate them.
 
 | Information | Source of Truth |
-|---|---|
+| --- | --- |
 | Business intent | BRD |
 | Product behavior | PRD |
 | Software requirements | SRS |
@@ -2040,73 +1777,53 @@ Tránh duplicate cùng một thông tin ở nhiều nơi.
 | Story behavior | User Story + Acceptance Criteria |
 | QA classifications/scenario evidence | Quality Attribute Analysis; normative measures remain in SRS |
 | Architecture drivers and significant requirements | ASR |
-| Architecture options/trade-offs/recommendations | Architecture Decision Analysis |
-| Explicit current architecture selections/deferrals | Selected Architecture Decisions |
-| Architecture design | ADD + Views |
-| Architectural decision history | ADR |
+| Architecture problems/options/trade-offs/recommendations/confidence | Architecture Decision Analysis |
+| Authoritative selections/rationale/developer impact and retained selection history | Selected Architecture Decisions, linked to ADA |
+| Architecture realization | ADD + four architecture views |
+| Optional dedicated history of a significant future architecture change | Standalone ADR, only when justified; links to ADA/selection, not a competing current authority |
 | HTTP API contract | OpenAPI |
 | AI service contract | `ai-service-contract.md` |
-| Executable DB schema | migration/schema code |
-| Data relationships/ownership | Data View |
-| Current code | source code |
-| Build/test state | CI |
-| Sprint commitments | Sprint Backlog |
-| Release state | deployment/release artifacts |
+| Executable DB schema | Migration/schema code |
+| Logical data relationships/ownership/stores | Data View |
+| Necessary implementation-level design explanation | Living story-scoped contract/data/Sequence/State/design artifacts created during Sprint execution |
+| Current code | Source code |
+| Build/test state | CI and applicable verification evidence |
+| Sprint Goal, selected work and evolving implementation plan | Sprint Goal + Sprint Backlog |
+| Release state | Deployment/release artifacts |
+
+ADA and Selected Architecture Decisions already preserve the current decision baseline. New ADR files are neither a prerequisite to implementation nor a requirement for each ADA ID.
 
 ---
 
 # 41. Change Propagation
 
-## Requirement Change Example
+## Requirement Change
 
-Suppose image size changes from 10 MB to 20 MB:
+When a requirement changes, update its owning authority, then only affected rules, Use Cases/Activities, Story/AC, contracts, implementation and verification evidence. Update architecture only if architectural truth changes.
 
-```text
-SRS
- ↓
-Use Case / Activity if affected
- ↓
-User Story / Acceptance Criteria
- ↓
-API validation
- ↓
-OpenAPI
- ↓
-Implementation
- ↓
-Tests
-```
+A changed image-size limit, for example, affects the SRS, relevant user behavior, validation/API contract and tests. It does not automatically require a new ASR or architecture decision. If the implementing Story is not selected, retain the work in the Product Backlog rather than completing its detailed design in advance.
 
-Architecture documents change only if architecture is affected.
+## Architecture Change
 
-## Architecture Change Example
-
-Suppose AI processing changes:
+A hypothetical change from synchronous to asynchronous analysis would require evidence and renewed selection; this example changes no current CapsuleAI decision.
 
 ```text
-Synchronous
-→ Asynchronous
-```
-
-Review requirement/QA/ASR impact first; update those only if their underlying truth changes. Then follow:
-
-```text
-Architecture Decision Analysis (affected ADA IDs)
- ↓
+Review requirement / QA / ASR impact; update only changed truth
+        ↓
+Affected ADA analysis / re-analysis
+        ↓
 Explicit human selection / Selected Architecture Decisions
- ↓
-Affected ADD
- ↓
-Affected Logical → Implementation → Deployment → Data Views
- ↓
-Consequential ADR / supersession
- ↓
-Affected detailed API / Data / Sequence / State Design
- ↓
-Test Strategy / tests / operating evidence
+        ↓
+Affected ADD and architecture views
+        ↓
+Selected Sprint Story's JIT Detailed Design
+        ↓
+Automated Test + Implementation / verification
 ```
 
-User Stories/AC change only if their scoped behavior or references genuinely change; a communication tactic alone is not new product scope.
+For significant future evolution, a standalone ADR may optionally preserve the historical transition, linked to the same ADA/selection and affected views. It is not an additional compulsory stage.
+
+Update Test Strategy or engineering conventions when the changed verification/delivery approach warrants it. User Stories/AC change only when their behavior or source references change; a tactic alone creates no product scope. Preserve decision history and supersession without duplicating current authority.
 
 ---
 
@@ -2131,46 +1848,19 @@ Whenever an AI model is asked to create or update diagrams for this repository, 
 
 # 43. Architecture Evolution Rule
 
-Architecture is not frozen before Sprint 1.
+Architecture evolves with evidence. The initial sufficient baseline is QA → ASR → ADA → explicit human Selected Architecture Decisions → ADD + four views. It does not require standalone ADR files or all implementation detail.
 
-Start with:
+For example, the current selected direction starts without a dedicated cache. If measured representative recommendation latency later no longer satisfies requirements:
 
-```text
-ASR v0.1
-Architecture Decision Analysis v0.1
-Selected Architecture Decisions (explicit gate)
-ADD v0.1
-Logical View v0.1
-Implementation View v0.1
-Deployment View v0.1
-Data View v0.1
-Consequential ADRs
-```
+1. Review the evidence and requirement/QA/ASR impact.
+2. Re-analyze the relevant ADA alternatives against correctness, freshness, privacy and operating cost.
+3. Obtain explicit human selection and retain the superseded choice/history.
+4. Update only affected ADD/views and the selected Sprint work's JIT design, tests and implementation.
+5. Optionally create a standalone ADR if this consequential transition benefits from a dedicated historical record.
 
-Then evolve.
+Introducing Redis is an example of a possible future choice, not a decision made by this workflow. The existing no-cache selection remains in force unless explicitly changed through that process.
 
-Example:
-
-```text
-Sprint evidence
-Measured recommendation workload suggests cache need
-        ↓
-Check requirements / QA / ASR impact; update only if changed
-        ↓
-ADA comparison against correctness/currentness and operating cost
-        ↓
-Human selection; preserve superseded choice where applicable
-        ↓
-Affected ADD
-        ↓
-Affected Logical / Implementation / Deployment / Data Views
-        ↓
-Consequential ADR
-        ↓
-Detailed design / tests / Code
-```
-
-This is **Agile Architecture**, not Big Design Up Front. Keep baselines sufficient and iterative: the human gate controls consequential choices without requiring every low-level detail to be fixed before delivery.
+Stable boundaries guide delivery early; details are resolved as late as responsibly possible. Neither a frozen whole-MVP design nor ungoverned code-first development replaces the agreed baseline.
 
 ---
 
@@ -2219,86 +1909,42 @@ Diagram that duplicates code without adding understanding
 
 # 45. End-to-End Example — Add Garment
 
-The expected traceability chain is:
+This is a traceability and timing example, not a Sprint selection or a change to backlog order. The existing manual-add Story (US-GAR-001 / PBI-006) can use the following path **if later selected**:
 
 ```text
-BRD
-Business need: reduce manual wardrobe digitization effort
+BRD / PRD: trustworthy wardrobe understanding and manual continuity
         ↓
-PRD
-Feature: AI Digital Closet
+SRS / Business Rules: confirmed minimum, authority, readiness and safe acceptance
         ↓
-SRS
-FR-WAR-...
-FR-AI-...
-NFR-PERF-...
+UC-007 / AD-007: manual-entry branch and shared confirmation/recovery
         ↓
-Use Case
-UC-02 Add Garment
+PBI-006 → US-GAR-001 / Acceptance Criteria
         ↓
-UML Activity Diagram
-ACT-02 Garment Ingestion
+QA / ASR → ADA → Selected Architecture Decisions
         ↓
-Product Backlog
-US-003 Upload Garment
-US-004 Process Garment
-US-005 Confirm Attributes
+ADD + Logical / Implementation / Deployment / Data Views
         ↓
-14 QA Analysis
-Performance / Reliability / Flexibility / Interoperability
+Project-wide Test Strategy → Engineering Baseline
         ↓
-ASR
-Complete processing latency, authority and fallback requirements
+Backlog Refinement: clarify outcome, constraints, feasibility and testability
         ↓
-Architecture Decision Analysis
-Compare execution / interaction / resource directions
+Sprint Planning: select the Story within a coherent Sprint Goal
         ↓
-Selected Architecture Decisions
-Explicitly chosen options or safe bounded deferrals
-        ↓
-ADD
-Tactics and architecture given selected inputs
-        ↓
-Logical View
-Wardrobe ↔ Garment Processing
-        ↓
-Implementation View
-Selected core implementation ↔ selected analysis adapter/runtime
-        ↓
-Deployment View
-Mobile → Backend → AI Runtime → Storage/DB
-        ↓
-Data View
-Garment + image + attributes + processing status
-        ↓
-Consequential ADRs
-Selected rationale / alternatives / consequences
-        ↓
-Detailed API / Data / UML Sequence / UML State Design as needed
-Runtime and contract realization
-        ↓
-Test Strategy
-        ↓
-Engineering Baseline
-        ↓
-Sprint Readiness
-        ↓
-Sprint Planning / Sprint Backlog
-        ↓
-Implementation
-        ↓
-Tests
-        ↓
-PR / CI / Review
-        ↓
-Working Increment
+Sprint Execution:
+JIT API/Data/interaction/transaction detail only where needed
+→ Automated Test + Implementation → Refactor / Integration Verification
+→ PR / CI / Review → Done → Working Increment
 ```
+
+Existing AC and DoD govern completion; no image or AI success is introduced as a manual-entry prerequisite. Photo/AI assistance retains its own existing backlog boundaries and receives JIT detail only when its work is selected. The architecture decision baseline is reused rather than copied into ADR files.
 
 ---
 
 # 46. What the Team Should Do From Today
 
-Follow this reusable order. Current artifacts' historical handoffs do not require restarting completed preparation. Major architecture recommendations remain proposed until the responsible human selects; no downstream baseline bypasses the Section 17.3 gate.
+**Current position — 2026-10-20:** the system-wide requirements, Business Rules, Use Cases/Activities, Product Backlog/initial stories, QA/ASR, ADA, Selected Architecture Decisions, ADD and four architecture views already exist. All 18 recorded architecture selections remain unchanged. The next project-wide preparation activity is **Test Strategy**, followed by **Engineering Baseline**. Do not restart completed baseline work, create baseline ADRs or design the whole MVP.
+
+This process revision changes neither artifact approval statuses nor claims of implementation or verification. Existing source-specific historical handoffs remain history; this section and DD-006 provide current process navigation.
 
 | # | Action | Main Output |
 | ---: | --- | --- |
@@ -2312,139 +1958,101 @@ Follow this reusable order. Current artifacts' historical handoffs do not requir
 | 8 | Draw core workflows | UML Activity Diagrams |
 | 9 | Define Product Goal | `product-goal.md` |
 | 10 | Create initial Product Backlog | `product-backlog.md` |
-| 11 | Create initial User Stories for top backlog | `US-*.md` |
+| 11 | Create initial User Stories for top backlog | `US-*.md` + Acceptance Criteria |
 | 12 | Define Definition of Done | `definition-of-done.md` |
 | 13 | Analyze all 14 Quality Attributes | `quality-attribute-analysis.md` |
 | 14 | Identify ASRs and architectural drivers | `ASR.md` |
-| 15 | Compare major architecture choices; recommend without selecting | `architecture-decision-analysis.md` |
+| 15 | Compare major choices; recommend without selecting | `architecture-decision-analysis.md` |
 | 16 | Human review and explicit selection / safe bounded deferral | `selected-architecture-decisions.md` |
-| 17 | Create ADD baseline from ASRs and selected directions | `ADD.md` |
-| 18 | Draw Logical View | `logical-view.puml` |
-| 19 | Draw Implementation View | `implementation-view.puml` |
-| 20 | Draw Deployment View | `deployment-view.puml` |
-| 21 | Draw Data View | `data-view.puml` |
-| 22 | Preserve consequential selected rationale | ADR files |
-| 23 | Define initial detailed API/service and data design; complex interactions/lifecycles as needed | API/OpenAPI, data design, UML Sequence/State artifacts |
-| 24 | Create Test Strategy | `test-strategy.md` |
-| 25 | Prepare repository/build/CI/environments | engineering baseline |
-| 26 | Refine upcoming Sprint stories and assess dependencies/readiness | Ready stories |
-| 27 | Conduct Sprint Planning | Sprint Goal + Sprint Backlog |
-| 28 | Start Sprint implementation | Working Increment |
-| 29 | Run review/test/CI continuously | quality feedback |
-| 30 | Conduct Sprint Review | `review.md` |
-| 31 | Conduct Sprint Retrospective | `retrospective.md` |
-| 32 | Update backlog/requirements/architecture where truth changes | evolved baseline |
-| 33 | Start next Sprint | repeat |
+| 17 | Realize selected directions in ADD | `ADD.md` |
+| 18 | Maintain Logical View | `logical-view.puml` |
+| 19 | Maintain Implementation View | `implementation-view.puml` |
+| 20 | Maintain Deployment View | `deployment-view.puml` |
+| 21 | Maintain Data View; system-wide baseline now exists | `data-view.puml` |
+| 22 | Define project-wide Test Strategy | `test-strategy.md` when authorized |
+| 23 | Prepare repository/build/CI/environments/testing foundation | timeboxed Engineering Baseline |
+| 24 | Refine candidate work enough for feasibility, estimation/selection and readiness | understandable candidate Stories/AC; bounded Spikes where necessary |
+| 25 | Conduct Sprint Planning | Sprint Goal + selected PBIs + initial Sprint Backlog |
+| 26 | During Sprint execution, design one selected Story Just-In-Time | only necessary API/Data/Sequence/State/transaction/algorithm/integration detail |
+| 27 | Develop with automated tests and implementation together; refactor and verify integration | tested integrated behavior |
+| 28 | Use PR, CI and code review continuously; resolve findings | review/verification evidence |
+| 29 | Meet applicable Story AC + DoD | Done work contributing to a usable Working Increment |
+| 30 | Conduct Sprint Review | Increment inspection, feedback and `review.md` |
+| 31 | Conduct Sprint Retrospective | improvement actions and `retrospective.md` |
+| 32 | Update backlog/requirements/architecture only where truth changes | evolved authoritative artifacts and traceability |
+| 33 | Continue refinement and the next Sprint | repeat iterative delivery |
 
-The canonical architecture-to-delivery sequence is:
+Steps 1–21 describe the existing system-wide baseline, not work to repeat. Steps 22–23 are shared preparation before Sprint 1 implementation. Steps 24–33 form the ongoing delivery loop; Steps 26–29 repeat per selected Story within the Sprint, not as batches for the whole Sprint/MVP. Refinement continues throughout delivery.
 
 ```text
-Requirements → Quality Attribute Analysis → ASR
-→ Architecture Decision Analysis → Selected Architecture Decisions
-→ ADD → Logical View → Implementation View → Deployment View → Data View
-→ ADRs → Detailed API / Data / Sequence / State Design
-→ Test Strategy → Engineering Baseline → Sprint Readiness
-→ Sprint Planning → Implementation
+Architecture Baseline
+        ↓
+Test Strategy → Engineering Baseline
+        ↓
+Backlog Refinement → Sprint Planning
+        ↓
+Sprint Execution, per selected Story:
+JIT Detailed Design → Automated Test + Implementation
+→ Refactor / Integration Verification → PR / CI / Review → Done
+        ↓
+Working Increment → Sprint Review → Sprint Retrospective
+        ↓
+Update affected Backlog / Requirements / Architecture → Next Sprint
 ```
+
+Standalone ADRs are optional future evolution records under Section 25; they are outside this mandatory execution sequence.
 
 ---
 
 # 47. Final Operating Model
 
-CapsuleAI has three continuously connected tracks.
+Requirements, architecture and Scrum delivery remain continuously connected. Project-wide engineering preparation connects the existing baseline to Sprint 1 implementation.
 
 ## Requirements Track
 
 ```text
-BRD
- ↓
-PRD
- ↓
-SRS
- ↓
-Business Rules
- ↓
-Use Cases
- ↓
-UML Activity Diagrams
+BRD → PRD → SRS → Business Rules → Use Cases / UML Activities
 ```
 
 ## Architecture Track
 
 ```text
-14 Quality Attribute Analysis
- ↓
-ASR
- ↓
-Architecture Decision Analysis
- ↓
-Selected Architecture Decisions (human gate)
- ↓
-ADD
- ↓
-Logical View
- ↓
-Implementation View
- ↓
-Deployment View
- ↓
-Data View
- ↓
-ADRs
- ↓
-Detailed API / Data / UML Sequence / UML State Design
- ↓
-Test Strategy
- ↓
-Engineering Baseline
- ↓
-Sprint Readiness → Sprint Planning → Implementation
+14 QA Analysis → ASR → Architecture Decision Analysis
+→ Selected Architecture Decisions (explicit human gate)
+→ ADD → Logical / Implementation / Deployment / Data Views
 ```
 
-## Scrum Delivery Track
+ADA and the selected record preserve decision reasoning and history. Optional ADRs may support significant future evolution; they do not add a baseline phase.
+
+## Shared Engineering Preparation
 
 ```text
-Product Goal
- ↓
-Product Backlog
- ↓
-Refinement
- ↓
-Sprint Goal
- ↓
-Sprint Backlog
- ↓
-User Stories
- ↓
-Implementation
- ↓
-Tests / Review / CI
- ↓
+Architecture Baseline → Test Strategy → Engineering Baseline
+```
+
+## Iterative Scrum Delivery Track
+
+```text
+Product Goal / evolving Product Backlog
+        ↓
+Ongoing Backlog Refinement
+        ↓
+Sprint Planning: Sprint Goal + selected PBIs + initial plan
+        ↓
+Sprint Execution, story by story:
+JIT Detailed Design → Automated Test + Implementation
+→ Refactor / Integration Verification → PR / CI / Review → Done
+        ↓
 Working Increment
- ↓
-Sprint Review
- ↓
-Retrospective
- ↓
-Product Backlog
+        ↓
+Sprint Review → Sprint Retrospective
+        ↓
+Update affected Backlog / Requirements / Architecture
+        ↓
+Next Sprint
 ```
 
-They interact continuously:
-
-```text
-Requirements
-     ↓
-Architecture
-     ↓
-Product Backlog
-     ↓
-Sprint
-     ↓
-Code
-     ↓
-Feedback
-     └────────────→ Requirements / Architecture / Backlog
-```
+Learning flows back continuously, not only at the end of a Sprint. Change only affected authorities, preserve traceability and keep the Sprint Backlog adaptable. There is one implementation-level design concept: selected-story JIT design inside Sprint execution.
 
 ---
 
@@ -2452,46 +2060,53 @@ Feedback
 
 1. **Scrum is the delivery model; Jira is not required.**
 2. **All project documentation is version-controlled in the codebase.**
-3. **Requirements explain what must be true; architecture explains how the system satisfies the important requirements.**
-4. **Evaluate all 14 Quality Attributes, but only significant ones need deep scenarios.**
-5. **ASR precedes comparative Architecture Decision Analysis; explicit human selection precedes ADD. Recommendation is not selection.**
-6. **ADD consumes ASRs and the Selected Architecture Decisions record; it owns architecture design and the four primary views. ADRs follow those views and preserve consequential rationale.**
-7. **Logical, Implementation, Deployment and Data Views are mandatory architecture views for CapsuleAI.**
-8. **Use Case, Activity, Sequence and State diagrams use UML, stored preferably as PlantUML source.**
-9. **Do not draw diagrams merely for documentation volume.**
-10. **Product Backlog and User Stories are living artifacts, not frozen plans.**
-11. **Architecture evolves during Sprints.**
-12. **Every Sprint must aim to produce a usable Increment.**
+3. **Requirements explain what must be true; architecture explains how the system satisfies important requirements.**
+4. **Evaluate all 14 Quality Attributes; only significant ones need deep scenarios.**
+5. **ASR precedes ADA; explicit human selection precedes ADD. Recommendation is not selection.**
+6. **ADA and Selected Architecture Decisions already preserve the current decision baseline; ADD and four views realize it. Standalone ADRs are optional for consequential future evolution.**
+7. **Logical, Implementation, Deployment and Data Views remain mandatory architecture views for CapsuleAI.**
+8. **Use Case, Activity, Sequence and State diagrams use UML, preferably PlantUML source; create conditional diagrams only when useful.**
+9. **Do not create documentation merely for volume.**
+10. **Product Backlog and User Stories remain living artifacts.**
+11. **Architecture evolves during Sprints when evidence warrants change.**
+12. **Every Sprint aims for a usable Increment.**
 13. **Acceptance Criteria must be testable.**
 14. **Quality Attribute requirements must be measurable/testable.**
-15. **Documentation is updated when the underlying truth changes.**
+15. **Update documentation when its underlying truth changes.**
 16. **Avoid duplicate sources of truth.**
 17. **Prefer traceability over paperwork.**
-18. **Prefer simple architecture justified by ASRs over fashionable architecture without requirements.**
-19. **Tests and CI are part of development, not a final phase.**
-20. **Feedback from Review, testing and production returns to the Product Backlog.**
+18. **Prefer sufficient architecture justified by ASRs and constraints.**
+19. **Automated tests, integration verification, review and CI are part of development; selective TDD is optional.**
+20. **Review, testing and operating feedback return to the Product Backlog.**
+21. **Architecture early, Detailed Design late: stable boundaries early; implementation details Just-In-Time.**
+22. **Refinement prepares candidate Stories; it does not fully design implementation.**
+23. **Sprint Planning selects work before its full JIT Detailed Design.**
+24. **JIT design happens inside execution, story by story, proportional to complexity and risk.**
+25. **Test Strategy and Engineering Baseline are shared preparation before Sprint 1 implementation; neither requires complete MVP detailed design.**
 
 ---
 
 # 49. Instruction for Future AI Models
 
-When an AI model is asked to help continue CapsuleAI, it should:
+When continuing CapsuleAI:
 
-1. Read this workflow first.
-2. Identify the current project phase and Sprint.
-3. Inspect existing documents before creating new ones.
-4. Preserve IDs such as `FR-*`, `NFR-*`, `BR-*`, `UC-*`, `US-*`, `ASR-*`, `QA-*`, `ADA-*`, `ADR-*`.
-5. Follow the source-of-truth rules.
-6. Do not duplicate information across files unnecessarily.
-7. Maintain traceability among requirements, stories, architecture and tests.
-8. Use UML/PlantUML for UML diagrams.
-9. Keep the four ADD architecture views synchronized with the actual system.
-10. Update only affected QA/ASR, ADA, selected-decision record, ADD/views and ADRs when their underlying truth changes. Preserve the analysis → human selection → ADD → four views → ADR order; do not edit ASRs merely because a tactic changes.
-11. Do not over-engineer the system.
-12. Do not introduce a technology unless a requirement, ASR or engineering constraint justifies it.
-13. Preserve Scrum's iterative nature rather than turning the workflow into Waterfall.
-14. Prioritize a working Increment every Sprint.
-15. Treat this document as the high-level process authority for CapsuleAI unless the team explicitly revises it.
-16. Never invent a human preference/approval or promote a proposed recommendation into a Selected decision. Preserve stable ADA IDs and analyzed alternatives.
-17. Create the selected-decision record only after actual human selection; create ADD/views only after the major-choice gate. Later detailed design, Test Strategy, engineering preparation and Sprint artifacts follow their own stages.
-18. Keep reusable process guidance generic. A historical technology or another project's architecture is not a mandate.
+1. Read this workflow and current relevant repository artifacts first; repository truth overrides memory.
+2. Identify the current baseline, engineering-preparation state and actual Sprint Backlog before proposing next work.
+3. Inspect existing files before creating new ones; do not repeat completed baseline work.
+4. Preserve stable `FR-*`, `NFR-*`, `BR-*`, `UC-*`, `PBI-*`, `US-*`, `ASR-*`, `QA-*`, `ADA-*` and any existing `ADR-*` IDs.
+5. Follow source ownership and maintain traceability among requirements, Stories, architecture and tests.
+6. Use ADA for analysis and Selected Architecture Decisions for authoritative selections/history. Do not create one ADR per ADA or invent approval/selection.
+7. Keep ADD and the four views synchronized only when architectural truth changes; update QA/ASR only when requirements/drivers change.
+8. Follow analysis → explicit human selection → affected ADD/views for consequential architecture changes. A future standalone ADR is optional under Section 25.
+9. Preserve UML/PlantUML standards and the abstraction boundaries of each artifact.
+10. After the existing architecture baseline, proceed to authorized Test Strategy and Engineering Baseline work; do not require full API/Data/Sequence/State design first.
+11. Refine candidate Stories only enough for clarity, feasibility, testability and estimation/selection; investigate major unknowns with bounded Spikes.
+12. Sprint Planning establishes the Sprint Goal, selected PBIs and initial Sprint Backlog. Draft Stories, backlog order and examples do not authorize Sprint selection.
+13. Perform JIT / Just-Enough Detailed Design only for work actually selected into the Sprint, during execution. Create only artifacts justified by complexity/risk.
+14. Use the same JIT → Automated Test + Implementation → Refactor / Integration Verification → PR / CI / Review → Done loop. Do not add a second generic Design phase or final-only testing stage.
+15. Apply Story AC and the project DoD; preserve a usable integrated Increment rather than counting documents or isolated tasks as Done.
+16. Update contracts, schemas/migrations, diagrams and tests with delivered truth; requirements and architecture change only when their respective truth changes.
+17. Preserve Product Owner ordering, PO/BA Story/AC responsibilities and Developer ownership of the evolving Sprint Backlog. Do not invent Sprint Goals, scope, estimates or capacity.
+18. Avoid over-engineering, duplicate authorities and unjustified technologies; historical examples are not selections.
+19. Keep Scrum iterative and incremental, with Review/Retrospective feedback informing subsequent work.
+20. Treat this file as process authority unless the team explicitly revises it; process navigation does not claim artifact approval or software verification.

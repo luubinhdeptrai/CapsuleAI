@@ -5,10 +5,10 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Decision Analysis |
-| Version | 0.2.6 |
+| Version | 0.2.7 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
-| Last Updated | 2026-10-11 |
+| Last Updated | 2026-10-20 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
@@ -24,6 +24,7 @@
 | 0.2.4 | 2026-10-10 | Linked Implementation View v0.1 and recorded explicit human acceptance of the Logical decomposition; review precedes Deployment View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.5 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.6 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
+| 0.2.7 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
 
 ## 2. Purpose
 
@@ -37,7 +38,7 @@ The selected business-core direction is a modular monolith with **service-extrac
 | Architecture Decision Analysis (ADA) | Problems, credible alternatives, trade-offs, recommendation and confidence. |
 | Selected Architecture Decisions | Explicit human selection or justified bounded deferral of analyzed options. |
 | ADD and its views | Architecture structure and realization given ASRs and explicitly selected directions. |
-| ADR | Durable rationale, alternatives and consequences for consequential selected decisions, recorded later in this workflow. |
+| Optional future ADR | A dedicated historical record only when significant future architecture evolution benefits from it; no baseline phase or one-to-one ADA mapping. ADA and the selected record already preserve the current decision baseline. |
 
 **Recommendation is not selection.** The Project Owner / Backend Developer explicitly accepted every current ADA-001–018 recommendation on 2026-10-10; all are now **Selected**, without override or deferral. The separate [selection record](selected-architecture-decisions.md) governs the chosen options. The analytical comparisons and conditional consequences below retain their v0.2 wording, importance, confidence and evidence gaps; selection does not prove conformance or benchmarks. Detailed providers, versions and topology remain downstream. A material new alternative still requires analysis and explicit selection.
 
@@ -120,6 +121,8 @@ All 18 entries are Selected through the separate human [selection record](select
 | ADA-016 | Context Data Ownership | Critical Before ADD | One PostgreSQL database initially with explicit context-owned logical persistence boundaries | High | Selected |
 | ADA-017 | Inter-Context Communication | Critical Before ADD | Explicit published module contracts; synchronous local or event-based interaction follows business semantics | High | Selected |
 | ADA-018 | Context Model Isolation and Anti-Corruption | Important Before ADD | Published contracts + Anti-Corruption Layer translation at meaningful semantic boundaries | High | Selected |
+
+**Process navigation clarification — 2026-10-20:** retained analytical references to “Detailed Design / ADR” or “later ADRs” do not mandate new baseline ADR files. Implementation detail is JIT for selected Stories after Sprint Planning, during execution; an ADR is optional only for significant future architecture evolution. Analytical options, trade-offs and selections below are unchanged.
 
 ## 5. Major Architecture Decision Analyses
 
@@ -1556,7 +1559,7 @@ This map tests boundary quality; it is not a module decomposition, migration com
 
 ## 8. Human Selection and Historical Review Guidance
 
-**Current state — 2026-10-11:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed on 2026-10-10. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD](ADD.md) realizes them. **Data View review → ADRs** is the current handoff. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines in the current Data View instruction. [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review. Then follow ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation. All eight Critical and ten Important choices remain selected; evidence gaps remain realization/verification work.
+**Current state — 2026-10-20:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed on 2026-10-10. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD](ADD.md) realizes them. **Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All eight Critical and ten Important choices remain selected; evidence gaps remain realization/verification work.
 
 ### Historical v0.2 Review Guidance
 
@@ -1630,8 +1633,8 @@ Reliability/Security remain Critical; Conceptual Integrity/Interoperability/Test
 
 ## 11. Status and Next Step
 
-**Version 0.2.6 — Baseline Draft. ADA-001–018 Selected.** Explicit human selection on 2026-10-10 remains in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges ADD, all three human-accepted preceding views and the Data View draft. Analytical recommendations, trade-offs, importance, confidence and evidence gaps remain unchanged; Data View approval, software conformance and benchmark success are not claimed.
+**Version 0.2.7 — Baseline Draft. ADA-001–018 Selected.** Explicit human selection on 2026-10-10 remains in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges ADD, all three human-accepted preceding views and the Data View draft. Analytical recommendations, trade-offs, importance, confidence and evidence gaps remain unchanged; Data View approval, software conformance and benchmark success are not claimed.
 
-**Data View review → ADRs** is the current handoff. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines in the current Data View instruction. [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review. Then follow ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation. All Critical/Important recommendations remain Selected without override or deferral.
+**Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All Critical/Important recommendations remain Selected without override or deferral.
 
-This revision synchronizes current navigation only; ADD and all four architecture views exist separately. Historical revisions and preselection guidance remain visible; all ADA analytical content/statuses are unchanged. No product requirement, QA scenario or ASR obligation changes. Data View review, ADRs, detailed design, Test Strategy, Sprint artifacts and code remain downstream.
+This revision synchronizes current navigation only; ADD and all four architecture views exist separately. Historical revisions and preselection guidance remain visible; all ADA analytical content/statuses are unchanged. No product requirement, QA scenario or ASR obligation changes. Test Strategy and Engineering Baseline remain the next shared preparation activities. JIT design follows selection during Sprint execution; standalone ADRs are optional for significant future evolution. No Sprint scope or code is created.

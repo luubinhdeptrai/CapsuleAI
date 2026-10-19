@@ -5,9 +5,9 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Quality Attribute Analysis |
-| Version | 0.1.7 |
+| Version | 0.1.8 |
 | Status | Baseline Draft |
-| Last Updated | 2026-10-11 |
+| Last Updated | 2026-10-20 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 |
 | Method Reference | [14 Quality Attributes — architecture learning material](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md) |
@@ -24,6 +24,7 @@
 | 0.1.5 | 2026-10-10 | Linked Implementation View v0.1 and recorded explicit human acceptance of the Logical decomposition; review precedes Deployment View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.6 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.7 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
+| 0.1.8 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
 
 ## 2. Purpose
 
@@ -448,7 +449,7 @@ Sources: SRS NFR-SUP-001/002, NFR-TEST-002, NFR-SEC-003, FR-WAR-008, FR-MET-006 
 
 ## 20. Cross-Quality Trade-offs
 
-These tensions inform ASR identification → Architecture Decision Analysis → explicit human selection → ADD/views and later ADR rationale. Current obligations remain in force; the analysis selects no resolution.
+These tensions inform ASR identification → Architecture Decision Analysis → explicit human selection → ADD/views; ADA and the selected record already retain decision rationale. A future standalone ADR is optional under Workflow Section 25. Current obligations remain in force; the analysis selects no resolution.
 
 | Potential tension | CapsuleAI consequence to examine later |
 | --- | --- |
@@ -476,7 +477,7 @@ The following are existing imposed boundaries or mandated policies. Their relate
 | Immediate effective removal, 30-day applicable physical deletion and 90-day user-linked measurement maximum | DATA-RET-001–003; FR-WAR-005; FR-WEAR-007; FR-MET-006; SRS Section 12.1 | Preserve necessary minimal history separately from removed images/nonessential data and measurement. Enforcement technology remains open; no account-delete/export product or statutory certification is added. |
 | Logical external interactions and bounded evidence policies | SI-001–004; FR-WEATHER-003–005; FR-SHOP-001/003; SRS Section 12.2 | Analysis may be internal/external; weather age ≤30 minutes and wait ≤2 seconds; credible commercial price/availability up to 24 hours before refresh/stale qualification/omission. No provider or mandatory retailer contract. |
 | Commerce remains optional external navigation | BR-024; FR-SHOP-005–008; UC-023 extension of UC-021 | No native cart/checkout/payment/order/fulfillment, verified purchase or automatic ownership/Wear from navigation. |
-| Workflow ownership, evolving documentation and artifact order | Workflow Sections 39–43/46; DD-001–006; DoD | Architecture follows quality analysis and ASR identification; contracts, test strategy and engineering preparation precede later Sprint readiness/planning. Product ordering remains PO-accountable; no Sprint commitment or developer-owned product ranking. |
+| Workflow ownership, evolving documentation and artifact order | Workflow Sections 39–43/46; DD-001–006; DoD | Architecture follows quality analysis and ASR identification. Test Strategy and Engineering Baseline precede Sprint delivery; refinement and Sprint Planning precede selected-story JIT contracts/data/interaction design during execution. Product ordering remains PO-accountable; no Sprint commitment or developer-owned product ranking. |
 
 **Historical technology directions.** The [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), Sections 6 and 15.1, proposes React Native, Java/Spring Boot, MongoDB, AWS S3 and a Python AI/CV route, including an older “option B” selection. The [official outline](../../Initial%20files/%C4%90%E1%BB%80%20C%C6%AF%C6%A0NG%20%C4%90%E1%BB%92%20%C3%81N%202_%20H%E1%BB%86%20TH%E1%BB%90NG%20QU%E1%BA%A2N%20L%C3%9D%20V%C3%80%20G%E1%BB%A2I%20%C3%9D%20PH%E1%BB%90I%20%C4%90%E1%BB%92%20TH%C3%94NG%20MINH.md), Section 4.3, contains similar projected technology and older hardware direction. These remain historical inputs under SRS Section 1.5, PRD Sections 25/29 and current backlog authority; they are not promoted to hard current stack, AI-service topology, GPU, database or cloud constraints. JWT is different because current PRD/SRS explicitly preserve it. No code, CI configuration or later current architecture decision artifact was present to establish additional choices.
 
@@ -508,7 +509,7 @@ These are concerns to examine in formal ASR identification, without ASR IDs or c
 - Treat Coverage and Multiplier as evidence-based assessments. Exact utility needs complete consistent sets; incomplete/unavailable/outdated is never a fabricated zero.
 - Measure complete operations under existing SRS conditions. Keep nominal p95, concurrent integrity and restart recovery separate; do not introduce general API or Multiplier timing promises.
 - Make required dependency outcomes and diagnostic evidence inspectable with minimal private content. Work with mobile/AI/QA on real integration, accessibility and validation evidence under the DoD.
-- Bring feasibility and implementation concerns into later architecture/refinement work. Database, topology, communication, caching and JWT realization follow ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD/views → ADRs; backlog order and product-scope decisions remain with their responsible roles.
+- Bring feasibility and implementation concerns into later architecture/refinement work. Database, topology, communication, caching and JWT realization use ASR → Architecture Decision Analysis → Selected Architecture Decisions → ADD/views, with implementation detail resolved Just-In-Time for selected Sprint work; backlog order and product-scope decisions remain with their responsible roles.
 
 ## 24. Traceability
 
@@ -532,12 +533,12 @@ Detailed scenario source lines and attribute drivers are the primary traceabilit
 
 **Source interpretation and issues.** No blocking contradiction in current quality obligations was found. FR-MET-004 contains an incomplete benchmark cross-reference, already noted in Product Backlog Section 11. Recognition/preview evidence uses explicit SRS Section 8.1/3.4.1; timing uses Section 12.3 and NFR-TEST-003. The editorial defect does not remove those acceptance criteria. Historical directions that conflict with normalized scope/thresholds remain historical under Section 21; no upstream artifact is repaired or overridden here.
 
-Older artifacts' “next artifact” statements describe their own handoff point. Current progression follows Workflow Section 46 and DD-006: QA → ASR → ADA → explicit human selection → ADD/views → ADRs → detailed design and delivery preparation. Initial artifact-specific handoffs do not restart completed preparation. All sources remain drafts where so marked; resolved business/product decisions do not imply formal artifact approval.
+Older artifacts' “next artifact” statements describe their own handoff point. Current progression follows Workflow Section 46 and DD-006: QA → ASR → ADA → explicit human selection → ADD/views → Test Strategy → Engineering Baseline → refinement → Sprint Planning → selected-story JIT design and automated tests/implementation inside execution. Separate ADRs are optional future evolution records. Initial artifact-specific handoffs do not restart completed preparation. All sources remain drafts where so marked; resolved business/product decisions do not imply formal artifact approval.
 
 ## 25. Status
 
-**Version 0.1.7 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. ADD and all four architecture views exist separately; Data View review and detailed design remain downstream, and no upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
+**Version 0.1.8 — Baseline Draft**, prepared for Architect/Tech Lead review with Developers, QA and Product. All 14 attributes are analyzed with discriminating significance; 17 concrete scenarios use the reference's six elements and current acceptance measures. Privacy and Accessibility retain their places within the established taxonomy. This QA analysis itself selects no architecture solution; the separate record linked below governs selections. ADD and all four architecture views exist separately; Test Strategy and Engineering Baseline are next, and detailed implementation design follows Sprint selection during execution. No upstream requirement, backlog/story boundary, estimate or Sprint commitment changes.
 
 **Original v0.1 handoff:** formal ASR identification and architectural-driver selection (Workflow Section 17 and Section 46, Step 14). The preliminary candidates and source/scenario evidence above preserve that analysis stage.
 
-**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions](selected-architecture-decisions.md) records all ADA-001–018 as Selected by explicit human acceptance on 2026-10-10; the gate remains complete. [ADD](ADD.md) includes source scenarios and selected tactics. **Data View review → ADRs** is the current handoff. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml) and [Deployment View v0.1](views/deployment-view.puml) are human-accepted baselines in the current Data View instruction. [Data View v0.1 — Baseline Draft](views/data-view.puml) is available for review. Then follow ADRs → Detailed API/Data/Sequence/State Design as needed → Test Strategy → Engineering Baseline → Sprint Readiness → Sprint Planning → Implementation. This v0.1.7 navigation revision changes no QA classification, scenario body or acceptance measure.
+**Current navigation:** [ASR](ASR.md) and [Architecture Decision Analysis](architecture-decision-analysis.md) drafts exist. [Selected Architecture Decisions](selected-architecture-decisions.md) records all ADA-001–018 as Selected by explicit human acceptance on 2026-10-10; the gate remains complete. [ADD](ADD.md) includes source scenarios and selected tactics. **Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. This v0.1.8 navigation revision changes no QA classification, scenario body or acceptance measure.

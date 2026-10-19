@@ -6,7 +6,7 @@
 ' Human acceptance of both existing views is explicit in this Deployment View task.
 ' Source versions are authoring inputs; subsequent navigation-only patches preserve meaning.
 ' Navigation update only, 2026-10-11: all three preceding views human-accepted; Data v0.1 exists.
-' Runtime/resources/trust boundaries unchanged; Data View review precedes ADRs.
+' Runtime/resources/trust boundaries unchanged; 2026-10-20 handoff: Test Strategy, then Engineering Baseline.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 23/39-43/46.
 ' Scope: runtime processes, deployment nodes, durable resources, external systems, communication
 ' and trust boundaries. Controlled environment denotes control, not a physical host or cloud.
@@ -142,6 +142,6 @@ legend bottom
   Supervisor/evidence tooling, providers, protocols, physical placement and capacity remain unresolved.
   AI image transfer/access and media delivery mechanics remain open; Core governs private access.
   Shared-resource failure/contention risks need evidence; no timing, capacity or recovery pass claimed.
-  Next: Data View review -> ADRs.
+  Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
 endlegend
 @enduml

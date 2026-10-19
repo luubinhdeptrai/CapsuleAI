@@ -31,7 +31,7 @@
 ' SRS / Business Rules / ADD; this refactor removes no rule from those authoritative homes.
 ' Draft/evidence/result persistence, physical references/transactions and cleanup realization remain
 ' unresolved detailed design (ADD 9.2-9.9); no shared action/work entity or new decision is selected.
-' Next: Data View review -> ADRs.
+' Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
 
 title CapsuleAI - Data Ownership Overview\nData View v0.1 | Baseline Draft
 allowmixing
