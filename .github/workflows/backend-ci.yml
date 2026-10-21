@@ -1,0 +1,76 @@
+name: Backend verification
+
+on:
+  push:
+    branches: [main, chore/engineering-baseline]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: backend
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Verify Docker availability
+        run: docker info --format '{{.ServerVersion}} {{.OSType}}'
+
+      - name: Build and run required verification
+        run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Require expected test reports
+        run: |
+          $required = @{
+            'surefire-reports/TEST-com.capsuleai.foundation.HarnessSmokeTest.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.foundation.DatabaseSmokeIT.xml' = 1
+          }
+
+          foreach ($entry in $required.GetEnumerator()) {
+            $path = Join-Path 'target' $entry.Key
+
+            if (-not (Test-Path -LiteralPath $path)) {
+              throw "Missing report: $path"
+            }
+
+            [xml]$report = Get-Content -LiteralPath $path -Raw -Encoding UTF8
+            $suite = $report.testsuite
+
+            if ([int]$suite.tests -lt $entry.Value -or
+                [int]$suite.failures -ne 0 -or
+                [int]$suite.errors -ne 0 -or
+                [int]$suite.skipped -ne 0) {
+              throw "Required checks missing, failed or skipped: $path"
+            }
+
+            Write-Host "$($suite.name): $($suite.tests) tests, none failed/skipped"
+          }
+
+      - name: Retain test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+          if-no-files-found: error
