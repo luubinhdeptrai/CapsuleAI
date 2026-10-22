@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-AUTH-003 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-004](../../product-backlog.md#pbi-004--emailpassword-access-and-controllable-sessions) |
+| Domain | Authentication |
 | Theme | Foundation & Access |
 | Product Goal Contribution | [Enabling / Protecting Product Value](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -77,7 +80,7 @@ Existing-session return, access renewal, maximum session lifetime, refresh rotat
 
 **When** I try to open protected wardrobe or another personal area
 
-**Then** CapsuleAI pauses protected use, explains renewed authentication, and offers the login route. After valid credential login, the correct accepted personal state is available and the intended area is restored where practical.
+**Then** CapsuleAI pauses protected use, explains renewed authentication, and offers the login route. A cryptographically valid, unexpired Access Token does not permit protected use through the unusable session/account context. After valid credential login, the correct accepted personal state is available and the intended area is restored where practical.
 
 ### AC-07 — Keep separate sessions distinct
 
@@ -115,6 +118,8 @@ Existing-session return, access renewal, maximum session lifetime, refresh rotat
 - [US-AUTH-002](US-AUTH-002-log-in.md) establishes a credential-based login session and restores access after expiry/revocation. Existing sessions are valid inputs; registration need not run again.
 - Useful sequencing: PBI-003 supplies the common mobile access/recovery experience. [US-AUTH-004](US-AUTH-004-log-out.md) and PBI-005 supply revocation scenarios, not extra gates for every return.
 
+- Related first-private-operation evidence is [US-PRIV-001](../privacy/US-PRIV-001-protect-first-private-operations.md) and common mobile entry is [US-MOB-001](../mobile/US-MOB-001-use-vietnamese-mobile-journey-foundation.md). These drafts clarify the existing PBI-002 / useful PBI-003 support; documented stories do not prove those capabilities implemented.
+
 ## 8. Out of Scope
 
 Credential-login validation is US-AUTH-002; account creation is US-AUTH-001; explicit logout is US-AUTH-004. Password-reset completion and all-account Refresh Session revocation are PBI-005. No session-management dashboard, all-device-logout control, remember-me setting, new access method, storage mechanism or API contract is introduced.
@@ -126,14 +131,18 @@ Credential-login validation is US-AUTH-002; account creation is US-AUTH-001; exp
 | Parent PBI | [PBI-004](../../product-backlog.md#pbi-004--emailpassword-access-and-controllable-sessions) |
 | Business | [BRD](../../../01-business/BRD.md): BR-021, BR-023; CAP-01 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-01; FEAT-AUTH-001 (returning access) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-005, FR-AUTH-006, FR-AUTH-008–FR-AUTH-010, FR-AUTH-013, FR-AUTH-014; DATA-AUTH-005; ERR-AUTH-003, COM-002; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-002; LOC-001 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-005, FR-AUTH-006, FR-AUTH-008–FR-AUTH-010, FR-AUTH-013, FR-AUTH-014; DATA-AUTH-005; ERR-AUTH-003, COM-001, COM-002; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-001, NFR-ACC-002; LOC-001 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-006, BRULE-AUTH-007 |
 | Use Cases | [UC-002 — Log In](../../../03-requirements/use-cases/UC-002-log-in.md), returning-access alternatives and failure flows |
 | Activity Diagrams | None for UC-002 in the current baseline. |
+| Architecture constraint | [Selected Architecture Decisions](../../../04-architecture/selected-architecture-decisions.md), ADA-008: usable persistent account/session authority is required in addition to token validity. |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain continuity, rotation, expiry/reuse and reauthentication as one user outcome under DD-003. AC-06 clarifies denial after authority is unusable even if a token is still unexpired, rather than adding a new session policy. Clock-boundary, separate-session, competing-renewal and interrupted-response evidence needs real session integration as well as policy tests (Test Strategy Sections 8–9/14). Developers must assess selectability and any bounded investigation (Q-05); shared mobile/privacy questions are Q-02/Q-04. Do not settle transaction or retry mechanisms in refinement.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 

@@ -5,13 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Initial ordered Scrum Product Backlog |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Owner / Accountability | Product Owner |
 | Product Goal reference | [Product Goal](product-goal.md), Version 0.1.1, Baseline Draft |
 | Estimates | Not Estimated — applies to every PBI |
-| Revision note | Initial globally ordered MVP backlog derived from the current canonical baseline; no upstream scope or decision change. |
+| Revision note | 2026-10-21: focused refinement of PBI-001–PBI-007 against the merged backend foundation and existing stories; clarified evidence, boundaries and traceability without changing order, scope, estimates or refinement states. |
 
 ## 1. Purpose
 
@@ -30,7 +30,7 @@ The canonical artifacts below were read before deriving this backlog. Their requ
 | Complex flows | All 12 current [Activity Diagrams](../03-requirements/activity-diagrams/): AD-004, AD-006, AD-007, AD-011, AD-012, AD-014, AD-016, AD-017, AD-019, AD-020, AD-021 and AD-022. |
 | Scrum ordering anchor | [Product Goal](product-goal.md), v0.1.1: outcomes, value loop, boundaries and existing evidence directions. |
 
-The other repository sources were inspected: the Implementation Summary, proposal, official outline and Business Analysis notes are historical context. Their older quotas, rules, targets, technology descriptions, speculative features and Sprint roadmap do not override the current canonical baseline. No additional current implementation, architecture, testing or operations artifact was present to supply further approved decisions.
+The other repository sources were inspected: the Implementation Summary, proposal, official outline and Business Analysis notes are historical context. Their older quotas, rules, targets, technology descriptions, speculative features and Sprint roadmap do not override the current canonical baseline. That v0.1 inventory predates the current architecture and engineering baseline. For this refinement, the [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md), [ADD and views](../04-architecture/ADD.md), [Test Strategy](../07-testing/test-strategy.md), [Definition of Done](definition-of-done.md), [Delivery Decisions](delivery-decisions.md) and merged [backend foundation](../../backend/README.md) provide current constraints and implementation evidence. Infrastructure evidence does not establish product completion or approval.
 
 ## 2. Backlog Management Principles
 
@@ -139,7 +139,7 @@ Enable repeatable delivery and early detection of regressions across the connect
 
 **Scope Summary**
 
-Establish reproducible builds, controlled configuration, automated checks and a repeatable validation environment for the supported mobile experience and its connected capabilities. Add representative checks as each increment arrives; protect secrets and make results inspectable. Technology choices and implementation begin only after the workflow's intervening architecture and engineering preparation.
+Establish reproducible builds, controlled configuration, automated checks and a repeatable validation environment for the supported mobile experience and its connected capabilities. The merged backend foundation already supplies build, migration, smoke/dependency-test and CI infrastructure; do not recreate it. Determine the remaining mobile and connected-capability readiness from actual delivery needs. Add representative checks as each increment arrives; protect secrets and make results inspectable. Existing architecture decisions remain authoritative.
 
 **Key Dependencies**
 
@@ -155,7 +155,7 @@ BR-023; NFR-MNT-001, NFR-TEST-001, NFR-TEST-002, NFR-TEST-003, NFR-SUP-001; Work
 
 **Refinement Notes**
 
-Refine delivery outcomes and evidence needed for the first private wardrobe increment. Separate this ongoing foundation from PBI-039's complete-loop regression evidence and PBI-040's operational readiness; do not select frameworks or deployment topology here.
+The [backend README](../../backend/README.md), Sections 11–15, records foundation verification and its limits; current production source contains bootstrap and module documentation, not business features. Mobile and Python/provider integration evidence is not established by those checks. PO and Developers must review a bounded completion/evidence boundary for this PBI (review Q-01/Q-02), distinguishing remaining foundation capability from ongoing feature tests under the DoD, PBI-039's complete-loop regression and PBI-040's operational readiness. No automatic Done transition, duplicate infrastructure work or topology change follows.
 
 ### PBI-002 — Protect private user data from the first usable increment
 
@@ -187,7 +187,7 @@ BR-021; CAP-01; FR-AUTH-008; NFR-SEC-001, NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001
 
 **Refinement Notes**
 
-Refine the first authenticated-data boundary and its failure behavior. Garment/Wear removal is delivered within PBI-016/PBI-023; measurement lifecycle within PBI-009/PBI-034. PBI-041 provides broader verification evidence rather than postponing these protections.
+For each first delivered protected operation, verify signed-out/unusable-session denial, correct account ownership, account-switch/logout isolation and safe credential/secret handling, using agreed representative scenarios and inspectable evidence. Add image, profile, feedback and history scenarios when those capabilities exist; their absence now is not proof of protection. Review Q-04 addresses this PBI's completion/evidence boundary without weakening source obligations. Garment/Wear removal is delivered within PBI-016/PBI-023; measurement lifecycle within PBI-009/PBI-034. PBI-041 provides broader verification evidence rather than postponing protections.
 
 ### PBI-003 — Usable Vietnamese mobile journey foundation
 
@@ -219,7 +219,7 @@ BR-023, BR-022; UI-001, UI-002, UI-003, UI-004, UI-005, UI-006, UI-007, UI-008, 
 
 **Refinement Notes**
 
-Refine the first entry and wardrobe routes with authentication/manual entry. This establishes shared usability and accessibility behavior; PBI-036/PBI-037 validate the delivered journeys. Future localization compatibility does not add another MVP UI language.
+Refine the first entry and wardrobe routes with authentication/manual entry, including an empty wardrobe and usable Add/return handoffs. Later profile/location, outfit and insight features are not entry gates or completed capabilities merely because navigation names exist. Developers must establish mobile feasibility and representative Android/iOS verification access (review Q-02); the backend build supplies neither. Apply Vietnamese semantic labels, TalkBack/VoiceOver, 200% text scaling and the source touch-target criteria to delivered interactions. PBI-036/PBI-037 extend journey validation; future localization compatibility does not add another MVP UI language.
 
 ### PBI-004 — Email/password access and controllable sessions
 
@@ -247,11 +247,11 @@ Enabling / Protecting Product Value.
 
 **Primary Traceability**
 
-CAP-01; JRN-01, FEAT-AUTH-001; FR-AUTH-001, FR-AUTH-002, FR-AUTH-006, FR-AUTH-007, FR-AUTH-010; UC-001, UC-002, UC-003; BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-004, BRULE-AUTH-006.
+CAP-01; JRN-01, FEAT-AUTH-001; FR-AUTH-001, FR-AUTH-002, FR-AUTH-005–FR-AUTH-016; DATA-AUTH-002, DATA-AUTH-005; UC-001, UC-002, UC-003; BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-004, BRULE-AUTH-006.
 
 **Refinement Notes**
 
-Registration, login and logout stay together as one access capability rather than token/layer tasks. Refine normal access, invalid credentials, loss of access and deliberate logout; exact JWT/session constraints remain in the SRS and rules.
+Retain four distinct user outcomes within this parent capability: US-AUTH-001 registration, US-AUTH-002 credential login, US-AUTH-003 returning-session continuity and US-AUTH-004 current-session logout (DD-003). Normal, denied, expired/revoked and uncertain outcomes remain inside their relevant story. Current refinement makes normalized-email conflict and unexpired-token revocation expectations explicit; the SRS and rules still govern exact policy. Review shared mobile/privacy evidence and Developers' complexity assessment (Q-02/Q-04/Q-05); no story is selected or estimated.
 
 ### PBI-005 — Recover access through email password reset
 
@@ -283,7 +283,7 @@ CAP-01; JRN-01, FEAT-AUTH-001; FR-AUTH-003, FR-AUTH-004, FR-AUTH-017, FR-AUTH-01
 
 **Refinement Notes**
 
-Use UC-004 and AD-004 to refine recovery as an end-to-end outcome. An email-delivery provider is a later engineering choice; requesting instructions is not a completed reset.
+Retain US-AUTH-005 as the end-to-end recovery outcome under UC-004/AD-004: request/delivery is distinct from completed reset, and failed or replaced instructions do not change credentials. Check delivery and opening/return feasibility on the supported client before selecting dependent work (review Q-03). Provider contracts and reset implementation remain selected-story JIT detail. Completed reset must also deny protected use through the revoked sessions; a still-unexpired token is not a bypass (FR-AUTH-009; selected ADA-008).
 
 ### PBI-006 — Add a confirmed garment manually
 
@@ -311,11 +311,11 @@ Trustworthy Wardrobe Understanding.
 
 **Primary Traceability**
 
-BG-01; BR-002, BR-004; CAP-03, CAP-04; JRN-02, FEAT-AI-002, FEAT-GAR-001; FR-AI-003, FR-GAR-001, FR-GAR-002, FR-GAR-003, FR-GAR-004, FR-GAR-011; UC-007, AD-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003.
+BG-01; BR-002, BR-004; CAP-03, CAP-04; JRN-02, FEAT-AI-002, FEAT-GAR-001; FR-AI-003, FR-AI-008–FR-AI-010, FR-GAR-001, FR-GAR-002, FR-GAR-003, FR-GAR-004, FR-GAR-011; DATA-INT-001, DATA-INT-004, COM-002; UC-007, AD-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003.
 
 **Refinement Notes**
 
-The confirmed minimum and manual continuity are already explicit. Refine a minimum-only entry and its inspection after acceptance; rich descriptor enrichment is PBI-008, photo input PBI-012 and AI assistance PBI-013. AI success is never a prerequisite.
+Retain US-GAR-001 as one confirmed manual-add outcome, including cancellation and safe resolution of uncertain acceptance. Repeated delivery or retry must not create additional accepted garments for the same logical addition (DATA-INT-004). Retain an accepted but unready owned garment and explain missing information. Review mobile Add/acceptance/inspection evidence and story complexity (Q-02/Q-05). Rich descriptor enrichment is PBI-008, photo input PBI-012 and AI assistance PBI-013; AI success is never a prerequisite.
 
 ### PBI-007 — Browse current wardrobe and inspect owned garments
 
@@ -343,11 +343,11 @@ Trustworthy Wardrobe Understanding.
 
 **Primary Traceability**
 
-BR-005, BR-006; CAP-03, CAP-04; JRN-03, FEAT-WAR-001; FR-WAR-001, FR-WAR-002, FR-GAR-004; UC-008; BRULE-HIST-001, BRULE-HIST-002.
+BR-005, BR-006; CAP-03, CAP-04; JRN-03, FEAT-WAR-001; FR-WAR-001, FR-WAR-002, FR-WAR-008 (empty/loading/unavailable), FR-GAR-004, FR-AUTH-008; DATA-GAR-005; UC-008; BRULE-HIST-001, BRULE-HIST-002.
 
 **Refinement Notes**
 
-Empty browsing does not require existing garments. PBI-006 supplies useful populated inspection examples; search/filtering is PBI-015 and detailed reported-use insight is PBI-025.
+Retain US-WAR-001 browsing and US-WAR-002 detail as two coherent outcomes. Empty browsing does not require existing garments or completion of detail first. Detail requires a current owned garment, not completion of one particular creation method. PBI-006 supplies useful minimum-only/imageless examples and Add handoff; unavailable Wear evidence must not be shown as zero use or block profile inspection. Review mobile navigation and cross-account evidence (Q-02/Q-04). Search/filtering is PBI-015 and detailed reported-use insight is PBI-025.
 
 ### PBI-008 — Correct and enrich garment information with readiness guidance
 
@@ -1522,9 +1522,9 @@ Simple behaviors remain grouped where they form one useful capability: UC-001/UC
 
 Use a small first refinement horizon: **PBI-001–PBI-007**. Begin story-level refinement with PBI-004–PBI-007 (private account access, recovery, confirmed manual entry and wardrobe inspection). Clarify the enabling/quality outcomes of PBI-001–PBI-003 within that horizon so technical preparation and trust/usability constraints accompany early value. PBI-008–PBI-011 are the next candidates when review and learning justify extending the horizon.
 
-For each selected PBI, confirm the user/delivery outcome, smallest coherent slice, source constraints, dependencies, failed/uncertain states and evidence needed. Then derive traceable User Stories and testable Acceptance Criteria in the next authorized workflow stage. Enabler refinement must expose decisions needed from the later architecture stages rather than resolve them inside this backlog.
+For each candidate PBI, clarify the user/delivery outcome, smallest coherent slice, source constraints, dependencies, failed/uncertain states and evidence needed. The [eight existing stories](stories/README.md) already provide the PBI-004–PBI-007 decomposition under DD-003; refine them rather than derive duplicate stories. Use the existing architecture and Test Strategy to establish enough feasibility/testability for selection. Full API, physical-data, transaction and interaction/state design remains Just-In-Time during execution of a selected story.
 
-Top PBI states indicate suitability to begin that refinement, not completed stories. Lower items remain Needs Refinement because delivery slices, evidence and integration boundaries need team discussion. Revisit Order after refinement and observed learning; do not infer team capacity, estimates or Sprint allocation.
+The [first focused refinement review](backlog-refinement-review.md), dated 2026-10-21, records findings, advisory candidate assessments and Q-01–Q-05 for PO/Developers. Existing refinement states remain unchanged; none signifies completed stories, formal readiness or Sprint selection. Lower items retain their current states and require later refinement as needed. Only PO-authorized ordering changes may alter Section 5; no team capacity, estimates or Sprint allocation are inferred here.
 
 ## 11. Current Status
 
@@ -1532,5 +1532,5 @@ Top PBI states indicate suitability to begin that refinement, not completed stor
 
 The audit found no blocking contradiction in current MVP scope or behavior and no uncovered major MVP area. One non-blocking source editorial issue remains: FR-MET-004 contains an incomplete benchmark cross-reference. PBI-014/PBI-035 use the explicit SRS Sections 8.1 and 12.3 to anchor recognition and timing validation. The SRS and every other input artifact remain unchanged.
 
-After Product Backlog review, the next expected artifact is **initial User Stories for the highest-ordered backlog**, followed by **Definition of Done**, according to Workflow Section 46, Steps 11–12. Later quality-attribute analysis, ASR/ADD/ADR, test strategy, engineering preparation and Sprint Planning retain their separate workflow responsibilities. This task creates only product-backlog.md; it creates no stories, detailed Acceptance Criteria, Definition of Done, Sprint artifacts, architecture/design artifacts or implementation.
+The original v0.1 handoff to initial Stories/DoD is historical: those artifacts, the system-wide architecture, Test Strategy and merged backend engineering foundation now exist. Current work is **focused Backlog Refinement → PO/team review of remaining questions → future Sprint Planning when authorized → selected-story JIT Detailed Design with Automated Test + Implementation → PR / CI / Review → Done Increment**, followed by Review/Retrospective and adaptation. Separate baseline ADRs and whole-MVP detailed design are not prerequisites. This refinement changes no requirement, architecture decision, order, estimate, Sprint scope or implementation; PBI-001 completion remains for evidence-based review.
 

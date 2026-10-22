@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-WAR-002 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
+| Domain | Wardrobe |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Trustworthy Wardrobe Understanding](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -141,6 +144,8 @@ Read-only detail for a selected current confirmed garment, including available i
 - PBI-006 / [US-GAR-001](../garment/US-GAR-001-add-garment-manually.md) supply useful minimum-only/imageless examples. PBI-008 supplies later enrichment; neither is a new mandatory completion gate for already available detail.
 - Reported-use presentation integrates with available evidence as its owning capabilities arrive (PBI-021/PBI-025); those capabilities are not hard prerequisites to profile/readiness inspection.
 
+- Related [US-GAR-002](../garment/US-GAR-002-correct-and-enrich-garment-information.md) enrichment, [US-WEAR-002](../wear/US-WEAR-002-review-distinct-wear-history.md) history and [US-ANL-001](../analytics/US-ANL-001-understand-reported-wardrobe-utilization.md) utilization remain separate outcomes. Available recorded-use evidence can be consumed without making those whole capabilities prerequisites to profile inspection.
+
 ## 8. Out of Scope
 
 Collection browsing is US-WAR-001. Rich descriptor entry/enrichment and editing are PBI-008; search/filtering is PBI-015; removal and retention enforcement are PBI-016. Photo/AI entry/proposal review remain PBI-012/PBI-013. Wear reporting/history and utilization calculations/insights remain their owning PBIs, including PBI-021/PBI-025. No new reporting action, analytics event, restore action, image generation, recommendation algorithm or implementation design is introduced.
@@ -152,14 +157,17 @@ Collection browsing is US-WAR-001. Rich descriptor entry/enrichment and editing 
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
 | Business | [BRD](../../../01-business/BRD.md): BR-003, BR-005, BR-006, BR-021, BR-022; CAP-03, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-03; FEAT-WAR-001, FEAT-GAR-001 (accepted profile/readiness); FEAT-ANL-001, available indicators only |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-002, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-AUTH-008; DATA-GAR-001, DATA-GAR-003, DATA-GAR-004, DATA-GAR-005; UI-004; ERR-GAR-002, ERR-AUTH-001, ERR-NET-001; NFR-ACC-002; LOC-001 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-002, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-AUTH-008; DATA-GAR-001, DATA-GAR-003, DATA-GAR-004, DATA-GAR-005; UI-004; ERR-GAR-002, ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006; BRULE-HIST-001, BRULE-HIST-002 |
 | Use Cases | [UC-008 — View Wardrobe](../../../03-requirements/use-cases/UC-008-view-wardrobe.md), selected detail/readiness/use/return and failure branches only |
 | Activity Diagrams | No current dedicated Activity Diagram for UC-008; the textual specification governs this slice. |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain detail as a read-only selected-garment outcome; its existing AC-06/AC-07 already distinguish no recorded use from unavailable evidence. Verify current/changed ownership, minimum-only imageless information, readiness limitations and return to browsing with controlled examples (Q-02/Q-04/Q-05). Neither a completed Wear capability nor a particular creation method is a hard prerequisite. No new reporting, edit, removal or enrichment behavior is proposed.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 

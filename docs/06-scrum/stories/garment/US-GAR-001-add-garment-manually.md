@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-GAR-001 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-006](../../product-backlog.md#pbi-006--add-a-confirmed-garment-manually) |
+| Domain | Garment |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Trustworthy Wardrobe Understanding](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -125,7 +128,7 @@ Imageless manual entry of the supported Primary Category and Dominant Color, rev
 
 **When** I review the outcome or continue the intended addition
 
-**Then** CapsuleAI distinguishes pending/unconfirmed acceptance from known failure and success, preserves useful work where practical, and lets me establish whether creation was accepted before safe retry. One accepted addition does not become unexplained duplicate entries; uncertainty does not establish definite unchanged inventory.
+**Then** CapsuleAI distinguishes pending/unconfirmed acceptance from known failure and success, preserves useful work where practical, and lets me establish whether creation was accepted before safe retry. Repeated delivery or retry of the same intended addition has at most one accepted wardrobe effect; uncertainty does not establish definite unchanged inventory.
 
 ### AC-13 — Respect authorized ownership during entry
 
@@ -155,6 +158,8 @@ Imageless manual entry of the supported Primary Category and Dominant Color, rev
 - PBI-007's [US-WAR-001](../wardrobe/US-WAR-001-browse-current-wardrobe.md) and [US-WAR-002](../wardrobe/US-WAR-002-inspect-owned-garment.md) are useful inspection paths after acceptance; creating the minimum is not conditional on completing those whole stories.
 - PBI-003 provides useful common interaction support, not an additional hard capability dependency. PBI-008 enriches descriptors later; PBI-012/PBI-013 add photo/AI routes. None is a prerequisite to manual creation.
 
+- Related drafts now document [US-GAR-002](../garment/US-GAR-002-correct-and-enrich-garment-information.md) enrichment, [US-GAR-003](../garment/US-GAR-003-add-photo-supported-garment.md) photo-supported input and [US-GAR-004](../garment/US-GAR-004-review-ai-assisted-garment-proposals.md) assistance. None becomes a prerequisite to this minimum-confirmed imageless outcome.
+
 ## 8. Out of Scope
 
 Rich descriptor entry/enrichment and later editing are PBI-008. Photo capture/selection, image validation and photo-supported entry are PBI-012; AI proposals, confidence and processed preview are PBI-013. General browsing/detail are PBI-007, measurement is PBI-009, and search/removal belong to PBI-015/PBI-016. No new quota, mandatory image/AI, inventory sorting, analytics event or implementation design is added.
@@ -166,14 +171,17 @@ Rich descriptor entry/enrichment and later editing are PBI-008. Photo capture/se
 | Parent PBI | [PBI-006](../../product-backlog.md#pbi-006--add-a-confirmed-garment-manually) |
 | Business | [BRD](../../../01-business/BRD.md): BG-01; BR-002, BR-003, BR-004, BR-005; CAP-03, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-02; FEAT-AI-002, FEAT-GAR-001 (manual minimum and authority) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-AI-003, FR-AI-008, FR-AI-009, FR-AI-010; FR-GAR-001, FR-GAR-002, FR-GAR-003, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-GAR-011; DATA-GAR-001, DATA-GAR-005; UI-004, UI-006; ERR-GAR-001, ERR-GAR-002; COM-002; NFR-ACC-002; LOC-001 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-AI-003, FR-AI-008, FR-AI-009, FR-AI-010; FR-GAR-001, FR-GAR-002, FR-GAR-003, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-GAR-011, FR-AUTH-008; DATA-GAR-001, DATA-GAR-005; DATA-INT-001, DATA-INT-004; UI-004, UI-006; ERR-GAR-001, ERR-GAR-002; COM-001, COM-002; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-004, BRULE-GAR-005, BRULE-GAR-006 |
 | Use Cases | [UC-007 — Add Garment](../../../03-requirements/use-cases/UC-007-add-garment.md), manual alternative and shared confirmation/save flows only |
 | Activity Diagrams | [AD-007 — Add Garment](../../../03-requirements/activity-diagrams/AD-007-add-garment.puml), manual branch and shared confirmation/recovery only |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain manual entry, review, explicit confirmation and safe acceptance as one outcome. AC-12 makes repeated delivery/retry of one logical addition explicit without prescribing a deduplication mechanism (DATA-INT-004). Verify an imageless minimum-only saved entry, retained UNKNOWN/readiness meaning, cancellation, denied ownership and interrupted acceptance. Confirm mobile Add/acknowledgment/inspection feasibility and Developers' complexity assessment (Q-02/Q-04/Q-05). Rich entry, images and AI remain later capabilities.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 

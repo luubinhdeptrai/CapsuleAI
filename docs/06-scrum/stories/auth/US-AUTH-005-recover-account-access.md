@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-AUTH-005 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-005](../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
+| Domain | Authentication |
 | Theme | Foundation & Access |
 | Product Goal Contribution | [Enabling / Protecting Product Value](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -69,7 +72,7 @@ Forgot Password, account-safe initiation, purpose-minimal email delivery, valid 
 
 **When** password reset completes successfully
 
-**Then** all account Refresh Sessions are revoked and cannot renew access. Subsequent authentication requires the new password; reset does not delete my accepted wardrobe/profile/history and does not affect a different account's sessions.
+**Then** all account Refresh Sessions are revoked and cannot renew access. Protected operations through those revoked sessions are denied even if their issued Access Tokens remain otherwise valid and unexpired. Subsequent authentication requires the new password; reset does not delete my accepted wardrobe/profile/history and does not affect a different account's sessions.
 
 ### AC-06 — Start from already delivered instructions
 
@@ -172,6 +175,8 @@ Forgot Password, account-safe initiation, purpose-minimal email delivery, valid 
 - Email Delivery Service is the established external delivery dependency. Delivery is not assumed to succeed, and this story does not select a provider.
 - An existing account can satisfy recovery; repeating registration is not a prerequisite.
 
+- Related first-private-operation evidence is [US-PRIV-001](../privacy/US-PRIV-001-protect-first-private-operations.md) and common mobile entry is [US-MOB-001](../mobile/US-MOB-001-use-vietnamese-mobile-journey-foundation.md). These drafts clarify the existing PBI-002 / useful PBI-003 support; documented stories do not prove those capabilities implemented.
+
 ## 8. Out of Scope
 
 Ordinary account creation/login/renewal/logout belong to PBI-004. This story adds no SMS, OTP, security questions, email-verification requirement, social recovery, account deletion, delivery-provider choice, token storage or revocation design.
@@ -183,14 +188,18 @@ Ordinary account creation/login/renewal/logout belong to PBI-004. This story add
 | Parent PBI | [PBI-005](../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
 | Business | [BRD](../../../01-business/BRD.md): BR-021, BR-023; CAP-01 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-01; FEAT-AUTH-001 (email recovery) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-003, FR-AUTH-004, FR-AUTH-015, FR-AUTH-017, FR-AUTH-018; DATA-AUTH-001, DATA-AUTH-005; SI-003, COM-002; ERR-AUTH-002; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-002; LOC-001 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-003, FR-AUTH-004, FR-AUTH-008, FR-AUTH-009, FR-AUTH-015, FR-AUTH-017, FR-AUTH-018; DATA-AUTH-001, DATA-AUTH-005; SI-003, COM-001, COM-002, COM-003; ERR-AUTH-002, ERR-AUTH-003; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-001, NFR-ACC-002; LOC-001 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-004, BRULE-AUTH-005, BRULE-AUTH-007 |
 | Use Cases | [UC-004 — Reset Password](../../../03-requirements/use-cases/UC-004-reset-password.md); [UC-002 — Log In](../../../03-requirements/use-cases/UC-002-log-in.md), return handoff only |
 | Activity Diagrams | [AD-004 — Reset Password](../../../03-requirements/activity-diagrams/AD-004-reset-password.puml) |
+| Architecture constraint | [Selected Architecture Decisions](../../../04-architecture/selected-architecture-decisions.md), ADA-008: usable persistent account/session authority is required in addition to token validity. |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain one end-to-end recovery story; an initiation-only slice would not restore access. AC-05 clarifies the existing protected-use consequence of revoked sessions, including unexpired tokens. Email delivery and opening/return feasibility remain unverified in this implementation (Q-03); Developers must also review lifecycle/concurrency testability and whether the story is selectable as written (Q-05), with shared mobile/privacy evidence in Q-02/Q-04. This requires enough feasibility evidence, not a finalized provider contract or reset design before Planning.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 

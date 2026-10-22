@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-WAR-001 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
+| Domain | Wardrobe |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Trustworthy Wardrobe Understanding](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -132,6 +135,8 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 - PBI-006 / [US-GAR-001](../garment/US-GAR-001-add-garment-manually.md) provide useful populated examples and the manual Add Garment destination; PBI-006 is useful sequencing rather than an additional hard dependency for browsing.
 - PBI-003 supplies useful common navigation/accessibility support. PBI-008/PBI-015/PBI-016/PBI-025 add separate future capabilities; their completion does not gate basic browsing.
 
+- Related drafts [US-WAR-003](../wardrobe/US-WAR-003-find-garments-with-search-and-filters.md) discovery, [US-GAR-005](../garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md) garment removal and [US-ANL-001](../analytics/US-ANL-001-understand-reported-wardrobe-utilization.md) utilization retain their separate PBI boundaries; their existence does not gate base browsing.
+
 ## 8. Out of Scope
 
 Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich entry and editing are PBI-008, measurement PBI-009, photo/AI entry PBI-012/PBI-013, search/filter conditions and no-match/reset behavior PBI-015, removal/retention enforcement PBI-016, and utilization analytics PBI-025. This story introduces no sorting, pagination rule, archive/restore, wear-reporting action, new event or universal offline guarantee.
@@ -143,14 +148,17 @@ Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich ent
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
 | Business | [BRD](../../../01-business/BRD.md): BR-003, BR-005, BR-021, BR-022; CAP-03, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-03; FEAT-WAR-001 (overview and entry/return paths) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-008 (empty/loading/unavailable only), FR-GAR-004, FR-AUTH-008; DATA-GAR-001, DATA-GAR-004, DATA-GAR-005; UI-001, UI-003, UI-004; ERR-AUTH-001, ERR-NET-001; NFR-ACC-002; LOC-001 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-008 (empty/loading/unavailable only), FR-GAR-004, FR-AUTH-008; DATA-GAR-001, DATA-GAR-004, DATA-GAR-005; UI-001, UI-003, UI-004; ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003; BRULE-HIST-002 |
 | Use Cases | [UC-008 — View Wardrobe](../../../03-requirements/use-cases/UC-008-view-wardrobe.md), browsing/empty/retrieval/access branches; [UC-007 — Add Garment](../../../03-requirements/use-cases/UC-007-add-garment.md), entry handoff only |
 | Activity Diagrams | No current dedicated Activity Diagram for UC-008; the textual specification governs this slice. |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain browsing and its empty-state value separately from garment detail. The existing criteria already distinguish accepted entries, loading/unavailable data, unusable access and genuinely empty inventory; no new browsing behavior is needed. Agree representative empty and populated account fixtures, previous-account isolation and Add/detail handoff evidence with Developers (Q-02/Q-04/Q-05). PBI-006 supplies useful populated examples, not a hard prerequisite to empty browsing; future search/filtering and use analytics remain excluded.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 

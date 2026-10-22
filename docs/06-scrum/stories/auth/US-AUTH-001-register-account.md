@@ -5,10 +5,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
-| Version | 0.1 |
+| Story ID | US-AUTH-001 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
+| Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
 | Parent PBI | [PBI-004](../../product-backlog.md#pbi-004--emailpassword-access-and-controllable-sessions) |
+| Domain | Authentication |
 | Theme | Foundation & Access |
 | Product Goal Contribution | [Enabling / Protecting Product Value](../../product-goal.md#4-desired-product-outcomes) |
 
@@ -76,7 +79,7 @@ Email/password account creation, required-input and identity validation, explici
 
 **When** I submit registration using surrounding whitespace and different email case, such as Person@Example.com with surrounding spaces
 
-**Then** no second account is created and the existing account is unchanged; CapsuleAI offers sign-in/password-recovery guidance. Provider-specific alias transformations are not used to merge otherwise distinct email strings.
+**Then** no second account is created and the existing account is unchanged; CapsuleAI offers sign-in/password-recovery guidance. Provider-specific alias transformations are not used to merge otherwise distinct email strings. The same at-most-one-account outcome holds when equivalent normalized-email registrations are submitted concurrently.
 
 ### AC-07 — Keep an optional name intact
 
@@ -130,6 +133,8 @@ Email/password account creation, required-input and identity validation, explici
 - Existing-account access is refined in [US-AUTH-002](US-AUTH-002-log-in.md); registration supplies an account for its new-user path, while existing accounts remain valid inputs.
 - Useful sequencing: PBI-003 supplies common mobile entry. PBI-010/PBI-011 own subsequent preferences/location; completing them is not a prerequisite for authenticated entry.
 
+- Related declared-preference and optional-context outcomes are [US-PROF-001](../profile/US-PROF-001-set-and-revise-style-and-common-needs.md)/[US-PROF-002](../profile/US-PROF-002-control-optional-personal-context.md); environmental context is [US-CTX-001](../context/US-CTX-001-choose-location-and-recover-limited-context.md). These later capabilities remain outside account-entry acceptance and introduce no new hard gate.
+
 ## 8. Out of Scope
 
 Credential login, returning-session renewal and logout are the other PBI-004 stories. Password recovery is PBI-005. Preference editing/progressive setup and location behavior are PBI-010/PBI-011. This story adds no email verification, social/guest access, username authentication, CAPTCHA, OTP, remember-me control, lockout threshold or password-strength meter.
@@ -141,14 +146,17 @@ Credential login, returning-session renewal and logout are the other PBI-004 sto
 | Parent PBI | [PBI-004](../../product-backlog.md#pbi-004--emailpassword-access-and-controllable-sessions) |
 | Business | [BRD](../../../01-business/BRD.md): BR-012, BR-021, BR-023; CAP-01 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-01; FEAT-AUTH-001 (registration/entry only) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-001, FR-AUTH-011, FR-AUTH-012, FR-AUTH-015, FR-AUTH-016; DATA-AUTH-001, DATA-AUTH-002; COM-002; ERR-NET-001; NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-002; LOC-001, LOC-004 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-AUTH-001, FR-AUTH-011, FR-AUTH-012, FR-AUTH-015, FR-AUTH-016; DATA-AUTH-001, DATA-AUTH-002; COM-001, COM-002; ERR-NET-001; NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-001, NFR-ACC-002; LOC-001, LOC-004 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-007 |
 | Use Cases | [UC-001 — Register Account](../../../03-requirements/use-cases/UC-001-register-account.md) |
 | Activity Diagrams | None for UC-001 in the current baseline. |
+| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
 
-None currently identified from the authoritative baseline.
+**2026-10-21 refinement draft.** Retain this registration outcome; DD-003 already separates credential login, continuity and logout. AC-06 now makes the existing at-most-one normalized-email rule explicit under concurrent registration (FR-AUTH-016; DATA-AUTH-002; Test Strategy Section 8). Before selection, review shared mobile/privacy evidence (Q-02/Q-04) and Developers' sizing/feasibility (Q-05). No additional onboarding or verification gate is proposed.
+
+Question details, owners and conditional planning blockers are centralized in the [focused refinement review](../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team). These notes do not change story status, assign estimates or authorize implementation. Necessary implementation detail remains JIT for a selected story. The [full story catalogue](../README.md) now accounts for all 41 PBIs; those additional drafts change none of this story's acceptance boundaries.
 
 ## 11. Status
 
