@@ -44,6 +44,7 @@
 | **Exception** — wrong password or unknown email | 401 `INVALID_CREDENTIALS`, identical for both; no session; account unchanged. | UC-002 E1, ERR-AUTH-001 |
 | **Exception** — password with spaces trimmed / different Unicode form | Rejected — not the same password. | FR-AUTH-002, BRULE-AUTH-003 |
 | **Security** — request to any protected route without usable authority | 401 `AUTHENTICATION_REQUIRED`; no content. | FR-AUTH-008/009, ADA-008 |
+| **Infrastructure** — PostgreSQL unreachable while the session is being checked | Fail closed: no access, no content; 503 `TEMPORARILY_UNAVAILABLE` (not 401, because the credentials were not found invalid). | FR-AUTH-009, COM-002, ERR-DEP-001 ("do not present a dependency failure as loss of the wardrobe") |
 | **Security** — token for another account's session, forged, wrong issuer, expired | 401. | FR-AUTH-009, NFR-SEC-001 |
 | **Recovery** — response lost | Retry is safe; no protected content exposed until tokens arrive. | UC-002 E3, COM-002 |
 
@@ -110,18 +111,20 @@
 | ports | `AccountRepository` **(modified)** | + `findByEmail`. | Login looks accounts up. |
 | adapter.out | `JdbcSessionRepository`, `SpringIdentityTransactions`, `JdbcTime` | SQL, `TransactionTemplate`, time mapping. | — |
 | adapter.out | `JdbcAccountRepository` **(modified)** | + `findByEmail`. | — |
+| adapter.jwt | `JwtClaimNames` | The `sid` claim name, shared by token issuing and token reading. | Inbound and outbound adapters must not import each other (TD-25). |
 | adapter.out | `JwtAccessTokenIssuer`, `SecureRandomRefreshTokenGenerator` | Sign HS256 JWT; 256-bit random tokens. | — |
 | adapter.in.security | `AccessTokenExpiryValidator` | `now ≥ exp` → invalid, zero skew, application clock. | Exact 15-minute boundary (TD-09). |
-| adapter.in.security | `SessionAwareJwtAuthenticationConverter` | JWT → `AuthenticatedAccountToken` **only** if the session is usable. | ADA-008 on every request. |
+| adapter.in.security | `SessionAwareJwtAuthenticationConverter` | JWT → `AuthenticatedAccountToken` **only** if the session is usable; an unreachable database becomes `SessionAuthorityUnavailableException`. | ADA-008 on every request; TD-26. |
+| adapter.in.security | `SessionAuthorityUnavailableException` | "Authority could not be checked" — an `AuthenticationException` the entry point turns into 503. | Fail closed without telling the client its credentials are bad. |
 | adapter.in.security | `AuthenticatedAccountToken` | Spring `Authentication` with `AuthenticatedAccount` principal. | Enables `@AuthenticationPrincipal AuthenticatedAccount`. |
-| adapter.in.security | `ProblemJsonAuthenticationEntryPoint` | 401 + `WWW-Authenticate` + problem JSON. | Consistent error contract. |
+| adapter.in.security | `ProblemJsonAuthenticationEntryPoint` | 401 + `WWW-Authenticate` + problem JSON; 503 problem JSON for an authority outage. | Consistent error contract. |
 | adapter.in.security | `PublicEndpointAwareBearerTokenResolver` | Ignore `Authorization` on public endpoints. | TD-17. |
 | configuration | `AccessTokenProperties` | Binds and validates the Base64 signing secret. | Fail fast on missing/weak secret. |
 | configuration | `IdentityTokenConfiguration` | `JwtEncoder`, `JwtDecoder` (+ validators), issuer, generator beans. | — |
 | configuration | `IdentitySecurityConfiguration` | The single default-deny `SecurityFilterChain`. | TD-19. |
 | configuration | `IdentityConfiguration` **(modified)** | + session repository, transactions, login service, authority service. | — |
 | adapter.in.web | `LoginController`, `LoginRequest`, `TokenResponse` | HTTP. | — |
-| adapter.in.web | `IdentityApiExceptionHandler` **(modified)** | + 401 `INVALID_CREDENTIALS`. | — |
+| adapter.in.web | `IdentityApiExceptionHandler` **(modified)** | + 401 `INVALID_CREDENTIALS`. (503 stays limited to unreachable-database exceptions, as in Stage 1.) | — |
 
 ### 5.2 HTTP contract
 
@@ -137,7 +140,7 @@
 | Missing field | 400 | `VALIDATION_FAILED`, `fieldErrors` with `REQUIRED` for `email` and/or `password` |
 | Wrong password **or** unknown email | 401 | `INVALID_CREDENTIALS` (byte-identical bodies) |
 | Not JSON | 400 | `MALFORMED_REQUEST` |
-| Database failure | 503 | `TEMPORARILY_UNAVAILABLE` |
+| Database unreachable | 503 | `TEMPORARILY_UNAVAILABLE` |
 
 Every other request without a usable session:
 
@@ -150,6 +153,17 @@ Content-Type: application/problem+json
 ```
 
 (Without any token the header is just `WWW-Authenticate: Bearer`.)
+
+A protected request whose session **cannot be checked** because PostgreSQL is unreachable:
+
+```http
+HTTP/1.1 503 Service Unavailable
+Content-Type: application/problem+json
+
+{"type":"about:blank","title":"Service Unavailable","status":503,"detail":"Your access could not be verified right now. Nothing was changed. Try again shortly.","code":"TEMPORARILY_UNAVAILABLE"}
+```
+
+No `WWW-Authenticate` header is sent: the client is not being asked to authenticate again. The body is a fixed string, so it never contains exception text, SQL, host names or credentials.
 
 ### 5.3 Token and session rules
 
@@ -173,6 +187,9 @@ See the sequence diagram in [Shared Architecture §4.5](shared-architecture.md#4
 2. `NimbusJwtDecoder` checks the HS256 signature, then our validators (`typ`, `iss`, expiry with the application clock).
 3. `SessionAwareJwtAuthenticationConverter` asks `SessionAuthority` → `SessionAuthorityService` → `SELECT` the session.
 4. Usable → principal `AuthenticatedAccount`; otherwise `InvalidBearerTokenException` → entry point → 401.
+5. If step 3 cannot reach PostgreSQL (`DataAccessResourceFailureException`, including `CannotGetJdbcConnectionException`, or `TransientDataAccessResourceException`), the converter throws `SessionAuthorityUnavailableException` → entry point → **503**. Any other exception (a programming error) is not caught → 500. In **all** of these cases no authentication is established and the controller never runs (fail closed, [TD-26](shared-architecture.md#14-technical-decision-log)).
+
+> **Concept — why a special exception type, and why it extends `AuthenticationException`.** Spring Security's `BearerTokenAuthenticationFilter` catches `AuthenticationException` and passes it to its failure handler, which calls our entry point — **except** for `AuthenticationServiceException`, which it rethrows as a server error. A plain `DataAccessException` is not an `AuthenticationException` at all, so it would escape the filter as a 500. `SessionAuthorityUnavailableException` extends `AuthenticationException` directly, so it reaches our entry point, which can then choose 503 for it and 401 for everything else. This reuses the existing error path; no extra filter or handler is needed.
 
 Stage 2 has **no production protected endpoint yet** (logout arrives in US-AUTH-004). The tests therefore use a **test-only** probe endpoint defined in test sources ([TD-21](shared-architecture.md#14-technical-decision-log)). Inventing a production endpoint just to demonstrate security is explicitly discouraged by the [Sprint plan](../sprint-plan.md#10-sprint-review-evidence).
 
@@ -213,13 +230,15 @@ Stage 2 has **no production protected endpoint yet** (logout arrives in US-AUTH-
 | 20 | `J/adapter/out/persistence/JdbcAccountRepository.java` | MODIFY | + `findByEmail`; uses `JdbcTime`. | 12, 19 |
 | 21 | `J/adapter/out/persistence/JdbcSessionRepository.java` | NEW | Session SQL. | 3, 13, 19 |
 | 22 | `J/adapter/out/persistence/SpringIdentityTransactions.java` | NEW | `TransactionTemplate`. | 14 |
-| 23 | `J/adapter/out/security/JwtAccessTokenIssuer.java` | NEW | JWT signing. | 1, 15 |
+| 22a | `J/adapter/jwt/JwtClaimNames.java` | NEW | Shared JWT claim names (no in↔out adapter import). | — |
+| 23 | `J/adapter/out/security/JwtAccessTokenIssuer.java` | NEW | JWT signing. | 1, 15, 22a |
 | 24 | `J/adapter/out/security/SecureRandomRefreshTokenGenerator.java` | NEW | Random tokens. | 16 |
 | 25 | `J/adapter/in/security/AccessTokenExpiryValidator.java` | NEW | Exact expiry. | 1 |
 | 26 | `J/adapter/in/security/AuthenticatedAccountToken.java` | NEW | Authentication object. | 7 |
-| 27 | `J/adapter/in/security/SessionAwareJwtAuthenticationConverter.java` | NEW | JWT → usable session. | 8, 23, 26 |
-| 28 | `J/adapter/in/security/ProblemJsonAuthenticationEntryPoint.java` | NEW | 401 body. | 1 |
+| 27 | `J/adapter/in/security/SessionAwareJwtAuthenticationConverter.java` | NEW | JWT → usable session; outage classification. | 8, 22a, 26, 29a |
+| 28 | `J/adapter/in/security/ProblemJsonAuthenticationEntryPoint.java` | NEW | 401 body; 503 body for an authority outage. | 1, 29a |
 | 29 | `J/adapter/in/security/PublicEndpointAwareBearerTokenResolver.java` | NEW | Public-endpoint token handling. | 1 |
+| 29a | `J/adapter/in/security/SessionAuthorityUnavailableException.java` | NEW | "Authority could not be checked" (→ 503). | 1 |
 | 30 | `J/configuration/AccessTokenProperties.java` | NEW | Secret binding. | 2 |
 | 31 | `J/configuration/IdentityTokenConfiguration.java` | NEW | JWT beans. | 23–25, 30 |
 | 32 | `J/configuration/IdentityConfiguration.java` | MODIFY | + login wiring. | 17–22 |
@@ -993,11 +1012,39 @@ public final class SpringIdentityTransactions implements IdentityTransactions {
 }
 ```
 
+### 7.22a `J/adapter/jwt/JwtClaimNames.java` — NEW
+
+**Purpose.** The token **issuer** (outbound adapter, 7.23) writes the session id into the JWT, and the token **reader** (inbound adapter, 7.27) reads it back. Both must use the same claim name. If the reader imported the issuer class just to reuse its constant, an inbound adapter would depend on an outbound adapter — two independent edges of the hexagon would be glued together, and changing token *signing* could break token *reading* at compile time. This tiny, framework-free class is the shared definition both depend on instead ([TD-25](shared-architecture.md#14-technical-decision-log)).
+
+Why this package: it is a technical token-format detail, so it does not belong in `domain` (business rules) or in `api` (other modules receive `AuthenticatedAccount`, never raw claims). `adapter.jwt` sits beside `adapter.in` and `adapter.out` and contains only this constant holder.
+
+```java
+package com.capsuleai.identity.adapter.jwt;
+
+/**
+ * Names of Identity's custom access-token claims: the shared wire format of
+ * the token issuer (adapter.out.security) and the token reader
+ * (adapter.in.security). Neither adapter imports the other; both use this.
+ *
+ * <p>Internal to Identity and deliberately not part of the published
+ * {@code api}: other modules receive {@code AuthenticatedAccount}, never JWT claims.
+ */
+public final class JwtClaimNames {
+
+    /** Claim carrying the login-session id. */
+    public static final String SESSION_ID = "sid";
+
+    private JwtClaimNames() {
+    }
+}
+```
+
 ### 7.23 `J/adapter/out/security/JwtAccessTokenIssuer.java` — NEW
 
 ```java
 package com.capsuleai.identity.adapter.out.security;
 
+import com.capsuleai.identity.adapter.jwt.JwtClaimNames;
 import com.capsuleai.identity.application.ports.AccessTokenIssuer;
 import java.time.Instant;
 import java.util.Objects;
@@ -1010,9 +1057,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
 /** Signs HS256 access tokens naming the account ({@code sub}) and login session ({@code sid}). */
 public final class JwtAccessTokenIssuer implements AccessTokenIssuer {
-
-    /** Claim carrying the login-session id. Read back by the security adapter. */
-    public static final String SESSION_ID_CLAIM = "sid";
 
     private final JwtEncoder encoder;
     private final String issuer;
@@ -1030,7 +1074,7 @@ public final class JwtAccessTokenIssuer implements AccessTokenIssuer {
                 .subject(accountId.toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
-                .claim(SESSION_ID_CLAIM, sessionId.toString())
+                .claim(JwtClaimNames.SESSION_ID, sessionId.toString())
                 .build();
         return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
@@ -1150,17 +1194,24 @@ No roles/authorities exist in the requirements, so the token carries none. Autho
 
 ### 7.27 `J/adapter/in/security/SessionAwareJwtAuthenticationConverter.java` — NEW
 
-**Purpose.** The heart of ADA-008. Spring Security calls this **after** the signature and our validators have accepted the JWT. It asks the published `SessionAuthority` whether the session is usable. Throwing `InvalidBearerTokenException` (an `AuthenticationException`) makes the filter call the entry point → 401.
+**Purpose.** The heart of ADA-008. Spring Security calls this **after** the signature and our validators have accepted the JWT. It asks the published `SessionAuthority` whether the session is usable. Throwing `InvalidBearerTokenException` (an `AuthenticationException`) makes the filter call the entry point → 401. If the question cannot be answered because PostgreSQL is unreachable, it throws `SessionAuthorityUnavailableException` instead → 503 (7.29a, TD-26).
+
+It reads the claim name from `JwtClaimNames` (7.22a), **not** from `JwtAccessTokenIssuer`: an inbound adapter must not import an outbound adapter.
 
 ```java
 package com.capsuleai.identity.adapter.in.security;
 
-import com.capsuleai.identity.adapter.out.security.JwtAccessTokenIssuer;
+import com.capsuleai.identity.adapter.jwt.JwtClaimNames;
 import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.identity.api.SessionAuthority;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
@@ -1169,9 +1220,15 @@ import org.springframework.security.oauth2.server.resource.InvalidBearerTokenExc
  * Turns an already signature- and expiry-checked JWT into an authenticated
  * account, but ONLY if persistent session authority says the session is usable
  * now (FR-AUTH-009, ADA-008). A valid signature alone is never enough.
+ *
+ * <p>Fail closed in every outcome other than "usable": an unusable session is an
+ * invalid token (401); an unreachable database is an authority outage (503); any
+ * other exception propagates (500).
  */
 public final class SessionAwareJwtAuthenticationConverter
         implements Converter<Jwt, AbstractAuthenticationToken> {
+
+    private static final Logger log = LoggerFactory.getLogger(SessionAwareJwtAuthenticationConverter.class);
 
     private final SessionAuthority sessionAuthority;
 
@@ -1182,10 +1239,24 @@ public final class SessionAwareJwtAuthenticationConverter
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         UUID accountId = requiredUuid(jwt.getSubject());
-        UUID sessionId = requiredUuid(jwt.getClaimAsString(JwtAccessTokenIssuer.SESSION_ID_CLAIM));
-        AuthenticatedAccount account = sessionAuthority.findUsableSession(accountId, sessionId)
+        UUID sessionId = requiredUuid(jwt.getClaimAsString(JwtClaimNames.SESSION_ID));
+        AuthenticatedAccount account = findUsableSession(accountId, sessionId)
                 .orElseThrow(() -> new InvalidBearerTokenException("The login session is no longer usable"));
         return new AuthenticatedAccountToken(account);
+    }
+
+    /**
+     * Only a confirmed "database cannot be reached" failure is translated. Any
+     * other exception (for example invalid SQL) is a programming error and is
+     * left to propagate as a 500. In both cases no authentication is created.
+     */
+    private Optional<AuthenticatedAccount> findUsableSession(UUID accountId, UUID sessionId) {
+        try {
+            return sessionAuthority.findUsableSession(accountId, sessionId);
+        } catch (DataAccessResourceFailureException | TransientDataAccessResourceException unavailable) {
+            log.error("Session authority check failed because the database is unreachable", unavailable);
+            throw new SessionAuthorityUnavailableException(unavailable);
+        }
     }
 
     private static UUID requiredUuid(String claimValue) {
@@ -1201,7 +1272,9 @@ public final class SessionAwareJwtAuthenticationConverter
 }
 ```
 
-If PostgreSQL is unreachable, `findUsableSession` throws a `DataAccessException`, which is **not** an authentication exception: the request fails with a 500 error page and is never authenticated ([A-10](shared-architecture.md#15-ambiguities-limitations-and-open-questions)). No bypass is possible.
+**What happens when PostgreSQL is down.** `SessionAuthorityService` → `JdbcSessionRepository.findById` → `JdbcClient` asks for a connection; HikariCP cannot supply one, so Spring's `DataSourceUtils` throws `CannotGetJdbcConnectionException` (a `DataAccessResourceFailureException`). The converter catches exactly that family, logs it server-side, and throws `SessionAuthorityUnavailableException`. The request is **not** authenticated and never reaches a controller; the client receives a fixed 503 body. There is no fallback, cache or "assume valid" branch: a session that cannot be checked is never treated as usable ([TD-26](shared-architecture.md#14-technical-decision-log); this replaces the earlier "500" behaviour recorded as A-10).
+
+Why catch here and not inside `SessionAuthorityService`: classifying Spring DAO exceptions is a technical concern of the security adapter. The application layer stays Spring-free (ArchUnit rule), and `SessionAuthority` keeps its simple "usable or not" contract.
 
 ### 7.28 `J/adapter/in/security/ProblemJsonAuthenticationEntryPoint.java` — NEW
 
@@ -1219,31 +1292,51 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthen
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 /**
- * Answers every authentication failure with 401, the standard
- * {@code WWW-Authenticate: Bearer} header and a problem body telling the client
- * to authenticate again — never an "empty wardrobe" (BRULE-AUTH-001).
+ * Answers authentication failures with a problem body:
+ * <ul>
+ *   <li>credentials not acceptable → 401, the standard {@code WWW-Authenticate:
+ *       Bearer} header and "authenticate again" — never an "empty wardrobe"
+ *       (BRULE-AUTH-001);</li>
+ *   <li>session authority could not be checked → 503 "temporarily unavailable",
+ *       without a challenge header, because the credentials were not found invalid.</li>
+ * </ul>
+ * Both bodies are fixed strings, so no exception text or request data can leak.
  */
 public final class ProblemJsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private static final String BODY = """
+    private static final String AUTHENTICATION_REQUIRED_BODY = """
             {"type":"about:blank","title":"Unauthorized","status":401,\
             "detail":"Authentication is required. Log in again to continue.",\
             "code":"AUTHENTICATION_REQUIRED"}""";
+
+    private static final String TEMPORARILY_UNAVAILABLE_BODY = """
+            {"type":"about:blank","title":"Service Unavailable","status":503,\
+            "detail":"Your access could not be verified right now. Nothing was changed. Try again shortly.",\
+            "code":"TEMPORARILY_UNAVAILABLE"}""";
 
     private final AuthenticationEntryPoint bearerEntryPoint = new BearerTokenAuthenticationEntryPoint();
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        bearerEntryPoint.commence(request, response, authException);
+        if (authException instanceof SessionAuthorityUnavailableException) {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            writeProblemBody(response, TEMPORARILY_UNAVAILABLE_BODY);
+            return;
+        }
+        bearerEntryPoint.commence(request, response, authException);   // 401 + WWW-Authenticate
+        writeProblemBody(response, AUTHENTICATION_REQUIRED_BODY);
+    }
+
+    private static void writeProblemBody(HttpServletResponse response, String body) throws IOException {
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write(BODY);
+        response.getWriter().write(body);
     }
 }
 ```
 
-The body is a fixed string (it contains no request data), so it is written directly without a JSON library. The `\` at a line end inside a text block joins lines without inserting a newline.
+The bodies are fixed strings (they contain no request data), so they are written directly without a JSON library. The `\` at a line end inside a text block joins lines without inserting a newline. The 503 body reuses the existing `TEMPORARILY_UNAVAILABLE` code, so clients handle it the same way as a 503 from a controller.
 
 ### 7.29 `J/adapter/in/security/PublicEndpointAwareBearerTokenResolver.java` — NEW
 
@@ -1274,6 +1367,31 @@ public final class PublicEndpointAwareBearerTokenResolver implements BearerToken
     @Override
     public String resolve(HttpServletRequest request) {
         return publicEndpoints.matches(request) ? null : delegate.resolve(request);
+    }
+}
+```
+
+### 7.29a `J/adapter/in/security/SessionAuthorityUnavailableException.java` — NEW
+
+**Purpose.** Carries "the session could not be checked" from the converter (7.27) to the entry point (7.28). It must extend `AuthenticationException` so Spring Security delivers it to the entry point, and must **not** extend `AuthenticationServiceException`, which Spring Security rethrows as a 500 instead. The message is generic; the original database exception is kept only as the `cause` for server-side logs.
+
+```java
+package com.capsuleai.identity.adapter.in.security;
+
+import org.springframework.security.core.AuthenticationException;
+
+/**
+ * Persistent session authority could not be checked because the database is
+ * unreachable. Authentication fails (fail closed); the entry point answers 503
+ * rather than 401, because the client's credentials were not found invalid.
+ *
+ * <p>Deliberately not an {@code AuthenticationServiceException}: Spring
+ * Security rethrows that type as a server error instead of calling the entry point.
+ */
+public final class SessionAuthorityUnavailableException extends AuthenticationException {
+
+    public SessionAuthorityUnavailableException(Throwable cause) {
+        super("Session authority is temporarily unavailable", cause);
     }
 }
 ```
@@ -1665,6 +1783,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -1710,7 +1830,11 @@ public class IdentityApiExceptionHandler {
                 "The request body is missing or is not valid JSON."));
     }
 
-    @ExceptionHandler(DataAccessException.class)
+    /**
+     * Only an unreachable database becomes 503. Other data-access errors (for
+     * example invalid SQL) are programming errors and stay 500.
+     */
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
     public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException exception) {
         log.error("Identity persistence operation failed", exception);
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
@@ -1999,7 +2123,7 @@ Create `JdbcTime`, update `JdbcAccountRepository`, create `JdbcSessionRepository
 Adding `spring-boot-starter-security-oauth2-resource-server` turns on Spring Security for **every** endpoint. If you add the dependency and run the app before `IdentitySecurityConfiguration` exists, registration answers **401** and Boot prints a generated password. Therefore do these files together, in this order:
 
 1. `pom.xml` (7.1) — accept the classpath refresh in VS Code.
-2. Token adapters (7.23, 7.24) and security adapters (7.25–7.29).
+2. `JwtClaimNames` (7.22a), token adapters (7.23, 7.24) and security adapters (7.25–7.29a).
 3. `AccessTokenProperties`, `IdentityTokenConfiguration`, updated `IdentityConfiguration`, `IdentitySecurityConfiguration` (7.30–7.33).
 4. `application-local.properties` (7.2).
 
@@ -2010,6 +2134,8 @@ Adding `spring-boot-starter-security-oauth2-resource-server` turns on Spring Sec
 - Using `NimbusJwtDecoder.withSecretKey(key).build()` without `setJwtValidator(...)`: Spring's default validator allows 60 s of clock skew and uses the system clock; the exact-expiry test fails.
 - Calling `decoder.setJwtValidator(new AccessTokenExpiryValidator(clock))` **alone**: this *replaces* the defaults, so the issuer and type checks would disappear. Use the full list in 7.31.
 - Forgetting the `ERROR` dispatcher permit: real 404/500 errors would turn into confusing 401s.
+- Importing `JwtAccessTokenIssuer` into the converter to reuse a constant. Use `JwtClaimNames`; inbound and outbound adapters never import each other.
+- Catching `DataAccessException` (all of it) in the converter, or making `SessionAuthorityUnavailableException` extend `AuthenticationServiceException`. The first disguises programming errors as outages; the second makes Spring Security rethrow it as a 500 instead of calling the entry point.
 
 ### Step 4 — Web layer and contract (files 34–38)
 
@@ -2067,6 +2193,22 @@ docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_
 
 Production has no protected endpoint yet, so the "valid token → 200" path is verified by the automated test-only probe (Section 9). US-AUTH-004 adds logout, the first real protected operation.
 
+**Optional manual outage check (fail closed → 503).** With the app running and `$tokens` from above, stop only the database, call any non-public route with the still-valid access token, then start the database again:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env stop postgres
+try {
+    Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/anything' -Headers @{ Authorization = "Bearer $($tokens.accessToken)" }
+} catch {
+    $_.Exception.Response.StatusCode.value__     # expect 503 (may take ~30 s: Hikari's connection timeout)
+    $_.ErrorDetails.Message                      # expect code TEMPORARILY_UNAVAILABLE, no SQL or host details
+}
+docker compose --env-file .env up -d --wait --wait-timeout 60 postgres
+```
+
+With the database running, the same request authenticates and then returns 404 (the route does not exist) — proof that the 503 came from the authority check, not from routing. The application log shows one `Session authority check failed because the database is unreachable` entry with the cause; the HTTP body shows none of it.
+
 ---
 
 ## 9. Complete Automated Test Code
@@ -2091,6 +2233,8 @@ Paths relative to `backend/src/test/`.
 | T14 | `java/com/capsuleai/identity/adapter/out/persistence/SessionSchemaIT.java` | PostgreSQL / migration | Failsafe |
 | T15 | `java/com/capsuleai/identity/adapter/in/web/LoginApiIT.java` | HTTP + security + PostgreSQL | Failsafe |
 | T16 | `java/com/capsuleai/identity/adapter/in/security/AccessTokenSecurityIT.java` | Real security chain | Failsafe |
+| T17 | `java/com/capsuleai/identity/adapter/in/security/SessionAwareJwtAuthenticationConverterTest.java` | Adapter unit (401 / 503 / 500 classification) | Surefire |
+| T18 | `java/com/capsuleai/identity/adapter/in/security/SessionAuthorityOutageIT.java` | Real security chain with an unreachable authority | Failsafe |
 
 All Stage 1 tests remain and must still pass. In particular `RegistrationApiIT` now runs **through** the security chain, proving registration stayed public.
 
@@ -3095,6 +3239,7 @@ class LoginApiIT extends IdentityIntegrationTestSupport {
 ```java
 package com.capsuleai.identity.adapter.in.security;
 
+import com.capsuleai.identity.adapter.jwt.JwtClaimNames;
 import com.capsuleai.identity.application.ports.AccessTokenIssuer;
 import com.capsuleai.identity.configuration.AccessTokenProperties;
 import com.capsuleai.identity.support.IdentityIntegrationTestSupport;
@@ -3257,7 +3402,7 @@ class AccessTokenSecurityIT extends IdentityIntegrationTestSupport {
                 .subject(accountId.toString())
                 .issuedAt(now)
                 .expiresAt(now.plus(Duration.ofMinutes(15)))
-                .claim("sid", sessionId.toString())
+                .claim(JwtClaimNames.SESSION_ID, sessionId.toString())
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();
         return NimbusJwtEncoder.withSecretKey(key)
@@ -3270,6 +3415,238 @@ class AccessTokenSecurityIT extends IdentityIntegrationTestSupport {
 ```
 
 `sessionAuthorityIsReadFromPostgreSqlOnEveryRequest` is also the backend's restart-durability argument: authority lives only in PostgreSQL, never in application memory, so an application restart cannot forget a session or a later revocation.
+
+### T17 — `java/com/capsuleai/identity/adapter/in/security/SessionAwareJwtAuthenticationConverterTest.java`
+
+**Covers:** TD-26 classification and TD-25 claim name. A usable session becomes the principal; an unusable session and a missing claim stay **invalid-token** failures (401 path); an unreachable database becomes `SessionAuthorityUnavailableException` (503 path); a programming error (`BadSqlGrammarException`) is **not** disguised as an outage. **Proves:** the converter's decisions with plain lambda stubs of the published `SessionAuthority`. **Does not prove:** what the filter chain sends to the client (T18) or a real database outage (manual check in Step 5).
+
+```java
+package com.capsuleai.identity.adapter.in.security;
+
+import com.capsuleai.identity.adapter.jwt.JwtClaimNames;
+import com.capsuleai.identity.api.AuthenticatedAccount;
+import com.capsuleai.identity.api.SessionAuthority;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.dao.TransientDataAccessResourceException;
+import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class SessionAwareJwtAuthenticationConverterTest {
+
+    private final UUID accountId = UUID.randomUUID();
+    private final UUID sessionId = UUID.randomUUID();
+
+    @Test
+    void usableSessionBecomesTheAuthenticatedPrincipal() {
+        AuthenticatedAccount expected = new AuthenticatedAccount(accountId, sessionId);
+
+        AbstractAuthenticationToken authentication =
+                converter((account, session) -> Optional.of(expected)).convert(jwt());
+
+        assertThat(authentication.isAuthenticated()).isTrue();
+        assertThat(authentication.getPrincipal()).isEqualTo(expected);
+    }
+
+    @Test
+    void unusableSessionIsAnInvalidTokenNotAnOutage() {
+        assertThatThrownBy(() -> converter((account, session) -> Optional.empty()).convert(jwt()))
+                .isInstanceOf(InvalidBearerTokenException.class);
+    }
+
+    @Test
+    void tokenWithoutTheSessionClaimIsAnInvalidToken() {
+        Jwt withoutSessionClaim = Jwt.withTokenValue("token-value")
+                .header("alg", "HS256")
+                .subject(accountId.toString())
+                .build();
+
+        assertThatThrownBy(() -> converter((account, session) -> Optional.empty()).convert(withoutSessionClaim))
+                .isInstanceOf(InvalidBearerTokenException.class);
+    }
+
+    @Test
+    void unobtainableDatabaseConnectionIsReportedAsUnavailableAuthority() {
+        SessionAuthority unreachable = (account, session) -> {
+            throw new CannotGetJdbcConnectionException("Failed to obtain JDBC Connection");
+        };
+
+        assertThatThrownBy(() -> converter(unreachable).convert(jwt()))
+                .isInstanceOf(SessionAuthorityUnavailableException.class)
+                .hasCauseInstanceOf(CannotGetJdbcConnectionException.class);
+    }
+
+    @Test
+    void transientResourceFailureIsAlsoReportedAsUnavailableAuthority() {
+        SessionAuthority flaky = (account, session) -> {
+            throw new TransientDataAccessResourceException("Connection reset");
+        };
+
+        assertThatThrownBy(() -> converter(flaky).convert(jwt()))
+                .isInstanceOf(SessionAuthorityUnavailableException.class);
+    }
+
+    @Test
+    void programmingErrorsAreNotDisguisedAsOutages() {
+        SessionAuthority broken = (account, session) -> {
+            throw new BadSqlGrammarException("find session", "SELECT nonsense", new SQLException("syntax error"));
+        };
+
+        assertThatThrownBy(() -> converter(broken).convert(jwt()))
+                .isInstanceOf(BadSqlGrammarException.class);
+    }
+
+    private static SessionAwareJwtAuthenticationConverter converter(SessionAuthority authority) {
+        return new SessionAwareJwtAuthenticationConverter(authority);
+    }
+
+    private Jwt jwt() {
+        return Jwt.withTokenValue("token-value")
+                .header("alg", "HS256")
+                .subject(accountId.toString())
+                .claim(JwtClaimNames.SESSION_ID, sessionId.toString())
+                .issuedAt(Instant.parse("2026-01-05T08:00:00Z"))
+                .expiresAt(Instant.parse("2026-01-05T08:15:00Z"))
+                .build();
+    }
+}
+```
+
+`SessionAuthority` has a single method, so a lambda is a complete stub. The two outage tests log an error line each — that is the converter's server-side diagnostic and is expected.
+
+### T18 — `java/com/capsuleai/identity/adapter/in/security/SessionAuthorityOutageIT.java`
+
+**Covers:** TD-26 through the **real configured `SecurityFilterChain`**: a validly signed, unexpired token whose session cannot be checked gets **503** with the fixed problem body, no `WWW-Authenticate` challenge, no principal data, no exception text and no token echo, and the protected controller is not reached (fail closed). Invalid, expired and missing tokens still get **401** — they fail before the authority is consulted.
+
+**How the outage is simulated.** The test replaces `SessionAuthority` with a `@Primary` stub that throws `CannotGetJdbcConnectionException` — exactly what Spring throws when HikariCP cannot supply a connection. Replacing a bean changes the Spring configuration, so this class gets **its own** application context and therefore its own PostgreSQL container (a few extra seconds); it does **not** extend `IdentityIntegrationTestSupport`, so the shared context used by every other IT stays untouched. **Does not prove:** a real database stop (manual check in Step 5).
+
+```java
+package com.capsuleai.identity.adapter.in.security;
+
+import com.capsuleai.CapsuleAiApplication;
+import com.capsuleai.identity.api.SessionAuthority;
+import com.capsuleai.identity.application.ports.AccessTokenIssuer;
+import com.capsuleai.identity.support.IdentityTestConfiguration;
+import com.capsuleai.identity.support.MutableClock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest(classes = {
+        CapsuleAiApplication.class,
+        IdentityTestConfiguration.class,
+        SessionAuthorityOutageIT.UnreachableSessionAuthority.class})
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class SessionAuthorityOutageIT {
+
+    private static final String PROTECTED_PROBE = IdentityTestConfiguration.ProtectedProbeController.PATH;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private AccessTokenIssuer accessTokenIssuer;
+
+    @Autowired
+    private MutableClock clock;
+
+    /** Simulates a database outage at the published authority boundary. */
+    @TestConfiguration(proxyBeanMethods = false)
+    static class UnreachableSessionAuthority {
+
+        @Bean
+        @Primary
+        SessionAuthority unreachableSessionAuthority() {
+            return (accountId, sessionId) -> {
+                throw new CannotGetJdbcConnectionException("Failed to obtain JDBC Connection (simulated outage)");
+            };
+        }
+    }
+
+    @BeforeEach
+    void resetClock() {
+        clock.setInstant(MutableClock.DEFAULT_START);
+    }
+
+    @Test
+    void confirmedDatabaseOutageFailsClosedWithASanitized503() throws Exception {
+        String token = validlySignedToken();
+
+        mockMvc.perform(get(PROTECTED_PROBE).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.accountId").doesNotExist())
+                .andExpect(jsonPath("$.sessionId").doesNotExist())
+                .andExpect(header().doesNotExist(HttpHeaders.WWW_AUTHENTICATE))
+                .andExpect(content().string(not(containsString("JDBC"))))
+                .andExpect(content().string(not(containsString("simulated"))))
+                .andExpect(content().string(not(containsString(token))));
+    }
+
+    @Test
+    void malformedTokenIsStillRejectedAs401() throws Exception {
+        mockMvc.perform(get(PROTECTED_PROBE).header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void expiredTokenIsStillRejectedAs401() throws Exception {
+        String token = validlySignedToken();
+        clock.advance(Duration.ofMinutes(15));
+
+        mockMvc.perform(get(PROTECTED_PROBE).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    void missingTokenIsStillRejectedAs401() throws Exception {
+        mockMvc.perform(get(PROTECTED_PROBE))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
+    }
+
+    private String validlySignedToken() {
+        Instant now = clock.instant();
+        return accessTokenIssuer.issue(UUID.randomUUID(), UUID.randomUUID(), now, now.plus(Duration.ofMinutes(15)));
+    }
+}
+```
+
+Why the 401 cases matter here: they prove the classification order. Signature, issuer and expiry are checked by the decoder **before** the converter asks `SessionAuthority`, so a database outage can never turn a bad or expired token into anything other than 401. A revoked session (401) is covered by US-AUTH-004 `LogoutApiIT`, because revocation does not exist yet in this stage.
 
 ### 9.1 Test traceability
 
@@ -3298,6 +3675,10 @@ class AccessTokenSecurityIT extends IdentityIntegrationTestSupport {
 | FR-AUTH-010 | Exact 15-minute access boundary | `AccessTokenSecurityIT` / `SessionPolicyTest` | `accessTokenExpiresExactlyFifteenMinutesAfterIssue` / `accessTokensLastFifteenMinutes` | Security chain / Domain |
 | FR-AUTH-010 | 30-day session boundary | `LoginSessionTest` / `SessionAuthorityServiceTest` / `SessionSchemaIT` | `isUsableUntilJustBeforeItsMaximumLifetime` / `sessionAtItsMaximumLifetimeIsNotAccepted` / `databaseEnforcesTheThirtyDayMaximum` | Domain / Application / DB |
 | 001 AC-10 | Default deny | `AccessTokenSecurityIT` | `unknownRoutesAreProtectedByDefault` | Security chain |
+| FR-AUTH-009 / TD-26 | Unreachable database during the authority check → fail closed, sanitized 503, no challenge, no leak | `SessionAuthorityOutageIT` / `SessionAwareJwtAuthenticationConverterTest` | `confirmedDatabaseOutageFailsClosedWithASanitized503` / `unobtainableDatabaseConnectionIsReportedAsUnavailableAuthority`, `transientResourceFailureIsAlsoReportedAsUnavailableAuthority` | Security chain (stubbed authority) / Adapter unit |
+| FR-AUTH-009 / TD-26 | Invalid, expired, missing token or unusable session still 401 | `SessionAuthorityOutageIT` / `SessionAwareJwtAuthenticationConverterTest` | `malformedTokenIsStillRejectedAs401`, `expiredTokenIsStillRejectedAs401`, `missingTokenIsStillRejectedAs401` / `unusableSessionIsAnInvalidTokenNotAnOutage`, `tokenWithoutTheSessionClaimIsAnInvalidToken` | Security chain / Adapter unit |
+| TD-26 | Programming errors are not reported as 503 | `SessionAwareJwtAuthenticationConverterTest` | `programmingErrorsAreNotDisguisedAsOutages` | Adapter unit |
+| TD-26 | Real PostgreSQL stop → 503 | — | Manual check (Section 8, Step 5) | **Manual evidence** |
 | Regression | Registration public; Stage 1 suite | `LoginApiIT` + all Stage 1 tests | `registrationRemainsPublicNowThatSecurityIsActive` | HTTP |
 
 ---
@@ -3309,8 +3690,8 @@ Set-Location 'D:\CapsuleAI\backend'
 
 .\mvnw.cmd compile
 .\mvnw.cmd test
-.\mvnw.cmd '-Dtest=LogInServiceTest,SessionAuthorityServiceTest' test
-.\mvnw.cmd '-Dit.test=AccessTokenSecurityIT' verify
+.\mvnw.cmd '-Dtest=LogInServiceTest,SessionAuthorityServiceTest,SessionAwareJwtAuthenticationConverterTest' test
+.\mvnw.cmd '-Dit.test=AccessTokenSecurityIT,SessionAuthorityOutageIT' verify
 .\mvnw.cmd '-Dit.test=LoginApiIT,RegistrationApiIT' verify
 
 .\mvnw.cmd --batch-mode --no-transfer-progress clean verify
@@ -3320,7 +3701,7 @@ Get-ChildItem .\target\surefire-reports\*.txt | Get-Content
 Get-ChildItem .\target\failsafe-reports\*.txt | Get-Content
 ```
 
-**Expected:** `BUILD SUCCESS`; Failsafe now also lists `SessionSchemaIT`, `LoginApiIT`, `AccessTokenSecurityIT`; all Stage 1 classes still pass, including `DatabaseSmokeIT` (it needs T1 to start). Record the actual counts.
+**Expected:** `BUILD SUCCESS`; Failsafe now also lists `SessionSchemaIT`, `LoginApiIT`, `AccessTokenSecurityIT`, `SessionAuthorityOutageIT`; all Stage 1 classes still pass, including `DatabaseSmokeIT` (it needs T1 to start). `SessionAuthorityOutageIT` starts a second PostgreSQL container because it has its own context. Record the actual counts.
 
 | Symptom | Likely cause / fix |
 | --- | --- |
@@ -3332,6 +3713,9 @@ Get-ChildItem .\target\failsafe-reports\*.txt | Get-Content
 | Expiry test passes at +15 min (should fail) | Default `JwtTimestampValidator` still in use, or decoder not using the injected `Clock`. |
 | Log shows "Using generated security password" | No `JwtDecoder` bean (check `IdentityTokenConfiguration` is in `identity.configuration`). |
 | ArchUnit failure in `application` | A Spring type leaked into a service (e.g. `@Transactional`). |
+| Outage test gets 500 instead of 503 | `SessionAuthorityUnavailableException` extends `AuthenticationServiceException` (rethrown by Spring Security) or the converter does not catch `DataAccessResourceFailureException`. |
+| Outage test gets 401 instead of 503 | The entry point checks for the wrong type, or the converter wraps the outage in `InvalidBearerTokenException`. |
+| Outage test: `expected single matching bean but found 2` for `SessionAuthority` | `@Primary` missing on the stub bean in `UnreachableSessionAuthority`. |
 
 ---
 
@@ -3354,17 +3738,19 @@ No workflow change is required for discovery: Surefire/Failsafe pick up the new 
             'surefire-reports/TEST-com.capsuleai.identity.application.LogInServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.LoginApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.AccessTokenSecurityIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 1
           }
 ```
 
-After the PR run, open the job log for "Require expected test reports" and download `backend-test-reports` to confirm `AccessTokenSecurityIT` ran with zero skips.
+After the PR run, open the job log for "Require expected test reports" and download `backend-test-reports` to confirm `AccessTokenSecurityIT` and `SessionAuthorityOutageIT` ran with zero skips.
 
 ---
 
 ## 12. Completion Checklist
 
 **Production implementation**
-- [ ] Files 1–38 done; `pom.xml` uses `spring-boot-starter-security-oauth2-resource-server`.
+- [ ] Files 1–38 (including 22a and 29a) done; `pom.xml` uses `spring-boot-starter-security-oauth2-resource-server`.
+- [ ] No class in `adapter.in` imports `adapter.out` (and vice versa); the `sid` claim name comes only from `JwtClaimNames`.
 - [ ] `V3` applied; `identity_session` and `identity_refresh_token` exist with their constraints.
 - [ ] No signing secret committed; local runs use `CAPSULE_JWT_SIGNING_SECRET`.
 - [ ] `openapi.yaml` updated to version 0.2.0 with login and bearer scheme.
@@ -3380,9 +3766,11 @@ After the PR run, open the job log for "Require expected test reports" and downl
 - [ ] Signed but session-less, cross-account, wrong-issuer, wrong-key, expired and malformed tokens → 401.
 - [ ] Exact 15-minute boundary verified with the test clock.
 - [ ] Passwords/tokens absent from logs; only the refresh-token hash is stored.
+- [ ] Unreachable database during the authority check → 503 `TEMPORARILY_UNAVAILABLE`, fail closed, fixed body, no challenge header; programming errors stay 500.
 
 **Tests and verification**
-- [ ] New unit/application tests pass; `SessionSchemaIT`, `LoginApiIT`, `AccessTokenSecurityIT` pass.
+- [ ] New unit/application tests pass (incl. `SessionAwareJwtAuthenticationConverterTest`); `SessionSchemaIT`, `LoginApiIT`, `AccessTokenSecurityIT`, `SessionAuthorityOutageIT` pass.
+- [ ] Optional manual outage check (Section 8, Step 5) recorded if performed.
 - [ ] All Stage 1 tests still pass (registration through the security chain).
 - [ ] `clean verify` green locally; CI green on the PR; report guard updated (optional).
 - [ ] Review done; `git diff --check` clean; no `.env`/`target`/secrets staged.

@@ -45,6 +45,7 @@ This story is the one the Sprint plan calls "the greatest lifecycle/concurrency 
 | **Competing renewals** | Same token twice at once → exactly one rotation; the other is reuse → session revoked. | AC-03/05, [Test Strategy §8.2](../../../../07-testing/test-strategy.md#82-what-database-tests-must-establish) |
 | **Interrupted renewal** | Response lost after commit → retry presents a consumed token → session revoked → log in again. Response lost before commit → nothing changed → retry succeeds. | AC-08, COM-002 |
 | **Logout then renew** | Refused; the logout reason is kept. | US-AUTH-004 AC-01 |
+| **Logout after access expiry** (closes the Stage 3 gap) | Client renews first, then logs out with the new access token → 204; the session is revoked and every token of it is dead. No new endpoint. | US-AUTH-004 AC-01/AC-06, [A-07](shared-architecture.md#15-ambiguities-limitations-and-open-questions) |
 
 ### 2.2 Requirements traceability
 
@@ -173,9 +174,44 @@ Content-Type: application/json
 | Renewed | 200 | `TokenResponse` — new `accessToken`, new `refreshToken`, **unchanged** `sessionExpiresAt` |
 | `refreshToken` missing/blank | 400 | `VALIDATION_FAILED`, field `refreshToken` `REQUIRED` |
 | Unknown, consumed (reuse), revoked or expired session | 401 | `AUTHENTICATION_REQUIRED` |
-| Database failure | 503 | `TEMPORARILY_UNAVAILABLE` (transaction rolled back) |
+| Database unreachable | 503 | `TEMPORARILY_UNAVAILABLE` (transaction rolled back) |
 
 Public endpoint: the refresh token is the credential. An `Authorization` header (for example an expired access token) is ignored.
+
+### 5.7 Final logout flow after access expiry
+
+In Stage 3, an access token that had already expired could not log out, and the resulting 401 did **not** revoke the session ([US-AUTH-004 guide §5.6](US-AUTH-004-guide.md#56-temporary-stage-3-limitation-expired-access-token)). With renewal available, the final client contract closes that gap **without any new endpoint, credential or server code**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client (session A, access token expired)
+    participant R as POST /api/v1/auth/refresh
+    participant L as POST /api/v1/auth/logout
+    Note over C: Sign out locally at once:<br/>drop access token, hide personal content
+    C->>R: {refreshToken}
+    alt 200 (session A usable)
+        R-->>C: new access token + new refresh token
+        C->>L: Bearer <new access token>
+        L-->>C: 204 = revocation confirmed (reason LOGOUT)
+        Note over C: Delete the refresh token
+    else 401 (revoked, expired, or token already consumed)
+        R-->>C: AUTHENTICATION_REQUIRED
+        Note over C: Session can no longer be renewed with this token<br/>(a consumed token is turned into a reuse revocation).<br/>Treat as confirmed unusable; delete the refresh token.
+    else 503 or timeout
+        R-->>C: TEMPORARILY_UNAVAILABLE / no answer
+        Note over C: NOT confirmed: keep content hidden,<br/>keep the refresh token only to retry
+    end
+```
+
+Why this is correct with the existing rules:
+
+- Renewal and logout are the same operations already specified; they only run in sequence.
+- After step 2's `204`, the session is revoked, so the refresh token issued in step 1 is dead as well — a revoked session never renews (ADA-008).
+- Only session A is touched; other devices keep their sessions (BRULE-AUTH-006).
+- If step 1's response is lost after commit, retrying it presents a consumed token → reuse revocation → the session ends anyway. That outcome is what the user asked for.
+
+The test `logoutAfterAccessExpiryRenewsFirstThenConfirmsRevocation` (T4) exercises this whole flow.
 
 ---
 
@@ -920,6 +956,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -971,7 +1009,11 @@ public class IdentityApiExceptionHandler {
                 "The request body is missing or is not valid JSON."));
     }
 
-    @ExceptionHandler(DataAccessException.class)
+    /**
+     * Only an unreachable database becomes 503. Other data-access errors (for
+     * example invalid SQL) are programming errors and stay 500.
+     */
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
     public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException exception) {
         log.error("Identity persistence operation failed", exception);
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
@@ -1482,7 +1524,7 @@ class RefreshSessionServiceTest {
 
 ### T4 — `identity/adapter/in/web/SessionRefreshApiIT.java`
 
-**Covers:** AC-01/02 (renew after real 15-minute expiry, same account), AC-03 (database consumption, one current token, same `sid`), AC-04 (absolute maximum across rotations; capped access expiry; nothing deleted), AC-05/AC-07 (reuse revokes A including its newest tokens; B unaffected), AC-06 (unusable session → login restores the same account), US-AUTH-004 AC-01 (logout blocks renewal), TD-17, NFR-SEC-003. **Proves:** HTTP + configured security + PostgreSQL. **Does not prove:** competing requests (T5) or mobile retry UI.
+**Covers:** AC-01/02 (renew after real 15-minute expiry, same account), AC-03 (database consumption, one current token, same `sid`), AC-04 (absolute maximum across rotations; capped access expiry; nothing deleted), AC-05/AC-07 (reuse revokes A including its newest tokens; B unaffected), AC-06 (unusable session → login restores the same account), US-AUTH-004 AC-01 (logout blocks renewal), the final renew-then-logout flow that closes the Stage 3 limitation (§5.7), TD-17, NFR-SEC-003. **Proves:** HTTP + configured security + PostgreSQL. **Does not prove:** competing requests (T5) or mobile retry UI.
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
@@ -1610,6 +1652,33 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
 
         assertThat(revocationReason(sessionId)).isEqualTo("LOGOUT");
         assertThat(isConsumed(login.refreshToken())).isFalse();
+    }
+
+    @Test
+    void logoutAfterAccessExpiryRenewsFirstThenConfirmsRevocation() throws Exception {
+        registerAccount("expired-logout@example.com", PASSWORD);
+        IssuedTokens deviceA = logIn("expired-logout@example.com", PASSWORD);
+        IssuedTokens deviceB = logIn("expired-logout@example.com", PASSWORD);
+        UUID sessionA = sessionIdOf(deviceA.accessToken());
+        clock.advance(Duration.ofMinutes(30));
+
+        // The expired access token alone still cannot log out, and that 401 revokes nothing ...
+        mockMvc.perform(post(LOGOUT).header(HttpHeaders.AUTHORIZATION, "Bearer " + deviceA.accessToken()))
+                .andExpect(status().isUnauthorized());
+        assertThat(jdbc.sql("SELECT revoked_at IS NULL FROM identity_session WHERE id = :id")
+                .param("id", sessionA).query(Boolean.class).single()).isTrue();
+
+        // ... the final flow renews first and then logs out with the new access token.
+        IssuedTokens renewed = renew(deviceA.refreshToken());
+        mockMvc.perform(post(LOGOUT).header(HttpHeaders.AUTHORIZATION, "Bearer " + renewed.accessToken()))
+                .andExpect(status().isNoContent());
+
+        assertThat(revocationReason(sessionA)).isEqualTo("LOGOUT");
+        refresh(renewed.refreshToken()).andExpect(status().isUnauthorized());
+        getProtectedProbe(renewed.accessToken()).andExpect(status().isUnauthorized());
+
+        // Device B's separate session is untouched: it can still renew and be used.
+        getProtectedProbe(renew(deviceB.refreshToken()).accessToken()).andExpect(status().isOk());
     }
 
     @Test
@@ -2006,6 +2075,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
 | AC-08 | Pending/uncertain UI; single-flight client renewal | — | — | **External** |
 | AC-09 | Accessible guidance | — | — | **External only** |
 | 004 AC-01 | Logout blocks renewal; reason kept | `SessionRefreshApiIT` / `RefreshSessionServiceTest` | `loggedOutSessionCannotBeRenewed` / `loggedOutSessionCannotBeRenewedAndKeepsItsLogoutReason` | HTTP / Application |
+| 004 AC-01/AC-06, A-07 | Expired access token: 401 revokes nothing; renew → logout → 204; new tokens dead; other session unaffected | `SessionRefreshApiIT` | `logoutAfterAccessExpiryRenewsFirstThenConfirmsRevocation` | HTTP + security + DB |
 | 004 AC-01 | Logout racing renewal | `ConcurrentRefreshIT` | `concurrentLogoutAndRenewalLeaveNoUsableAuthority` | PostgreSQL concurrency |
 | TD-17 | Stale header ignored on renewal | `SessionRefreshApiIT` | `renewalIsPublicAndIgnoresAStaleAuthorizationHeader` | Security chain |
 | NFR-SEC-003 | Tokens not logged | `SessionRefreshApiIT` | `tokensNeverAppearInLogs` | Logs |
@@ -2064,6 +2134,7 @@ No workflow change is required for discovery or execution. The concurrency test 
             'surefire-reports/TEST-com.capsuleai.identity.application.RefreshSessionServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.SessionRefreshApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRefreshIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 1
           }
 ```
 
@@ -2085,6 +2156,7 @@ If the job ever approaches its 15-minute timeout, investigate before raising it 
 - [ ] Reuse revokes only the affected session, killing its newer tokens (FR-AUTH-014, BRULE-AUTH-006).
 - [ ] 30-day maximum absolute; access `exp` capped; refusal deletes nothing (FR-AUTH-010).
 - [ ] Logged-out sessions cannot renew (US-AUTH-004 AC-01).
+- [ ] Final logout flow after access expiry works: renew → logout → 204; the Stage 3 limitation (A-07) is closed without a new endpoint (§5.7).
 - [ ] No grace window for replayed tokens.
 
 **Tests and verification**
@@ -2095,6 +2167,7 @@ If the job ever approaches its 15-minute timeout, investigate before raising it 
 
 **Remaining external evidence**
 - [ ] Mobile single-flight renewal and atomic refresh-token replacement (AC-08 client contract).
+- [ ] Mobile logout follows §5.7: local sign-out first, renew-then-logout when the access token has expired, "not confirmed" state for 503/timeout.
 - [ ] Authentication-required state distinct from an empty wardrobe; login route; intended-area restoration (AC-04, AC-06, AC-09).
 - [ ] Vietnamese accessible guidance at 200% text (AC-09).
 

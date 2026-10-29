@@ -98,7 +98,7 @@ Out of Sprint scope: FR-AUTH-003/004/017/018, BRULE-AUTH-004/005 (password recov
 | Two equivalent registrations at once | At most one account (001 AC-06).                                              | Unique constraint on normalized `email` + `INSERT … ON CONFLICT DO NOTHING`.                                       |
 | Registration response lost           | Retry cannot create a duplicate (001 AC-09).                                  | Retry receives `409 EMAIL_ALREADY_REGISTERED`; the user then logs in, which confirms the outcome.                  |
 | Login response lost                  | No false claim; retry is safe.                                                | Retry creates another separate session; the orphaned one is unusable without its tokens and expires after 30 days. |
-| Logout response lost                 | Distinguish unconfirmed from completed; no other session revoked (004 AC-06). | Retry with the same access token returns `401 AUTHENTICATION_REQUIRED` = "already signed out".                     |
+| Logout response lost                 | Distinguish unconfirmed from completed; no other session revoked (004 AC-06). | Retry only ever targets the token's own session. A `401` on retry does **not** by itself prove revocation (the token may simply have expired); from Stage 4 the client confirms with renew-then-logout ([§4.6](#46-logout-us-auth-004)). |
 | Two renewals with one refresh token  | Exactly one rotation; the other is reuse (003 AC-03/05).                      | `SELECT … FOR UPDATE` serializes them; the loser sees a consumed token and revokes the session.                    |
 | Renewal response lost                | No replay grace (Sprint plan §3.3, Test Strategy §9.2).                       | Retry presents a consumed token → session revoked → user logs in again. Strict, but it is the established policy.  |
 | Logout racing a renewal              | Session ends up revoked; no usable authority remains.                         | Both lock the same session row; whichever is second sees the result of the first.                                  |
@@ -136,6 +136,7 @@ flowchart TB
                 Web["web: Registration / Login / Logout / SessionRefresh controllers<br/>IdentityApiExceptionHandler"]
                 Sec["security: SessionAwareJwtAuthenticationConverter<br/>AccessTokenExpiryValidator, entry point, bearer resolver"]
             end
+            Claims["adapter.jwt: JwtClaimNames<br/>(access-token wire format, internal)"]
             API["api: AuthenticatedAccount, SessionAuthority<br/>(published, framework-free)"]
             App["application: RegisterAccountService, LogInService,<br/>LogOutService, RefreshSessionService, SessionAuthorityService"]
             Ports["application.ports: AccountRepository, SessionRepository,<br/>PasswordHasher, AccessTokenIssuer, RefreshTokenGenerator,<br/>IdentityTransactions"]
@@ -158,6 +159,8 @@ flowchart TB
     App --> Ports
     Persist -.implements.-> Ports
     Crypto -.implements.-> Ports
+    Sec --> Claims
+    Crypto --> Claims
     Persist --> DB
     Config -.wires.-> App
     Config -.wires.-> Chain
@@ -174,9 +177,12 @@ All paths are below `backend/src/main/java/com/capsuleai/identity/`.
 | `application`             | Use cases; owns transaction boundaries through a port.                                 | `domain`, `api`, `application.ports`, JDK. **No Spring.** **[TECH]** new ArchUnit rule. |
 | `application.ports`       | What the use cases need from the outside world.                                        | `domain`, JDK.                                                                          |
 | `adapter.in.web`          | HTTP JSON ↔ commands/results, error translation.                                       | Spring MVC, `application`, `api`.                                                       |
-| `adapter.in.security`     | Turns a verified JWT into `AuthenticatedAccount` using `SessionAuthority`.             | Spring Security, `api`.                                                                 |
+| `adapter.in.security`     | Turns a verified JWT into `AuthenticatedAccount` using `SessionAuthority`; classifies authority outages. | Spring Security, Spring DAO exception types, `api`, `adapter.jwt`.                  |
+| `adapter.jwt`             | `JwtClaimNames`: the access-token claim names shared by the issuing and verifying adapters (S2). | JDK only. Internal to Identity — **not** part of `api`.                       |
 | `adapter.out.persistence` | JDBC (`JdbcClient`) implementations of repositories and transactions.                  | Spring JDBC/TX, `ports`, `domain`.                                                      |
-| `adapter.out.security`    | PBKDF2 hashing, JWT signing, random refresh tokens.                                    | Spring Security crypto/JOSE, `ports`, `domain`.                                         |
+| `adapter.out.security`    | PBKDF2 hashing, JWT signing, random refresh tokens.                                    | Spring Security crypto/JOSE, `ports`, `domain`, `adapter.jwt`.                          |
+
+**Rule [TECH]: `adapter.in.*` and `adapter.out.*` never import each other.** When an inbound and an outbound adapter must agree on a technical format (here: the name of the session-id claim inside the JWT), the shared constant lives in the neutral `adapter.jwt` package that both depend on ([TD-25](#14-technical-decision-log)). It is not placed in `domain` (it is a token-format detail, not a business rule) or in `api` (other modules receive `AuthenticatedAccount`, never raw JWT claims).
 | `configuration`           | `@Bean` wiring, the filter chain, token properties.                                    | Everything inside `identity`.                                                           |
 
 Why the application layer has **no Spring**: [ADA-015](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) says "Keep Spring/JPA, HTTP and provider types outside the domain/application core." That is why transactions go through the small `IdentityTransactions` port instead of `@Transactional`, and why application services are created with `@Bean` methods instead of `@Service`.
@@ -347,7 +353,10 @@ sequenceDiagram
         F->>CV: convert(jwt)
         CV->>SA: findUsableSession(sub, sid)
         SA->>DB: SELECT session by id
-        alt missing / other account / revoked / expired
+        alt database unreachable (connection cannot be obtained / resource failure)
+            CV-->>F: SessionAuthorityUnavailableException
+            F-->>C: 503 TEMPORARILY_UNAVAILABLE (fail closed, no WWW-Authenticate)
+        else missing / other account / revoked / expired
             F-->>C: 401 AUTHENTICATION_REQUIRED
         else usable
             CV-->>F: AuthenticatedAccountToken(principal = AuthenticatedAccount)
@@ -357,6 +366,16 @@ sequenceDiagram
 ```
 
 This is how "a cryptographically valid, unexpired Access Token does not permit protected use through the unusable session" ([US-AUTH-003 AC-06](../../../stories/auth/US-AUTH-003-resume-session.md#ac-06--reauthenticate-after-unusable-access), [ADD §9.1](../../../../04-architecture/ADD.md#91-authentication-authorization-and-session-lifecycle)) is enforced.
+
+**Authentication failure vs. infrastructure failure [TECH] ([TD-26](#14-technical-decision-log)).** Every branch except "usable" ends the request **without** authentication — the check is fail-closed. They differ only in what the client is told:
+
+| What went wrong | Example | Response | Why |
+| --- | --- | --- | --- |
+| The credential is not acceptable | missing, malformed, wrong-key, wrong-issuer or expired token; session missing, revoked, expired or another account's | 401 `AUTHENTICATION_REQUIRED` + `WWW-Authenticate: Bearer` | The client must authenticate again. |
+| The credential could not be checked | PostgreSQL unreachable: `CannotGetJdbcConnectionException` (Hikari could not hand out a connection) or another `DataAccessResourceFailureException` / `TransientDataAccessResourceException` | 503 `TEMPORARILY_UNAVAILABLE`, no `WWW-Authenticate` | The client's credentials were **not** found invalid; asking it to log in again would be wrong. Retry later. |
+| A defect | e.g. `BadSqlGrammarException`, `NullPointerException` | 500 (Spring error page) | Programming errors are not disguised as outages. Still no authentication. |
+
+Mechanics: the converter catches only the two outage types and throws `SessionAuthorityUnavailableException`, a plain `AuthenticationException`. Spring Security's `BearerTokenAuthenticationFilter` hands every `AuthenticationException` except `AuthenticationServiceException` to the entry point (verified for Security 7.1.1), so the existing `ProblemJsonAuthenticationEntryPoint` can answer 503 for this one type and 401 for everything else. No new filter or failure handler is needed.
 
 ### 4.6 Logout (US-AUTH-004)
 
@@ -369,16 +388,28 @@ sequenceDiagram
     participant S as LogOutService
     participant DB as PostgreSQL
     C->>F: POST /api/v1/auth/logout, Bearer <jwt of session A>
-    alt session A already unusable
-        F-->>C: 401 AUTHENTICATION_REQUIRED → client shows signed-out state
-    else usable
+    alt access token expired/invalid, or session A already unusable
+        F-->>C: 401 AUTHENTICATION_REQUIRED
+        Note over C,F: 401 means "this token gives no access".<br/>It does NOT prove session A is revoked:<br/>an expired token says nothing about A.
+    else database unreachable
+        F-->>C: 503 TEMPORARILY_UNAVAILABLE (nothing changed)
+    else token valid and session A usable
         F->>LC: principal = (accountId, sessionA)
         LC->>S: logOut(principal)
         S->>DB: UPDATE identity_session SET revoked_at, revocation_reason='LOGOUT'<br/>WHERE id = A AND account_id = ? AND revoked_at IS NULL
-        LC-->>C: 204 No Content
+        LC-->>C: 204 No Content = server-side revocation confirmed
     end
     Note over C,DB: Session B (device B) is never touched.
 ```
+
+**Local sign-out vs. confirmed revocation.** On every logout attempt the client signs out **locally** at once (drops the access token, hides and clears cached personal content). Only `204` *confirms* that the server revoked the session. A `401` returned for an access token that has already expired leaves the server-side session exactly as it was — still usable for renewal until it is revoked or reaches its 30-day maximum.
+
+| Stage | Access token expired at logout time | What the client can do | Server-side session A |
+| --- | --- | --- | --- |
+| **Stage 3** (logout exists, renewal does not) | Logout → 401 | Sign out locally only. Delete the stored refresh token too, so nobody can use it once renewal exists. | **Not revoked** (`revoked_at` stays NULL). Its access tokens are already expired, so no protected use is possible; the row remains until the 30-day maximum. This is a temporary limitation of the intermediate Stage 3, not of the final design ([A-07](#15-ambiguities-limitations-and-open-questions)). |
+| **Stage 4** (final) | 1. `POST /refresh` with the stored refresh token. 2a. `200` → `POST /logout` with the **new** access token → `204` = confirmed. 2b. `401` from refresh → the session can no longer be renewed by anyone holding this token (revoked, expired, or the token was already consumed — which this very request turns into a reuse revocation) → treat as confirmed unusable. 2c. `503`/timeout → **not confirmed**: keep content hidden, show "logout not confirmed", keep the refresh token in secure storage only to retry. | Revoked with reason `LOGOUT` (2a), or already unusable (2b). |
+
+The rules stay exactly as specified: logout revokes only its own session, other sessions stay usable, a revoked session can never renew, and a valid JWT is never enough without usable persistent authority.
 
 ### 4.7 Refresh rotation and reuse detection (US-AUTH-003)
 
@@ -546,6 +577,81 @@ Two requests A and B present the same refresh token R1 at the same moment:
 
 Result: exactly one success, the session ends revoked, and the outcome does not depend on timing. This is the strict policy required by FR-AUTH-014 and the Test Strategy's "no replay exception" rule.
 
+### 5.5 Database connections and HikariCP
+
+**What a connection pool is.** A *physical* PostgreSQL connection is a TCP connection plus a server process, created by a handshake (network round trips, authentication, session setup). That takes milliseconds and server memory, which is far too expensive to repeat for every SQL statement. A **connection pool** opens a small set of connections once, keeps them open, and *lends* them to application code; when the code is done, the connection goes back to the pool instead of being closed.
+
+**HikariCP** is the pool Spring Boot uses by default. It keeps the open connections, hands one out on request, waits (by default up to 30 seconds, `connectionTimeout`) if all are busy, validates and replaces broken connections, and returns connections to the idle set when they are "closed" by application code.
+
+**Evidence that CapsuleAI uses it** (checked against the repository, not assumed): `backend/pom.xml` declares `spring-boot-starter-flyway`, which depends on `spring-boot-starter-jdbc 4.1.1`, which depends on `com.zaxxer:HikariCP` (version 7.0.2 from the Boot 4.1.1 BOM). Running `.\mvnw.cmd -o dependency:tree '-Dincludes=com.zaxxer:HikariCP'` on commit `c3a61da` printed exactly that path. The project adds no other pool, and Sprint 1 adds none (TD-01). The only Hikari-specific setting is the driver option from US-AUTH-001 (`spring.datasource.hikari.data-source-properties.logServerErrorDetail=false`, TD-23); pool sizes stay at Hikari's defaults (maximum 10 connections), because no requirement justifies tuning.
+
+```text
+Spring Boot application (services, security filter)
+        |
+        v
+JdbcClient                (Spring JDBC; sends SQL with named parameters)
+        |
+        v
+DataSourceUtils           (borrows a connection — or reuses the one bound to the current transaction)
+        |
+        v
+Spring DataSource bean    (a HikariDataSource, auto-configured by Spring Boot)
+        |
+        v
+HikariCP connection pool  (a few long-lived physical connections)
+        |
+        v
+PostgreSQL 17
+```
+
+**How Spring Boot builds it.** `DataSourceAutoConfiguration` creates a `HikariDataSource` bean when HikariCP is on the classpath and connection details exist — from `spring.datasource.url/username/password` (profile `local`) or from the Testcontainers `@ServiceConnection` (tests). Properties under `spring.datasource.hikari.*` are bound onto that bean.
+
+**How `JdbcClient` gets and returns a connection.**
+
+- *Outside a transaction* (registration's single insert, the authority `SELECT`, logout's single `UPDATE`): `JdbcClient` borrows a connection through `DataSourceUtils`, runs the statement in auto-commit mode, and "closes" the connection — which really returns it to Hikari. One statement, one short loan.
+- *Inside a transaction* (login, refresh): `TransactionTemplate` asks `DataSourceTransactionManager` to begin; it borrows **one** connection, switches auto-commit off and **binds it to the current thread** for the transaction. Every `JdbcClient` call in that transaction asks `DataSourceUtils` for a connection and receives **that same bound connection**, so all statements share one database transaction — this is why the `SELECT … FOR UPDATE` lock in §5.3 is still held when the following `UPDATE`/`INSERT` run. On commit or rollback the connection is unbound and returned to the pool.
+
+**Avoiding connection leaks.** A leak is a borrowed connection that is never returned; once all 10 are leaked, every request waits `connectionTimeout` and then fails. In this codebase:
+
+- Always go through `JdbcClient`; it returns connections even when SQL fails. Never call `dataSource.getConnection()` by hand. If you ever must, use `try (Connection c = …) { … }`.
+- Keep transactions short and free of slow work. That is why registration hashes the password **before** touching the database, and why renewal generates the replacement token before `inTransaction(...)` begins.
+- Do not wait on other threads or external services inside `inTransaction(...)`.
+
+**Connection to the 503 rule (TD-26).** When PostgreSQL is down, or the pool cannot hand out a connection within `connectionTimeout`, `DataSourceUtils` throws `CannotGetJdbcConnectionException` (a `DataAccessResourceFailureException`). Identity reports exactly that family as `503 TEMPORARILY_UNAVAILABLE`, both from controllers and from the authority check in the security filter. Expect such a response to arrive only after the timeout, about 30 seconds by default.
+
+**How to verify it yourself.**
+
+```powershell
+Set-Location 'D:\CapsuleAI\backend'
+# 1. Build-time evidence: which dependency brings HikariCP in
+.\mvnw.cmd dependency:tree '-Dincludes=com.zaxxer:HikariCP'
+#    expect: spring-boot-starter-flyway -> spring-boot-starter-jdbc -> com.zaxxer:HikariCP:jar:7.0.2
+
+# 2. Runtime evidence: start the app (backend README §9) and look for Hikari's start-up lines
+.\mvnw.cmd spring-boot:run '-Dspring-boot.run.profiles=local'
+#    expect log lines similar to:  HikariPool-1 - Starting...   and   HikariPool-1 - Start completed.
+
+# 3. Why Boot chose it: the condition report (run once, it is long)
+.\mvnw.cmd spring-boot:run '-Dspring-boot.run.profiles=local' '-Dspring-boot.run.arguments=--debug'
+#    search the output for "DataSourceConfiguration.Hikari" under "Positive matches"
+```
+
+To see the actual `DataSource` implementation in a test, an assertion like the following can be added temporarily to any Identity integration test (illustrative only — it is not part of the required test set):
+
+```java
+// Illustrative only: inject javax.sql.DataSource and check its implementation class.
+@Autowired
+private javax.sql.DataSource dataSource;
+
+@Test
+void usesTheHikariConnectionPool() {
+    org.assertj.core.api.Assertions.assertThat(dataSource)
+            .isInstanceOf(com.zaxxer.hikari.HikariDataSource.class);
+}
+```
+
+The guide author confirmed the build-time evidence only (step 1, offline). Steps 2–3 and the assertion need the application or tests to run; record what you actually see.
+
 ---
 
 ## 6. Security configuration
@@ -563,6 +669,7 @@ Result: exactly one success, the session ends revoked, and the outcome does not 
 | JWT decoder                                   | HS256 secret ≥ 32 bytes; validators: `typ`, `iss`, `AccessTokenExpiryValidator` (application `Clock`, zero skew) | Exact 15-minute boundary; testable with a controllable clock.                                              |
 | JWT → principal                               | `SessionAwareJwtAuthenticationConverter` → `SessionAuthority`                                                    | Usable-session check on every request (ADA-008).                                                           |
 | 401 body                                      | `application/problem+json` with `code: AUTHENTICATION_REQUIRED`, plus `WWW-Authenticate: Bearer …`               | Tells the client "authenticate again", never "empty wardrobe".                                             |
+| Authority outage                              | Converter maps `DataAccessResourceFailureException` / `TransientDataAccessResourceException` to `SessionAuthorityUnavailableException`; entry point answers 503 `TEMPORARILY_UNAVAILABLE` (no challenge header) | Fail closed, but truthful: credentials could not be checked ([§4.5](#45-every-protected-request-us-auth-002-onward), TD-26). |
 
 Spring Boot 4 starter: `spring-boot-starter-security-oauth2-resource-server` (the old `spring-boot-starter-oauth2-resource-server` is deprecated in 4.1.1). Because a `JwtDecoder` bean exists, Boot does not create its default in-memory user.
 
@@ -576,9 +683,9 @@ All bodies are JSON (UTF-8). Error bodies are RFC 9457 problem details with an e
 | --------------------------------- | ---------------------- | -------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----- |
 | `POST /api/v1/auth/registrations` | Public                 | `{email, password, confirmPassword, displayName?}` | `201 {accountId, email, displayName}` | 400 `VALIDATION_FAILED`, 400 `MALFORMED_REQUEST`, 409 `EMAIL_ALREADY_REGISTERED`, 503 `TEMPORARILY_UNAVAILABLE` | 001   |
 | `POST /api/v1/auth/login`         | Public                 | `{email, password}`                                | `200 TokenResponse`                   | 400 `VALIDATION_FAILED`, 400 `MALFORMED_REQUEST`, 401 `INVALID_CREDENTIALS`, 503                                | 002   |
-| `POST /api/v1/auth/logout`        | Bearer                 | none                                               | `204`                                 | 401 `AUTHENTICATION_REQUIRED`                                                                                   | 004   |
+| `POST /api/v1/auth/logout`        | Bearer                 | none                                               | `204`                                 | 401 `AUTHENTICATION_REQUIRED` (not proof of revocation — [§4.6](#46-logout-us-auth-004)), 503 `TEMPORARILY_UNAVAILABLE` | 004   |
 | `POST /api/v1/auth/refresh`       | Public (refresh token) | `{refreshToken}`                                   | `200 TokenResponse`                   | 400 `VALIDATION_FAILED`, 400 `MALFORMED_REQUEST`, 401 `AUTHENTICATION_REQUIRED`, 503                            | 003   |
-| any other route                   | Bearer                 | —                                                  | —                                     | 401 `AUTHENTICATION_REQUIRED`                                                                                   | 002+  |
+| any other route                   | Bearer                 | —                                                  | —                                     | 401 `AUTHENTICATION_REQUIRED`, 503 `TEMPORARILY_UNAVAILABLE` (authority could not be checked)                   | 002+  |
 
 `TokenResponse`:
 
@@ -602,7 +709,7 @@ Error catalogue:
 | `EMAIL_ALREADY_REGISTERED` | 409  | Offer **Log in** and **Forgot Password**. Existing account unchanged.                                                 | —                                                                                       |
 | `INVALID_CREDENTIALS`      | 401  | Email or password wrong; offer retry and Forgot Password. Same for unknown email.                                     | —                                                                                       |
 | `AUTHENTICATION_REQUIRED`  | 401  | Session unusable (expired, revoked, missing, reused). Show signed-out/login state; **do not** show an empty wardrobe. | —                                                                                       |
-| `TEMPORARILY_UNAVAILABLE`  | 503  | Outcome not confirmed. Offer review/retry.                                                                            | —                                                                                       |
+| `TEMPORARILY_UNAVAILABLE`  | 503  | The database could not be reached. For a write, the outcome is not confirmed; for a protected request, access was **not** granted and nothing changed. Offer review/retry; do **not** send the user to login. | —                                                                                       |
 
 The DoD requires the API contract to be synchronized ([DoD §5](../../../definition-of-done.md#5-conditional-completion-criteria); Workflow §27 names OpenAPI as the source of truth). Each story guide gives the OpenAPI change for `docs/05-api/openapi.yaml`, which the student creates in US-AUTH-001.
 
@@ -615,8 +722,9 @@ The DoD requires the API contract to be synchronized ([DoD §5](../../../definit
 | Validation error                                                               | 400                     | Nothing written.                                                                                                                                             |
 | Duplicate email                                                                | 409                     | Existing account unchanged.                                                                                                                                  |
 | Wrong credentials                                                              | 401                     | No session written; account unchanged.                                                                                                                       |
-| Database unavailable/failed during a request handled by an Identity controller | 503                     | Transaction rolled back; for a single autocommit statement the outcome is unknown → review/retry is safe because of the unique email and strict token rules. |
-| Database unavailable during the authority check in the filter                  | 500 (Spring error page) | **Never** a bypass: no authentication is established.                                                                                                        |
+| Database unreachable during a request handled by an Identity controller (`DataAccessResourceFailureException`, `TransientDataAccessResourceException`) | 503                     | Transaction rolled back; for a single autocommit statement the outcome is unknown → review/retry is safe because of the unique email and strict token rules. |
+| Database unreachable during the authority check in the security filter (same two exception types) | 503 `TEMPORARILY_UNAVAILABLE` | **Fail closed:** no authentication is established and the controller never runs. Not reported as 401, because the credentials were not found invalid (TD-26). |
+| Any other data-access error (e.g. invalid SQL) or unexpected exception, in a controller or in the filter | 500 (Spring error page) | Programming error; still no authentication and no partial commit. Deliberately **not** reported as 503.                                                    |
 | Response lost after commit                                                     | (client sees timeout)   | See [Section 2.4](#24-competing-and-interrupted-requests).                                                                                                   |
 
 ---
@@ -631,7 +739,7 @@ The DoD requires the API contract to be synchronized ([DoD §5](../../../definit
 | `backend/src/main/resources/application-local.properties` | S2    | `capsuleai.identity.access-token.signing-secret=${CAPSULE_JWT_SIGNING_SECRET}` (no default)       |
 | `backend/src/test/resources/application-test.properties`  | S2    | Disposable test-only signing secret                                                               |
 
-All versions come from the Boot 4.1.1 BOM; no version tags are added. No JPA, Redis, Lombok, Bean Validation or extra test libraries are introduced.
+All versions come from the Boot 4.1.1 BOM; no version tags are added. No JPA, Redis, Lombok, Bean Validation or extra test libraries are introduced. The connection pool (HikariCP) is already present through `spring-boot-starter-flyway` → `spring-boot-starter-jdbc`; see [§5.5](#55-database-connections-and-hikaricp).
 
 ---
 
@@ -641,7 +749,7 @@ All versions come from the Boot 4.1.1 BOM; no version tags are added. No JPA, Re
 | --------------------------- | ----------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Domain unit                 | Surefire, `*Test` | None                                                                                          | `EmailAddressTest`, `PasswordPolicyTest`, `LoginSessionTest`, `RefreshRotationPolicyTest` |
 | Application                 | Surefire, `*Test` | In-memory fakes, `MutableClock`                                                               | `RegisterAccountServiceTest`, `LogInServiceTest`, `RefreshSessionServiceTest`             |
-| Adapter unit                | Surefire, `*Test` | Real PBKDF2                                                                                   | `Pbkdf2PasswordHasherTest`                                                                |
+| Adapter unit                | Surefire, `*Test` | Real PBKDF2; plain stubs of `SessionAuthority`                                                | `Pbkdf2PasswordHasherTest`, `SessionAwareJwtAuthenticationConverterTest`                  |
 | Architecture                | Surefire, `*Test` | Compiled classes                                                                              | `ArchitectureDependencyTest` (extended in S1)                                             |
 | API + security + PostgreSQL | Failsafe, `*IT`   | MockMvc **through the real filter chain**, Testcontainers PostgreSQL 17.11, Flyway migrations | `RegistrationApiIT`, `AccessTokenSecurityIT`, `LogoutApiIT`, `SessionRefreshApiIT`        |
 | Concurrency                 | Failsafe, `*IT`   | Real threads, `CountDownLatch` start gate, real transactions                                  | `ConcurrentRegistrationIT`, `ConcurrentRefreshIT`                                         |
@@ -655,7 +763,7 @@ Shared test support (all in `backend/src/test/java/com/capsuleai/identity/suppor
 
 Why MockMvc and not a mock JWT: the Test Strategy states that mock-user/mock-JWT helpers "do not establish signature validation, expiry or real persistent session enforcement" ([Test Strategy §9.3](../../../../07-testing/test-strategy.md#93-evidence-across-layers)). Every security IT sends real signed tokens through the configured `SecurityFilterChain`. MockMvc does not start Tomcat; the servlet container itself is not under test.
 
-`DatabaseSmokeIT` (baseline) keeps its own context and container and is not modified.
+`DatabaseSmokeIT` (baseline) keeps its own context and container and is not modified. `SessionAuthorityOutageIT` (S2) also uses its own context, because it replaces `SessionAuthority` with a stub that throws the same exception Spring raises when no database connection can be obtained; that is how the 503 path is exercised through the real filter chain without stopping the shared container.
 
 ---
 
@@ -701,10 +809,11 @@ Paths are relative to `backend/` unless they start with `docs/` or `.github/`. "
 | `identity/adapter/out/persistence/JdbcTime.java`, `SpringIdentityTransactions.java`                                                                                                                           | S2             | —                                                                      | Time mapping; `TransactionTemplate`.                 |
 | `identity/adapter/out/persistence/JdbcSessionRepository.java`                                                                                                                                                 | S2             | **S3**, **S4**                                                         | Session SQL.                                         |
 | `identity/adapter/out/security/Pbkdf2PasswordHasher.java`                                                                                                                                                     | S1             | —                                                                      | Password hashing.                                    |
-| `identity/adapter/out/security/JwtAccessTokenIssuer.java`, `SecureRandomRefreshTokenGenerator.java`                                                                                                           | S2             | —                                                                      | Token creation.                                      |
-| `identity/adapter/in/security/*` (5 classes)                                                                                                                                                                  | S2             | —                                                                      | JWT → usable session.                                |
+| `identity/adapter/out/security/JwtAccessTokenIssuer.java`, `SecureRandomRefreshTokenGenerator.java`                                                                                                           | S2             | —                                                                      | Token creation (issuer uses `JwtClaimNames`).        |
+| `identity/adapter/jwt/JwtClaimNames.java`                                                                                                                                                                     | S2             | —                                                                      | Shared claim names; removes the in→out adapter dependency (TD-25). |
+| `identity/adapter/in/security/*` (6 classes, incl. `SessionAuthorityUnavailableException`)                                                                                                                    | S2             | —                                                                      | JWT → usable session; 401 vs. 503 classification.    |
 | `identity/adapter/in/web/RegistrationRequest.java`, `RegistrationResponse.java`, `RegistrationController.java`                                                                                                | S1             | —                                                                      | Registration HTTP.                                   |
-| `identity/adapter/in/web/IdentityApiExceptionHandler.java`                                                                                                                                                    | S1             | **S2** (401 invalid credentials), **S4** (401 authentication required) | Error translation.                                   |
+| `identity/adapter/in/web/IdentityApiExceptionHandler.java`                                                                                                                                                    | S1             | **S2** (401 invalid credentials), **S4** (401 authentication required) | Error translation; 503 only for unreachable-database exceptions. |
 | `identity/adapter/in/web/LoginRequest.java`, `TokenResponse.java`, `LoginController.java`                                                                                                                     | S2             | —                                                                      | Login HTTP.                                          |
 | `identity/adapter/in/web/LogoutController.java`                                                                                                                                                               | S3             | —                                                                      | Logout HTTP.                                         |
 | `identity/adapter/in/web/RefreshRequest.java`, `SessionRefreshController.java`                                                                                                                                | S4             | —                                                                      | Refresh HTTP.                                        |
@@ -729,7 +838,8 @@ Paths are relative to `backend/` unless they start with `docs/` or `.github/`. "
 | `java/com/capsuleai/identity/application/InMemorySessionRepository.java`                                                                 | S2            | S3, S4                        | Fake.                                   |
 | `java/com/capsuleai/identity/application/ImmediateTransactions.java`, `FakeAccessTokenIssuer.java`, `SequenceRefreshTokenGenerator.java` | S2            | —                             | Fakes.                                  |
 | `java/com/capsuleai/identity/application/*ServiceTest.java`                                                                              | S1–S4         | —                             | Use-case tests.                         |
-| `java/com/capsuleai/identity/**/*IT.java`                                                                                                | S1–S4         | —                             | Integration evidence.                   |
+| `java/com/capsuleai/identity/adapter/in/security/SessionAwareJwtAuthenticationConverterTest.java`                                       | S2            | —                             | 401 vs. 503 vs. 500 classification.     |
+| `java/com/capsuleai/identity/**/*IT.java`                                                                                                | S1–S4         | —                             | Integration evidence (incl. `SessionAuthorityOutageIT`, S2). |
 | `resources/application-test.properties`                                                                                                  | S2            | —                             | Test signing secret.                    |
 
 ---
@@ -740,9 +850,9 @@ Paths are relative to `backend/` unless they start with `docs/` or `.github/`. "
 | ---------------------- | ------------- | ---------------------------------------------- | ------------------------------------------- | -------------------------------------------- |
 | Baseline               | none          | none                                           | none                                        | 0                                            |
 | **S1** (US-AUTH-001)   | registrations | `identity_account`                             | Crypto only; no filter chain yet            | 9 test classes (+ fixture, fakes, support)   |
-| **S2** (+ US-AUTH-002) | + login       | + `identity_session`, `identity_refresh_token` | Default-deny chain, JWT + session authority | +8                                           |
-| **S3** (+ US-AUTH-004) | + logout      | + revocation columns                           | unchanged; logout is protected              | +3                                           |
-| **S4** (+ US-AUTH-003) | + refresh     | + `consumed_at`, current-token index           | + public refresh                            | +5                                           |
+| **S2** (+ US-AUTH-002) | + login       | + `identity_session`, `identity_refresh_token` | Default-deny chain, JWT + session authority; 503 on authority outage | +10                                          |
+| **S3** (+ US-AUTH-004) | + logout      | + revocation columns                           | unchanged; logout is protected. **Limitation:** an expired access token cannot log out yet ([§4.6](#46-logout-us-auth-004)) | +3                                           |
+| **S4** (+ US-AUTH-003) | + refresh     | + `consumed_at`, current-token index           | + public refresh; complete lifecycle incl. renew-then-logout | +5                                           |
 
 Every stage must pass `.\mvnw.cmd --batch-mode --no-transfer-progress clean verify` on its own before the next story starts.
 
@@ -759,15 +869,15 @@ Every stage must pass `.\mvnw.cmd --batch-mode --no-transfer-progress clean veri
 | TD-05 | Email: `strip()` + `toLowerCase(Locale.ROOT)`; one `@`, non-empty parts, no inner whitespace, ≤ 254 characters.                    | Implements BRULE-AUTH-002 exactly; minimal shape check only.                                                                                                                                                                                   | Registration, login.    |
 | TD-06 | Display name stored exactly; blank = omitted; ≤ 100 code points.                                                                   | Exact retention (AC-07); a bound prevents abuse. Limit is **[OPEN] A-01**.                                                                                                                                                                     | Registration.           |
 | TD-07 | Registration returns 201 without tokens.                                                                                           | Sprint plan forbids inventing automatic login.                                                                                                                                                                                                 | 001 AC-01 handoff.      |
-| TD-08 | JWT HS256 with a ≥ 32-byte Base64 secret from configuration; claims `iss/sub/sid/iat/exp`, `typ=JWT`.                              | Issuer and verifier are the same application; symmetric key is simplest and safe.                                                                                                                                                              | Login, refresh, filter. |
+| TD-08 | JWT HS256 with a ≥ 32-byte Base64 secret from configuration; claims `iss/sub/sid/iat/exp`, `typ=JWT`. The `sid` claim name is defined once in `JwtClaimNames` (TD-25). | Issuer and verifier are the same application; symmetric key is simplest and safe.                                                                                                                                                              | Login, refresh, filter. |
 | TD-09 | Access token rejected when `now ≥ exp`, zero skew, application `Clock`.                                                            | Exact 15-minute rule; RFC 7519 semantics; testable.                                                                                                                                                                                            | Filter.                 |
 | TD-10 | Access token `exp = min(iat + 15 min, session expiry)`.                                                                            | A token never claims more than its session allows.                                                                                                                                                                                             | Login, refresh.         |
 | TD-11 | Refresh token = 256 random bits, Base64url; only SHA-256 hex stored.                                                               | A database leak does not reveal usable tokens; high entropy makes slow hashing unnecessary.                                                                                                                                                    | Login, refresh.         |
 | TD-12 | One `identity_session` row per login; refresh tokens in a child table.                                                             | DATA-AUTH-005: separate sessions with current/consumed validity.                                                                                                                                                                               | All session stories.    |
-| TD-13 | Authority read from PostgreSQL on every protected request; no cache.                                                               | ADA-008, ADA-011; logout/reuse take effect immediately.                                                                                                                                                                                        | Filter.                 |
+| TD-13 | Authority read from PostgreSQL on every protected request; no cache. If PostgreSQL cannot be reached, the request fails closed (TD-26). | ADA-008, ADA-011; logout/reuse take effect immediately. A cache would also be a way to bypass authority during an outage, which is not allowed.                                                                                                | Filter.                 |
 | TD-14 | Rotation under `SELECT … FOR UPDATE OF t, s` at `READ COMMITTED`.                                                                  | Single-success consumption with deterministic outcomes ([§5.4](#54-why-the-refresh-locking-is-correct-worked-race)).                                                                                                                           | Refresh.                |
 | TD-15 | Concurrent/late reuse of a consumed token always revokes the session (no grace window).                                            | FR-AUTH-014 and Test Strategy forbid a replay exception.                                                                                                                                                                                       | Refresh.                |
-| TD-16 | Logout is a protected `POST` authenticated by the access token; no body.                                                           | Identifies "the current session" unambiguously; first real protected operation for US-PRIV-001.                                                                                                                                                | Logout.                 |
+| TD-16 | Logout is a protected `POST` authenticated by the access token; no body. Only `204` confirms server-side revocation; a `401` does not. With an expired access token the client renews first and then logs out (possible from Stage 4); in Stage 3 it can only sign out locally (A-07). | Identifies "the current session" unambiguously; first real protected operation for US-PRIV-001. No second logout endpoint or credential type is introduced for the temporary Stage 3 gap. | Logout, refresh.        |
 | TD-17 | Public endpoints ignore the `Authorization` header.                                                                                | Expired tokens attached by client interceptors must not block login/renewal.                                                                                                                                                                   | Filter.                 |
 | TD-18 | RFC 9457 problem details + stable `code`.                                                                                          | Standard, machine-readable, no echo of submitted values.                                                                                                                                                                                       | All errors.             |
 | TD-19 | Identity owns the single default-deny `SecurityFilterChain`.                                                                       | Identity owns authentication; other modules inherit protection.                                                                                                                                                                                | All routes.             |
@@ -776,6 +886,8 @@ Every stage must pass `.\mvnw.cmd --batch-mode --no-transfer-progress clean veri
 | TD-22 | `MutableClock` as `@Primary` test bean.                                                                                            | Deterministic expiry tests without waiting.                                                                                                                                                                                                    | Tests.                  |
 | TD-23 | `logServerErrorDetail=false` for the PostgreSQL driver.                                                                            | PostgreSQL constraint errors can echo row values (e.g. a password hash) into exception messages and logs.                                                                                                                                      | Logging (NFR-SEC-003).  |
 | TD-24 | Revoked/expired session rows are kept.                                                                                             | Needed to detect reuse; no retention rule requires deletion in Sprint 1 ([OPEN] A-06).                                                                                                                                                         | Schema.                 |
+| TD-25 | The `sid` claim name lives in `identity.adapter.jwt.JwtClaimNames` (JDK-only constants), used by `JwtAccessTokenIssuer` (out) and `SessionAwareJwtAuthenticationConverter` (in) and the tests. **Previously:** the inbound converter imported the outbound `JwtAccessTokenIssuer` to reuse its constant. | Inbound and outbound adapters must not depend on each other. A neutral, internal constant holder is the smallest fix: no interface, not in `domain` (token format, not business rule), not in `api` (other modules never see JWT claims). Remaining: no ArchUnit rule enforces "in ↛ out" yet; reviews must catch it. | Login, refresh, filter, tests. |
+| TD-26 | Classify authority failures in the filter: unusable credential → 401 `AUTHENTICATION_REQUIRED`; unreachable database (`DataAccessResourceFailureException`, incl. `CannotGetJdbcConnectionException`, and `TransientDataAccessResourceException`) → `SessionAuthorityUnavailableException` → 503 `TEMPORARILY_UNAVAILABLE`; anything else → 500. The controller error handler uses the **same two exception types** for its 503. **Previously:** filter outage → 500; controllers mapped every `DataAccessException` to 503. | Fail-closed in every case; truthful status for a confirmed outage; programming errors are not disguised as outages. Uses Spring Security's own path (`AuthenticationException` → entry point), so no new filter or handler infrastructure. Remaining: a 503 can take up to Hikari's 30-second `connectionTimeout` to arrive. | Filter, all Identity controllers. |
 
 ---
 
@@ -789,10 +901,10 @@ Every stage must pass `.\mvnw.cmd --batch-mode --no-transfer-progress clean veri
 | A-04        | Registration → authorized entry handoff mechanics.                                                                                                                            | No auto-login; client logs in next (TD-07).                                                                     | PO with mobile developers.                                          |
 | A-05        | Strict reuse means a lost renewal response forces a new login.                                                                                                                | Kept strict (policy).                                                                                           | Already decided by SRS/Test Strategy; PO should be aware of the UX. |
 | A-06        | Retention/cleanup of expired session rows.                                                                                                                                    | Kept indefinitely in Sprint 1.                                                                                  | PO/Developers (DATA-RET-002 scope).                                 |
-| A-07        | Logout with an **expired** access token is rejected with 401; client must renew first. Before Stage 4 exists the session stays stored but nobody can renew it.                | Documented client contract.                                                                                     | Developers/mobile.                                                  |
+| A-07        | Logout with an **expired** access token is rejected with 401, and that 401 does **not** mean the session was revoked. **Stage 3 (temporary):** renewal does not exist yet, so the client can only sign out locally; the server-side session stays unrevoked (its access tokens are already expired) until its 30-day maximum. **Stage 4 (final):** the client renews and then logs out, so revocation is confirmed by `204` (or renewal returns 401 because the session is already unusable). | Documented in [§4.6](#46-logout-us-auth-004) and the US-AUTH-004/003 guides; tests assert that an expired-token logout revokes nothing. Stage 3 should not be released to users on its own. | Developers/mobile.                                                  |
 | A-08        | TLS, rate limiting, lockout, CAPTCHA, denylist.                                                                                                                               | Not implemented (stories exclude lockout/CAPTCHA; denylist optional). TLS is a deployment concern (US-OPS-001). | PO/Developers.                                                      |
 | A-09        | Login timing difference between unknown email and wrong password.                                                                                                             | Not equalized, because registration intentionally reveals existence (FR-AUTH-016).                              | Developers if policy changes.                                       |
-| A-10        | Persistent-authority unavailability during the filter check returns 500 instead of a dedicated 503 problem body.                                                              | Safe (no bypass); refine later if needed.                                                                       | Developers.                                                         |
+| A-10        | **Resolved by TD-26.** Previously, persistent-authority unavailability during the filter check returned 500. Now an unreachable database returns a sanitized 503 `TEMPORARILY_UNAVAILABLE` problem body (fail closed); other unexpected errors still return 500. | Remaining: the outage IT simulates the outage at the `SessionAuthority` boundary; a real database stop is a manual check (US-AUTH-002 guide, Step 5). | Developers.                                                         |
 | Q-04 / Q-05 | First-protected-operation evidence boundary; capacity/selectability ([refinement review](../../../backlog-refinement-review.md#6-open-questions-for-product-owner-and-team)). | Evidence tables in each guide.                                                                                  | PO/Developers.                                                      |
 
 ---

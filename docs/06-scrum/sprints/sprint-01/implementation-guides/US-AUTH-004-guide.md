@@ -39,8 +39,9 @@
 | **Normal** — usable session, user taps Log Out | Revoke that session; 204; its access token is rejected from now on. | [UC-003 Main](../../../../03-requirements/use-cases/UC-003-log-out.md#6-main-success-scenario), FR-AUTH-007 |
 | **Separate session** — same account on device B | B keeps working. | FR-AUTH-007, BRULE-AUTH-006 |
 | **Alternative** — session already revoked | Request is rejected at the filter with 401 `AUTHENTICATION_REQUIRED` → client shows the signed-out state. | UC-003 A1 |
-| **Alternative** — access token already expired | 401; no session is targeted. Client contract: renew first (US-AUTH-003), or treat 401 as signed out. | UC-003 A1, [A-07](shared-architecture.md#15-ambiguities-limitations-and-open-questions) |
-| **Exception** — logout response lost | Retry with the same token → 401 = already signed out; no other session revoked. | UC-003 E1, COM-002, ERR-NET-001 |
+| **Alternative** — access token already expired | 401; no session is targeted and **nothing is revoked**. The 401 does not mean the session ended. Stage 3: the client can only sign out locally. Stage 4: the client renews first (US-AUTH-003) and then logs out. See [5.6](#56-temporary-stage-3-limitation-expired-access-token). | UC-003 A1, [A-07](shared-architecture.md#15-ambiguities-limitations-and-open-questions) |
+| **Exception** — logout response lost | Retry only targets this token's session; no other session is revoked. While the token is unexpired, a retry answers 401 because the session is revoked. Once the token has expired, a 401 proves nothing, so confirmation needs the Stage 4 renew-then-logout flow. | UC-003 E1, COM-002, ERR-NET-001 |
+| **Infrastructure** — PostgreSQL unreachable | 503 `TEMPORARILY_UNAVAILABLE` from the security filter; nothing revoked; logout **not** confirmed — retry later. | COM-002, [TD-26](shared-architecture.md#14-technical-decision-log) |
 | **Data** — wardrobe, profile, history | Never touched by logout. | UC-003 §10, DATA-RET-002 |
 | **Security** — another account | Unaffected; previous account's content not reachable with the revoked token. | NFR-SEC-002 |
 
@@ -79,8 +80,8 @@
 | [AC-02](../../../stories/auth/US-AUTH-004-log-out.md#ac-02--preserve-another-separate-session) Preserve another session | B keeps working. | Revocation targets one row. | **Backend**. |
 | [AC-03](../../../stories/auth/US-AUTH-004-log-out.md#ac-03--retain-accepted-personal-information) Retain personal information | Nothing deleted/altered. | Only `identity_session` updated. | **Backend** for account data; wardrobe/profile/history **not yet exercised** (not delivered). |
 | [AC-04](../../../stories/auth/US-AUTH-004-log-out.md#ac-04--keep-protected-content-hidden) Keep protected content hidden | Old token reopens nothing; another account sees only its own. | 401 without content; other account unaffected. | **Backend**; **External** (back navigation, local cache). |
-| [AC-05](../../../stories/auth/US-AUTH-004-log-out.md#ac-05--handle-an-already-unusable-session) Already unusable session | Signed-out outcome; no other session targeted. | 401 `AUTHENTICATION_REQUIRED`; nothing revoked. | **Backend**; **External** (message). |
-| [AC-06](../../../stories/auth/US-AUTH-004-log-out.md#ac-06--resolve-unconfirmed-logout) Unconfirmed logout | Distinguish from completed; review/retry; no other session revoked. | Retry answers 401 = already signed out; idempotent end state. | **Backend** (retry semantics); **External** (unconfirmed UI, content hidden). |
+| [AC-05](../../../stories/auth/US-AUTH-004-log-out.md#ac-05--handle-an-already-unusable-session) Already unusable session | Signed-out outcome; no other session targeted. | 401 `AUTHENTICATION_REQUIRED`; nothing revoked. An **expired access token** is a different case: the session may still be usable, so the 401 is not "already signed out" (5.6). | **Backend**; **External** (message). |
+| [AC-06](../../../stories/auth/US-AUTH-004-log-out.md#ac-06--resolve-unconfirmed-logout) Unconfirmed logout | Distinguish from completed; review/retry; no other session revoked. | Only `204` confirms revocation. Retry is safe and only targets this session; 401/503/timeout leave the outcome **unconfirmed** unless resolved by the Stage 4 renew-then-logout flow. | **Backend** (retry semantics); **External** (unconfirmed UI, content hidden). |
 | [AC-07](../../../stories/auth/US-AUTH-004-log-out.md#ac-07--operate-and-understand-logout) Accessible logout | Vietnamese, screen reader, 200%. | — | **External only**. |
 
 ---
@@ -110,12 +111,19 @@ Authorization: Bearer <access token of the session to end>
 
 | Outcome | Status | Body |
 | --- | --- | --- |
-| Session revoked (or found already revoked by a concurrent request) | 204 | none |
-| Missing/invalid/expired token, or session already unusable | 401 | `AUTHENTICATION_REQUIRED` problem (from the filter) |
+| Session revoked (or found already revoked by a concurrent request) | 204 | none — **the only response that confirms server-side revocation** |
+| Missing/invalid/expired token, or session already unusable | 401 | `AUTHENTICATION_REQUIRED` problem (from the filter). Does **not** by itself prove revocation. |
+| PostgreSQL unreachable during the authority check | 503 | `TEMPORARILY_UNAVAILABLE` problem (from the filter); nothing revoked |
 
 The endpoint needs no permit rule: everything outside `PUBLIC_ENDPOINTS` already requires authentication.
 
-**Client contract** (to share with the mobile developer): on 204 **or** 401, clear the stored tokens and all cached personal content and show the signed-out screen; 401 means "already signed out". On a timeout, show "logout not confirmed", keep personal content hidden, and offer retry (retry is safe and only ever targets this session). If the access token has expired, renew it first (US-AUTH-003) and then log out; if renewal is refused, the session is already unusable.
+**Client contract** (to share with the mobile developer):
+
+1. **Always sign out locally first:** drop the access token and hide/clear all cached personal content, whatever the server answers.
+2. **204** → revocation confirmed; delete the refresh token too; show the signed-out screen.
+3. **401** → this access token gives no access. If the token was still unexpired, the session is already unusable. If the token had expired, the session's state is **unknown** — see 5.6. The 401 body is identical in both cases by design, so the client must not treat it as proof of revocation.
+4. **503 or timeout** → logout **not confirmed**; keep content hidden, show "logout not confirmed", offer retry. Retry is safe and only ever targets this session.
+5. **Final behaviour (from Stage 4):** if the access token has expired, renew first (`POST /api/v1/auth/refresh`), then log out with the new access token. `204` confirms revocation. A 401 from renewal means the session can no longer be renewed by anyone holding that token, so it is unusable.
 
 ### 5.3 Revocation in the database
 
@@ -137,6 +145,26 @@ Nothing in the token changes — it is still signed and unexpired. But every req
 ### 5.5 Database change
 
 `V4__add_identity_session_revocation.sql` adds two nullable columns and three CHECKs: time and reason set together; reason in (`LOGOUT`); revocation not before establishment. Existing Stage 2 rows get `NULL` (= not revoked) and stay usable — verified by a real migration-transition test (T5).
+
+### 5.6 Temporary Stage 3 limitation: expired access token
+
+Stage 3 implements logout **before** renewal exists (the agreed order is register → login → logout → renewal). Logout is authenticated by the access token, which lives only 15 minutes. Example:
+
+| Time | Event | Server-side session A |
+| --- | --- | --- |
+| 08:00 | Login → access token valid until 08:15, refresh token issued | usable |
+| 08:15 | Access token expires | **still usable** (the session lasts up to 30 days) |
+| 08:30 | Client calls logout with the expired token → **401** | **unchanged — not revoked** |
+
+What this means:
+
+- The 401 is correct: an expired token cannot authenticate anything, so it cannot authorize a revocation either. But it is **not** proof that session A ended.
+- No protected use is possible through A with that token (it is expired), and in Stage 3 nobody can renew A, because the refresh endpoint does not exist yet.
+- The client can only **sign out locally**, and should delete its stored refresh token so it cannot be used once renewal exists.
+- The session row keeps `revoked_at = NULL` until its 30-day maximum. Stage 3 is an intermediate development state and should not be released to users on its own.
+- **Stage 4 closes the gap** without any new logout endpoint: the client renews with its refresh token and then logs out with the fresh access token ([US-AUTH-003 guide §5.7](US-AUTH-003-guide.md#57-final-logout-flow-after-access-expiry), [Shared Architecture §4.6](shared-architecture.md#46-logout-us-auth-004)).
+
+The rules themselves are unchanged and fully enforced in every stage: logout revokes only its own session, other sessions stay usable, a revoked session can never renew (from Stage 4), and a valid JWT is never enough without usable persistent authority. The test `logoutWithAnExpiredAccessTokenIsRejectedAndDoesNotRevokeTheSession` (T4) documents the limitation by asserting that nothing was revoked.
 
 ---
 
@@ -582,13 +610,18 @@ Two edits:
         Revokes only the login session the access token belongs to. Other
         sessions of the account and all account data are unchanged. Afterwards
         this session's access token (and refresh token) are rejected.
-        A 401 means the session was already unusable, i.e. already signed out.
-        Uses the default bearer security requirement.
+        Only 204 confirms the revocation. A 401 means this access token gives
+        no access; it does not by itself prove the session was revoked (for
+        example, the token may simply have expired). If the access token has
+        expired, renew it with the refresh operation (US-AUTH-003) and log out
+        with the new access token. Uses the default bearer security requirement.
       responses:
         '204':
-          description: The current session is revoked.
+          description: The current session is revoked (confirmed).
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
 ```
 
 ---
@@ -628,6 +661,10 @@ Next request with the same JWT:
  └─ Security filter: signature ✓, iss ✓, now < exp ✓
      └─ findUsableSession(A, S1) → revoked_at set → isUsableAt = false → empty
      └─ InvalidBearerTokenException → 401 AUTHENTICATION_REQUIRED
+
+Logout at 08:30 with a token that expired at 08:15 (Stage 3 limitation, 5.6):
+ └─ Security filter: signature ✓, iss ✓, now < exp ✗ → 401 AUTHENTICATION_REQUIRED
+     (the controller never runs; session S1 is NOT revoked)
 ```
 
 *Common mistakes:* revoking by `account_id` only (logs out every device — violates AC-02); deleting the session row (loses the history needed by US-AUTH-003's reuse detection and makes "already revoked" indistinguishable from "never existed"); reading the session id from the request body instead of the principal.
@@ -648,7 +685,7 @@ $deviceB = Send-Json "$base/login" @{ email = 'person@example.com'; password = '
 # Log out device A -> 204 (Invoke-WebRequest shows the status code)
 (Invoke-WebRequest -Method Post -Uri "$base/logout" -Headers @{ Authorization = "Bearer $($deviceA.accessToken)" } -UseBasicParsing).StatusCode
 
-# Same request again -> 401 AUTHENTICATION_REQUIRED (already signed out)
+# Same request again (token still unexpired) -> 401 AUTHENTICATION_REQUIRED because session A is revoked
 try { Invoke-WebRequest -Method Post -Uri "$base/logout" -Headers @{ Authorization = "Bearer $($deviceA.accessToken)" } -UseBasicParsing } catch {
     $_.Exception.Response.StatusCode.value__
     $_.ErrorDetails.Message
@@ -662,6 +699,8 @@ try { Invoke-WebRequest -Method Post -Uri "$base/logout" -Headers @{ Authorizati
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT id, established_at, revoked_at, revocation_reason FROM identity_session ORDER BY established_at;'
 ```
+
+**See the Stage 3 limitation yourself (optional).** Log in as device C, wait more than 15 minutes, then call logout with C's access token: you get 401, and the query above still shows C's session with `revoked_at` empty. That is the expected Stage 3 behaviour (5.6). After US-AUTH-003, repeat the experiment with the renew-then-logout flow and the row shows `LOGOUT`.
 
 ---
 
@@ -892,13 +931,14 @@ class LogOutServiceTest {
 
 ### T4 — `identity/adapter/in/web/LogoutApiIT.java`
 
-**Covers:** AC-01 (unexpired token rejected after logout; persisted revocation), AC-02, AC-03 (account unchanged; re-login restores the same account), AC-04 (other account unaffected; old token returns no content), AC-05 (already revoked; expired token), AC-06 (retry is safe and targets nothing else), US-PRIV-001 AC-01/02 for the first production protected operation. **Proves:** real filter chain + PostgreSQL. **Does not prove:** client cache clearing or renewal denial (US-AUTH-003).
+**Covers:** AC-01 (unexpired token rejected after logout; persisted revocation), AC-02, AC-03 (account unchanged; re-login restores the same account), AC-04 (other account unaffected; old token returns no content), AC-05 (already revoked), AC-06 (retry is safe and targets nothing else), the Stage 3 limitation (an expired-token logout returns 401 and revokes **nothing** — the test asserts exactly that, never the opposite), US-PRIV-001 AC-01/02 for the first production protected operation. **Proves:** real filter chain + PostgreSQL. **Does not prove:** client cache clearing, renewal denial or the renew-then-logout flow (US-AUTH-003), or the 503 outage path (US-AUTH-002 `SessionAuthorityOutageIT` — logout goes through the same filter).
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
 
 import com.capsuleai.identity.support.IdentityIntegrationTestSupport;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -963,12 +1003,29 @@ class LogoutApiIT extends IdentityIntegrationTestSupport {
     }
 
     @Test
-    void logoutWithAnExpiredAccessTokenIsRejectedAndTargetsNoSession() throws Exception {
+    void logoutWithAnExpiredAccessTokenIsRejectedAndDoesNotRevokeTheSession() throws Exception {
         IssuedTokens tokens = registerAndLogIn("expired@example.com");
+        UUID sessionId = sessionIdOf(tokens.accessToken());
         clock.advance(Duration.ofMinutes(15));
 
-        logOut(tokens.accessToken()).andExpect(status().isUnauthorized());
+        logOut(tokens.accessToken())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 
+        // Stage 3 limitation (guide 5.6): this 401 is NOT a revocation. The server-side
+        // session is untouched and stays within its 30-day lifetime; from Stage 4 the
+        // client renews first and then logs out (US-AUTH-003 SessionRefreshApiIT).
+        Map<String, Object> row = jdbc.sql("""
+                        SELECT revoked_at, revocation_reason, expires_at > :now AS within_lifetime
+                        FROM identity_session WHERE id = :id
+                        """)
+                .param("now", clock.instant().atOffset(ZoneOffset.UTC))
+                .param("id", sessionId)
+                .query()
+                .singleRow();
+        assertThat(row.get("revoked_at")).isNull();
+        assertThat(row.get("revocation_reason")).isNull();
+        assertThat(row.get("within_lifetime")).isEqualTo(true);
         assertThat(countRevokedSessions()).isZero();
     }
 
@@ -1176,8 +1233,10 @@ How the transition test works: `Flyway.configure().schemas(X)` creates schema `X
 | AC-04 | Other account unaffected; old token yields no content | `LogoutApiIT` | `oneAccountsLogoutDoesNotAffectAnotherAccount` | Security chain |
 | AC-04 | Client navigation / cache hidden | — | — | **External** |
 | AC-05 | Already revoked → signed-out answer, nothing else revoked | `LogoutApiIT` / `LogOutServiceTest` | `repeatingLogoutReportsTheSessionAsAlreadyUnusable` / `repeatedLogoutFindsNothingToRevokeAndKeepsTheFirstRevocation` | Security chain / Application |
-| AC-05 | Expired access token → 401, no session targeted | `LogoutApiIT` | `logoutWithAnExpiredAccessTokenIsRejectedAndTargetsNoSession` | Security chain |
-| AC-06 | Retry after unconfirmed logout is safe | `LogoutApiIT` | `repeatingLogoutReportsTheSessionAsAlreadyUnusable`, `logoutLeavesAnotherSessionOfTheSameAccountUsable` | Security chain |
+| Stage 3 limitation | Expired access token → 401; session **not** revoked, still within lifetime (not "already signed out") | `LogoutApiIT` | `logoutWithAnExpiredAccessTokenIsRejectedAndDoesNotRevokeTheSession` | Security chain + DB |
+| Final flow | Expired access token → renew → logout → 204 confirmed | US-AUTH-003 `SessionRefreshApiIT` | `logoutAfterAccessExpiryRenewsFirstThenConfirmsRevocation` | **Cross-story** (Stage 4) |
+| AC-06 | Retry after unconfirmed logout is safe and targets only this session | `LogoutApiIT` | `repeatingLogoutReportsTheSessionAsAlreadyUnusable`, `logoutLeavesAnotherSessionOfTheSameAccountUsable` | Security chain |
+| AC-06 | Database unreachable → 503, nothing revoked, not confirmed | US-AUTH-002 `SessionAuthorityOutageIT` | `confirmedDatabaseOutageFailsClosedWithASanitized503` | **Cross-story** (same filter) |
 | AC-06 | Unconfirmed UI, content hidden | — | — | **External** |
 | AC-07 | Accessible logout | — | — | **External only** |
 | PRIV AC-01/02 | Unauthenticated logout rejected, no mutation | `LogoutApiIT` | `logoutWithoutAuthenticationIsRejectedAndChangesNothing` | Security chain |
@@ -1237,6 +1296,7 @@ Confirm in the PR run that both print `… tests, none failed/skipped`.
 - [ ] Unexpired token rejected immediately after logout (ADA-008).
 - [ ] Account row unchanged; re-login works.
 - [ ] Repeated/expired/unauthenticated logout → 401, nothing else changes.
+- [ ] Stage 3 limitation understood and recorded in the PR: an expired-token logout is a **local** sign-out only; the session is not revoked until the Stage 4 renew-then-logout flow (5.6, A-07). Client contract (5.2) shared with the mobile developer.
 
 **Tests and verification**
 - [ ] `LoginSessionTest` (replaced), `LogOutServiceTest`, `LogoutApiIT`, `SessionRevocationSchemaIT` pass.
@@ -1246,7 +1306,7 @@ Confirm in the PR run that both print `… tests, none failed/skipped`.
 
 **Remaining external evidence**
 - [ ] Signed-out screen; local tokens and cached personal content cleared (AC-01, AC-04).
-- [ ] Unconfirmed-logout presentation with content hidden (AC-06); accessibility (AC-07).
+- [ ] Unconfirmed-logout presentation with content hidden (AC-06), including 401-for-expired-token and 503 treated as "not confirmed"; accessibility (AC-07).
 - [ ] Wardrobe/profile/history retention re-verified once those features exist (AC-03).
 
 Next: [US-AUTH-003 — Resume access within my login session](US-AUTH-003-guide.md).

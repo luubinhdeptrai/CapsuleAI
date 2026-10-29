@@ -53,7 +53,7 @@ CapsuleAI users keep a **private** digital wardrobe, so the first thing the prod
 - One Spring Boot **modular monolith**; all Sprint 1 code is in the **Identity** module, `com.capsuleai.identity` ([ADA-001, ADA-015](../../../../04-architecture/selected-architecture-decisions.md#3-selection-summary)).
 - **Pragmatic Clean Architecture:** `domain` (rules, plain Java) ← `application` (use cases, plain Java) ← `adapter.in` / `adapter.out` (Spring MVC, Spring Security, JDBC) ← `configuration` (bean wiring). An ArchUnit test keeps Spring out of `domain`, `application` and `api`.
 - **PostgreSQL is the session authority** ([ADA-008](../../../../04-architecture/selected-architecture-decisions.md#ada-008--session-refresh-and-reset-authority)): a valid JWT is necessary but never sufficient.
-- **Spring JDBC (`JdbcClient`)**, Flyway migrations V2–V5, no JPA, no cache.
+- **Spring JDBC (`JdbcClient`)**, Flyway migrations V2–V5, no JPA, no cache. Connections come from the **HikariCP** pool that Spring Boot already configures (explained, with verification steps, in [Shared Architecture §5.5](shared-architecture.md#55-database-connections-and-hikaricp)).
 - **One security filter chain**, owned by Identity, denies everything except the three public auth endpoints.
 
 Full design, diagrams, schema, contracts and the file change matrix: **[shared-architecture.md](shared-architecture.md)**.
@@ -150,7 +150,8 @@ The existing workflow needs **no structural change**: Maven discovers new `*Test
 | Password "character" definition | Unicode code points; unpaired surrogates rejected | Proposed ([TD-04](shared-architecture.md#14-technical-decision-log)) |
 | Registration → entry | No automatic login; client logs in next | Follows the Sprint plan; PO may refine |
 | Lost renewal response | Forces a new login (strict reuse rule) | Required by policy; mobile must renew single-flight |
-| Logout with an expired access token | 401; client renews first | Documented client contract |
+| Logout with an expired access token | 401, which does **not** revoke the session. Stage 3: local sign-out only (temporary). Stage 4: renew first, then log out → 204 confirms. | Documented limitation and client contract ([A-07](shared-architecture.md#15-ambiguities-limitations-and-open-questions)) |
+| Database unreachable during authentication | Fail closed with 503 `TEMPORARILY_UNAVAILABLE` (not 401); other unexpected errors stay 500 | Resolved ([TD-26](shared-architecture.md#14-technical-decision-log)) |
 | Expired session row cleanup | Not implemented | Retention policy open ([A-06](shared-architecture.md#15-ambiguities-limitations-and-open-questions)) |
 | Rate limiting, lockout, CAPTCHA, denylist, TLS | Not implemented | Out of story scope or deployment concern |
 | Wardrobe/profile/history protection | Not exercised (features do not exist yet) | Recorded as unexercised, not passed |

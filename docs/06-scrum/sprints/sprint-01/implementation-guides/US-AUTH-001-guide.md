@@ -150,7 +150,7 @@ Request:
 | Invalid fields | `400` | `{"type":"about:blank","title":"Bad Request","status":400,"detail":"Some submitted values are missing or invalid. Correct them and submit again.","instance":"/api/v1/auth/registrations","code":"VALIDATION_FAILED","fieldErrors":[{"field":"password","code":"TOO_SHORT"}]}` |
 | Not JSON / no body | `400` | `code: MALFORMED_REQUEST` |
 | Email already registered | `409` | `code: EMAIL_ALREADY_REGISTERED`, detail suggests Log in / Forgot Password |
-| Database failure | `503` | `code: TEMPORARILY_UNAVAILABLE` |
+| Database unreachable | `503` | `code: TEMPORARILY_UNAVAILABLE` |
 
 Field names and codes: `email` (`REQUIRED`, `INVALID_FORMAT`, `TOO_LONG`), `password` (`REQUIRED`, `TOO_SHORT`, `TOO_LONG`, `INVALID_CHARACTERS`), `confirmPassword` (`REQUIRED`, `MISMATCH`), `displayName` (`TOO_LONG`).
 
@@ -183,7 +183,8 @@ Only the `spring-security-crypto` module is added (for PBKDF2). The web security
 | `RequestValidationException` | 400 `VALIDATION_FAILED` + `fieldErrors` |
 | `HttpMessageNotReadableException` | 400 `MALFORMED_REQUEST` |
 | `EmailAlreadyRegisteredException` | 409 `EMAIL_ALREADY_REGISTERED` |
-| `DataAccessException` | 503 `TEMPORARILY_UNAVAILABLE` (logged without values) |
+| `DataAccessResourceFailureException`, `TransientDataAccessResourceException` (database unreachable) | 503 `TEMPORARILY_UNAVAILABLE` (logged without values) |
+| any other exception (e.g. `BadSqlGrammarException`, a programming error) | not handled here → Spring's 500 error page. Not disguised as "temporarily unavailable" ([TD-26](shared-architecture.md#14-technical-decision-log)). |
 
 ---
 
@@ -1138,6 +1139,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -1177,7 +1180,11 @@ public class IdentityApiExceptionHandler {
                 "The request body is missing or is not valid JSON."));
     }
 
-    @ExceptionHandler(DataAccessException.class)
+    /**
+     * Only an unreachable database becomes 503. Other data-access errors (for
+     * example invalid SQL) are programming errors and stay 500.
+     */
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
     public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException exception) {
         log.error("Identity persistence operation failed", exception);
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
@@ -1210,6 +1217,8 @@ public class IdentityApiExceptionHandler {
 ```
 
 Why logging the `DataAccessException` is safe: SQL is sent with parameters (`:email`), so values are not part of the SQL text, and Section 7.2 removed row values from driver messages.
+
+Why only two exception types become 503: Spring translates JDBC failures into a hierarchy of `DataAccessException` subclasses. `DataAccessResourceFailureException` (which includes `CannotGetJdbcConnectionException`, thrown when the connection pool cannot hand out a connection) and `TransientDataAccessResourceException` mean "the database could not be reached" — a real temporary outage, so 503 is truthful. Other subclasses, such as `BadSqlGrammarException`, mean the code is wrong; reporting them as "temporarily unavailable" would hide a bug, so they fall through to Spring's 500 error page. US-AUTH-002 uses the **same two types** for the security filter ([TD-26](shared-architecture.md#14-technical-decision-log)); see [Shared Architecture §5.5](shared-architecture.md#55-database-connections-and-hikaricp) for how connections are obtained.
 
 ### 7.26 `docs/05-api/openapi.yaml` — NEW (living API contract)
 
