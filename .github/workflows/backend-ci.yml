@@ -2,7 +2,7 @@ name: Backend verification
 
 on:
   push:
-    branches: [main, chore/engineering-baseline]
+    branches: [main]
   pull_request:
     branches: [main]
 
