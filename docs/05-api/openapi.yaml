@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: CapsuleAI Backend API
+  version: 0.1.0
+  description: |
+    Living HTTP contract (Scrum Workflow Section 27).
+    Sprint 1 adds the Identity authentication endpoints.
+    Error bodies are RFC 9457 problem details with a stable `code` property;
+    clients map each code to Vietnamese guidance.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local development
+paths:
+  /api/v1/auth/registrations:
+    post:
+      tags: [Identity]
+      operationId: registerAccount
+      summary: Register a private account (US-AUTH-001)
+      description: |
+        Creates exactly one account per normalized email (surrounding whitespace
+        removed, compared case-insensitively). Does not log the user in; the
+        client calls the login operation next.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrationRequest"
+      responses:
+        "201":
+          description: Account created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: EMAIL_ALREADY_REGISTERED. Offer Log in and Forgot Password. The existing account is unchanged.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+components:
+  schemas:
+    RegistrationRequest:
+      type: object
+      required: [email, password, confirmPassword]
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          example: person@example.com
+        password:
+          type: string
+          description: 12 to 128 Unicode code points, used exactly as entered.
+        confirmPassword:
+          type: string
+          description: Must equal password exactly.
+        displayName:
+          type: [string, "null"]
+          description: Optional. Stored exactly. At most 100 code points.
+    RegistrationResponse:
+      type: object
+      required: [accountId, email, displayName]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          description: Normalized email identity.
+        displayName:
+          type: [string, "null"]
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field:
+          type: string
+          example: password
+        code:
+          type: string
+          enum:
+            [
+              REQUIRED,
+              INVALID_FORMAT,
+              TOO_SHORT,
+              TOO_LONG,
+              INVALID_CHARACTERS,
+              MISMATCH,
+            ]
+    Problem:
+      type: object
+      required: [status, code]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          enum:
+            [
+              VALIDATION_FAILED,
+              MALFORMED_REQUEST,
+              EMAIL_ALREADY_REGISTERED,
+              TEMPORARILY_UNAVAILABLE,
+            ]
+        fieldErrors:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldError"
+  responses:
+    BadRequest:
+      description: VALIDATION_FAILED (see fieldErrors) or MALFORMED_REQUEST. Nothing was saved.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unavailable:
+      description: TEMPORARILY_UNAVAILABLE. The outcome is not confirmed; review or retry.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
