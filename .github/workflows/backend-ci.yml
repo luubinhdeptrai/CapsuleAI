@@ -41,8 +41,11 @@ jobs:
         run: |
           $required = @{
             'surefire-reports/TEST-com.capsuleai.foundation.HarnessSmokeTest.xml' = 2
-            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 4
             'failsafe-reports/TEST-com.capsuleai.foundation.DatabaseSmokeIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.application.RegisterAccountServiceTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.RegistrationApiIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRegistrationIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {

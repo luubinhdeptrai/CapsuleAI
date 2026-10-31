@@ -1,5 +1,6 @@
 package com.capsuleai.architecture;
 
+import com.capsuleai.architecturefixture.application.InvalidApplicationFixture;
 import com.capsuleai.architecturefixture.domain.InvalidDomainFixture;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -34,14 +35,43 @@ class ArchitectureDependencyTest {
                 .allowEmptyShould(true);
     }
 
-    @Test
-    void productionDependenciesRespectInitialBoundaries() {
+    private static ArchRule frameworkFreeApplicationAndApiRule() {
+        return noClasses()
+                .that()
+                .resideInAnyPackage(
+                        "com.capsuleai..application..",
+                        "com.capsuleai..api.."
+                )
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        "org.springframework..",
+                        "jakarta.servlet..",
+                        "jakarta.persistence..",
+                        "org.hibernate..",
+                        "java.sql..",
+                        "javax.sql..",
+                        "java.net.http..",
+                        "com.fasterxml..",
+                        "tools.jackson..",
+                        "com.capsuleai..adapter..",
+                        "com.capsuleai..configuration.."
+                )
+                .allowEmptyShould(true);
+    }
 
-        JavaClasses production = new ClassFileImporter()
+    private static JavaClasses productionClasses() {
+        return new ClassFileImporter()
                 .withImportOption(
                         ImportOption.Predefined.DO_NOT_INCLUDE_TESTS
                 )
                 .importPackages("com.capsuleai");
+    }
+
+    @Test
+    void productionDependenciesRespectInitialBoundaries() {
+
+        JavaClasses production = productionClasses();
 
         assertThat(production)
                 .extracting(JavaClass::getName)
@@ -76,6 +106,12 @@ class ArchitectureDependencyTest {
     }
 
     @Test
+    void applicationAndApiCodeStaysFrameworkFree() {
+
+        frameworkFreeApplicationAndApiRule().check(productionClasses());
+    }
+
+    @Test
     void domainRuleDetectsTheDeliberateTestFixtureViolation() {
 
         JavaClasses fixture = new ClassFileImporter()
@@ -83,6 +119,17 @@ class ArchitectureDependencyTest {
 
         assertThat(
                 domainRule().evaluate(fixture).hasViolation()
+        ).isTrue();
+    }
+
+    @Test
+    void applicationRuleDetectsTheDeliberateTestFixtureViolation() {
+
+        JavaClasses fixture = new ClassFileImporter()
+                .importClasses(InvalidApplicationFixture.class);
+
+        assertThat(
+                frameworkFreeApplicationAndApiRule().evaluate(fixture).hasViolation()
         ).isTrue();
     }
 }
