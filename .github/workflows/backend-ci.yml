@@ -46,6 +46,9 @@ jobs:
             'surefire-reports/TEST-com.capsuleai.identity.application.RegisterAccountServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.RegistrationApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRegistrationIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.application.LogInServiceTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.LoginApiIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.AccessTokenSecurityIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {
