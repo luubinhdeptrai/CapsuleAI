@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
   title: CapsuleAI Backend API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Living HTTP contract (Scrum Workflow Section 27).
     Sprint 1 adds the Identity authentication endpoints.
     Error bodies are RFC 9457 problem details with a stable `code` property;
     clients map each code to Vietnamese guidance.
+    Every operation requires a bearer access token unless it declares `security: []`.
 servers:
   - url: http://127.0.0.1:8080
     description: Local development
+security:
+  - bearerAuth: []
 paths:
   /api/v1/auth/registrations:
     post:
@@ -20,6 +23,7 @@ paths:
         Creates exactly one account per normalized email (surrounding whitespace
         removed, compared case-insensitively). Does not log the user in; the
         client calls the login operation next.
+      security: []
       requestBody:
         required: true
         content:
@@ -43,7 +47,46 @@ paths:
                 $ref: "#/components/schemas/Problem"
         "503":
           $ref: "#/components/responses/Unavailable"
+  /api/v1/auth/login:
+    post:
+      tags: [Identity]
+      operationId: logIn
+      summary: Log in with email and password (US-AUTH-002)
+      description: |
+        Verifies the normalized email and the exact password, creates a new
+        separate login session (maximum 30 days) and returns a 15-minute access
+        token plus a refresh token. An Authorization header, if sent, is ignored.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: INVALID_CREDENTIALS. Same response for an unknown email and a wrong password. No session created.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from login. Valid for 15 minutes and only while its login session is usable.
   schemas:
     RegistrationRequest:
       type: object
@@ -74,6 +117,46 @@ components:
           description: Normalized email identity.
         displayName:
           type: [string, "null"]
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          description: Compared exactly; never trimmed or normalized.
+    TokenResponse:
+      type: object
+      required:
+        [
+          tokenType,
+          accessToken,
+          accessTokenExpiresAt,
+          refreshToken,
+          sessionExpiresAt,
+          accountId,
+        ]
+      properties:
+        tokenType:
+          type: string
+          enum: [Bearer]
+        accessToken:
+          type: string
+          description: JWT for the Authorization header.
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+        refreshToken:
+          type: string
+          description: Opaque credential for renewing access. Store securely; never log it.
+        sessionExpiresAt:
+          type: string
+          format: date-time
+          description: Absolute end of the login session. Never extended.
+        accountId:
+          type: string
+          format: uuid
     FieldError:
       type: object
       required: [field, code]
@@ -109,12 +192,12 @@ components:
         code:
           type: string
           enum:
-            [
-              VALIDATION_FAILED,
-              MALFORMED_REQUEST,
-              EMAIL_ALREADY_REGISTERED,
-              TEMPORARILY_UNAVAILABLE,
-            ]
+            - VALIDATION_FAILED
+            - MALFORMED_REQUEST
+            - EMAIL_ALREADY_REGISTERED
+            - INVALID_CREDENTIALS
+            - AUTHENTICATION_REQUIRED
+            - TEMPORARILY_UNAVAILABLE
         fieldErrors:
           type: array
           items:
@@ -122,6 +205,16 @@ components:
   responses:
     BadRequest:
       description: VALIDATION_FAILED (see fieldErrors) or MALFORMED_REQUEST. Nothing was saved.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: AUTHENTICATION_REQUIRED. The login session is unusable; authenticate again. Not an empty result.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
       content:
         application/problem+json:
           schema:

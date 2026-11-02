@@ -1,6 +1,8 @@
 package com.capsuleai.identity.application.ports;
 
 import com.capsuleai.identity.domain.Account;
+import com.capsuleai.identity.domain.EmailAddress;
+import java.util.Optional;
 
 /** Identity-owned account persistence. */
 public interface AccountRepository {
@@ -15,4 +17,7 @@ public interface AccountRepository {
      *         already registered (nothing was changed)
      */
     boolean addIfEmailAvailable(Account account);
+
+    /** @return the account registered for this normalized email, if any */
+    Optional<Account> findByEmail(EmailAddress email);
 }

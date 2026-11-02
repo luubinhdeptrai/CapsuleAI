@@ -2,6 +2,7 @@ package com.capsuleai.identity.adapter.in.web;
 
 import com.capsuleai.identity.application.EmailAlreadyRegisteredException;
 import com.capsuleai.identity.application.FieldViolation;
+import com.capsuleai.identity.application.InvalidCredentialsException;
 import com.capsuleai.identity.application.RequestValidationException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +41,12 @@ public class IdentityApiExceptionHandler {
     public ResponseEntity<ProblemDetail> handleEmailAlreadyRegistered(EmailAlreadyRegisteredException exception) {
         return respond(problem(HttpStatus.CONFLICT, "EMAIL_ALREADY_REGISTERED",
                 "An account already exists for this email. Log in, or use Forgot Password to recover access."));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidCredentials(InvalidCredentialsException exception) {
+        return respond(problem(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
+                "The email or password is incorrect. Check them and try again, or use Forgot Password."));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
