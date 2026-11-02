@@ -5,6 +5,7 @@ import com.capsuleai.identity.adapter.out.persistence.JdbcSessionRepository;
 import com.capsuleai.identity.adapter.out.persistence.SpringIdentityTransactions;
 import com.capsuleai.identity.adapter.out.security.Pbkdf2PasswordHasher;
 import com.capsuleai.identity.application.LogInService;
+import com.capsuleai.identity.application.LogOutService;
 import com.capsuleai.identity.application.RegisterAccountService;
 import com.capsuleai.identity.application.SessionAuthorityService;
 import com.capsuleai.identity.application.ports.AccessTokenIssuer;
@@ -68,5 +69,10 @@ public class IdentityConfiguration {
     @Bean
     SessionAuthorityService sessionAuthorityService(SessionRepository sessions, Clock clock) {
         return new SessionAuthorityService(sessions, clock);
+    }
+
+    @Bean
+    LogOutService logOutService(SessionRepository sessions, Clock clock) {
+        return new LogOutService(sessions, clock);
     }
 }

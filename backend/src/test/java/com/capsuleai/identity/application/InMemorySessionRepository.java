@@ -3,6 +3,8 @@ package com.capsuleai.identity.application;
 import com.capsuleai.identity.application.ports.SessionRepository;
 import com.capsuleai.identity.domain.LoginSession;
 import com.capsuleai.identity.domain.RefreshTokenHash;
+import com.capsuleai.identity.domain.RevocationReason;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,17 @@ final class InMemorySessionRepository implements SessionRepository {
     @Override
     public synchronized Optional<LoginSession> findById(UUID sessionId) {
         return Optional.ofNullable(sessionsById.get(sessionId));
+    }
+
+    @Override
+    public synchronized boolean revoke(UUID sessionId, UUID accountId, RevocationReason reason, Instant revokedAt) {
+        LoginSession session = sessionsById.get(sessionId);
+        if (session == null || !session.belongsTo(accountId) || session.isRevoked()) {
+            return false;
+        }
+        sessionsById.put(sessionId, new LoginSession(session.id(), session.accountId(),
+                session.establishedAt(), session.expiresAt(), revokedAt, reason));
+        return true;
     }
 
     synchronized List<LoginSession> all() {

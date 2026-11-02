@@ -80,6 +80,22 @@ paths:
                 $ref: "#/components/schemas/Problem"
         "503":
           $ref: "#/components/responses/Unavailable"
+  /api/v1/auth/logout:
+    post:
+      tags: [Identity]
+      operationId: logOut
+      summary: Log out of the current session (US-AUTH-004)
+      description: |
+        Revokes only the login session the access token belongs to. Other
+        sessions of the account and all account data are unchanged. Afterwards
+        this session's access token (and refresh token) are rejected.
+        A 401 means the session was already unusable, i.e. already signed out.
+        Uses the default bearer security requirement.
+      responses:
+        "204":
+          description: The current session is revoked.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 components:
   securitySchemes:
     bearerAuth:
