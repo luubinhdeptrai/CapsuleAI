@@ -1,5 +1,7 @@
 package com.capsuleai.architecture;
 
+import com.capsuleai.architecturefixture.adapter.in.InvalidInboundAdapterFixture;
+import com.capsuleai.architecturefixture.adapter.out.InvalidOutboundAdapterFixture;
 import com.capsuleai.architecturefixture.application.InvalidApplicationFixture;
 import com.capsuleai.architecturefixture.domain.InvalidDomainFixture;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -7,6 +9,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.CompositeArchRule;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -60,6 +63,29 @@ class ArchitectureDependencyTest {
                 .allowEmptyShould(true);
     }
 
+    /**
+     * Inbound and outbound adapters are independent edges: a format both must
+     * agree on lives in a neutral package (for example {@code adapter.jwt}), TD-25.
+     */
+    private static ArchRule independentAdaptersRule() {
+        return CompositeArchRule.of(
+                        noClasses()
+                                .that()
+                                .resideInAPackage("com.capsuleai..adapter.in..")
+                                .should()
+                                .dependOnClassesThat()
+                                .resideInAPackage("com.capsuleai..adapter.out..")
+                                .allowEmptyShould(true))
+                .and(
+                        noClasses()
+                                .that()
+                                .resideInAPackage("com.capsuleai..adapter.out..")
+                                .should()
+                                .dependOnClassesThat()
+                                .resideInAPackage("com.capsuleai..adapter.in..")
+                                .allowEmptyShould(true));
+    }
+
     private static JavaClasses productionClasses() {
         return new ClassFileImporter()
                 .withImportOption(
@@ -109,6 +135,28 @@ class ArchitectureDependencyTest {
     void applicationAndApiCodeStaysFrameworkFree() {
 
         frameworkFreeApplicationAndApiRule().check(productionClasses());
+    }
+
+    @Test
+    void inboundAndOutboundAdaptersStayIndependent() {
+
+        independentAdaptersRule().check(productionClasses());
+    }
+
+    @Test
+    void adapterRuleDetectsTheDeliberateTestFixtureViolations() {
+
+        JavaClasses inboundFixture = new ClassFileImporter()
+                .importClasses(InvalidInboundAdapterFixture.class);
+        JavaClasses outboundFixture = new ClassFileImporter()
+                .importClasses(InvalidOutboundAdapterFixture.class);
+
+        assertThat(
+                independentAdaptersRule().evaluate(inboundFixture).hasViolation()
+        ).isTrue();
+        assertThat(
+                independentAdaptersRule().evaluate(outboundFixture).hasViolation()
+        ).isTrue();
     }
 
     @Test

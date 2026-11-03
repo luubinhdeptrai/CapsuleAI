@@ -6,7 +6,7 @@ CapsuleAI helps users understand their wardrobe, choose outfits and evaluate war
 
 The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** through [PR #1](https://github.com/luubinhdeptrai/CapsuleAI/pull/1). It provides the application/build foundation, six documented module boundaries, PostgreSQL configuration, Flyway migrations, automated smoke/dependency tests and GitHub Actions verification.
 
-Product features are not implemented yet: registration/login/JWT, garments, outfits, Wear/history, Coverage/Multiplier, shopping and real provider integrations remain selected-story work. There are no product HTTP endpoints or business tables. This foundation is not a production deployment or a completed product Increment.
+**Sprint 1 Identity authentication is implemented** (US-AUTH-001–004): registration, login, persistent login sessions with HS256 JWT access tokens, refresh-token rotation with reuse detection and current-session logout, under `/api/v1/auth` ([OpenAPI contract](../docs/05-api/openapi.yaml)). Garments, outfits, Wear/history, Coverage/Multiplier, shopping, password recovery and real provider integrations remain selected-story work. This is not a production deployment or a completed product Increment; story completion follows the Definition of Done.
 
 ## 2. Technology stack
 
@@ -16,6 +16,7 @@ Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/mave
 | --- | --- | --- |
 | Java | 21 | Compilation/runtime |
 | Spring Boot / servlet MVC | 4.1.1 | Application configuration and embedded HTTP server |
+| Spring Security (OAuth2 resource server, JOSE, crypto) | 7.1.1 | Bearer JWT authentication and password hashing |
 | Maven / Maven Wrapper | 3.9.16 / 3.3.4 | Reproducible build; Wrapper uses `only-script` |
 | PostgreSQL | `17.11-bookworm` image | Development and integration-test databases |
 | Flyway / PostgreSQL JDBC | 12.4.0 / 42.7.13 | Migrations and connectivity |
@@ -32,7 +33,7 @@ Boot manages library/plugin versions except the explicit ArchUnit pin. Keep mana
 
 One Spring Boot application and one Maven project contain six logical business owners. **Clean Architecture** keeps domain policy independent of infrastructure. Application use cases coordinate domain behavior through necessary **ports**; outer **adapters** implement database, transport or provider access.
 
-The [Implementation View](../docs/04-architecture/views/implementation-view.puml) defines the following role conventions. Currently each owner contains only useful `package-info.java` documentation; add roles/classes when actual selected work requires them.
+The [Implementation View](../docs/04-architecture/views/implementation-view.puml) defines the following role conventions. Identity contains the Sprint 1 roles; the other owners still contain only `package-info.java` documentation. Add roles/classes when actual selected work requires them.
 
 | Role inside an owner | Responsibility |
 | --- | --- |
@@ -50,7 +51,7 @@ See [Selected Decisions](../docs/04-architecture/selected-architecture-decisions
 
 ## 4. Business modules
 
-These responsibilities are documented boundaries, not implemented product capabilities.
+These responsibilities are documented boundaries. So far only Identity's registration and login-session lifecycle are implemented.
 
 | Owner / package below `com.capsuleai` | Responsibility |
 | --- | --- |
@@ -83,7 +84,7 @@ CapsuleAI/
     ├── src/main/
     │   ├── java/com/capsuleai/
     │   │   ├── CapsuleAiApplication.java
-    │   │   ├── identity/package-info.java
+    │   │   ├── identity/                    # Sprint 1: api, domain, application(.ports), adapter.in/out/jwt, configuration
     │   │   ├── personalcontext/package-info.java
     │   │   ├── wardrobe/package-info.java
     │   │   ├── outfitadviceanduse/package-info.java
@@ -92,12 +93,13 @@ CapsuleAI/
     │   └── resources/
     │       ├── application.properties
     │       ├── application-local.properties
-    │       └── db/migration/V1__foundation.sql
+    │       └── db/migration/                # V1 foundation; V2–V5 Identity tables
     ├── src/test/java/com/capsuleai/
-    │   ├── foundation/HarnessSmokeTest.java
-    │   ├── foundation/DatabaseSmokeIT.java
+    │   ├── foundation/                      # HarnessSmokeTest, DatabaseSmokeIT
     │   ├── architecture/ArchitectureDependencyTest.java
-    │   └── architecturefixture/domain/InvalidDomainFixture.java
+    │   ├── architecturefixture/             # Deliberate violations for the ArchUnit detectors
+    │   └── identity/                        # Unit, PostgreSQL, security-chain and contract tests
+    ├── src/test/resources/application-test.properties   # Disposable test-only signing key
     └── target/                          # Ignored classes, JAR and reports
 ```
 
@@ -206,6 +208,16 @@ Adapt URL/user to the private Compose configuration. The prompt avoids a passwor
 
 **Configuration caveat:** current `application-local.properties` includes an instructional literal password fallback. Always supply `CAPSULE_DB_PASSWORD` explicitly; the fallback is not your configured database credential.
 
+Startup also **requires an access-token signing secret** (Base64 of at least 32 random bytes) and deliberately has no default. In the same terminal:
+
+```powershell
+$secretBytes = New-Object byte[] 32
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
+$env:CAPSULE_JWT_SIGNING_SECRET = [Convert]::ToBase64String($secretBytes)
+```
+
+A new secret on each start only invalidates earlier access tokens, which is fine for development. Never commit or share the value.
+
 Choose **one** startup method in that terminal.
 
 **Maven plugin:**
@@ -232,7 +244,7 @@ Get-NetTCPConnection -LocalPort 8080 -State Listen |
     Select-Object LocalAddress, OwningProcess
 ```
 
-Correlate the listener with the application's logged Java PID. `GET /` returning **404** is expected: no product or health endpoint has been added.
+Correlate the listener with the application's logged Java PID. `GET /` returning **401** with an `AUTHENTICATION_REQUIRED` problem body is expected: every route except registration, login and refresh requires a bearer access token, and no health endpoint exists. The [OpenAPI contract](../docs/05-api/openapi.yaml) lists the available operations.
 
 Stop Boot with **Ctrl+C** before switching methods. Clear the launching terminal's temporary settings when finished:
 
@@ -241,6 +253,8 @@ $env:CAPSULE_DB_PASSWORD = $null
 $dbPassword = $null
 $env:CAPSULE_DB_URL = $null
 $env:CAPSULE_DB_USER = $null
+$env:CAPSULE_JWT_SIGNING_SECRET = $null
+$secretBytes = $null
 ```
 
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
@@ -249,48 +263,50 @@ See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profil
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` runs `SELECT 1;` and establishes migration plumbing; it creates no business tables. Flyway maintains `flyway_schema_history`. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token`. Flyway maintains `flyway_schema_history`. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
 ```
 
-Expect one successful version `1` row. Restart Boot using the same settings and confirm V1 remains applied once.
+Expect successful rows for versions `1` to `5`. Restart Boot using the same settings and confirm each remains applied once.
 
 Future files follow `V<version>__<description>.sql` with **two underscores**. Add a new migration for selected-story changes; do not edit an already applied shared migration. Business schemas/ORM/transactions remain story-specific design. Diagnose checksum mismatches rather than automatically cleaning, repairing or resetting data.
 
 ## 11. Automated testing
 
-| Suite / current class | Cases | Purpose | Infrastructure |
-| --- | ---: | --- | --- |
-| Fast foundation — `HarnessSmokeTest` | 2 | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
-| Architecture — `ArchitectureDependencyTest` | 2 | Production import/initial dependency rules and intentional fixture violation detection | Compiled classes; no Docker/database |
-| Integration — `DatabaseSmokeIT` | 1 | Boot wiring, real SQL, V1 history and no pending migration | Docker; disposable PostgreSQL |
+| Suite | Purpose | Infrastructure |
+| --- | --- | --- |
+| Fast foundation — `HarnessSmokeTest` | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
+| Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API, owner boundaries, independent inbound/outbound adapters, plus deliberate-violation detectors | Compiled classes; no Docker/database |
+| Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation | No Spring, database or Docker |
+| Integration — `DatabaseSmokeIT` | Boot wiring, real SQL and no pending migration | Docker; disposable PostgreSQL |
+| Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
 
-JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies. These smoke cases verify infrastructure, not product requirement coverage.
+JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
 
-From `backend`, run fast/architecture tests:
+From `backend`, run the fast unit/architecture tests:
 
 ```powershell
 Set-Location 'D:\CapsuleAI\backend'
 .\mvnw.cmd test
 ```
 
-Expected: **4 tests**, zero failures/errors/skips. Focus either class for diagnosis:
+Expected: zero failures/errors/skips. Focus one class for diagnosis:
 
 ```powershell
 .\mvnw.cmd '-Dtest=HarnessSmokeTest' test
 .\mvnw.cmd '-Dtest=ArchitectureDependencyTest' test
 ```
 
-Each focused command runs **2 cases**. For the complete suite, leave Docker running:
+For the complete suite, leave Docker running:
 
 ```powershell
 .\mvnw.cmd --batch-mode --no-transfer-progress clean verify
 ```
 
-Expected: **4 Surefire cases + 1 Failsafe IT**, all non-skipped. To select the existing IT:
+Expected: every Surefire and Failsafe suite passes with zero failures, errors or skips; read the actual counts from the reports. To select one IT:
 
 ```powershell
 .\mvnw.cmd '-Dit.test=DatabaseSmokeIT' verify
@@ -298,7 +314,7 @@ Expected: **4 Surefire cases + 1 Failsafe IT**, all non-skipped. To select the e
 
 This still runs fast tests; `it.test` selects Failsafe's integration class.
 
-`DatabaseSmokeIT` uses `@SpringBootTest(NONE)`, profile `test` and a Testcontainers 2.x PostgreSQL container with `@ServiceConnection`. Boot receives its temporary connection details; development Compose, private .env credentials and a fixed host port are unnecessary. Docker must remain running even if the development database is stopped.
+`DatabaseSmokeIT` uses `@SpringBootTest(NONE)`, profile `test` and a Testcontainers 2.x PostgreSQL container with `@ServiceConnection`. Identity ITs extend `IdentityIntegrationTestSupport`: the full application and security chain through MockMvc, Testcontainers PostgreSQL, a controllable clock and the disposable signing key in `application-test.properties`. Boot receives temporary connection details; development Compose, private .env credentials and a fixed host port are unnecessary. Docker must remain running even if the development database is stopped.
 
 Inspect fresh reports:
 
@@ -307,7 +323,7 @@ Get-Content .\target\surefire-reports\*.txt
 Get-Content .\target\failsafe-reports\*.txt
 ```
 
-Surefire runs `*Test` classes during `test`. Failsafe runs `*IT` during `integration-test` and enforces results during `verify`. Thus `test`/`package` omit the database IT; do not stop verification at `integration-test`. Both plugins reject an entirely empty suite; CI additionally checks the three named reports.
+Surefire runs `*Test` classes during `test`. Failsafe runs `*IT` during `integration-test` and enforces results during `verify`. Thus `test`/`package` omit the database IT; do not stop verification at `integration-test`. Both plugins reject an entirely empty suite; CI additionally requires the named reports described in Section 13.
 
 The invalid architecture fixture belongs in **test sources**. Its detector passes when the expected violation is found. Initial rules tolerate empty feature roles and do not prove full API/cycle restrictions, Clean conformance, SQL ownership or runtime authorization. Extend useful checks with real code.
 
@@ -320,21 +336,21 @@ Run project commands from `backend` using the Wrapper.
 | Command | Current effect |
 | --- | --- |
 | `.\mvnw.cmd compile` | Compile production Java and copy resources |
-| `.\mvnw.cmd test` | Compile tests and run 4 fast/architecture cases |
+| `.\mvnw.cmd test` | Compile tests and run the fast unit/architecture suites; no Docker |
 | `.\mvnw.cmd package` | Run preceding phases and package the executable JAR; no database IT |
 | `.\mvnw.cmd verify` | Include packaging, Failsafe IT and result enforcement |
-| `.\mvnw.cmd --batch-mode --no-transfer-progress clean verify` | Remove stale target output and repeat complete 5-case verification |
+| `.\mvnw.cmd --batch-mode --no-transfer-progress clean verify` | Remove stale target output and repeat complete unit + integration verification |
 | `.\mvnw.cmd spring-boot:run '-Dspring-boot.run.profiles=local'` | Start the configured development application; not build/test verification |
 
 Lifecycle phases include earlier phases. Packaging success does not prove IT execution. Linux CI uses `bash ./mvnw` for the same pinned distribution. See [Failsafe usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
 
 ## 13. Continuous integration
 
-Root [backend-ci.yml](../.github/workflows/backend-ci.yml) runs for pushes to `main`/`chore/engineering-baseline` and PRs targeting `main`.
+Root [backend-ci.yml](../.github/workflows/backend-ci.yml) runs for pushes to `main` and PRs targeting `main`.
 
 The `verify` job uses Ubuntu 24.04, Temurin 21 and PowerShell run steps. It checks out source, caches Maven dependencies using the backend POM, checks Docker, then runs `bash ./mvnw --batch-mode --no-transfer-progress clean verify` from `backend`.
 
-A guard requires harness/architecture/IT XML reports with minimum counts **2/2/1** and no failures/errors/skips. Reports upload as `backend-test-reports` even after failure; upload success cannot erase a failed build. Paths remain relative to the repository root. Permissions are read-only, checkout credentials are not persisted and the job timeout is 15 minutes. Testcontainers supplies PostgreSQL; CI does not start persistent Compose.
+A guard requires a named set of Surefire/Failsafe XML reports (foundation, architecture and the Sprint 1 Identity suites, including `SessionAuthorityOutageIT` and `IdentityOpenApiContractIT`), each with at least its stated test count and no failures/errors/skips. Reports upload as `backend-test-reports` even after failure; upload success cannot erase a failed build. Paths remain relative to the repository root. Permissions are read-only, checkout credentials are not persisted and the job timeout is 15 minutes. Testcontainers supplies PostgreSQL; CI does not start persistent Compose.
 
 **Baseline evidence:** [PR #1](https://github.com/luubinhdeptrai/CapsuleAI/pull/1) merged at `f0a6480`. Its [main-branch run](https://github.com/luubinhdeptrai/CapsuleAI/actions/runs/39603004558) completed successfully through Docker/build/report guard/upload, inspected on 2026-10-21. Check the latest relevant revision for later changes. Hosted CI does not verify a developer's private local credentials.
 
@@ -361,7 +377,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source currently contains bootstrap and module ownership documentation. Business endpoints, session/security enforcement, feature tables, domain behavior, Python/media/provider integrations and production deployment remain unimplemented.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Password recovery, Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented.
 
 Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
@@ -373,12 +389,14 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | --- | --- |
 | Wrapper fails / Java mismatch | Compare Java/compiler/Wrapper and JAVA_HOME; align editor runtime. First downloads need network access. |
 | Datasource URL missing | Activate `local` and supply settings in the launching terminal; .env configures Compose. |
+| Startup: signing-secret not configured / too short | Set `CAPSULE_JWT_SIGNING_SECRET` in the launching terminal (Section 9): Base64 of at least 32 bytes. |
+| Protected request returns 503 `TEMPORARILY_UNAVAILABLE` | PostgreSQL is unreachable, so session authority cannot be checked; the token was not found invalid. Check the database (Section 8) and retry. |
 | Password authentication fails | Check intended user/database/port and private password against original initialization; editing .env does not update an existing volume. |
 | Docker/Testcontainers unavailable | Check Linux engine and `docker info`; do not substitute the development database or skip the required IT. |
 | Port 8080/5433 occupied | Identify its owner; stop your own earlier instance or consistently change database port/application URL. Do not kill unknown processes. |
-| Only 4 tests ran | `test`/`package` intentionally omit the IT; use `verify` and inspect Failsafe. |
+| Integration tests did not run | `test`/`package` intentionally omit ITs; use `verify` and inspect Failsafe. |
 | Invalid architecture fixture | Intentional test-only violation; its detector must find it. Production import excludes tests. |
-| Root HTTP 404 | Expected until a product endpoint is implemented. |
+| Root HTTP 401 | Expected: unknown routes are protected by default. |
 | Flyway checksum mismatch | Inspect the applied change and use a reviewed forward migration; do not reset/repair blindly. |
 
 Share the nonsecret command, directory and minimal error. Do not publish environment dumps, resolved Compose configuration or sensitive logs.

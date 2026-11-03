@@ -3547,6 +3547,8 @@ class SessionAwareJwtAuthenticationConverterTest {
 
 ### T18 — `java/com/capsuleai/identity/adapter/in/security/SessionAuthorityOutageIT.java`
 
+> **Final repository version.** The code below is the Stage 2 starting point. The class in the repository goes further once logout and refresh exist: instead of a stubbed `SessionAuthority` it makes the real `DataSource` refuse connections (so the real repository, converter and entry point run), and it also proves recovery, that a revoked session is never authorized, and that logout, login and refresh during an outage are 503 with nothing changed. Test traceability for the final class is in the class itself.
+
 **Covers:** TD-26 through the **real configured `SecurityFilterChain`**: a validly signed, unexpired token whose session cannot be checked gets **503** with the fixed problem body, no `WWW-Authenticate` challenge, no principal data, no exception text and no token echo, and the protected controller is not reached (fail closed). Invalid, expired and missing tokens still get **401** — they fail before the authority is consulted.
 
 **How the outage is simulated.** The test replaces `SessionAuthority` with a `@Primary` stub that throws `CannotGetJdbcConnectionException` — exactly what Spring throws when HikariCP cannot supply a connection. Replacing a bean changes the Spring configuration, so this class gets **its own** application context and therefore its own PostgreSQL container (a few extra seconds); it does **not** extend `IdentityIntegrationTestSupport`, so the shared context used by every other IT stays untouched. **Does not prove:** a real database stop (manual check in Step 5).

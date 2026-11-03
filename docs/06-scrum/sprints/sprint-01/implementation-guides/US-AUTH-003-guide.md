@@ -986,7 +986,7 @@ public class AuthController {
 
 ### 7.16 `J/adapter/in/web/IdentityApiExceptionHandler.java` — MODIFY
 
-Complete resulting file (final; adds `handleAuthenticationRequired`):
+Complete resulting file (final; adds `handleAuthenticationRequired`, and `handleTransactionNotStarted`: renewal opens its transaction before any query, so an unreachable database first surfaces as `CannotCreateTransactionException`, which must also become 503 rather than 500 — [TD-26](shared-architecture.md#14-technical-decision-log)):
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
@@ -996,6 +996,7 @@ import com.capsuleai.identity.application.EmailAlreadyRegisteredException;
 import com.capsuleai.identity.application.FieldViolation;
 import com.capsuleai.identity.application.InvalidCredentialsException;
 import com.capsuleai.identity.application.RequestValidationException;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1009,6 +1010,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -1062,8 +1064,22 @@ public class IdentityApiExceptionHandler {
     @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
     public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException exception) {
         log.error("Identity persistence operation failed", exception);
-        return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
-                "The request could not be completed and its outcome is not confirmed. Check the result or retry."));
+        return outcomeNotConfirmed();
+    }
+
+    /**
+     * A transaction that could not begin because the database refused or lost the
+     * connection (an SQL cause) is the same outage, for example when renewal opens
+     * its transaction first. Transaction misuse without an SQL cause (such as
+     * unsupported nesting) is a programming error: it is rethrown and stays 500.
+     */
+    @ExceptionHandler(CannotCreateTransactionException.class)
+    public ResponseEntity<ProblemDetail> handleTransactionNotStarted(CannotCreateTransactionException exception) {
+        if (!(exception.getCause() instanceof SQLException)) {
+            throw exception;
+        }
+        log.error("Identity transaction could not be started", exception);
+        return outcomeNotConfirmed();
     }
 
     private static List<Map<String, String>> fieldErrors(List<FieldViolation> violations) {
@@ -1075,6 +1091,11 @@ public class IdentityApiExceptionHandler {
                     return error;
                 })
                 .toList();
+    }
+
+    private static ResponseEntity<ProblemDetail> outcomeNotConfirmed() {
+        return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
+                "The request could not be completed and its outcome is not confirmed. Check the result or retry."));
     }
 
     private static ProblemDetail problem(HttpStatus status, String code, String detail) {
@@ -2167,7 +2188,7 @@ No workflow change is required for discovery or execution. The concurrency test 
 ```powershell
           $required = @{
             'surefire-reports/TEST-com.capsuleai.foundation.HarnessSmokeTest.xml' = 2
-            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 6
             'failsafe-reports/TEST-com.capsuleai.foundation.DatabaseSmokeIT.xml' = 1
             'surefire-reports/TEST-com.capsuleai.identity.application.RegisterAccountServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.RegistrationApiIT.xml' = 1
@@ -2180,7 +2201,10 @@ No workflow change is required for discovery or execution. The concurrency test 
             'surefire-reports/TEST-com.capsuleai.identity.application.RefreshSessionServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.SessionRefreshApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRefreshIT.xml' = 1
-            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAwareJwtAuthenticationConverterTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityApiExceptionHandlerTest.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 11
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityOpenApiContractIT.xml' = 5
           }
 ```
 

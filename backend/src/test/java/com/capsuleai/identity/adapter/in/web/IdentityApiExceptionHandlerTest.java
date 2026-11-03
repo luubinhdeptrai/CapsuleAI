@@ -4,6 +4,7 @@ import com.capsuleai.identity.application.EmailAlreadyRegisteredException;
 import com.capsuleai.identity.application.FieldViolation;
 import com.capsuleai.identity.application.RequestValidationException;
 import com.capsuleai.identity.domain.ValueProblem;
+import java.sql.SQLTransientConnectionException;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.NestedTransactionNotSupportedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IdentityApiExceptionHandlerTest {
 
@@ -54,5 +58,25 @@ class IdentityApiExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getProperties()).containsEntry("code", "TEMPORARILY_UNAVAILABLE");
+    }
+
+    @Test
+    void transactionThatCouldNotOpenAConnectionIsReportedAsAnUnconfirmedOutcome() {
+        ResponseEntity<ProblemDetail> response = handler.handleTransactionNotStarted(
+                new CannotCreateTransactionException("Could not open JDBC Connection for transaction",
+                        new SQLTransientConnectionException("Connection is not available")));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getProperties()).containsEntry("code", "TEMPORARILY_UNAVAILABLE");
+        assertThat(response.getBody().getDetail()).doesNotContain("JDBC").doesNotContain("Connection");
+    }
+
+    @Test
+    void transactionMisuseIsNotDisguisedAsAnOutage() {
+        NestedTransactionNotSupportedException misuse =
+                new NestedTransactionNotSupportedException("Transaction manager does not allow nested transactions");
+
+        assertThatThrownBy(() -> handler.handleTransactionNotStarted(misuse)).isSameAs(misuse);
     }
 }

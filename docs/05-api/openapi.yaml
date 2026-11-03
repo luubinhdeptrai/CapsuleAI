@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI Identity API
-  version: 0.4.0
+  version: 0.4.1
   description: |
     CapsuleAI Sprint 1 — Secure Account Access (Backend Only).
 
@@ -27,6 +27,11 @@ info:
     Registration, login, and refresh are public endpoints.
     Logout requires a valid bearer access token.
 
+    A 401 means the presented credential is not acceptable.
+    A 503 means a required dependency (PostgreSQL) could not
+    be reached: the credential was not found invalid and the
+    outcome is not confirmed. Neither ever returns private data.
+
     This specification does not introduce endpoints for
     password reset, session listing, all-device logout,
     wardrobe data, or user profiles.
@@ -45,7 +50,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/v1/auth/register:
+  /api/v1/auth/registrations:
     post:
       tags:
         - Identity
@@ -54,7 +59,9 @@ paths:
       description: |
         US-AUTH-001.
 
-        Creates an account using an email address and password.
+        Creates an account using an email address, a password
+        and a matching password confirmation (FR-AUTH-001,
+        FR-AUTH-012).
 
         Email identity is normalized by trimming surrounding
         whitespace and applying case-insensitive comparison.
@@ -64,15 +71,15 @@ paths:
         Passwords must contain between 12 and 128 Unicode
         code points. The password value is preserved exactly:
         it is not trimmed, lowercased, or Unicode-normalized.
+        The confirmation must equal the password exactly.
 
         A display name is optional.
 
+        Every invalid field is reported in one 400 response;
+        nothing is stored when any field is rejected.
+
         Registration does not automatically create a login
         session or issue access and refresh tokens.
-
-        Contract confirmation needed:
-        Verify RegistrationResponse and the duplicate-email
-        error code against the US-AUTH-001 guide.
 
       security: []
 
@@ -82,19 +89,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/RegistrationRequest"
             examples:
               withDisplayName:
                 summary: Registration with display name
                 value:
                   email: " Person@Example.com "
                   password: "correct horse battery staple"
+                  confirmPassword: "correct horse battery staple"
                   displayName: "Person"
               withoutDisplayName:
                 summary: Registration without optional display name
                 value:
                   email: "person@example.com"
                   password: "correct horse battery staple"
+                  confirmPassword: "correct horse battery staple"
 
       responses:
         "201":
@@ -180,6 +189,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
               example:
+                tokenType: "Bearer"
                 accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
                 accessToken: "eyJhbGciOiJIUzI1NiJ9.example.signature"
                 accessTokenExpiresAt: "2026-11-03T10:15:00Z"
@@ -330,6 +340,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
               example:
+                tokenType: "Bearer"
                 accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
                 accessToken: "eyJhbGciOiJIUzI1NiJ9.newExample.signature"
                 accessTokenExpiresAt: "2026-11-03T10:30:00Z"
@@ -340,7 +351,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
 
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/RenewalRejected"
 
         "503":
           $ref: "#/components/responses/Unavailable"
@@ -370,16 +381,18 @@ components:
         protected request.
 
   schemas:
-    RegisterRequest:
+    RegistrationRequest:
       type: object
       description: |
         Registration input for US-AUTH-001.
 
         Email is normalized before identity comparison.
-        Password is preserved exactly as supplied.
+        Password and confirmation are preserved exactly
+        as supplied.
       required:
         - email
         - password
+        - confirmPassword
       properties:
         email:
           type: string
@@ -411,26 +424,40 @@ components:
           examples:
             - "correct horse battery staple"
 
-        displayName:
+        confirmPassword:
           type: string
+          format: password
+          writeOnly: true
           description: |
-            Optional display name.
+            Repetition of the password (FR-AUTH-001,
+            FR-AUTH-012).
 
-            Confirm any additional display-name validation
-            constraints against the US-AUTH-001 guide.
+            Missing or empty is REQUIRED; any difference from
+            password, including spaces or letter case, is
+            MISMATCH. Never returned by the API.
+          examples:
+            - "correct horse battery staple"
+
+        displayName:
+          type:
+            - string
+            - "null"
+          maxLength: 100
+          description: |
+            Optional display name of at most 100 Unicode
+            code points, stored exactly as supplied.
+
+            Omitted, null or blank means no display name.
           examples:
             - "Person"
 
     RegistrationResponse:
       type: object
-      description: |
-        Account created by registration.
-
-        The exact response field set should be checked
-        against US-AUTH-001 before treating this schema
-        as the final implementation contract.
+      description: Account created by registration.
       required:
         - accountId
+        - email
+        - displayName
       properties:
         accountId:
           type: string
@@ -445,7 +472,7 @@ components:
           type:
             - string
             - "null"
-          description: Optional display name, if returned.
+          description: The stored display name, or null when none was given.
 
     LoginRequest:
       type: object
@@ -513,12 +540,18 @@ components:
         sessionExpiresAt is the original absolute session
         expiry and does not move forward during rotation.
       required:
+        - tokenType
         - accountId
         - accessToken
         - accessTokenExpiresAt
         - refreshToken
         - sessionExpiresAt
       properties:
+        tokenType:
+          type: string
+          const: Bearer
+          description: Authorization scheme for the access token.
+
         accountId:
           type: string
           format: uuid
@@ -565,11 +598,7 @@ components:
 
     FieldError:
       type: object
-      description: |
-        A validation failure associated with a request field.
-
-        Verify the exact JSON property names against the
-        existing IdentityApiExceptionHandler.
+      description: A validation failure associated with a request field.
       required:
         - field
         - code
@@ -586,23 +615,26 @@ components:
             Stable validation reason identifier.
 
             REQUIRED is used for missing required values.
-            Other validation identifiers must match the
-            application's ValueProblem enum.
-          examples:
-            - "REQUIRED"
+          enum:
+            - REQUIRED
+            - INVALID_FORMAT
+            - TOO_SHORT
+            - TOO_LONG
+            - INVALID_CHARACTERS
+            - MISMATCH
 
     Problem:
       type: object
       description: |
-        CapsuleAI error response based on Problem Details.
+        CapsuleAI error response based on RFC 9457 Problem
+        Details. Errors use application/problem+json.
 
-        Errors use application/problem+json.
+        Clients branch on the stable code, not on detail.
 
         Authentication and infrastructure errors must not
         expose passwords, tokens, SQL, exception messages,
         connection strings, or internal system details.
       required:
-        - type
         - title
         - status
         - detail
@@ -610,9 +642,22 @@ components:
       properties:
         type:
           type: string
-          description: Problem type URI.
+          description: |
+            Problem type URI. Present as about:blank on
+            responses from the security layer; omitted on
+            responses from an endpoint, which RFC 9457 also
+            defines as about:blank.
           examples:
             - "about:blank"
+
+        instance:
+          type: string
+          description: |
+            Path of the request. Present on responses from
+            an endpoint; absent on responses from the
+            security layer.
+          examples:
+            - "/api/v1/auth/registrations"
 
         title:
           type: string
@@ -652,7 +697,8 @@ components:
     BadRequest:
       description: |
         Request validation failed or the JSON request
-        could not be parsed.
+        could not be parsed. Every invalid field is listed;
+        nothing was stored or changed.
       content:
         application/problem+json:
           schema:
@@ -661,22 +707,22 @@ components:
             missingRequiredField:
               summary: Missing required field
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request contains invalid fields."
+                detail: "Some submitted values are missing or invalid. Correct them and submit again."
+                instance: "/api/v1/auth/registrations"
                 code: "VALIDATION_FAILED"
                 fieldErrors:
-                  - field: "email"
+                  - field: "confirmPassword"
                     code: "REQUIRED"
 
             missingRefreshToken:
               summary: Missing refresh token
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request contains invalid fields."
+                detail: "Some submitted values are missing or invalid. Correct them and submit again."
+                instance: "/api/v1/auth/refresh"
                 code: "VALIDATION_FAILED"
                 fieldErrors:
                   - field: "refreshToken"
@@ -685,27 +731,25 @@ components:
             malformedJson:
               summary: Malformed JSON
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request body could not be read."
+                detail: "The request body is missing or is not valid JSON."
+                instance: "/api/v1/auth/registrations"
                 code: "MALFORMED_REQUEST"
 
     EmailConflict:
       description: |
         The normalized email is already registered.
-
-        Confirm the exact application error code against
-        the US-AUTH-001 implementation guide.
+        Nothing was changed.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
             title: "Conflict"
             status: 409
-            detail: "An account with this email already exists."
+            detail: "An account already exists for this email. Log in, or use Forgot Password to recover access."
+            instance: "/api/v1/auth/registrations"
             code: "EMAIL_ALREADY_REGISTERED"
 
     InvalidCredentials:
@@ -719,39 +763,31 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
             title: "Unauthorized"
             status: 401
-            detail: "Invalid email or password."
+            detail: "The email or password is incorrect. Check them and try again, or use Forgot Password."
+            instance: "/api/v1/auth/login"
             code: "INVALID_CREDENTIALS"
 
     Unauthorized:
       description: |
-        Authentication is required.
+        The bearer access token cannot authorize this
+        protected request: it is missing, malformed, signed
+        with another key, from another issuer, expired, or
+        its login session is revoked, expired or unknown.
 
-        For protected endpoints this can mean a missing,
-        invalid, expired, or revoked bearer access token.
-
-        For refresh it can mean an unknown or consumed
-        refresh token, or an unusable session.
-
-        A consumed refresh token may trigger revocation
-        of its session before this response is returned.
+        Returned by the security layer before the endpoint
+        runs, so nothing was changed.
       headers:
         WWW-Authenticate:
           description: |
-            Bearer authentication challenge on protected
-            endpoints.
-
-            May be "Bearer" when no token was provided,
-            or contain an invalid_token error when the
-            bearer token was rejected.
-
-            The public refresh endpoint does not require
-            this header.
+            Bearer authentication challenge (RFC 6750).
+            Starts with "Bearer"; contains
+            error="invalid_token" when a presented token was
+            rejected, and may carry further standard parameters.
           schema:
             type: string
-          example: "Bearer"
+          example: 'Bearer error="invalid_token"'
       content:
         application/problem+json:
           schema:
@@ -763,26 +799,62 @@ components:
             detail: "Authentication is required. Log in again to continue."
             code: "AUTHENTICATION_REQUIRED"
 
-    Unavailable:
+    RenewalRejected:
       description: |
-        Authentication or session authority could not
-        be completed because a required dependency,
-        such as PostgreSQL, is unavailable.
+        The refresh token cannot renew access: it is unknown,
+        already consumed, or its session is revoked or
+        expired. The client must log in again.
 
-        The operation is not reported as successful.
-
-        For a protected request, access is denied without
-        misrepresenting the outage as invalid credentials.
-
-        No internal database or infrastructure details
-        are disclosed.
+        A consumed refresh token presented while its session
+        was still usable revokes that session before this
+        response is returned. No WWW-Authenticate challenge
+        is sent, because the credential is the request body.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
-            title: "Service Unavailable"
-            status: 503
-            detail: "Your access could not be verified right now. Nothing was changed. Try again shortly."
-            code: "TEMPORARILY_UNAVAILABLE"
+            title: "Unauthorized"
+            status: 401
+            detail: "Your session can no longer be renewed. Log in again to continue."
+            instance: "/api/v1/auth/refresh"
+            code: "AUTHENTICATION_REQUIRED"
+
+    Unavailable:
+      description: |
+        A required dependency, PostgreSQL, could not be
+        reached. The request is not reported as successful,
+        the presented credential was not found invalid, and
+        no private data or internal detail is disclosed.
+        No WWW-Authenticate challenge is sent.
+
+        accessNotVerified: on a protected endpoint, the
+        security layer could not check session authority and
+        denied access before the endpoint ran (fail closed).
+
+        outcomeNotConfirmed: the database failed while the
+        endpoint processed the request. The client should
+        check the result or retry; for logout it must treat
+        the session as not confirmed revoked.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            accessNotVerified:
+              summary: Session authority could not be checked
+              value:
+                type: "about:blank"
+                title: "Service Unavailable"
+                status: 503
+                detail: "Your access could not be verified right now. Nothing was changed. Try again shortly."
+                code: "TEMPORARILY_UNAVAILABLE"
+
+            outcomeNotConfirmed:
+              summary: Database failed during the operation
+              value:
+                title: "Service Unavailable"
+                status: 503
+                detail: "The request could not be completed and its outcome is not confirmed. Check the result or retry."
+                instance: "/api/v1/auth/login"
+                code: "TEMPORARILY_UNAVAILABLE"
