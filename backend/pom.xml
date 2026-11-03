@@ -26,6 +26,25 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- US-AUTH-001: password hashing only (no web security yet) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- US-AUTH-002: Spring Security web filter chain + JWT (Nimbus) resource-server support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- US-AUTH-001: MockMvc support for HTTP integration tests (Boot 4 test module) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Flyway integration with Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

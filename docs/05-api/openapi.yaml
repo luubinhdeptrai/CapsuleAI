@@ -1,0 +1,788 @@
+openapi: 3.1.0
+
+info:
+  title: CapsuleAI Identity API
+  version: 0.4.0
+  description: |
+    CapsuleAI Sprint 1 — Secure Account Access (Backend Only).
+
+    Covers:
+      - US-AUTH-001: Register an account
+      - US-AUTH-002: Log in to a private account
+      - US-AUTH-004: Log out of the current session
+      - US-AUTH-003: Resume access through refresh-token rotation
+
+    Authentication model:
+      - Access tokens are HS256-signed JWTs.
+      - Access tokens last at most 15 minutes.
+      - Each login creates a separate PostgreSQL-backed session.
+      - A session has an absolute maximum lifetime of 30 days.
+      - Access is granted only when both the JWT and its
+        PostgreSQL session are usable.
+      - Refresh tokens are opaque, rotated after successful use,
+        and never accepted twice.
+      - Reuse of a consumed refresh token revokes its session.
+      - Logout revokes only the current session.
+
+    Registration, login, and refresh are public endpoints.
+    Logout requires a valid bearer access token.
+
+    This specification does not introduce endpoints for
+    password reset, session listing, all-device logout,
+    wardrobe data, or user profiles.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Identity
+    description: Account registration and authentication lifecycle
+
+# Every endpoint requires bearer authentication unless it
+# explicitly overrides this requirement with security: [].
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Identity
+      operationId: registerAccount
+      summary: Register a new account
+      description: |
+        US-AUTH-001.
+
+        Creates an account using an email address and password.
+
+        Email identity is normalized by trimming surrounding
+        whitespace and applying case-insensitive comparison.
+        Equivalent normalized email addresses cannot be
+        registered twice, including under concurrent requests.
+
+        Passwords must contain between 12 and 128 Unicode
+        code points. The password value is preserved exactly:
+        it is not trimmed, lowercased, or Unicode-normalized.
+
+        A display name is optional.
+
+        Registration does not automatically create a login
+        session or issue access and refresh tokens.
+
+        Contract confirmation needed:
+        Verify RegistrationResponse and the duplicate-email
+        error code against the US-AUTH-001 guide.
+
+      security: []
+
+      requestBody:
+        required: true
+        description: Account registration details.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            examples:
+              withDisplayName:
+                summary: Registration with display name
+                value:
+                  email: " Person@Example.com "
+                  password: "correct horse battery staple"
+                  displayName: "Person"
+              withoutDisplayName:
+                summary: Registration without optional display name
+                value:
+                  email: "person@example.com"
+                  password: "correct horse battery staple"
+
+      responses:
+        "201":
+          description: |
+            Account created successfully.
+            Does not issue authentication tokens.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationResponse"
+              example:
+                accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
+                email: "person@example.com"
+                displayName: "Person"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "409":
+          $ref: "#/components/responses/EmailConflict"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Identity
+      operationId: logIn
+      summary: Log in to a private account
+      description: |
+        US-AUTH-002.
+
+        Authenticates an existing account using its normalized
+        email address and exact password.
+
+        On success:
+          - Creates a new, independent login session.
+          - Persists the session in PostgreSQL.
+          - Issues an HS256 JWT access token.
+          - Issues an opaque refresh token.
+          - Returns the account ID and token expiry times.
+
+        The access token expires after at most 15 minutes.
+        The session expires at most 30 days after login.
+        Access-token expiry is capped by session expiry.
+
+        Wrong passwords and unknown email addresses produce
+        the same INVALID_CREDENTIALS response. The API does
+        not disclose which part of the credentials was wrong.
+
+        Logging in on another device creates a separate
+        session without invalidating existing usable sessions.
+
+      security: []
+
+      requestBody:
+        required: true
+        description: Email and password credentials.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: " Person@Example.com "
+              password: "correct horse battery staple"
+
+      responses:
+        "200":
+          description: |
+            Authentication succeeded and a new session was
+            established. Both tokens are returned.
+          headers:
+            Cache-Control:
+              description: |
+                Prevents storage of authentication responses.
+                Spring Security supplies no-store directives.
+              schema:
+                type: string
+              example: "no-cache, no-store, max-age=0, must-revalidate"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+              example:
+                accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
+                accessToken: "eyJhbGciOiJIUzI1NiJ9.example.signature"
+                accessTokenExpiresAt: "2026-11-03T10:15:00Z"
+                refreshToken: "q8lC2vExampleOpaqueRefreshToken"
+                sessionExpiresAt: "2026-12-03T10:00:00Z"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Identity
+      operationId: logOut
+      summary: Log out of the current session
+      description: |
+        US-AUTH-004.
+
+        Requires a valid, unexpired JWT access token and
+        a usable PostgreSQL-backed login session.
+
+        The server identifies the session from the
+        authenticated principal, not from a request body.
+
+        Revokes only the current session. Other sessions
+        belonging to the same account remain usable.
+
+        After revocation:
+          - The current session's access tokens are rejected,
+            even if their JWT signatures and expiry times
+            are still valid.
+          - Its refresh tokens cannot renew access.
+          - Account and personal data remain unchanged.
+
+        A 204 response confirms server-side revocation.
+
+        A 401 response means the presented access token
+        cannot authorize logout. It does not necessarily
+        prove that the session was revoked: the access token
+        may simply have expired.
+
+        When the access token has expired, the client can
+        first call /api/v1/auth/refresh and then call this
+        endpoint with the new access token.
+
+        A 503 response or network timeout does not confirm
+        logout. The client should keep private content hidden
+        and handle the outcome as unconfirmed.
+
+      # Inherits the global bearerAuth requirement.
+
+      responses:
+        "204":
+          description: |
+            The current login session is revoked.
+            The response has no body.
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Identity
+      operationId: refreshSession
+      summary: Renew access within the current login session
+      description: |
+        US-AUTH-003.
+
+        Exchanges the current opaque refresh token for:
+          - A new JWT access token.
+          - A new opaque refresh token.
+
+        The previous refresh token is consumed atomically.
+        The replacement refresh token belongs to the same
+        account and the same login session.
+
+        Refresh-token rotation does not extend the session's
+        original absolute 30-day expiry.
+
+        The endpoint uses the refresh token in the JSON
+        request body as its credential. A bearer Authorization
+        header is not required and is ignored, including
+        when it contains an expired access token.
+
+        Rotation and reuse detection are coordinated through
+        PostgreSQL transactions and row locks.
+
+        If a previously consumed refresh token is presented
+        again while its session is usable, the entire affected
+        session is revoked. This invalidates newer refresh
+        tokens and access tokens of that session.
+
+        There is no reuse grace period.
+
+        If two requests concurrently present the same current
+        refresh token, at most one rotates successfully.
+        The other is treated as reuse, revoking the session.
+
+        A revoked or expired session cannot be renewed.
+        Other independent login sessions remain unaffected.
+
+        Clients must perform at most one refresh operation
+        at a time per session and atomically replace the
+        stored refresh token after successful rotation.
+
+        If the response is lost after the transaction commits,
+        retrying the old token triggers reuse detection.
+        The client must authenticate again.
+
+      security: []
+
+      requestBody:
+        required: true
+        description: The current opaque refresh token.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+            example:
+              refreshToken: "q8lC2vExampleOpaqueRefreshToken"
+
+      responses:
+        "200":
+          description: |
+            Refresh succeeded.
+
+            Returns a new access token and a new refresh token.
+            The account ID and absolute session expiry remain
+            unchanged.
+          headers:
+            Cache-Control:
+              description: Prevents caching of returned credentials.
+              schema:
+                type: string
+              example: "no-cache, no-store, max-age=0, must-revalidate"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+              example:
+                accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
+                accessToken: "eyJhbGciOiJIUzI1NiJ9.newExample.signature"
+                accessTokenExpiresAt: "2026-11-03T10:30:00Z"
+                refreshToken: "NewOpaqueRefreshTokenAfterRotation"
+                sessionExpiresAt: "2026-12-03T10:00:00Z"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token sent as:
+
+          Authorization: Bearer <accessToken>
+
+        Access tokens:
+          - Are signed with HS256.
+          - Have issuer capsuleai-identity.
+          - Include sub (account UUID).
+          - Include sid (session UUID).
+          - Include iat and exp timestamps.
+          - Have a maximum lifetime of 15 minutes.
+          - Must belong to a currently usable database session.
+
+        JWT validity alone does not grant access.
+        PostgreSQL session authority is checked on every
+        protected request.
+
+  schemas:
+    RegisterRequest:
+      type: object
+      description: |
+        Registration input for US-AUTH-001.
+
+        Email is normalized before identity comparison.
+        Password is preserved exactly as supplied.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          minLength: 1
+          description: |
+            Email address to register.
+
+            Surrounding whitespace is trimmed before
+            validation and identity comparison.
+            Comparison is case-insensitive.
+
+            The normalized email must be unique.
+          examples:
+            - " Person@Example.com "
+
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 12
+          maxLength: 128
+          description: |
+            Password containing 12–128 Unicode code points.
+
+            Leading and trailing spaces are significant.
+            The value is not trimmed or normalized.
+
+            The password is never returned by the API.
+          examples:
+            - "correct horse battery staple"
+
+        displayName:
+          type: string
+          description: |
+            Optional display name.
+
+            Confirm any additional display-name validation
+            constraints against the US-AUTH-001 guide.
+          examples:
+            - "Person"
+
+    RegistrationResponse:
+      type: object
+      description: |
+        Account created by registration.
+
+        The exact response field set should be checked
+        against US-AUTH-001 before treating this schema
+        as the final implementation contract.
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Identifier of the registered account.
+
+        email:
+          type: string
+          description: Normalized account email.
+
+        displayName:
+          type:
+            - string
+            - "null"
+          description: Optional display name, if returned.
+
+    LoginRequest:
+      type: object
+      description: Credentials used to create a login session.
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          minLength: 1
+          description: |
+            Account email.
+
+            Surrounding whitespace and case differences
+            do not change which account is selected.
+          examples:
+            - " Person@Example.com "
+
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          description: |
+            Exact password supplied by the caller.
+
+            Unlike registration, login does not reapply
+            the registration password-length policy.
+
+            The password is compared without trimming
+            or Unicode normalization.
+          examples:
+            - "correct horse battery staple"
+
+    RefreshRequest:
+      type: object
+      description: |
+        Current refresh credential used to renew a session.
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          writeOnly: true
+          description: |
+            Opaque refresh token issued by login or the
+            previous successful refresh operation.
+
+            Missing or blank values are rejected with 400.
+            Unknown, consumed, or unusable tokens result
+            in 401.
+
+    TokenResponse:
+      type: object
+      description: |
+        Authentication credentials returned by login
+        and successful refresh.
+
+        The access token is an HS256 JWT.
+
+        The refresh token is opaque and must be replaced
+        after every successful refresh.
+
+        sessionExpiresAt is the original absolute session
+        expiry and does not move forward during rotation.
+      required:
+        - accountId
+        - accessToken
+        - accessTokenExpiresAt
+        - refreshToken
+        - sessionExpiresAt
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Authenticated account identifier.
+
+        accessToken:
+          type: string
+          description: |
+            Signed JWT access token.
+
+            Send in the Authorization header of protected
+            requests using the Bearer scheme.
+
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+          description: |
+            Absolute expiry of the returned access token.
+
+            At this instant the access token is no longer
+            valid. Its lifetime never exceeds 15 minutes
+            or the remaining session lifetime.
+
+        refreshToken:
+          type: string
+          description: |
+            Current opaque refresh token.
+
+            Generated from 32 cryptographically secure
+            random bytes and encoded as unpadded Base64url.
+
+            Only its SHA-256 hash is stored by the server.
+
+            Never reuse after successful rotation.
+
+        sessionExpiresAt:
+          type: string
+          format: date-time
+          description: |
+            Absolute session expiry established at login.
+
+            At this instant the session becomes unusable.
+            Refresh operations never extend this value.
+
+    FieldError:
+      type: object
+      description: |
+        A validation failure associated with a request field.
+
+        Verify the exact JSON property names against the
+        existing IdentityApiExceptionHandler.
+      required:
+        - field
+        - code
+      properties:
+        field:
+          type: string
+          description: Name of the invalid request field.
+          examples:
+            - "email"
+
+        code:
+          type: string
+          description: |
+            Stable validation reason identifier.
+
+            REQUIRED is used for missing required values.
+            Other validation identifiers must match the
+            application's ValueProblem enum.
+          examples:
+            - "REQUIRED"
+
+    Problem:
+      type: object
+      description: |
+        CapsuleAI error response based on Problem Details.
+
+        Errors use application/problem+json.
+
+        Authentication and infrastructure errors must not
+        expose passwords, tokens, SQL, exception messages,
+        connection strings, or internal system details.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - code
+      properties:
+        type:
+          type: string
+          description: Problem type URI.
+          examples:
+            - "about:blank"
+
+        title:
+          type: string
+          description: Short HTTP problem title.
+          examples:
+            - "Bad Request"
+
+        status:
+          type: integer
+          description: HTTP response status.
+          examples:
+            - 400
+
+        detail:
+          type: string
+          description: Safe human-readable explanation.
+
+        code:
+          type: string
+          description: Stable application error identifier.
+          examples:
+            - "VALIDATION_FAILED"
+            - "MALFORMED_REQUEST"
+            - "INVALID_CREDENTIALS"
+            - "AUTHENTICATION_REQUIRED"
+            - "TEMPORARILY_UNAVAILABLE"
+
+        fieldErrors:
+          type: array
+          description: |
+            Present when individual request fields failed
+            validation.
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+  responses:
+    BadRequest:
+      description: |
+        Request validation failed or the JSON request
+        could not be parsed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            missingRequiredField:
+              summary: Missing required field
+              value:
+                type: "about:blank"
+                title: "Bad Request"
+                status: 400
+                detail: "The request contains invalid fields."
+                code: "VALIDATION_FAILED"
+                fieldErrors:
+                  - field: "email"
+                    code: "REQUIRED"
+
+            missingRefreshToken:
+              summary: Missing refresh token
+              value:
+                type: "about:blank"
+                title: "Bad Request"
+                status: 400
+                detail: "The request contains invalid fields."
+                code: "VALIDATION_FAILED"
+                fieldErrors:
+                  - field: "refreshToken"
+                    code: "REQUIRED"
+
+            malformedJson:
+              summary: Malformed JSON
+              value:
+                type: "about:blank"
+                title: "Bad Request"
+                status: 400
+                detail: "The request body could not be read."
+                code: "MALFORMED_REQUEST"
+
+    EmailConflict:
+      description: |
+        The normalized email is already registered.
+
+        Confirm the exact application error code against
+        the US-AUTH-001 implementation guide.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: "about:blank"
+            title: "Conflict"
+            status: 409
+            detail: "An account with this email already exists."
+            code: "EMAIL_ALREADY_REGISTERED"
+
+    InvalidCredentials:
+      description: |
+        The email/password combination is invalid.
+
+        Unknown email addresses and incorrect passwords
+        produce identical responses. No session is created.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: "about:blank"
+            title: "Unauthorized"
+            status: 401
+            detail: "Invalid email or password."
+            code: "INVALID_CREDENTIALS"
+
+    Unauthorized:
+      description: |
+        Authentication is required.
+
+        For protected endpoints this can mean a missing,
+        invalid, expired, or revoked bearer access token.
+
+        For refresh it can mean an unknown or consumed
+        refresh token, or an unusable session.
+
+        A consumed refresh token may trigger revocation
+        of its session before this response is returned.
+      headers:
+        WWW-Authenticate:
+          description: |
+            Bearer authentication challenge on protected
+            endpoints.
+
+            May be "Bearer" when no token was provided,
+            or contain an invalid_token error when the
+            bearer token was rejected.
+
+            The public refresh endpoint does not require
+            this header.
+          schema:
+            type: string
+          example: "Bearer"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: "about:blank"
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication is required. Log in again to continue."
+            code: "AUTHENTICATION_REQUIRED"
+
+    Unavailable:
+      description: |
+        Authentication or session authority could not
+        be completed because a required dependency,
+        such as PostgreSQL, is unavailable.
+
+        The operation is not reported as successful.
+
+        For a protected request, access is denied without
+        misrepresenting the outage as invalid credentials.
+
+        No internal database or infrastructure details
+        are disclosed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: "about:blank"
+            title: "Service Unavailable"
+            status: 503
+            detail: "Your access could not be verified right now. Nothing was changed. Try again shortly."
+            code: "TEMPORARILY_UNAVAILABLE"
