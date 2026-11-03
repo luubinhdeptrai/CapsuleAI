@@ -28,10 +28,15 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class IdentitySecurityConfiguration {
 
-    /** Operations anyone may call. Every other request needs a usable login session. */
+    /**
+     * Operations anyone may call. Renewal is public because the refresh token in
+     * the body is its credential; requiring a still-valid access token would make
+     * renewal at access expiry impossible (Sprint plan §4).
+     */
     static final RequestMatcher PUBLIC_ENDPOINTS = new OrRequestMatcher(
             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/registrations"),
-            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/login"));
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/login"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/refresh"));
 
     @Bean
     SecurityFilterChain identitySecurityFilterChain(HttpSecurity http,

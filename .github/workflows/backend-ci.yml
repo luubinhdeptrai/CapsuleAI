@@ -49,6 +49,12 @@ jobs:
             'surefire-reports/TEST-com.capsuleai.identity.application.LogInServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.LoginApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.AccessTokenSecurityIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.application.LogOutServiceTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.LogoutApiIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.application.RefreshSessionServiceTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.SessionRefreshApiIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRefreshIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {

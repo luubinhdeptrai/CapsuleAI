@@ -1,7 +1,9 @@
 package com.capsuleai.identity.adapter.out.persistence;
 
+import com.capsuleai.identity.application.ports.LockedRefreshCredential;
 import com.capsuleai.identity.application.ports.SessionRepository;
 import com.capsuleai.identity.domain.LoginSession;
+import com.capsuleai.identity.domain.RefreshToken;
 import com.capsuleai.identity.domain.RefreshTokenHash;
 import com.capsuleai.identity.domain.RevocationReason;
 import java.sql.ResultSet;
@@ -59,6 +61,51 @@ public final class JdbcSessionRepository implements SessionRepository {
                 .param("accountId", accountId)
                 .update();
         return updated == 1;
+    }
+
+    @Override
+    public Optional<LockedRefreshCredential> lockByRefreshToken(RefreshTokenHash hash) {
+        return jdbc.sql("""
+                        SELECT t.id          AS token_id,
+                               t.issued_at   AS token_issued_at,
+                               t.consumed_at AS token_consumed_at,
+                               s.id, s.account_id, s.established_at, s.expires_at,
+                               s.revoked_at, s.revocation_reason
+                        FROM identity_refresh_token t
+                        JOIN identity_session s ON s.id = t.session_id
+                        WHERE t.token_hash = :tokenHash
+                        FOR UPDATE OF t, s
+                        """)
+                .param("tokenHash", hash.value())
+                .query((row, rowNumber) -> new LockedRefreshCredential(
+                        mapSession(row, rowNumber),
+                        new RefreshToken(
+                                row.getObject("token_id", UUID.class),
+                                row.getObject("id", UUID.class),
+                                JdbcTime.fromDatabase(row, "token_issued_at"),
+                                JdbcTime.fromDatabase(row, "token_consumed_at"))))
+                .optional();
+    }
+
+    @Override
+    public void consumeRefreshToken(UUID refreshTokenId, Instant consumedAt) {
+        int updated = jdbc.sql("""
+                        UPDATE identity_refresh_token
+                        SET consumed_at = :consumedAt
+                        WHERE id = :id AND consumed_at IS NULL
+                        """)
+                .param("consumedAt", JdbcTime.toDatabase(consumedAt))
+                .param("id", refreshTokenId)
+                .update();
+        if (updated != 1) {
+            throw new IllegalStateException(
+                    "Refresh token " + refreshTokenId + " was not current; lock it with lockByRefreshToken first");
+        }
+    }
+
+    @Override
+    public void addRefreshToken(UUID sessionId, RefreshTokenHash hash, Instant issuedAt) {
+        insertRefreshToken(sessionId, hash, issuedAt);
     }
 
     private void insertRefreshToken(UUID sessionId, RefreshTokenHash tokenHash, Instant issuedAt) {

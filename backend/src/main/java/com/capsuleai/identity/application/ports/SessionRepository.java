@@ -26,4 +26,18 @@ public interface SessionRepository {
      *         already revoked or is not that account's session
      */
     boolean revoke(UUID sessionId, UUID accountId, RevocationReason reason, Instant revokedAt);
+
+    /**
+     * Finds a refresh token by hash together with its session and LOCKS both rows
+     * until the surrounding transaction ends, so competing renewals and logouts
+     * of the same session run one after another.
+     * Must be called inside {@link IdentityTransactions}.
+     */
+    Optional<LockedRefreshCredential> lockByRefreshToken(RefreshTokenHash hash);
+
+    /** Marks a locked, current refresh token as consumed. */
+    void consumeRefreshToken(UUID refreshTokenId, Instant consumedAt);
+
+    /** Stores the session's new current refresh token. */
+    void addRefreshToken(UUID sessionId, RefreshTokenHash hash, Instant issuedAt);
 }

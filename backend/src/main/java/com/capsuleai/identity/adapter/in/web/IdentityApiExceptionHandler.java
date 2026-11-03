@@ -1,5 +1,6 @@
 package com.capsuleai.identity.adapter.in.web;
 
+import com.capsuleai.identity.application.AuthenticationRequiredException;
 import com.capsuleai.identity.application.EmailAlreadyRegisteredException;
 import com.capsuleai.identity.application.FieldViolation;
 import com.capsuleai.identity.application.InvalidCredentialsException;
@@ -10,6 +11,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -49,13 +52,23 @@ public class IdentityApiExceptionHandler {
                 "The email or password is incorrect. Check them and try again, or use Forgot Password."));
     }
 
+    @ExceptionHandler(AuthenticationRequiredException.class)
+    public ResponseEntity<ProblemDetail> handleAuthenticationRequired(AuthenticationRequiredException exception) {
+        return respond(problem(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED",
+                "Your session can no longer be renewed. Log in again to continue."));
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
         return respond(problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST",
                 "The request body is missing or is not valid JSON."));
     }
 
-    @ExceptionHandler(DataAccessException.class)
+    /**
+     * Only an unreachable database becomes 503. Other data-access errors (for
+     * example invalid SQL) are programming errors and stay 500.
+     */
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
     public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException exception) {
         log.error("Identity persistence operation failed", exception);
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
