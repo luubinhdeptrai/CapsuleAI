@@ -133,7 +133,7 @@ flowchart TB
         subgraph Identity["identity module"]
             direction TB
             subgraph In["adapter.in"]
-                Web["web: Registration / Login / Logout / SessionRefresh controllers<br/>IdentityApiExceptionHandler"]
+                Web["web: AuthController (register, login, logout, refresh)<br/>IdentityApiExceptionHandler"]
                 Sec["security: SessionAwareJwtAuthenticationConverter<br/>AccessTokenExpiryValidator, entry point, bearer resolver"]
             end
             Claims["adapter.jwt: JwtClaimNames<br/>(access-token wire format, internal)"]
@@ -176,14 +176,16 @@ All paths are below `backend/src/main/java/com/capsuleai/identity/`.
 | `api`                     | Published contract other modules may use: `AuthenticatedAccount`, `SessionAuthority`.  | JDK only. **[TECH]** new ArchUnit rule.                                                 |
 | `application`             | Use cases; owns transaction boundaries through a port.                                 | `domain`, `api`, `application.ports`, JDK. **No Spring.** **[TECH]** new ArchUnit rule. |
 | `application.ports`       | What the use cases need from the outside world.                                        | `domain`, JDK.                                                                          |
-| `adapter.in.web`          | HTTP JSON ↔ commands/results, error translation.                                       | Spring MVC, `application`, `api`.                                                       |
+| `adapter.in.web`          | HTTP JSON ↔ commands/results (one `AuthController` for `/api/v1/auth`), error translation. | Spring MVC, `application`, `api`.                                                       |
 | `adapter.in.security`     | Turns a verified JWT into `AuthenticatedAccount` using `SessionAuthority`; classifies authority outages. | Spring Security, Spring DAO exception types, `api`, `adapter.jwt`.                  |
 | `adapter.jwt`             | `JwtClaimNames`: the access-token claim names shared by the issuing and verifying adapters (S2). | JDK only. Internal to Identity — **not** part of `api`.                       |
 | `adapter.out.persistence` | JDBC (`JdbcClient`) implementations of repositories and transactions.                  | Spring JDBC/TX, `ports`, `domain`.                                                      |
 | `adapter.out.security`    | PBKDF2 hashing, JWT signing, random refresh tokens.                                    | Spring Security crypto/JOSE, `ports`, `domain`, `adapter.jwt`.                          |
+| `configuration`           | `@Bean` wiring, the filter chain, token properties.                                    | Everything inside `identity`.                                                           |
 
 **Rule [TECH]: `adapter.in.*` and `adapter.out.*` never import each other.** When an inbound and an outbound adapter must agree on a technical format (here: the name of the session-id claim inside the JWT), the shared constant lives in the neutral `adapter.jwt` package that both depend on ([TD-25](#14-technical-decision-log)). It is not placed in `domain` (it is a token-format detail, not a business rule) or in `api` (other modules receive `AuthenticatedAccount`, never raw JWT claims).
-| `configuration`           | `@Bean` wiring, the filter chain, token properties.                                    | Everything inside `identity`.                                                           |
+
+**Rule [TECH]: one controller per cohesive API, not per story or endpoint.** Registration, login, logout and refresh share the `/api/v1/auth` base path and one responsibility (authentication), so they are four handlers in one `AuthController`. Each handler calls only its own application service; the services, domain rules and repositories stay separate. Which handlers are public is decided by `IdentitySecurityConfiguration`, not by the controller ([TD-27](#14-technical-decision-log), [backend conventions §1](../../../../engineering/backend-conventions.md#1-controllers-group-a-cohesive-api)).
 
 Why the application layer has **no Spring**: [ADA-015](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) says "Keep Spring/JPA, HTTP and provider types outside the domain/application core." That is why transactions go through the small `IdentityTransactions` port instead of `@Transactional`, and why application services are created with `@Bean` methods instead of `@Service`.
 
@@ -239,7 +241,7 @@ A session never returns to _Usable_. The only way back is a new login, which cre
 sequenceDiagram
     autonumber
     actor C as Client
-    participant RC as RegistrationController
+    participant RC as AuthController
     participant S as RegisterAccountService
     participant D as Domain (EmailAddress, PasswordPolicy, DisplayName)
     participant H as Pbkdf2PasswordHasher
@@ -272,7 +274,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor C as Client
-    participant LC as LoginController
+    participant LC as AuthController
     participant S as LogInService
     participant AR as AccountRepository
     participant H as PasswordHasher
@@ -384,7 +386,7 @@ sequenceDiagram
     autonumber
     actor C as Client (device A)
     participant F as Security filter (4.5)
-    participant LC as LogoutController
+    participant LC as AuthController
     participant S as LogOutService
     participant DB as PostgreSQL
     C->>F: POST /api/v1/auth/logout, Bearer <jwt of session A>
@@ -417,7 +419,7 @@ The rules stay exactly as specified: logout revokes only its own session, other 
 sequenceDiagram
     autonumber
     actor C as Client
-    participant RC as SessionRefreshController
+    participant RC as AuthController
     participant S as RefreshSessionService
     participant TX as IdentityTransactions
     participant P as RefreshRotationPolicy
@@ -812,11 +814,11 @@ Paths are relative to `backend/` unless they start with `docs/` or `.github/`. "
 | `identity/adapter/out/security/JwtAccessTokenIssuer.java`, `SecureRandomRefreshTokenGenerator.java`                                                                                                           | S2             | —                                                                      | Token creation (issuer uses `JwtClaimNames`).        |
 | `identity/adapter/jwt/JwtClaimNames.java`                                                                                                                                                                     | S2             | —                                                                      | Shared claim names; removes the in→out adapter dependency (TD-25). |
 | `identity/adapter/in/security/*` (6 classes, incl. `SessionAuthorityUnavailableException`)                                                                                                                    | S2             | —                                                                      | JWT → usable session; 401 vs. 503 classification.    |
-| `identity/adapter/in/web/RegistrationRequest.java`, `RegistrationResponse.java`, `RegistrationController.java`                                                                                                | S1             | —                                                                      | Registration HTTP.                                   |
+| `identity/adapter/in/web/RegistrationRequest.java`, `RegistrationResponse.java`                                                                                                | S1             | —                                                                      | Registration HTTP.                                   |
 | `identity/adapter/in/web/IdentityApiExceptionHandler.java`                                                                                                                                                    | S1             | **S2** (401 invalid credentials), **S4** (401 authentication required) | Error translation; 503 only for unreachable-database exceptions. |
-| `identity/adapter/in/web/LoginRequest.java`, `TokenResponse.java`, `LoginController.java`                                                                                                                     | S2             | —                                                                      | Login HTTP.                                          |
-| `identity/adapter/in/web/LogoutController.java`                                                                                                                                                               | S3             | —                                                                      | Logout HTTP.                                         |
-| `identity/adapter/in/web/RefreshRequest.java`, `SessionRefreshController.java`                                                                                                                                | S4             | —                                                                      | Refresh HTTP.                                        |
+| `identity/adapter/in/web/LoginRequest.java`, `TokenResponse.java`                                                                                                                     | S2             | —                                                                      | Login HTTP.                                          |
+| `identity/adapter/in/web/AuthController.java`                                                                                                                                                                 | S1             | **S2** (+ `logIn`), **S3** (+ `logOut`), **S4** (+ `refresh`)          | The single `/api/v1/auth` controller (TD-27).        |
+| `identity/adapter/in/web/RefreshRequest.java`                                                                                                                                | S4             | —                                                                      | Refresh HTTP.                                        |
 | `identity/configuration/IdentityConfiguration.java`                                                                                                                                                           | S1             | **S2**, **S3**, **S4**                                                 | Bean wiring.                                         |
 | `identity/configuration/AccessTokenProperties.java`, `IdentityTokenConfiguration.java`                                                                                                                        | S2             | —                                                                      | JWT key and codec beans.                             |
 | `identity/configuration/IdentitySecurityConfiguration.java`                                                                                                                                                   | S2             | **S4** (public refresh)                                                | Filter chain.                                        |
@@ -888,6 +890,7 @@ Every stage must pass `.\mvnw.cmd --batch-mode --no-transfer-progress clean veri
 | TD-24 | Revoked/expired session rows are kept.                                                                                             | Needed to detect reuse; no retention rule requires deletion in Sprint 1 ([OPEN] A-06).                                                                                                                                                         | Schema.                 |
 | TD-25 | The `sid` claim name lives in `identity.adapter.jwt.JwtClaimNames` (JDK-only constants), used by `JwtAccessTokenIssuer` (out) and `SessionAwareJwtAuthenticationConverter` (in) and the tests. **Previously:** the inbound converter imported the outbound `JwtAccessTokenIssuer` to reuse its constant. | Inbound and outbound adapters must not depend on each other. A neutral, internal constant holder is the smallest fix: no interface, not in `domain` (token format, not business rule), not in `api` (other modules never see JWT claims). Remaining: no ArchUnit rule enforces "in ↛ out" yet; reviews must catch it. | Login, refresh, filter, tests. |
 | TD-26 | Classify authority failures in the filter: unusable credential → 401 `AUTHENTICATION_REQUIRED`; unreachable database (`DataAccessResourceFailureException`, incl. `CannotGetJdbcConnectionException`, and `TransientDataAccessResourceException`) → `SessionAuthorityUnavailableException` → 503 `TEMPORARILY_UNAVAILABLE`; anything else → 500. The controller error handler uses the **same two exception types** for its 503. **Previously:** filter outage → 500; controllers mapped every `DataAccessException` to 503. | Fail-closed in every case; truthful status for a confirmed outage; programming errors are not disguised as outages. Uses Spring Security's own path (`AuthenticationException` → entry point), so no new filter or handler infrastructure. Remaining: a 503 can take up to Hikari's 30-second `connectionTimeout` to arrive. | Filter, all Identity controllers. |
+| TD-27 | All four auth endpoints are handlers of one `AuthController` (`@RequestMapping("/api/v1/auth")`); each story adds a handler instead of a new controller class. **Previously:** `RegistrationController`, `LoginController`, `LogoutController`, `SessionRefreshController`. | A controller represents one cohesive API (bounded context + resource responsibility + base path), not one user story. One class keeps the auth surface reviewable in one place, while thin handlers delegating to separate services keep the use cases independent. URLs, DTOs, status codes, security and error handling are unchanged. Applies to later sprints too ([backend conventions §1](../../../../engineering/backend-conventions.md#1-controllers-group-a-cohesive-api)). | All auth endpoints. |
 
 ---
 

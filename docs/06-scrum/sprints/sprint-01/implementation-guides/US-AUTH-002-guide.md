@@ -123,7 +123,7 @@
 | configuration | `IdentityTokenConfiguration` | `JwtEncoder`, `JwtDecoder` (+ validators), issuer, generator beans. | — |
 | configuration | `IdentitySecurityConfiguration` | The single default-deny `SecurityFilterChain`. | TD-19. |
 | configuration | `IdentityConfiguration` **(modified)** | + session repository, transactions, login service, authority service. | — |
-| adapter.in.web | `LoginController`, `LoginRequest`, `TokenResponse` | HTTP. | — |
+| adapter.in.web | `AuthController` **(modified)**, `LoginRequest`, `TokenResponse` | HTTP: + `logIn` handler. | — |
 | adapter.in.web | `IdentityApiExceptionHandler` **(modified)** | + 401 `INVALID_CREDENTIALS`. (503 stays limited to unreachable-database exceptions, as in Stage 1.) | — |
 
 ### 5.2 HTTP contract
@@ -245,7 +245,7 @@ Stage 2 has **no production protected endpoint yet** (logout arrives in US-AUTH-
 | 33 | `J/configuration/IdentitySecurityConfiguration.java` | NEW | Filter chain. | 27–29, 31 |
 | 34 | `J/adapter/in/web/LoginRequest.java` | NEW | Request JSON. | 9 |
 | 35 | `J/adapter/in/web/TokenResponse.java` | NEW | Response JSON. | 10 |
-| 36 | `J/adapter/in/web/LoginController.java` | NEW | Endpoint. | 17, 34, 35 |
+| 36 | `J/adapter/in/web/AuthController.java` | MODIFY | + `logIn` handler. | 17, 34, 35 |
 | 37 | `J/adapter/in/web/IdentityApiExceptionHandler.java` | MODIFY | + 401 `INVALID_CREDENTIALS`. | 11 |
 | 38 | `docs/05-api/openapi.yaml` | MODIFY | + login, bearer scheme, `TokenResponse`. | 36 |
 | — | All other Stage 1 files | REUSE | Unchanged. | — |
@@ -1737,28 +1737,50 @@ public record TokenResponse(
 
 `accountId` lets the mobile client detect an account switch and clear the previous user's cached screens (AC-06, external evidence).
 
-### 7.36 `J/adapter/in/web/LoginController.java` — NEW
+### 7.36 `J/adapter/in/web/AuthController.java` — MODIFY
+
+Complete resulting file (adds `logIn`; `register` is unchanged):
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
 
 import com.capsuleai.identity.application.LogInService;
+import com.capsuleai.identity.application.RegisterAccountService;
+import com.capsuleai.identity.application.RegisteredAccount;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** US-AUTH-002 — public credential login endpoint. */
+/**
+ * Authentication API: account registration and the login-session lifecycle.
+ *
+ * <p>Each handler only translates HTTP to its own use case. Which operations
+ * are public is decided by {@code IdentitySecurityConfiguration}, not here.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
-public class LoginController {
+public class AuthController {
 
+    private final RegisterAccountService registerAccountService;
     private final LogInService logInService;
 
-    public LoginController(LogInService logInService) {
+    public AuthController(RegisterAccountService registerAccountService,
+                          LogInService logInService) {
+        this.registerAccountService = registerAccountService;
         this.logInService = logInService;
     }
 
+    /** US-AUTH-001 — public; creates an account without issuing tokens. */
+    @PostMapping("/registrations")
+    public ResponseEntity<RegistrationResponse> register(@RequestBody RegistrationRequest request) {
+        RegisteredAccount account = registerAccountService.register(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED).body(RegistrationResponse.from(account));
+    }
+
+    /** US-AUTH-002 — public credential login; starts a new login session. */
     @PostMapping("/login")
     public TokenResponse logIn(@RequestBody LoginRequest request) {
         return TokenResponse.from(logInService.logIn(request.toCommand()));
@@ -2099,7 +2121,7 @@ Start with code that needs no new dependency: `SessionPolicy`, `LoginSession`, `
 Login flow as executed, for a correct password:
 
 ```text
-LoginController.logIn({email:" Person@Example.com ", password:"…"})
+AuthController.logIn({email:" Person@Example.com ", password:"…"})
  └─ LogInService.logIn
      ├─ requireCredentials → both present
      ├─ EmailAddress.normalize → person@example.com
@@ -2139,7 +2161,7 @@ Adding `spring-boot-starter-security-oauth2-resource-server` turns on Spring Sec
 
 ### Step 4 — Web layer and contract (files 34–38)
 
-Create `LoginRequest`, `TokenResponse`, `LoginController`; update `IdentityApiExceptionHandler`; replace `openapi.yaml`.
+Create `LoginRequest`, `TokenResponse`; add `logIn` to `AuthController`; update `IdentityApiExceptionHandler`; replace `openapi.yaml`.
 
 ### Step 5 — Run locally with a signing secret
 

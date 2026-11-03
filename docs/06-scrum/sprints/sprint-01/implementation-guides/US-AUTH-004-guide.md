@@ -98,7 +98,7 @@
 | application | `LogOutService` | NEW | Revoke the principal's session at "now". |
 | ports | `SessionRepository` | MODIFY | + `revoke(sessionId, accountId, reason, revokedAt)`. |
 | adapter.out | `JdbcSessionRepository` | MODIFY | Conditional `UPDATE`; map new columns. |
-| adapter.in.web | `LogoutController` | NEW | `POST /logout` → 204. |
+| adapter.in.web | `AuthController` | MODIFY | + `logOut`: `POST /logout` → 204. |
 | configuration | `IdentityConfiguration` | MODIFY | + `LogOutService` bean. |
 | — | `SessionAuthorityService`, security adapters, `IdentitySecurityConfiguration` | REUSE | **No change**: they already call `isUsableAt`, which now includes revocation. |
 
@@ -182,7 +182,7 @@ The rules themselves are unchanged and fully enforced in every stage: logout rev
 | 6 | `J/application/LogOutService.java` | NEW | Use case. | 4, 5 |
 | 7 | `J/adapter/out/persistence/JdbcSessionRepository.java` | MODIFY | SQL. | 1, 3, 5 |
 | 8 | `J/configuration/IdentityConfiguration.java` | MODIFY | Wiring. | 6 |
-| 9 | `J/adapter/in/web/LogoutController.java` | NEW | Endpoint. | 6 |
+| 9 | `J/adapter/in/web/AuthController.java` | MODIFY | + `logOut` handler. | 6 |
 | 10 | `docs/05-api/openapi.yaml` | MODIFY | + logout. | 9 |
 | — | `J/application/SessionAuthorityService.java`, `J/adapter/in/security/*`, `J/configuration/IdentitySecurityConfiguration.java` | REUSE | Unchanged. | — |
 
@@ -557,30 +557,62 @@ public class IdentityConfiguration {
 }
 ```
 
-### 7.9 `J/adapter/in/web/LogoutController.java` — NEW
+### 7.9 `J/adapter/in/web/AuthController.java` — MODIFY
+
+Complete resulting file (adds `logOut`; `register` and `logIn` are unchanged):
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
 
 import com.capsuleai.identity.api.AuthenticatedAccount;
+import com.capsuleai.identity.application.LogInService;
 import com.capsuleai.identity.application.LogOutService;
+import com.capsuleai.identity.application.RegisterAccountService;
+import com.capsuleai.identity.application.RegisteredAccount;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** US-AUTH-004 — ends the current login session. Requires a usable access token. */
+/**
+ * Authentication API: account registration and the login-session lifecycle.
+ *
+ * <p>Each handler only translates HTTP to its own use case. Which operations
+ * are public is decided by {@code IdentitySecurityConfiguration}, not here.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
-public class LogoutController {
+public class AuthController {
 
+    private final RegisterAccountService registerAccountService;
+    private final LogInService logInService;
     private final LogOutService logOutService;
 
-    public LogoutController(LogOutService logOutService) {
+    public AuthController(RegisterAccountService registerAccountService,
+                          LogInService logInService,
+                          LogOutService logOutService) {
+        this.registerAccountService = registerAccountService;
+        this.logInService = logInService;
         this.logOutService = logOutService;
     }
 
+    /** US-AUTH-001 — public; creates an account without issuing tokens. */
+    @PostMapping("/registrations")
+    public ResponseEntity<RegistrationResponse> register(@RequestBody RegistrationRequest request) {
+        RegisteredAccount account = registerAccountService.register(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED).body(RegistrationResponse.from(account));
+    }
+
+    /** US-AUTH-002 — public credential login; starts a new login session. */
+    @PostMapping("/login")
+    public TokenResponse logIn(@RequestBody LoginRequest request) {
+        return TokenResponse.from(logInService.logIn(request.toCommand()));
+    }
+
+    /** US-AUTH-004 — ends the current login session. Requires a usable access token. */
     @PostMapping("/logout")
     public ResponseEntity<Void> logOut(@AuthenticationPrincipal AuthenticatedAccount current) {
         logOutService.logOut(current);
@@ -591,7 +623,7 @@ public class LogoutController {
 
 Both outcomes return 204 because in both cases the session is unusable afterwards — which is what the user asked for. `NOTHING_TO_REVOKE` can only happen if another request revoked the same session in the few milliseconds after the filter checked it.
 
-> **Concept — `@AuthenticationPrincipal`.** Spring Security registers an argument resolver that injects `Authentication.getPrincipal()` into a controller parameter. Our `AuthenticatedAccountToken` returns the published `AuthenticatedAccount`, so this controller (and any future module's controller) receives a plain Identity API record — not a Spring or JWT type.
+> **Concept — `@AuthenticationPrincipal`.** Spring Security registers an argument resolver that injects `Authentication.getPrincipal()` into a controller parameter. Our `AuthenticatedAccountToken` returns the published `AuthenticatedAccount`, so this handler (and any future module's controller) receives a plain Identity API record — not a Spring or JWT type.
 
 ### 7.10 `docs/05-api/openapi.yaml` — MODIFY
 
@@ -642,7 +674,7 @@ Create V4, `RevocationReason`, and replace `LoginSession`.
 
 ### Step 3 — Adapter, wiring, endpoint, contract (files 7–10)
 
-Replace `JdbcSessionRepository` and `IdentityConfiguration`; create `LogoutController`; edit `openapi.yaml`.
+Replace `JdbcSessionRepository` and `IdentityConfiguration`; add `logOut` to `AuthController`; edit `openapi.yaml`.
 
 *Check:* `.\mvnw.cmd -q compile` succeeds.
 
@@ -652,7 +684,7 @@ Request walkthrough:
 POST /api/v1/auth/logout  (Authorization: Bearer JWT{sub=A, sid=S1})
  └─ Security filter: signature ✓, iss ✓, now < exp ✓
      └─ SessionAuthorityService.findUsableSession(A, S1) → session row: revoked_at NULL, not expired → usable ✓
- └─ LogoutController.logOut(principal = AuthenticatedAccount(A, S1))
+ └─ AuthController.logOut(principal = AuthenticatedAccount(A, S1))
      └─ LogOutService.logOut → UPDATE identity_session SET revoked_at=08:05:00Z, reason='LOGOUT'
                                 WHERE id=S1 AND account_id=A AND revoked_at IS NULL   → 1 row
  └─ 204
@@ -1288,7 +1320,7 @@ Confirm in the PR run that both print `… tests, none failed/skipped`.
 
 **Production implementation**
 - [ ] V4 applied; columns and three CHECKs exist.
-- [ ] `LoginSession` revocation-aware; `JdbcSessionRepository` maps and revokes; `LogOutService` wired; `LogoutController` added; logout **not** public.
+- [ ] `LoginSession` revocation-aware; `JdbcSessionRepository` maps and revokes; `LogOutService` wired; `logOut` added to `AuthController`; logout **not** public.
 - [ ] `openapi.yaml` 0.3.0 with `/api/v1/auth/logout`.
 
 **Rules and AC**

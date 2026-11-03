@@ -112,7 +112,7 @@
 | ports | `PasswordHasher` | `hash` / `matches`. | Slow crypto behind a port; fakes in tests. |
 | adapter.out | `JdbcAccountRepository` | `INSERT … ON CONFLICT (email) DO NOTHING`. | Database-enforced uniqueness. |
 | adapter.out | `Pbkdf2PasswordHasher` | PBKDF2-HMAC-SHA256, 600 000 iterations. | See TD-03 (why **not** BCrypt). |
-| adapter.in | `RegistrationController`, `RegistrationRequest`, `RegistrationResponse` | HTTP ↔ use case. | Thin translation. |
+| adapter.in | `AuthController` (`register`), `RegistrationRequest`, `RegistrationResponse` | HTTP ↔ use case. | Thin translation. One controller for the whole `/api/v1/auth` group; later stages add handlers to it. |
 | adapter.in | `IdentityApiExceptionHandler` | Exceptions → RFC 9457 problem JSON with `code`. | Consistent error contract for all Identity endpoints. |
 | configuration | `IdentityConfiguration` | `@Bean` wiring (clock, hasher, repository, service). | Application classes carry no Spring annotations. |
 
@@ -120,7 +120,7 @@ Dependency direction (arrows = "depends on"):
 
 ```mermaid
 flowchart LR
-    RC[RegistrationController] --> S[RegisterAccountService]
+    RC[AuthController] --> S[RegisterAccountService]
     EH[IdentityApiExceptionHandler] --> AppEx[application exceptions]
     S --> D[domain: EmailAddress, PasswordPolicy, DisplayName, Account]
     S --> P[ports: AccountRepository, PasswordHasher]
@@ -217,7 +217,7 @@ Paths relative to the repository root. `J` = `backend/src/main/java/com/capsulea
 | 21 | `J/configuration/IdentityConfiguration.java` | NEW | Bean wiring. | 18–20 |
 | 22 | `J/adapter/in/web/RegistrationRequest.java` | NEW | Request JSON. | 14 |
 | 23 | `J/adapter/in/web/RegistrationResponse.java` | NEW | Response JSON. | 15 |
-| 24 | `J/adapter/in/web/RegistrationController.java` | NEW | Endpoint. | 18, 22, 23 |
+| 24 | `J/adapter/in/web/AuthController.java` | NEW | Auth endpoints (`register` in this stage). | 18, 22, 23 |
 | 25 | `J/adapter/in/web/IdentityApiExceptionHandler.java` | NEW | Error contract. | 12, 13 |
 | 26 | `docs/05-api/openapi.yaml` | NEW | Living API contract. | 24, 25 |
 | — | `backend/src/main/java/com/capsuleai/identity/package-info.java` | REUSE | Module description (unchanged). | — |
@@ -1090,7 +1090,9 @@ public record RegistrationResponse(UUID accountId, String email, String displayN
 }
 ```
 
-### 7.24 `J/adapter/in/web/RegistrationController.java` — NEW
+### 7.24 `J/adapter/in/web/AuthController.java` — NEW
+
+**Purpose.** The one controller for the `/api/v1/auth` API group. It holds only the registration handler now; US-AUTH-002, US-AUTH-004 and US-AUTH-003 add `logIn`, `logOut` and `refresh` to this same class instead of creating a controller per story ([backend conventions §1](../../../../engineering/backend-conventions.md#1-controllers-group-a-cohesive-api)). Each handler calls its own application service, so the use cases stay separate.
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
@@ -1104,17 +1106,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** US-AUTH-001 — public registration endpoint. */
+/**
+ * Authentication API: account registration and the login-session lifecycle.
+ *
+ * <p>Each handler only translates HTTP to its own use case.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
-public class RegistrationController {
+public class AuthController {
 
     private final RegisterAccountService registerAccountService;
 
-    public RegistrationController(RegisterAccountService registerAccountService) {
+    public AuthController(RegisterAccountService registerAccountService) {
         this.registerAccountService = registerAccountService;
     }
 
+    /** US-AUTH-001 — public; creates an account without issuing tokens. */
     @PostMapping("/registrations")
     public ResponseEntity<RegistrationResponse> register(@RequestBody RegistrationRequest request) {
         RegisteredAccount account = registerAccountService.register(request.toCommand());
@@ -1396,7 +1403,7 @@ Create the exceptions, command/result records, the two ports and `RegisterAccoun
 Request-to-database walkthrough for a valid request:
 
 ```text
-RegistrationController.register(request)
+AuthController.register(request)
  └─ RegisterAccountService.register(command)
      ├─ EmailAddress.normalize(" Person@Example.com ")  → person@example.com
      ├─ PasswordPolicy.validateNewPassword(password)   → ok (no exception)
@@ -1424,7 +1431,7 @@ Create `JdbcAccountRepository`, `Pbkdf2PasswordHasher` and `IdentityConfiguratio
 
 Create the request/response records, the controller and the exception handler.
 
-How an error becomes JSON: the service throws `RequestValidationException` → Spring MVC looks for an `@ExceptionHandler` in `@RestControllerAdvice` classes that apply to `RegistrationController` → `handleValidation` builds a `ProblemDetail` → Jackson serializes it with `code` and `fieldErrors` as top-level fields.
+How an error becomes JSON: the service throws `RequestValidationException` → Spring MVC looks for an `@ExceptionHandler` in `@RestControllerAdvice` classes that apply to `AuthController` → `handleValidation` builds a `ProblemDetail` → Jackson serializes it with `code` and `fieldErrors` as top-level fields.
 
 ### Step 7 — API contract (file 26)
 

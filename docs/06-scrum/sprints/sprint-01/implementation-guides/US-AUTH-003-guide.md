@@ -109,7 +109,8 @@ This story is the one the Sprint plan calls "the greatest lifecycle/concurrency 
 | application | `RenewSessionCommand`, `AuthenticationRequiredException` | NEW | Input; uniform refusal. |
 | application | `RefreshSessionService` | NEW | Transaction: lock → decide → rotate / revoke / reject. |
 | adapter.out | `JdbcSessionRepository` | MODIFY | `SELECT … FOR UPDATE OF t, s`; consume; add. |
-| adapter.in.web | `RefreshRequest`, `SessionRefreshController` | NEW | `POST /refresh` → `TokenResponse` (reused). |
+| adapter.in.web | `RefreshRequest` | NEW | Request JSON. |
+| adapter.in.web | `AuthController` | MODIFY | + `refresh`: `POST /refresh` → `TokenResponse` (reused). |
 | adapter.in.web | `IdentityApiExceptionHandler` | MODIFY | + 401 `AUTHENTICATION_REQUIRED`. |
 | configuration | `IdentitySecurityConfiguration` | MODIFY | + public `/refresh`. |
 | configuration | `IdentityConfiguration` | MODIFY | + `RefreshSessionService` bean. |
@@ -235,7 +236,7 @@ The test `logoutAfterAccessExpiryRenewsFirstThenConfirmsRevocation` (T4) exercis
 | 12 | `J/configuration/IdentityConfiguration.java` | MODIFY | Wiring. | 10 |
 | 13 | `J/configuration/IdentitySecurityConfiguration.java` | MODIFY | Public `/refresh`. | — |
 | 14 | `J/adapter/in/web/RefreshRequest.java` | NEW | Request JSON. | 8 |
-| 15 | `J/adapter/in/web/SessionRefreshController.java` | NEW | Endpoint. | 10, 14 |
+| 15 | `J/adapter/in/web/AuthController.java` | MODIFY | + `refresh` handler. | 10, 14 |
 | 16 | `J/adapter/in/web/IdentityApiExceptionHandler.java` | MODIFY | + 401. | 9 |
 | 17 | `docs/05-api/openapi.yaml` | MODIFY | + refresh. | 15 |
 | — | `J/adapter/in/web/TokenResponse.java`, `J/application/SessionTokens.java`, token adapters | REUSE | Unchanged. | — |
@@ -909,28 +910,73 @@ public record RefreshRequest(String refreshToken) {
 }
 ```
 
-### 7.15 `J/adapter/in/web/SessionRefreshController.java` — NEW
+### 7.15 `J/adapter/in/web/AuthController.java` — MODIFY
+
+Complete resulting file (final; adds `refresh`, the other three handlers are unchanged):
 
 ```java
 package com.capsuleai.identity.adapter.in.web;
 
+import com.capsuleai.identity.api.AuthenticatedAccount;
+import com.capsuleai.identity.application.LogInService;
+import com.capsuleai.identity.application.LogOutService;
 import com.capsuleai.identity.application.RefreshSessionService;
+import com.capsuleai.identity.application.RegisterAccountService;
+import com.capsuleai.identity.application.RegisteredAccount;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** US-AUTH-003 — public renewal endpoint; the refresh token is the credential. */
+/**
+ * Authentication API: account registration and the login-session lifecycle.
+ *
+ * <p>Each handler only translates HTTP to its own use case. Which operations
+ * are public is decided by {@code IdentitySecurityConfiguration}, not here.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
-public class SessionRefreshController {
+public class AuthController {
 
+    private final RegisterAccountService registerAccountService;
+    private final LogInService logInService;
+    private final LogOutService logOutService;
     private final RefreshSessionService refreshSessionService;
 
-    public SessionRefreshController(RefreshSessionService refreshSessionService) {
+    public AuthController(RegisterAccountService registerAccountService,
+                          LogInService logInService,
+                          LogOutService logOutService,
+                          RefreshSessionService refreshSessionService) {
+        this.registerAccountService = registerAccountService;
+        this.logInService = logInService;
+        this.logOutService = logOutService;
         this.refreshSessionService = refreshSessionService;
     }
 
+    /** US-AUTH-001 — public; creates an account without issuing tokens. */
+    @PostMapping("/registrations")
+    public ResponseEntity<RegistrationResponse> register(@RequestBody RegistrationRequest request) {
+        RegisteredAccount account = registerAccountService.register(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED).body(RegistrationResponse.from(account));
+    }
+
+    /** US-AUTH-002 — public credential login; starts a new login session. */
+    @PostMapping("/login")
+    public TokenResponse logIn(@RequestBody LoginRequest request) {
+        return TokenResponse.from(logInService.logIn(request.toCommand()));
+    }
+
+    /** US-AUTH-004 — ends the current login session. Requires a usable access token. */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logOut(@AuthenticationPrincipal AuthenticatedAccount current) {
+        logOutService.logOut(current);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** US-AUTH-003 — public renewal; the refresh token is the credential. */
     @PostMapping("/refresh")
     public TokenResponse refresh(@RequestBody RefreshRequest request) {
         return TokenResponse.from(refreshSessionService.renew(request.toCommand()));
@@ -1138,7 +1184,7 @@ And a replay of R1 a minute later:
 
 ### Step 3 — Adapter, wiring, security, web, contract (files 11–17)
 
-Replace `JdbcSessionRepository`, `IdentityConfiguration`, `IdentitySecurityConfiguration`, `IdentityApiExceptionHandler`; create the request and controller; edit `openapi.yaml`.
+Replace `JdbcSessionRepository`, `IdentityConfiguration`, `IdentitySecurityConfiguration`, `IdentityApiExceptionHandler`; create the request; add `refresh` to `AuthController`; edit `openapi.yaml`.
 
 *Common mistakes:*
 
