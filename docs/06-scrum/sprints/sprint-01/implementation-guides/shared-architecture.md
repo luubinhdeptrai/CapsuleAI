@@ -145,7 +145,7 @@ flowchart TB
                 Persist["persistence: JdbcAccountRepository, JdbcSessionRepository,<br/>SpringIdentityTransactions"]
                 Crypto["security: Pbkdf2PasswordHasher, JwtAccessTokenIssuer,<br/>SecureRandomRefreshTokenGenerator"]
             end
-            Config["configuration: IdentityConfiguration, IdentityTokenConfiguration,<br/>IdentitySecurityConfiguration, AccessTokenProperties"]
+            Config["configuration: IdentityConfiguration, IdentityTokenConfiguration,<br/>IdentitySecurityConfiguration, AccessTokenProperties, CorsProperties"]
         end
         Chain["Spring Security filter chain<br/>(BearerTokenAuthenticationFilter)"]
     end
@@ -666,6 +666,7 @@ The guide author confirmed the build-time evidence only (step 1, offline). Steps
 | Everything else                               | `authenticated()`                                                                                                | Default deny (BRULE-AUTH-001). Unknown routes return 401, not 404.                                         |
 | Error dispatch                                | `DispatcherType.ERROR` permitted                                                                                 | Lets Spring's error page render real 404/500 instead of masking them as 401.                               |
 | CSRF, sessions                                | CSRF disabled; `STATELESS`                                                                                       | Bearer tokens in headers, no cookies, no server HTTP session.                                              |
+| CORS                                          | `cors()` with the `corsConfigurationSource` bean: exact origins from `capsuleai.cors.allowed-origins` (none by default; `local` profile: Swagger Editor), `GET`/`POST`, `Authorization`/`Content-Type`/`Accept`, no credentials | Browser clients on another origin can read responses. A granted preflight is answered before authentication but authorizes nothing; unlisted origins get 403 and no grant. |
 | Form login, HTTP Basic, default logout filter | Disabled                                                                                                         | Not part of the contract.                                                                                  |
 | Bearer resolver                               | Ignores `Authorization` on public endpoints                                                                      | A client that attaches an expired token to every call can still log in or renew.                           |
 | JWT decoder                                   | HS256 secret ≥ 32 bytes; validators: `typ`, `iss`, `AccessTokenExpiryValidator` (application `Clock`, zero skew) | Exact 15-minute boundary; testable with a controllable clock.                                              |

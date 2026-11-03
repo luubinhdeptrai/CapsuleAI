@@ -32,6 +32,11 @@ info:
     be reached: the credential was not found invalid and the
     outcome is not confirmed. Neither ever returns private data.
 
+    Browser clients on another origin, such as the Swagger
+    Editor, can call the API only from origins the server is
+    configured to allow (see "Browser access (CORS)" in the
+    backend README). CORS does not replace authentication.
+
     This specification does not introduce endpoints for
     password reset, session listing, all-device logout,
     wardrobe data, or user profiles.

@@ -255,9 +255,42 @@ $env:CAPSULE_DB_URL = $null
 $env:CAPSULE_DB_USER = $null
 $env:CAPSULE_JWT_SIGNING_SECRET = $null
 $secretBytes = $null
+$env:CAPSULE_CORS_ALLOWED_ORIGINS = $null
 ```
 
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
+
+### Browser access (CORS)
+
+A browser lets a page read responses from another origin only if the server grants that origin. The backend grants **only the exact origins in `capsuleai.cors.allowed-origins`**, which `CAPSULE_CORS_ALLOWED_ORIGINS` sets as a comma-separated list:
+
+| Configuration | Allowed browser origins |
+| --- | --- |
+| Base configuration (any deployment) | None until `CAPSULE_CORS_ALLOWED_ORIGINS` lists them |
+| `local` profile | `https://editor.swagger.io`, unless `CAPSULE_CORS_ALLOWED_ORIGINS` replaces the list |
+
+Write each entry exactly as the browser sends it, `scheme://host[:port]`: no path, trailing slash, wildcard or default port (`:443`, `:80`). Startup fails on anything else. Native Android/iOS apps send no `Origin` header and need no entry.
+
+A granted origin may use `GET` and `POST` with the `Authorization`, `Content-Type` and `Accept` request headers; browsers may cache a granted preflight for 30 minutes. Credentials mode (cookies) stays off: send the access token as `Authorization: Bearer …`. CORS only lets the page *read* responses. Every request is still authenticated exactly as from any other client, and an unlisted origin gets `403 Invalid CORS request` with no grant.
+
+To also allow a browser frontend during development, list its real dev-server origin next to the editor in the launching terminal, then start Boot (`5173` is only an example):
+
+```powershell
+$env:CAPSULE_CORS_ALLOWED_ORIGINS = 'https://editor.swagger.io,http://localhost:5173'
+```
+
+In production, set only the deployed web client's origins, for example `https://app.example.com`. Do not list the Swagger Editor or development origins there.
+
+Check a preflight from a second terminal. Expect `200`, `Access-Control-Allow-Origin: https://editor.swagger.io` and `Access-Control-Allow-Methods: GET,POST`; an unlisted origin returns `403` without those headers:
+
+```powershell
+curl.exe -i -X OPTIONS http://localhost:8080/api/v1/auth/login `
+    -H 'Origin: https://editor.swagger.io' `
+    -H 'Access-Control-Request-Method: POST' `
+    -H 'Access-Control-Request-Headers: content-type'
+```
+
+**Swagger Editor.** Open `https://editor.swagger.io` in a browser on the machine that runs Boot (it listens on `127.0.0.1` only) and paste the [OpenAPI contract](../docs/05-api/openapi.yaml), whose server is `http://localhost:8080`. Use **Try it out** to register and log in, then **Authorize** with the returned `accessToken` for logout. Chrome and Edge ask once whether the editor may access apps on this device ([Local Network Access](https://developer.chrome.com/blog/local-network-access)). Allow it; a denied prompt blocks requests in the browser before they reach the backend.
 
 ## 10. Database migrations
 
@@ -280,9 +313,9 @@ Future files follow `V<version>__<description>.sql` with **two underscores**. Ad
 | --- | --- | --- |
 | Fast foundation — `HarnessSmokeTest` | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
 | Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API, owner boundaries, independent inbound/outbound adapters, plus deliberate-violation detectors | Compiled classes; no Docker/database |
-| Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation | No Spring, database or Docker |
+| Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation (`CorsPropertiesTest`) | No database or Docker |
 | Integration — `DatabaseSmokeIT` | Boot wiring, real SQL and no pending migration | Docker; disposable PostgreSQL |
-| Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
+| Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; cross-origin browser access (`CorsSecurityIT`); concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
 
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
 
@@ -397,6 +430,10 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | Integration tests did not run | `test`/`package` intentionally omit ITs; use `verify` and inspect Failsafe. |
 | Invalid architecture fixture | Intentional test-only violation; its detector must find it. Production import excludes tests. |
 | Root HTTP 401 | Expected: unknown routes are protected by default. |
+| Startup: `capsuleai.cors.allowed-origins entry … is not an exact origin` | Fix that entry in `CAPSULE_CORS_ALLOWED_ORIGINS`: `scheme://host[:port]` only (Section 9, Browser access). |
+| Browser console: blocked by CORS policy; preflight `403` | The page's origin is not listed exactly (scheme, host and port must match), or it asked for a method/header other than `GET`/`POST` and `Authorization`/`Content-Type`/`Accept`. Fix the list and restart Boot. |
+| Browser: `Failed to fetch` and the backend logs nothing | Not CORS. Check that Boot runs on the server URL's port, that the browser runs on the same machine, and that the Local Network Access prompt was allowed (site settings). Use Chrome, Edge or Firefox if a browser blocks `http://localhost` from an HTTPS page as mixed content. |
+| Preflight succeeds but the request returns 401 | Expected without a usable access token: log in again or renew, then **Authorize** with the new `accessToken`. CORS never authenticates a request. |
 | Flyway checksum mismatch | Inspect the applied change and use a reviewed forward migration; do not reset/repair blindly. |
 
 Share the nonsecret command, directory and minimal error. Do not publish environment dumps, resolved Compose configuration or sensitive logs.

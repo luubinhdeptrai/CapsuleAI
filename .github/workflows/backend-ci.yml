@@ -58,6 +58,8 @@ jobs:
             'surefire-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityApiExceptionHandlerTest.xml' = 5
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 11
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityOpenApiContractIT.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.identity.configuration.CorsPropertiesTest.xml' = 23
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.CorsSecurityIT.xml' = 25
           }
 
           foreach ($entry in $required.GetEnumerator()) {
