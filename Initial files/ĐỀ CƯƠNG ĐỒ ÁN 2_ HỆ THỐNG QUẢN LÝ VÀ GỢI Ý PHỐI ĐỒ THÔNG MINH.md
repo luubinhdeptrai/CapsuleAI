@@ -1,3 +1,5 @@
+> **Historical source notice — 2026-11-05.** This document preserves earlier proposal/implementation context. Its four-category classification, subtype/slot examples and suggested schemas are not current requirements. The approved eight-category taxonomy, ten Dresses/Jumpsuits subtypes and optional Brand/purchase Price are defined in the [current PRD](../docs/02-product/PRD.md#132-controlled-initial-garment-subtypes) and [SRS](../docs/03-requirements/SRS.md). Category expansion does not automatically establish new outfit/readiness policies (PRD OPQ-012). Original content below is retained for provenance.
+
 # ĐỀ CƯƠNG ĐỒ ÁN 2: HỆ THỐNG QUẢN LÝ VÀ GỢI Ý PHỐI ĐỒ THÔNG MINH
 
 ## 1. Động lực nghiên cứu và lý do chọn đề tài

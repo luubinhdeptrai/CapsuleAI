@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-COV-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-026](../../product-backlog.md#pbi-026--see-a-defensible-personalized-wardrobe-coverage-score) |
@@ -14,6 +14,7 @@
 | Theme | Wardrobe Intelligence |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Actionable Wardrobe Needs |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Clarified category versus retained outfit roles following approved taxonomy expansion; existing validity and calculation rules preserved. |
 
 ## 1. Story
 
@@ -24,6 +25,8 @@ As an authenticated user, I want a score grounded in my common clothing needs an
 Help users understand how their owned wardrobe supports their relevant everyday needs.
 
 ## 3. Scope
+
+TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
 
 Completed contextual Coverage, sufficient-data gate, unique-valid need support, source weighted formula, concise evidence and honest noncurrent/non-numeric states.
 
@@ -93,7 +96,7 @@ Detailed per-need inspection is [US-COV-002](../coverage/US-COV-002-inspect-per-
 
 ## 10. Open Refinement Notes
 
-Formula, sufficiency and mapping are established. Developers need independent small explicit outfit-set fixtures as well as arithmetic examples; enumeration/runtime design is deferred to selected-story JIT work.
+Formula, sufficiency and mapping are established for the retained separated-garment template; PRD OPQ-012 remains open for newly supported categories. Developers need independent small explicit outfit-set fixtures as well as arithmetic examples; enumeration/runtime design is deferred to selected-story JIT work.
 
 ## 11. Status
 

@@ -1,5 +1,7 @@
 # CapsuleAI — Focused Backlog Refinement Review
 
+**2026-11-05 taxonomy/property clarification:** The user-approved change now includes optional subtype, Brand and purchase Price in US-GAR-001/PBI-006, with all eight categories accessible through US-WAR-001/002/PBI-007. Other rich enrichment and future editing remain PBI-008; image/AI/advice remain outside Sprint 2. This narrowly supersedes earlier minimum-only/rich-entry boundary wording below. Existing story identities, parent PBIs, backlog order and the four selected Sprint 2 stories are unchanged. [PRD Section 34.1](../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records approval and open policies; updated source stories/AC and the Sprint 2 plan govern current work.
+
 ## 1. Refinement Overview
 
 | Field | Value |

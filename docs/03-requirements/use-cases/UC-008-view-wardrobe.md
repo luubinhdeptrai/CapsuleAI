@@ -10,8 +10,9 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
+| Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 
@@ -40,7 +41,7 @@ The User opens the wardrobe or requests garment search/detail.
 3. The User browses or enters descriptor search and category/color filter conditions.
 4. CapsuleAI shows active conditions and the matching current garments.
 5. The User selects a garment to inspect.
-6. CapsuleAI presents its confirmed profile, available image/provenance/uncertainty, applicable readiness guidance and supported recorded-use information.
+6. CapsuleAI presents its confirmed profile for any of the eight supported categories, including available valid subtype, optional Brand text and optional purchase Price with explicit currency, available image/provenance/uncertainty, applicable readiness guidance and supported recorded-use information. Missing optional properties never hide the item; unknown Price is not zero or a current retailer quotation.
 7. The User returns to browsing or chooses a separate supported maintenance/insight action.
 
 ## 7. Alternative Flows
@@ -116,6 +117,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-001` | Confirmed garment values govern displayed current information. |
+| `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
 | `BRULE-GAR-003` | Show applicable readiness without hiding Saveable but unready entries. |
 | `BRULE-HIST-001` | Usage indicators are reported evidence, not verified physical behavior. |
 | `BRULE-HIST-002` | Historical removed snapshots do not enter current inventory. |
@@ -126,7 +128,7 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-03` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-WAR-001`, `FEAT-WAR-003`, `FEAT-GAR-001`, `FEAT-ANL-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-WAR-001`, `FR-WAR-002`, `FR-WAR-007`, `FR-WAR-008`, `FR-GAR-004`, `FR-ANL-004`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-WAR-001`, `FR-WAR-002`, `FR-WAR-007`, `FR-WAR-008`, `FR-GAR-004`, `FR-ANL-004`, `FR-AUTH-008`; `FR-GAR-001`, `FR-GAR-002`, `FR-GAR-012`, `FR-GAR-013` |
 | [Software Requirements — Data](../SRS.md) | `DATA-GAR-001`, `DATA-GAR-004`, `DATA-GAR-005`, `DATA-HIST-002`, `DATA-HIST-001`, `DATA-RET-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-001`, `UI-003`, `UI-004`, `UI-008`, `COM-001`, `COM-002` |
@@ -136,6 +138,10 @@ The following references constrain this interaction; detailed policy remains in 
 | [Capabilities](../../01-business/BRD.md) | `CAP-03`, `CAP-04`, `CAP-07` |
 
 ## 13. Special Requirements / Constraints
+
+All eight categories and category-specific optional subtype choices follow [PRD Section 13.2](../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Exactly ten Dresses/Jumpsuits subtypes are supported, with no automatic layer/length/occasion derivation from their names. FR-GAR-012/013 and BRULE-GAR-010 govern optional Brand and purchase Price: confirmed values remain authoritative, photographs never establish Price, and future Brand suggestions require acceptance. No image upload or later analysis silently overwrites either property.
+
+The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - Search/filtering is embedded in View Wardrobe rather than a new use case. Supported descriptor search and category/color filters have visible conditions and reset.
@@ -155,10 +161,12 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction.
+PRD OPQ-012–014 now track unresolved category readiness/composition and optional-field/subtype policies. Earlier issue review below predates this revision.
+
+The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-008-view-wardrobe.puml)
+Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this textual specification
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram retains the actor/goal boundary; the textual specification and linked existing Activity Diagram, where present, define workflow behavior. This revision creates no replacement focused diagram.

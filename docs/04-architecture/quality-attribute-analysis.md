@@ -10,7 +10,7 @@
 | Last Updated | 2026-10-20 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 |
-| Method Reference | [14 Quality Attributes — architecture learning material](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md) |
+| Method Reference | 14 Quality Attributes — architecture learning material (historical source; not present in this checkout) |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
 | Authoritative Location | `docs/04-architecture/quality-attribute-analysis.md` |
 
@@ -25,6 +25,8 @@
 | 0.1.6 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.7 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.8 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+
+**2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
 ## 2. Purpose
 
@@ -409,7 +411,7 @@ Sources: SRS Section 8.1, AI-REQ-010/011/014, NFR-TEST-002 and NFR-USE-002; PBI-
 | --- | --- |
 | Source of Stimulus | QA/AI contributors executing the established acceptance evaluation. |
 | Stimulus | Evaluate garment assistance against the locked qualified-image benchmark and inspect its evidence. |
-| Environment | Locked set of ≥200 qualified images with ≥50 each for TOP, BOTTOM, OUTERWEAR and FOOTWEAR; human category and controlled dominant-color-family ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
+| Environment | Locked set of ≥400 qualified images with ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; human category and controlled dominant-color-family ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
 | Artifact | Garment-assistance results, benchmark/label manifests and independent preview review. |
 | Response | Produce inspectable results tied to qualified inputs and the evaluated implementation, reporting category and dominant-color correctness separately from preview usability and richer attributes. |
 | Response Measure | Evidence establishes the required set size/balance and evaluation isolation. Category accuracy is ≥90% overall and ≥85% within each primary-category group; dominant-color accuracy is ≥90% overall, reported separately. Preview review checks identifiable garment, preserved major regions, non-obstructive background and sufficient correction/confirmation information under SRS Section 3.4.1; no preview percentage or equal-accuracy rich-attribute claim is introduced. |
@@ -471,7 +473,7 @@ The following are existing imposed boundaries or mandated policies. Their relate
 | Connected Vietnam-first mobile MVP; Android 10+ and iOS 15+ | BR-023; PRD Sections 2/26/27; SRS Sections 1.2/2.3 | Preserve supported platforms and permission alternatives. No consumer web/desktop, guaranteed offline mode or client framework is mandated. Reference hardware/network is validation configuration, not a user purchase minimum. |
 | Vietnamese initial UI, English documentation and canonical meanings independent of labels | PRD OPQ-002; LOC-001–005; NFR-MNT-001 | Support current localization and later label additions without a second MVP language or changed confirmed data. |
 | Email/password access with mandated JWT access/refresh direction and session/recovery policy | PRD OPQ-008; SRS Sections 2.4/3.1.1; FR-AUTH-* | Preserve 15-minute access, maximum 30-day session, rotation/reuse and revocation boundaries, 30-minute single-use/replacement reset, normalized unique email and exact 12–128-character password policy. No social/guest MVP access; mechanisms, keys and storage remain open. |
-| Four-category, confirmed-authority and validity-first domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | TOP/BOTTOM/OUTERWEAR/FOOTWEAR, approved bounded vocabularies, manual Saveable minimum and applicable readiness constrain supported behavior. Domain rules are behavioral obligations, not a mandated database or internal module map. |
+| Eight-category, confirmed-authority and validity-first domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR, approved bounded vocabularies, manual Saveable minimum and applicable readiness constrain supported behavior. Domain rules are behavioral obligations, not a mandated database or internal module map. |
 | Preserved event identity/time and assessment meaning | FR-WEAR-*; FR-PERS-*; FR-ANL-*; FR-MULT-*; DATA-OUT-*, DATA-ANL-* and DATA-WEAR-* | Keep intentional reports, safe logical retries, original local grouping/absolute aging, contextual Coverage and complete same-basis incremental utility. No new event architecture, enumeration strategy or arbitrary assessment TTL is prescribed. |
 | Purpose-limited private information; no MVP personal-data AI training; minimal external exchange | NFR-PRIV-001/002; SI-002/003; COM-003; BRULE-AUTH-007 | Constrain permitted processing/exchange. Future personal-data training requires separate explicit opt-in and approved product/privacy change; current corrections/feedback do not authorize it. |
 | Immediate effective removal, 30-day applicable physical deletion and 90-day user-linked measurement maximum | DATA-RET-001–003; FR-WAR-005; FR-WEAR-007; FR-MET-006; SRS Section 12.1 | Preserve necessary minimal history separately from removed images/nonessential data and measurement. Enforcement technology remains open; no account-delete/export product or statutory certification is added. |
@@ -518,7 +520,7 @@ Detailed scenario source lines and attribute drivers are the primary traceabilit
 | Source | Role in this analysis |
 | --- | --- |
 | [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 | Exact 14-QA taxonomy, significance from actual requirements, ASR/ADA/Selected Architecture Decisions/ADD boundaries, ownership, evolution and next-step order. |
-| [Architecture reference](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md), slides 4–16 and 18–22 | QA definition/classification, requirement/constraint distinctions, six-part scenarios and architecture reasoning categories; methodology only. |
+| Architecture reference (historical source; not present in this checkout), slides 4–16 and 18–22 | QA definition/classification, requirement/constraint distinctions, six-part scenarios and architecture reasoning categories; methodology only. |
 | [BRD v0.3](../01-business/BRD.md) | BG-01–04; BR-001–024; CAP-01–10; personas, trust, scope, metrics, risks and dependencies. Highest-ranked drivers particularly reach BR-002/004/009/011/014–017/021–024 and MET-Q01–Q07. |
 | [PRD v0.2](../02-product/PRD.md), Sections 21–29 and 34 | Complete FEAT/JRN experience, state/explanation/privacy/quality expectations and resolved OPQ-001–010. |
 | [SRS v0.3](../03-requirements/SRS.md), Sections 2.3/2.4, 3–9 and 12 | Authoritative functional/data/interface/quality obligations, numerical measures, operating configuration, AI acceptance and failure boundaries. |

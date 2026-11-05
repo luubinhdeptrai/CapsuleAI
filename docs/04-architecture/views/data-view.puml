@@ -1,8 +1,8 @@
 @startuml
 ' Artifact: CapsuleAI Data View
-' Version: 0.1; Status: Baseline Draft; Presentation refactor: 2026-10-11.
+' Version: 0.2; Status: Baseline Draft; Product-property synchronization: 2026-11-05.
 ' Purpose: Simple logical data ownership overview; concepts are NOT physical tables.
-' Primary Sources: SRS v0.3; Business Rules v0.1.2; ADD v0.1.4;
+' Primary Sources: SRS v0.4; Business Rules v0.2; ADD v0.1.4;
 ' Selected Architecture Decisions v0.1.5 (ADA-001-018 unchanged);
 ' accepted Logical, Implementation and Deployment Views v0.1.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 4.3/24/40/42/46.
@@ -33,7 +33,7 @@
 ' unresolved detailed design (ADD 9.2-9.9); no shared action/work entity or new decision is selected.
 ' Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
 
-title CapsuleAI - Data Ownership Overview\nData View v0.1 | Baseline Draft
+title CapsuleAI - Data Ownership Overview\nData View v0.2 | Baseline Draft
 allowmixing
 top to bottom direction
 hide empty members
@@ -67,7 +67,7 @@ package "Personal Context" as Context #F0FDFA {
 }
 
 package "Wardrobe" as Wardrobe #F0FDF4 {
-    class "Garment\nConfirmed profile" as Garment #DCFCE7
+    class "Garment\nConfirmed profile\nOptional Brand / purchase Price" as Garment #DCFCE7
     class "AI Proposal / Review Draft\nPython output; unconfirmed" as Draft #E2E8F0
     class "Media Reference" as MediaReference #DCFCE7
     Draft --> Garment : user confirmation / correction
@@ -126,6 +126,11 @@ Media -[hidden]down-> DB
 
 note as Boundaries
   All owners retain necessary state in ONE PostgreSQL.
+  Garment: eight categories; subtype is optional and category-bound.
+  Optional Price = user-reported decimal purchase amount + ISO 4217 currency.
+  Brand/Price retain confirmed authority; no readiness gate.
+  New category readiness/composition policies: PRD OPQ-012.
+  These are logical properties, not implemented columns or endpoints.
   Derived / input information does not imply permanent storage.
   Hypothetical previews create no ownership, purchase or Wear.
   History preserves past meaning, never current ownership.

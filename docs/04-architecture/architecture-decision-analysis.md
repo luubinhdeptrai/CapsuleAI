@@ -26,6 +26,8 @@
 | 0.2.6 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.7 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
 
+**2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
+
 ## 2. Purpose
 
 Expose the major choices between required architectural capability and a coherent design. The analysis covers the complete three-pillar mobile MVP: confirmed wardrobe, valid personalized styling and reported behavior, and contextual Coverage/Gaps plus hypothetical candidate utility. The first eight stories are implementation/refinement context, not the architecture boundary.
@@ -59,8 +61,8 @@ The current workflow was read first, followed by the complete relevant repositor
 | [All 12 Activity Diagrams](../03-requirements/activity-diagrams/) | AD-004/006/007/011/012/014/016/017/019/020/021/022 visualize the normative UC behavior; they do not add requirements. |
 | [Product Goal](../06-scrum/product-goal.md); [Product Backlog](../06-scrum/product-backlog.md); [all eight stories and index](../06-scrum/stories/README.md) | Whole 41-PBI horizon and concrete near-term AC; existing order/refinement boundaries are preserved. |
 | [DoD](../06-scrum/definition-of-done.md), Sections 4–6; [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006 | Integrated conditional evidence, source synchronization and preparation/handoff; no Sprint commitment. |
-| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline under Initial files and [Business Analysis.docx](../../Business%20Analysis.docx) at the repository root | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
-| [Quality-attribute learning reference](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md), ASR_FoodDelivery.md and ADD_FoodDelivery.md in the same reference directory | Methodology and artifact-boundary/structure reference only. No Food Delivery stack, event architecture or deployment decision is adopted. |
+| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline under Initial files and Business Analysis.docx (historical source; not present in this checkout) at the repository root | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
+| Quality-attribute learning reference (historical source; not present in this checkout), ASR_FoodDelivery.md and ADD_FoodDelivery.md in the same reference directory | Methodology and artifact-boundary/structure reference only. No Food Delivery stack, event architecture or deployment decision is adopted. |
 
 Existing technical capability claims retain their **2026-10-08** Context7/official-documentation checks. The v0.2 expansion checked Spring event/transaction behavior and PostgreSQL schemas/privileges through Context7 on **2026-10-10**, and consulted primary Clean Architecture/DDD explanations linked in ADA-015/018. These references explain capabilities and concepts; CapsuleAI-specific judgments derive from current ASRs and requirements. They do not create product requirements, prove benchmark results, or select versions/providers.
 
@@ -1098,7 +1100,7 @@ Security and Reliability — Critical; Testability, Performance, Conceptual Inte
 
 #### Relevant Constraints
 
-NFR-TEST-001–003, NFR-SUP-001/002, NFR-SEC-003, AI-REQ-010/011/014 and FR-MET-006/007; SRS Sections 3.4.1/8.1.1/12.3. Locked qualified corpus ≥200 images, ≥50 per category; category ≥90% overall/≥85% each, color ≥90% separately; preview review has no percentage target.
+NFR-TEST-001–003, NFR-SUP-001/002, NFR-SEC-003, AI-REQ-010/011/014 and FR-MET-006/007; SRS Sections 3.4.1/8.1.1/12.3. Locked qualified corpus ≥400 images, ≥50 per each of the eight categories; category ≥90% overall/≥85% each, color ≥90% separately; preview review has no percentage target.
 
 #### Evaluation Criteria
 

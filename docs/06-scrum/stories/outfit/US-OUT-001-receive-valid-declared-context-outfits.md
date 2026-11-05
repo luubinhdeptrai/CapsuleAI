@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-OUT-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-017](../../product-backlog.md#pbi-017--receive-valid-daily-outfits-relevant-to-declared-context) |
@@ -14,6 +14,7 @@
 | Theme | Outfit Decision Support |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Clarified category versus retained outfit roles following approved taxonomy expansion; existing validity and calculation rules preserved. |
 
 ## 1. Story
 
@@ -24,6 +25,8 @@ As an authenticated user, I want distinct valid outfits from my current wardrobe
 Reduce daily decision effort with distinct wearable combinations of current owned garments.
 
 ## 3. Scope
+
+TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
 
 Initial owned-wardrobe advice, applicable hard filtering before declared-context soft ranking, concise reasons and truthful limited/zero/insufficient/unavailable/outdated results.
 
@@ -101,7 +104,7 @@ Detailed inspection is [US-OUT-002](../outfit/US-OUT-002-inspect-outfit-constitu
 
 ## 10. Open Refinement Notes
 
-Validity and initial ranking semantics are established. Developers must assess feasible candidate generation and test evidence without prescribing full algorithms/contracts before Sprint selection; exact soft ordering is not a new universal AC.
+Validity and initial ranking semantics are established for the retained separated-garment template; PRD OPQ-012 remains open for newly supported categories. Developers must assess feasible candidate generation and test evidence without prescribing full algorithms/contracts before Sprint selection; exact soft ordering is not a new universal AC.
 
 ## 11. Status
 

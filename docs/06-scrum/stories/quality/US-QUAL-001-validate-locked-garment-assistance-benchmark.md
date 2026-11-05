@@ -19,6 +19,8 @@
 
 Establish reproducible, independent evidence that garment assistance meets the existing recognition floors and preview criteria without compromising user authority or manual continuity.
 
+**2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
+
 ## 2. Value
 
 Establish defensible assistance quality and reduce misleading confidence or burdensome corrections.
@@ -35,7 +37,7 @@ Locked non-personal corpus, qualification/ground truth, separate category/color/
 
 ### AC-01 — Lock representative qualified inputs
 
-Use at least 200 qualified images, including at least 50 for each TOP, BOTTOM, OUTERWEAR and FOOTWEAR. Qualification follows SRS Section 3.4.1 and does not require a plain/white background. Keep the locked set out of training/tuning after lock.
+Use at least 400 qualified images, including at least 50 for each TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. Qualification follows SRS Section 3.4.1 and does not require a plain/white background. Keep the locked set out of training/tuning after lock.
 
 ### AC-02 — Establish ground truth
 
@@ -43,7 +45,7 @@ Retain supported-category and controlled dominant-color-family labels, qualifica
 
 ### AC-03 — Measure category independently
 
-Report primary-category recognition accuracy of at least 90% overall and at least 85% within each of the four category groups, with inspectable denominators, predictions and evaluated revision/model basis.
+Report primary-category recognition accuracy of at least 90% overall and at least 85% within each of the eight category groups, with inspectable denominators, predictions and evaluated revision/model basis.
 
 ### AC-04 — Measure color separately
 

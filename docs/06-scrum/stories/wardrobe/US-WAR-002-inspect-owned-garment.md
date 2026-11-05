@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WAR-002 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
@@ -14,6 +14,7 @@
 | Domain | Wardrobe |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Trustworthy Wardrobe Understanding](../../product-goal.md#4-desired-product-outcomes) |
+| Product revision | 2026-11-05: Approved eight-category taxonomy and optional subtype/Brand/purchase Price synchronized. Existing story/AC IDs, parent PBI and Sprint 2 order retained; no implementation claimed. |
 
 ## 1. Story
 
@@ -41,7 +42,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** CapsuleAI presents the detail
 
-**Then** it identifies the selected garment and displays its current accepted category, dominant color and available supported profile information, with the appropriate available image. Applicable useful provenance/uncertainty distinguishes how information was established from its certainty; a proposal is not silently presented in place of accepted user values.
+**Then** it identifies the selected garment and displays its current accepted category (any of the eight supported categories), dominant color and available supported profile information, including optional subtype, Brand text and purchase Price with its explicit ISO 4217 currency, with the appropriate available image. Applicable useful provenance/uncertainty distinguishes how information was established from its certainty; a proposal is not silently presented in place of accepted user values.
 
 ### AC-02 — Inspect an imageless or incomplete entry
 
@@ -49,7 +50,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** detail retrieval succeeds
 
-**Then** it remains identifiable and inspectable through accepted information. Missing image, unavailable descriptors and missing readiness retain their distinct meanings; no image, material, color or other descriptor is fabricated to make the profile look complete.
+**Then** it remains identifiable and inspectable through accepted information. Missing image, unavailable descriptors and missing readiness retain their distinct meanings; no image, Brand, Price, default currency, material, color or other descriptor is fabricated to make the profile look complete. Missing Price is unknown, not zero; displayed Price means the user-reported purchase price, not current retailer or market value.
 
 ### AC-03 — Explain common readiness information
 
@@ -57,7 +58,9 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** I inspect its readiness guidance
 
-**Then** CapsuleAI explains the missing required information for that check. Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability are common readiness requirements; the garment remains owned/Saveable, while unavailable required information does not establish readiness for decisions needing it.
+**Then** CapsuleAI explains the missing required information for that check. Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability remain common readiness requirements for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES under the established composition; the garment remains owned/Saveable, while unavailable required information does not establish readiness for decisions needing it.
+
+The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
 
 ### AC-04 — Apply layering and bulk only where required
 
@@ -65,7 +68,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** CapsuleAI explains applicable readiness
 
-**Then** TOP/OUTERWEAR require applicable Layering Level in addition to common information, and layered compatibility requires Bulk Index where bulk matters. Missing required information is identified for the affected decision; bulk is not presented as universally required to save or use every garment.
+**Then** TOPS/OUTERWEAR require applicable Layering Level in addition to common information, and layered compatibility requires Bulk Index where bulk matters. Missing required information is identified for the affected decision; bulk is not presented as universally required to save or use every garment.
 
 ### AC-05 — Keep optional information and validity distinct
 
@@ -73,7 +76,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** I inspect its readiness guidance
 
-**Then** missing strongly recommended subtype or non-universal Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags or Occasion Tags does not become a universal readiness blocker. Any ready indication concerns applicable information only and does not guarantee that every outfit containing the garment is valid.
+**Then** missing strongly recommended subtype or non-universal Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags or Occasion Tags does not become a universal readiness blocker. Brand and Price never gate readiness. Any ready indication concerns applicable information only and does not guarantee that every outfit containing the garment is valid.
 
 ### AC-06 — Qualify available reported-use information
 
@@ -148,7 +151,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 ## 8. Out of Scope
 
-Collection browsing is US-WAR-001. Rich descriptor entry/enrichment and editing are PBI-008; search/filtering is PBI-015; removal and retention enforcement are PBI-016. Photo/AI entry/proposal review remain PBI-012/PBI-013. Wear reporting/history and utilization calculations/insights remain their owning PBIs, including PBI-021/PBI-025. No new reporting action, analytics event, restore action, image generation, recommendation algorithm or implementation design is introduced.
+Collection browsing is US-WAR-001. Optional subtype/Brand/Price creation is US-GAR-001; other rich enrichment and later editing are PBI-008; search/filtering is PBI-015; removal and retention enforcement are PBI-016. Photo/AI entry/proposal review remain PBI-012/PBI-013. Wear reporting/history and utilization calculations/insights remain their owning PBIs, including PBI-021/PBI-025. No new reporting action, analytics event, restore action, image generation, recommendation algorithm or implementation design is introduced.
 
 ## 9. Traceability
 
@@ -157,13 +160,15 @@ Collection browsing is US-WAR-001. Rich descriptor entry/enrichment and editing 
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
 | Business | [BRD](../../../01-business/BRD.md): BR-003, BR-005, BR-006, BR-021, BR-022; CAP-03, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-03; FEAT-WAR-001, FEAT-GAR-001 (accepted profile/readiness); FEAT-ANL-001, available indicators only |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-002, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-AUTH-008; DATA-GAR-001, DATA-GAR-003, DATA-GAR-004, DATA-GAR-005; UI-004; ERR-GAR-002, ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001 |
-| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006; BRULE-HIST-001, BRULE-HIST-002 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-002, FR-GAR-004, FR-GAR-005, FR-GAR-006, FR-AUTH-008; DATA-GAR-001, DATA-GAR-003, DATA-GAR-004, DATA-GAR-005; UI-004; ERR-GAR-002, ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001; FR-GAR-001, FR-GAR-002, FR-GAR-012, FR-GAR-013, DATA-GAR-002 |
+| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006; BRULE-HIST-001, BRULE-HIST-002; BRULE-GAR-004, BRULE-GAR-010 |
 | Use Cases | [UC-008 — View Wardrobe](../../../03-requirements/use-cases/UC-008-view-wardrobe.md), selected detail/readiness/use/return and failure branches only |
 | Activity Diagrams | No current dedicated Activity Diagram for UC-008; the textual specification governs this slice. |
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records open category-readiness/composition, optional-field validation and subtype-vocabulary questions. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 
 **2026-10-21 refinement draft.** Retain detail as a read-only selected-garment outcome; its existing AC-06/AC-07 already distinguish no recorded use from unavailable evidence. Verify current/changed ownership, minimum-only imageless information, readiness limitations and return to browsing with controlled examples (Q-02/Q-04/Q-05). Neither a completed Wear capability nor a particular creation method is a hard prerequisite. No new reporting, edit, removal or enrichment behavior is proposed.
 
@@ -171,5 +176,5 @@ Question details, owners and conditional planning blockers are centralized in th
 
 ## 11. Status
 
-**Baseline Draft.** Product Owner and Scrum Team review is pending; no approval or Sprint commitment is recorded.
+**Baseline Draft.** Product Owner and Scrum Team review is pending; document approval is not claimed; Sprint 2 selection is recorded separately in its plan.
 

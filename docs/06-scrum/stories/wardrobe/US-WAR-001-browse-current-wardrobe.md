@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WAR-001 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
@@ -14,6 +14,7 @@
 | Domain | Wardrobe |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Trustworthy Wardrobe Understanding](../../product-goal.md#4-desired-product-outcomes) |
+| Product revision | 2026-11-05: Approved eight-category taxonomy and optional subtype/Brand/purchase Price synchronized. Existing story/AC IDs, parent PBI and Sprint 2 order retained; no implementation claimed. |
 
 ## 1. Story
 
@@ -40,7 +41,7 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 **When** I open Wardrobe and retrieval succeeds
 
-**Then** CapsuleAI presents identifiable current owned entries with their confirmed category, available subtype, dominant color and available image/visual. Summaries correspond to the correct garments; missing subtype or image does not conceal an otherwise saved entry.
+**Then** CapsuleAI presents identifiable current owned entries across all eight approved categories with their confirmed category, available subtype, dominant color and available image/visual. Summaries correspond to the correct garments; missing subtype, Brand, Price or image does not conceal an otherwise saved entry. Optional confirmed Brand and purchase Price with currency remain available through detail; this does not require all fields on every card.
 
 ### AC-02 — Keep imageless and unready garments visible
 
@@ -48,7 +49,7 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 **When** the overview loads successfully
 
-**Then** the garment remains identifiable and selectable through its accepted information. Applicable guidance distinguishes Saveable ownership from Recommendation-Readiness without calling the entry unsaved or requiring an image/rich profile to browse.
+**Then** the garment remains identifiable and selectable through its accepted information. Applicable guidance distinguishes Saveable ownership from Recommendation-Readiness without calling the entry unsaved or requiring an image/rich profile to browse. Unresolved Dresses/Jumpsuits/Bags/Headwear evaluation policy is explained as not yet defined, rather than hiding the garment or claiming readiness.
 
 ### AC-03 — Distinguish loading from loaded emptiness
 
@@ -148,13 +149,15 @@ Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich ent
 | Parent PBI | [PBI-007](../../product-backlog.md#pbi-007--browse-current-wardrobe-and-inspect-owned-garments) |
 | Business | [BRD](../../../01-business/BRD.md): BR-003, BR-005, BR-021, BR-022; CAP-03, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-03; FEAT-WAR-001 (overview and entry/return paths) |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-008 (empty/loading/unavailable only), FR-GAR-004, FR-AUTH-008; DATA-GAR-001, DATA-GAR-004, DATA-GAR-005; UI-001, UI-003, UI-004; ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001 |
-| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003; BRULE-HIST-002 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-008 (empty/loading/unavailable only), FR-GAR-004, FR-AUTH-008; DATA-GAR-001, DATA-GAR-004, DATA-GAR-005; UI-001, UI-003, UI-004; ERR-AUTH-001, ERR-NET-001; COM-001; NFR-SEC-001, NFR-SEC-002, NFR-PRIV-001; NFR-ACC-001, NFR-ACC-002; LOC-001; FR-GAR-001, FR-GAR-002, FR-GAR-012, FR-GAR-013, DATA-GAR-002 |
+| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-AUTH-007; BRULE-GAR-001, BRULE-GAR-002, BRULE-GAR-003; BRULE-HIST-002; BRULE-GAR-004, BRULE-GAR-010 |
 | Use Cases | [UC-008 — View Wardrobe](../../../03-requirements/use-cases/UC-008-view-wardrobe.md), browsing/empty/retrieval/access branches; [UC-007 — Add Garment](../../../03-requirements/use-cases/UC-007-add-garment.md), entry handoff only |
 | Activity Diagrams | No current dedicated Activity Diagram for UC-008; the textual specification governs this slice. |
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records open category-readiness/composition, optional-field validation and subtype-vocabulary questions. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 
 **2026-10-21 refinement draft.** Retain browsing and its empty-state value separately from garment detail. The existing criteria already distinguish accepted entries, loading/unavailable data, unusable access and genuinely empty inventory; no new browsing behavior is needed. Agree representative empty and populated account fixtures, previous-account isolation and Add/detail handoff evidence with Developers (Q-02/Q-04/Q-05). PBI-006 supplies useful populated examples, not a hard prerequisite to empty browsing; future search/filtering and use analytics remain excluded.
 
@@ -162,5 +165,5 @@ Question details, owners and conditional planning blockers are centralized in th
 
 ## 11. Status
 
-**Baseline Draft.** Product Owner and Scrum Team review is pending; no approval or Sprint commitment is recorded.
+**Baseline Draft.** Product Owner and Scrum Team review is pending; document approval is not claimed; Sprint 2 selection is recorded separately in its plan.
 

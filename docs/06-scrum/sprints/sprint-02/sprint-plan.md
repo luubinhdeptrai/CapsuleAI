@@ -5,8 +5,9 @@
 | Field | Value |
 | --- | --- |
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
-| Version / status | 0.1 / Planning Draft — four-story scope selected by the Product Owner |
-| Prepared | 2026-11-03 |
+| Version / status | 0.2 / Planning Draft — four-story scope selected by the Product Owner |
+| Prepared | 2026-11-03; taxonomy/property revision 2026-11-05 |
+| Revision inspection | Branch `sprint_02`; commit `ae632fd115329cb66560781090b711b85f00cdb3`; existing user edit in `Initial files/Image to Properties Extraction.md` preserved. Documentation changes only. |
 | Inspected repository | Branch `sprint_02`; commit `4709d6f7d0c718129405732cfe824ccf6c6b2f61` |
 | Initial working tree | Clean |
 | Selected scope | US-AUTH-005, US-GAR-001, US-WAR-001 and US-WAR-002, exactly |
@@ -14,9 +15,9 @@
 | Capacity / velocity / estimates | Not supplied; no forecast, Story Points or assignments invented |
 | Delivery responsibility | Backend implementation, affected contracts, persistence, security and backend verification |
 | Planning accountability | Developers maintain the implementation plan; PO/BA clarify product behavior; relevant engineering/QA contributors supply verification |
-| Current task boundary | Planning document only; no implementation, implementation guides, source changes, commit, push or PR |
+| Current task boundary | Synchronize approved taxonomy/property requirements and this plan; no implementation, new guides, API/schema artifacts, commit, push or PR |
 
-**Scope authority:** the current Product Owner instruction explicitly selects all four stories. Earlier catalogue/story statements that no Sprint selection was recorded describe their authoring snapshots; they do not make these four items optional now. Their source-file statuses and AC remain unchanged. Selection establishes scope, not demonstrated feasibility, implementation success or full-story Done.
+**Scope authority:** the current Product Owner instruction explicitly selects all four stories. Earlier catalogue/story statements that no Sprint selection was recorded describe their authoring snapshots; they do not make these four items optional now. Their source-file statuses and AC identities remain unchanged. The 2026-11-05 approved taxonomy/property revision updates the three garment/wardrobe stories; US-AUTH-005 remains unchanged. Selection establishes scope, not demonstrated feasibility, implementation success or full-story Done.
 
 **Canonical location:** `docs/06-scrum/sprints/sprint-02/sprint-plan.md` follows the existing [Sprint 1 plan](../sprint-01/sprint-plan.md) and [workflow](../../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 3/32/38. The requested example used `docs/06-delivery/`; the repository uses `docs/06-scrum/`. One primary planning artifact is created under that established convention.
 
@@ -31,6 +32,9 @@ The Goal connects restored private participation with the first useful **Underst
 **[REQ]** Backend success means correct-account recovery and authorized creation/read outcomes, truthful failure/readiness states, preserved accepted data and inspectable automated integration evidence. Full mobile journeys and whole-story Done require the additional evidence identified in Sections 6/11. All four selected stories contribute to this Goal; none is optional, deferred or a stretch item.
 
 ## 3. Current Repository and Sprint 1 Baseline Assessment
+
+**2026-11-05 reinspection:** The detailed inventory/findings below were recorded at `4709d6f7d0c718129405732cfe824ccf6c6b2f61` and are historical. At `ae632fd115329cb66560781090b711b85f00cdb3`, `SessionAuthorityOutageIT`, `JwtClaimNames`, converter dependency-outage translation and `IdentityOpenApiContractIT` exist; OpenAPI v0.4.1 includes the registration confirmation field and corrected Identity contract. Earlier missing-file/contract findings must not be treated as current unresolved defects. No runtime/CI pass is inferred from this static reinspection. Wardrobe still contains only its package marker; no garment enum, DTO, API, persistence or migration exists. Migrations remain V1–V5 for the foundation/Identity. The current OpenAPI explicitly excludes Wardrobe. This revision creates no API or physical schema.
+
 
 ### 3.1 Verified implementation, rather than historical descriptions
 
@@ -94,7 +98,7 @@ Implementation priority below is the recommended sequence within the selected sc
 | Priority | Story / exact title | Parent PBI | User value / backend objective | Expected deliverables | Dependencies | Verification / backend acceptance |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | [US-AUTH-005 — Recover account access through email](../../stories/auth/US-AUTH-005-recover-account-access.md) | PBI-005 | Restore correct-account access through completed email recovery, not merely instruction delivery. | Account-safe initiation, real delivery boundary, reset validity/replacement/consumption, accepted password change and account-wide session revocation; affected API/migrations/tests. | Existing account/login/session authority from PBI-004; Email Delivery Service and usable instruction-opening contract. | AC-01–AC-16 mapping below; atomic reset effects, old authority denied, new-password login, actual delivery evidence and no disclosure. |
-| 2 | [US-GAR-001 — Add an owned garment manually](../../stories/garment/US-GAR-001-add-garment-manually.md) | PBI-006 | Establish one confirmed owned garment without image/AI dependency. | Confirmed minimum, owner-associated persistence, authority/provenance and readiness explanation, durable safe retry, protected API/migrations/tests. | PBI-004 usable access; Wardrobe ownership and private-data protections. Recovery completion is not a technical prerequisite. | AC-01–AC-14; accepted minimum-only entry survives reread, no unconfirmed/duplicate effect, bounded values and owner isolation. |
+| 2 | [US-GAR-001 — Add an owned garment manually](../../stories/garment/US-GAR-001-add-garment-manually.md) | PBI-006 | Establish one confirmed owned garment without image/AI dependency. | Eight-category confirmed minimum with optional valid subtype/Brand/purchase Price, owner-associated persistence, authority/provenance and readiness explanation, durable safe retry, protected API/migrations/tests. | PBI-004 usable access; Wardrobe ownership and private-data protections. Recovery completion is not a technical prerequisite. | AC-01–AC-14; accepted minimum-only entry survives reread, no unconfirmed/duplicate effect, bounded values and owner isolation. |
 | 3 | [US-WAR-001 — Browse my current wardrobe](../../stories/wardrobe/US-WAR-001-browse-current-wardrobe.md) | PBI-007 | Recognize current possessions and distinguish genuine emptiness from unavailable access/data. | Authorized read-only collection, identifiable imageless/unready summaries, current-ownership filtering, truthful empty/failure contract and tests. | PBI-004. Manual creation provides useful populated fixtures, not a hard gate to empty browsing. | AC-01–AC-11; only the current account's confirmed active entries; successful empty result distinct from failure; no read side effects. |
 | 4 | [US-WAR-002 — Inspect an owned garment](../../stories/wardrobe/US-WAR-002-inspect-owned-garment.md) | PBI-007 | Understand the accepted profile, applicable readiness and limits of use evidence. | Owner-scoped detail, available accepted information/provenance, conditional readiness, explicit unavailable use evidence, changed-current-state/failure semantics and tests. | PBI-004 and an actual current owned garment. Browse/add are useful routes; Wear/analytics are not prerequisites. | AC-01–AC-12; correct current garment, retained imageless/incomplete detail, no fabricated usage/readiness or read mutation. |
 
@@ -102,7 +106,7 @@ Implementation priority below is the recommended sequence within the selected sc
 
 ## 6. Story-by-Story Backend Scope
 
-The following are **planning summaries** of every original AC, with proposed verification and external limits. Read the linked complete story for normative wording; no AC is rewritten. All evidence described is required/planned, not already passed.
+The following are **planning summaries** of every original AC, with proposed verification and external limits. Read the linked complete current story for normative wording; the approved taxonomy/property revision is synchronized here while all AC IDs are retained. All evidence described is required/planned, not already passed.
 
 ### 6.1 US-AUTH-005 — Recover account access through email
 
@@ -140,19 +144,19 @@ The following are **planning summaries** of every original AC, with proposed ver
 | AC-01 | Accepted explicitly confirmed supported category/color creates one current owned garment with readiness explained separately. | Application, persistence round-trip and authenticated HTTP evidence; human review/confirmation presentation remains external. |
 | AC-02 | No image, analysis, upload or successful provider call is needed. | Omitted-image fixtures and no analysis/media dependency on the manual path; no artificial provider setup. |
 | AC-03 | Only submitted confirmed latest values become authoritative; draft changes alone create no owned garment. | Command/acceptance validation and retained accepted values; pre-submit draft editing/display remains client responsibility. |
-| AC-04 | Primary categories are TOP/BOTTOM/OUTERWEAR/FOOTWEAR; color-family values follow SRS Section 4.10/BRULE-GAR-005. | Bounded-value tests; no fifth category from OTHER/UNKNOWN subtype fallbacks. |
+| AC-04 | Primary categories are TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; color families remain SRS Section 4.10/BRULE-GAR-005. Optional subtype must belong to its category. | All eight categories and exactly ten Dresses/Jumpsuits values; reject mismatched pairs, permit omission; fallback values only where defined. |
 | AC-05 | Missing/unconfirmed minimum is rejected without creating or altering accepted garments. | Unit/API invalid-input and no-write checks; draft retention/correction interaction remains external where client-held. |
-| AC-06 | Rich fields and subtype are not mandatory to save. | Minimum-only acceptance and reread; do not add rich-descriptor entry work from PBI-008. |
-| AC-07 | UNKNOWN/unavailable required common information produces truthful missing-information guidance while retaining Saveable ownership. | Readiness policy/response tests; no inferred pattern/climate/color to force readiness. |
-| AC-08 | TOP/OUTERWEAR layering and evaluation-dependent bulk requirements are explained only where applicable. | Category/decision fixtures; no universal bulk gate and no outfit engine implementation. |
-| AC-09 | Accepted manual values/provenance retain authority. | Create/read model tests; future real AI overwrite regression remains unexercised while AI is absent, not a reason to implement it now. |
+| AC-06 | Subtype, Brand and purchase Price are supported but optional; other rich fields remain optional for saving. | Omitted/present values and reread; Brand text and decimal amount plus explicit ISO 4217 currency, partial-pair correction/clearing; other enrichment/editing stays PBI-008. |
+| AC-07 | For established TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES evaluation, UNKNOWN required common information produces missing-information guidance; new category evaluation policy remains explicitly unresolved, with Saveable ownership retained. | Readiness policy/response tests; no inferred pattern/climate/color to force readiness. |
+| AC-08 | TOPS/OUTERWEAR layering and evaluation-dependent bulk requirements are explained only where applicable. | Category/decision fixtures; no universal bulk gate and no outfit engine implementation. |
+| AC-09 | Accepted manual values/provenance, including Brand/Price, retain authority. No image-derived Price or automatic Brand confirmation. | Create/read model tests; future real AI overwrite regression remains unexercised while AI is absent, not a reason to implement it now. |
 | AC-10 | Canceled unsubmitted preconfirmation work creates no confirmed entry. | No creation from an unaccepted command; actual cancellation/navigation evidence is external. |
 | AC-11 | Known failed acceptance leaves prior inventory unchanged and is distinguishable from success. | Fault/rollback/API cases; useful client draft preservation and continuation remain external. |
 | AC-12 | Review/retry of the same intended addition has at most one accepted effect, including contention and lost response. | Durable PostgreSQL logical-action/outcome and restart/response-loss cases; user review/pending presentation remains external. |
 | AC-13 | Expired/revoked/wrong-owner access cannot create or expose garments, including retry/outcome review. | Actual signed-token/security/owner integration and no unauthorized mutation; renewed-login presentation remains external. |
 | AC-14 | Contract preserves draft/accepted/failed/unconfirmed/readiness meanings and canonical values. | Vietnamese accessible fields/confirmation/guidance and 200% scaling remain client/device evidence. |
 
-**Primary source anchors:** BG-01, BR-002–BR-005, CAP-03/CAP-04; FR-AI-003/FR-AI-008–FR-AI-010, FR-GAR-001–FR-GAR-006/FR-GAR-011, FR-AUTH-008; DATA-GAR-001–DATA-GAR-005, DATA-INT-001/DATA-INT-004, ERR-GAR-001/ERR-GAR-002/ERR-NET-001, COM-001/COM-002; BRULE-AUTH-001/BRULE-AUTH-007 and BRULE-GAR-001–BRULE-GAR-006; UC-007/AD-007 manual/shared confirmation branches.
+**Primary source anchors:** BG-01, BR-002–BR-005, CAP-03/CAP-04; FR-AI-003/FR-AI-008–FR-AI-010, FR-GAR-001–FR-GAR-006/FR-GAR-011–FR-GAR-013, FR-AUTH-008; DATA-GAR-001–DATA-GAR-005, DATA-INT-001/DATA-INT-004, ERR-GAR-001/ERR-GAR-002/ERR-NET-001, COM-001/COM-002; BRULE-AUTH-001/BRULE-AUTH-007 and BRULE-GAR-001–BRULE-GAR-006; UC-007/AD-007 manual/shared confirmation branches.
 
 **[OPEN] Required JIT decisions:** confirmation representation, owner-scoped logical-action identity/outcome review, minimum persistence and readiness/provenance representation, error/response contract. Do not deduplicate by category/color alone: two separate intended additions may describe distinct similar garments. A timeout alone does not prove no save occurred.
 
@@ -162,7 +166,7 @@ The following are **planning summaries** of every original AC, with proposed ver
 
 | Original AC | [REQ] Backend acceptance condition | [TECH] Verification / external residual |
 | --- | --- | --- |
-| AC-01 | Summaries identify the correct current confirmed garments with accepted category/color and available subtype/image information. | Owner-scoped JDBC/API mapping; cards/visual recognition remain client evidence. |
+| AC-01 | Summaries identify current confirmed garments across all eight categories with accepted category/color and available subtype/image information; missing Brand/Price never hides them, and available values can be inspected in detail. | Owner-scoped JDBC/API mapping; cards/visual recognition remain client evidence. |
 | AC-02 | Imageless/unready saved garments remain identifiable, selectable and distinct from unsaved work. | Minimum-only fixtures/readiness assertions; accessible selection remains external. |
 | AC-03 | Pending retrieval is not a completed empty collection. | No fabricated empty success for incomplete/failed retrieval; loading state itself is client evidence. |
 | AC-04 | Successful authorized zero-current-item retrieval is a genuine empty result, with no quota. | Real empty/populated account cases; explanatory text/Add action/leave behavior remain external. |
@@ -184,11 +188,11 @@ The following are **planning summaries** of every original AC, with proposed ver
 
 | Original AC | [REQ] Backend acceptance condition | [TECH] Verification / external residual |
 | --- | --- | --- |
-| AC-01 | Correct accepted profile and relevant provenance/uncertainty; no substitution by proposals. | Owner/current-state persistence and API cases; actual display/image presentation remains external. |
+| AC-01 | Correct accepted profile for all eight categories, including available subtype, Brand and purchase Price with currency; unknown Price is not zero; no substitution by proposals. | Owner/current-state persistence and API cases; actual display/image presentation remains external. |
 | AC-02 | Imageless/minimum-only detail remains useful; absent fields are not fabricated. | Explicit missing-data fixtures and response assertions. |
-| AC-03 | Explain missing common readiness information: category, color, pattern and climate suitability. | Wardrobe policy tests and identical semantic results across create/list/detail. |
-| AC-04 | Layering applies to TOP/OUTERWEAR; bulk only to decisions requiring it. | Category/conditional readiness fixtures; no universal gate. |
-| AC-05 | Optional rich fields/subtype do not become universal blockers; readiness does not guarantee every outfit is valid. | Ready/unready controlled fixtures and qualified response semantics, without implementing recommendations. |
+| AC-03 | Explain established common readiness for TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES: category/color/pattern/climate. New Dresses/Jumpsuits/Bags/Headwear evaluation policies remain PRD OPQ-012, not invented missing-field lists. | Wardrobe policy tests and identical semantic results across create/list/detail. |
+| AC-04 | Layering applies to TOPS/OUTERWEAR; bulk only to decisions requiring it. | Category/conditional readiness fixtures; no universal gate. |
+| AC-05 | Optional subtype/rich fields do not become universal blockers; Brand and Price never gate readiness; readiness does not guarantee every outfit is valid. | Ready/unready controlled fixtures and qualified response semantics, without implementing recommendations. |
 | AC-06 | Any supported available use information reflects effective reported evidence, not proven physical wear. | Conditional source/contract fixtures when that presentation exists; do not build reporting/analytics or claim an absent real integration was exercised. |
 | AC-07 | Current absence/unavailability of Wear evidence does not become zero use, last-worn data or a no-recorded-events conclusion. | Profile/readiness succeeds with explicit unavailable use meaning. No production Wear capability currently exists. |
 | AC-08 | Pending/failed detail is distinct from empty/deleted; accepted data remains unchanged. | Failure/retry/no-mutation tests; loading and recovery navigation remain external. |
@@ -203,12 +207,14 @@ The following are **planning summaries** of every original AC, with proposed ver
 
 ## 7. Applicable Business Rules, Security, and Privacy
 
+**[REQ] Taxonomy/property trace:** BR-002/003/005 → FEAT-AI-002/FEAT-GAR-001/FEAT-WAR-001 → FR-GAR-001–006/011–013, DATA-GAR-002 and BRULE-GAR-004/010 → US-GAR-001 AC-01/03/04/06–09, US-WAR-001 AC-01/02, US-WAR-002 AC-01–05 → selected-story JIT representation and the verification in Section 11. UC-007/008 and AD-007 retain authority, correction, failed/uncertain acceptance and owner access. Future editing remains PBI-008/UC-009.
+
 | Classification / source | Required treatment |
 | --- | --- |
 | **[REQ]** BRULE-AUTH-002/BRULE-AUTH-003; FR-AUTH-015 | Reuse trim/case-insensitive identity without alias transformations and exact password values. Existing code-point counting/PBKDF2 are implementation conventions; no new composition rule or denylist is inferred. |
 | **[REQ]** BRULE-AUTH-004/BRULE-AUTH-005; FR-AUTH-003/FR-AUTH-004/FR-AUTH-017/FR-AUTH-018 | Reset lasts 30 minutes and permits one successful use. Successful new issuance replaces all earlier unused interactions. Only accepted completion changes password, consumes the interaction and revokes all account sessions; request/opening/delivery is not completion. |
 | **[REQ]** BRULE-AUTH-001/BRULE-AUTH-006; FR-AUTH-007–FR-AUTH-010/FR-AUTH-013/FR-AUTH-014 | Preserve JWT plus usable persistent authority, 15-minute access/absolute 30-day session policy and distinct logout/reuse/reset revocation scopes. New wardrobe APIs cannot trust a caller-supplied owner identifier or JWT validity alone. |
-| **[REQ]** BRULE-GAR-001–BRULE-GAR-006; FR-AI-003/FR-AI-008/FR-GAR-003–FR-GAR-006/FR-GAR-011 | Confirmed category/color permits imageless saving; keep UNKNOWN/absent meanings and bounded vocabularies. Pattern/climate/category requirements, TOP/OUTERWEAR layering and conditional bulk govern applicable readiness, not universal saving. Never invent compatibility evidence or silently overwrite user values. |
+| **[REQ]** BRULE-GAR-001–BRULE-GAR-006; FR-AI-003/FR-AI-008/FR-GAR-003–FR-GAR-006/FR-GAR-011 | Confirmed category/color permits imageless saving; keep UNKNOWN/absent meanings and bounded vocabularies. Pattern/climate/category requirements, TOPS/OUTERWEAR layering and conditional bulk govern applicable readiness, not universal saving. Never invent compatibility evidence or silently overwrite user values. |
 | **[REQ]** BRULE-HIST-001/BRULE-HIST-002; FR-WAR-001/FR-WAR-002 | Reads show current possessions; historical snapshots and hypothetical/draft data are different. No recorded use is not physical nonuse; unavailable reporting is not a zero. |
 | **[REQ]** DATA-INT-001/DATA-INT-004, COM-002, ERR-NET-001 | Preserve accepted state, distinguish known failure from uncertain acceptance, coordinate safe retries durably and prevent duplicate effects of one intended creation. No general offline or unconditional retry-success guarantee. |
 | **[REQ]** NFR-SEC-001–NFR-SEC-003, NFR-PRIV-001/NFR-PRIV-002, COM-001/COM-003, SI-003, BRULE-AUTH-007 | Zero successful unauthorized cross-account access in agreed scenarios; protect exchanges, passwords and reset/token secrets. Purpose-minimal email delivery only; no personal-data training/improvement, sale, public wardrobe or unrestricted sharing. |
@@ -247,7 +253,7 @@ An email dependency problem does not create a technical dependency blocking inde
 | US-AUTH-005 — email adapter | Define a narrow recovery-delivery port and the adapter for the chosen real delivery mechanism, necessary private configuration and safe failure translation. | Deterministic adapter/protocol tests plus actual configured delivery compatibility/receipt evidence. Controlled failure substitutes are explicitly labelled. |
 | US-AUTH-005 — accepted completion | Reuse password policy/hasher; extend owned account/session operations and supported revocation reasons; coordinate password change, interaction consumption and account-wide revocation in the existing transaction style. | Commit/rollback, double completion, replacement/completion, reset/refresh and reset/login concurrency evidence; other accounts and accepted garments preserved. |
 | US-AUTH-005 — web/security/regression | Extend the cohesive auth API with thin handlers and scoped errors; update the common public-endpoint matcher/resolver consistently; retain protected defaults. | Known/unknown equivalence, malformed/expired/replaced inputs, secret-safe outputs/logs, stale bearer headers on recovery, old/new-password and old-token behavior. |
-| US-GAR-001 — minimum/readiness model | Resolve minimum-confirmation/provenance/readiness contracts; implement only supported bounded minimum and applicable missing-information policy inside Wardrobe. | Unit/application cases for four categories, bounded colors including defined UNKNOWN meaning, no rich-field/image gates and no fabricated descriptors. |
+| US-GAR-001 — minimum/readiness model | Resolve minimum-confirmation/provenance/readiness contracts; implement the eight-category minimum, optional valid subtype/Brand/Price and applicable missing-information or unresolved-policy explanations inside Wardrobe. | Unit/application cases for all eight categories, exactly ten Dresses/Jumpsuits subtype values and valid parent pairing, bounded colors including defined UNKNOWN meaning, no rich-field/image gates and no fabricated descriptors. |
 | US-GAR-001 — durable acceptance | Introduce needed Wardrobe-owned persistence and transaction/action-outcome ports/adapters using current JDBC/Flyway conventions. Coordinate accepted garment and logical-action outcome. | Real committed save/reread, same-intention retry/contention/response-loss/restart evidence and valid separate additions of similar garments; existing state preserved on failure. |
 | US-GAR-001 — protected creation | Add the necessary handler in a cohesive Wardrobe API, request/response validation and module-scoped error translation; derive owner from authenticated authority. | Real HTTP/security tests, explicit confirmation/missing-minimum/no-write evidence, cross-account and expired/revoked denial. |
 | US-WAR-001 — current collection | Implement owner-scoped current-confirmed queries/projections and reuse the owned readiness meaning; expose stable garment identification and truthful empty/unavailable semantics. | Empty/populated/imageless/unready/current/noncurrent persistence/API fixtures; another account's entries never appear. |
@@ -281,15 +287,17 @@ No complete Java classes, SQL, endpoint payload definitions or executable code i
 - **Recovery:** determine protected reset verification representation, account association, expiry/consumption/replacement coordination and authoritative password-update/account-wide revoke operations. Existing SQL/enum constraints permit only logout/reuse reasons and must evolve coherently. Test supported upgrades and old rows; do not delete sessions merely to avoid implementing revocation.
 - **Concurrent authority:** current `LogInService` verifies credentials before entering its session-creation transaction. Reset JIT design must examine concurrent login as well as refresh and reset completion so accepted reset cannot be bypassed by stale credential/session establishment. This is a risk requiring design/test evidence, not a confirmed exploit from an executed test. Choose the coordination mechanism JIT.
 - **Email:** successful issuance/replacement and provider delivery are different outcomes. PostgreSQL cannot make an external email atomic. Define necessary safe dispatch/failure/recovery behavior while preserving equivalent initiation responses; do not infer a broker, universal Outbox or guarantee that provider acceptance means inbox delivery.
-- **Manual creation:** persist accepted ownership/values with enough durable logical-action/outcome coordination to resolve uncertain creation. Replaying the same action and deliberately adding another similar garment are distinct. Choose conflict and outcome-review semantics without inventing a mandatory server-side draft product.
+- **Manual creation:** preserve the eight-category code, optional valid subtype, confirmed Brand text and optional purchase Price amount/currency alongside accepted ownership, with enough durable logical-action/outcome coordination to resolve uncertain creation. Replaying the same action and deliberately adding another similar garment are distinct. Choose conflict and outcome-review semantics without inventing a mandatory server-side draft product.
 - **Reads:** keep current ownership, readiness and historical meaning separate. A controlled inactive/stale fixture can verify changed selection without adding removal/history APIs. Missing Wear evidence remains unavailable, not zero.
 - **Migrations:** add new versioned migrations after current V5, allocate actual versions during story work and verify clean initialization plus supported transition from V1–V5 with representative account/session data. No whole-MVP physical schema is required.
 
 These tasks realize source behavior already traced in Section 6 and ADD Sections 9.1/9.2/9.4. They do not select physical tables, columns, indexes, isolation/locking mechanisms or a universal retention period now.
 
+**[REQ] Optional-property constraints:** no fixed Brand enum or brand subsystem; decimal monetary representation with explicit ISO 4217 currency and no location default, floating-point calculation or currency conversion. A supplied incomplete Price pair must be corrected or cleared; absence is unknown, not zero. Preserve authority and same-action retry behavior for optional values. Resolve PRD OPQ-013 before dependent validation design. Exact field names, columns and endpoint shapes remain JIT.
+
 ### 10.3 API compatibility and security
 
-**[REQ]** Workflow Section 27 makes OpenAPI the maintained HTTP contract authority; its current contradictions must be resolved against SRS, code and tests, not treated as permission to change product behavior. Preserve actual existing registration/login/logout/refresh behavior while adding only selected recovery and wardrobe operations.
+**[REQ]** Workflow Section 27 makes OpenAPI the maintained HTTP contract authority; any actual contradictions must be resolved against SRS, code and tests; the original Section 3 findings are historical, not treated as permission to change product behavior. Preserve actual existing registration/login/logout/refresh behavior while adding only selected recovery and wardrobe operations.
 
 **[TECH]** New recovery route names, open-versus-submit behavior, DTOs, status/error codes, duplicate-action handling and wardrobe collection/detail shapes remain selected-story JIT decisions. Existing convention examples and the test-only unknown-route string are not approved Wardrobe contracts. Retain safe Problem JSON/machine-readable meanings and distinguish unauthorized, unavailable, genuinely empty and no-longer-current outcomes; exact disclosure-safe status selection remains JIT.
 
@@ -298,6 +306,8 @@ The existing security configuration uses one public matcher for both authorizati
 ## 11. Testing Strategy and Definition of Done
 
 ### 11.1 Required verification portfolio
+
+**[REQ] Taxonomy/property cases:** every category saves with only confirmed supported category/color; every one of the ten Dresses/Jumpsuits subtypes accepts only the correct parent; omitted subtype remains valid; invalid pairs require correction/clearing. Verify Brand/Price absent and present across all categories, exact decimal/currency and Brand preservation through create/browse/detail, incomplete Price-pair validation, no fabricated zero/default values, unchanged owner isolation and repeated-action single acceptance. Verify established readiness checks separately from unresolved new-category policy; neither optional field gates readiness. Amount-edge/Brand-normalization expectations require OPQ-013 resolution. These are planned cases, not tests executed by this update.
 
 **[REQ]** Apply the existing Test Strategy/DoD. Section 6 maps all 53 selected-story AC to backend checks and external residuals.
 
@@ -334,8 +344,8 @@ API, schema, authorization/privacy, failure/recovery and runnable-software DoD t
 
 | Condition / question | Evidence and effect | Owner / resolution point |
 | --- | --- | --- |
-| Missing CI-required outage suite | Confirmed static source/report mismatch in Section 3.2. Blocks a defensible passing-current-CI/Done claim until resolved in subsequent engineering work. | Developers; address with the first affected integration work, not by calling missing evidence passed. |
-| OpenAPI registration drift and guide/code divergence | Confirmed route/confirmation mismatch; TD-25/TD-26 differ from source. Affects reliable contracts, future guides and authority-outage evidence. | Developers/Tech Lead; reconcile actual required behavior before extending the affected contract/security surface. No broad redesign. |
+| Historical missing outage suite | Present at the 2026-11-05 inspected revision; Section 3.2 records the older snapshot. Current execution evidence remains required. | Developers; verify actual affected CI/test results during implementation. |
+| Historical contract/guide drift | Current registration contract, shared JWT constant and outage handling now exist as noted in Section 3. Earlier findings are not current defect claims. | Developers/Tech Lead; use actual source and verify affected contracts during selected work. |
 | **[OPEN]** Email delivery mechanism and controlled destination access | No adapter/provider is implemented or selected by the inspected files. Actual delivery/receipt evidence cannot yet be produced. This blocks the affected recovery integration/completion claim, not independent Wardrobe development. | Developers with project owner for service/account access; resolve necessary feasibility/contract during recovery JIT work, without inventing a provider. |
 | **[OPEN]** Instruction opening and reset outcome review | Supported request/open/submit/return transport and uncertain-result behavior need a safe client/backend contract. Account-safe initiation must survive failure translation. | Developers/Tech Lead with PO/BA for a genuine user-outcome ambiguity and the external client contributor for integration; Q-03. Backend policy design can proceed without assigning UI work here. |
 | **[OPEN]** Reset concurrency/security | New persistence/credential-update/account-wide revoke capability is absent. Login verifies outside its creation transaction; refresh has existing row locking. Race correctness across these paths is unverified. | Developers/Tech Lead during reset JIT, before dependent implementation; demonstrate committed race/rollback outcomes rather than assume existing logout/refresh logic is sufficient. |
@@ -346,11 +356,19 @@ API, schema, authorization/privacy, failure/recovery and runnable-software DoD t
 
 Previously recorded Display Name bounds, broader foundation completion and unrelated catalogue questions are not new Sprint 2 policy decisions. Reuse accepted current behavior where relevant; escalate a real conflict rather than reopening the entire baseline.
 
+**[OPEN] Approved taxonomy follow-ups:**
+
+| Question | Effect | Owner / resolution point |
+| --- | --- | --- |
+| PRD OPQ-012: Dresses/Jumpsuits, Bags and Headwear composition/readiness | These categories are in approved save/browse/inspect scope; unsupported evaluation policy must be disclosed, not replaced with universal layering/bulk requirements. No recommendation work enters Sprint 2. | PO/BA before claiming those evaluations supported; Developers preserve explicit limitations in selected stories. |
+| PRD OPQ-013: monetary bounds, zero/negative handling, precision/rounding, currency-list and Brand validation/normalization | Meaning, decimal representation, explicit currency and optionality are approved; unsupported validation decisions are not. | PO/BA with Developers during affected JIT work, before dependent implementation. |
+| PRD OPQ-014: Bags/Headwear subtype vocabulary and subtype-overlap guidance | Omission remains supported. Research lists are not enums; ten Dresses/Jumpsuits values stay exact. | PO/BA before adding further controlled choices; no blocker to minimum entry. |
+
 ### 12.2 Feasibility assessment
 
 The work has a credible architectural base: existing account/session security, JDBC transactions, Flyway, real-PostgreSQL/API test support and CI are reusable. Creation/list/detail share Wardrobe ownership and readiness semantics. This reduces setup duplication.
 
-The scope is still substantial: recovery adds a real external boundary and security-sensitive concurrent authority transitions; manual entry introduces durable acceptance/idempotency; list/detail require current owner isolation and honest conditional evidence. Static inconsistencies and missing current verification increase uncertainty. A completion date or “fits one Sprint” claim would be unsupported.
+The scope is still substantial: recovery adds a real external boundary and security-sensitive concurrent authority transitions; manual entry introduces durable acceptance/idempotency; list/detail require current owner isolation and honest conditional evidence. Missing current runtime and integrated verification increases uncertainty; Section 3 distinguishes the historical static findings from the inspected revision. A completion date or “fits one Sprint” claim would be unsupported.
 
 All four stories remain selected. Resolve affected blockers with bounded engineering work and responsible PO/Developer coordination while progressing independent selected work. This document provides no reduced scope, stretch category or permission to omit security, recovery or verification obligations.
 
@@ -362,7 +380,7 @@ The following evidence is a target for later delivery, not a report of executed 
 | --- | --- |
 | Account-safe recovery request and actual delivery | Paired known/unknown initiation semantics, purpose-minimal recipient delivery, usable issued instructions and separate delivery/completion outcomes. Sanitize secrets in review captures. |
 | Accepted reset across multiple sessions | Old password rejected; exact new password logs in to the same account; all prior affected-account sessions/tokens denied; another account unaffected. Show expired/replaced/reused/invalid/uncertain outcomes. |
-| Confirmed imageless manual creation | Supported minimum saves once; omitted rich fields remain optional; missing readiness is explained without reporting save failure or creating fabricated data. |
+| Confirmed imageless manual creation | All eight categories save once with the supported minimum; optional subtype/Brand/purchase Price are retained when supplied and remain optional when omitted; missing readiness is explained without reporting save failure or creating fabricated data. |
 | Creation → collection → corresponding detail | Correct owner sees the accepted entry and profile/readiness; another account/guessed identifier does not. Genuine emptiness differs from unavailable access/data and stale selection. |
 | Reset after wardrobe creation | Existing wardrobe remains intact; old credentials cannot access it; new-password login restores authorized list/detail. This makes previously unexercised accepted-wardrobe preservation inspectable. |
 | Automated/real-integration evidence | Relevant unit/application, PostgreSQL, security/API, migration, concurrency, email compatibility, architecture and regression results; current CI reports and resolved review findings tied to revision/environment. |
@@ -376,7 +394,7 @@ The following evidence is a target for later delivery, not a report of executed 
 
 Review the proposed Goal, scheduling/capacity information, responsibility for external evidence and the concrete blockers in Section 12. All four selected stories remain in the Sprint 2 plan; this is not a request to reselect them.
 
-The next engineering activity is **US-AUTH-005 JIT Detailed Design**, grounded in the current Identity implementation: necessary recovery contract/delivery feasibility, reset authority/lifecycle, atomic accepted effects, concurrency and evidence. Address the bounded current contract/CI/security gaps alongside the first affected integration work. A sequence/state model is conditional on the reset risk, not a mandatory diagram set for every story.
+The next engineering activity is **US-AUTH-005 JIT Detailed Design**, grounded in the current Identity implementation: necessary recovery contract/delivery feasibility, reset authority/lifecycle, atomic accepted effects, concurrency and evidence. Verify current contract/CI/security evidence alongside the first affected integration work; Section 3 distinguishes historical findings from current source. A sequence/state model is conditional on the reset risk, not a mandatory diagram set for every story.
 
 Then repeat the established **JIT Design → Automated Tests + Implementation → Refactor → Integration Verification → PR / CI / Review** loop for recovery, manual creation, browsing and detail. Keep selected work and affected living artifacts synchronized; do not complete a Sprint-wide implementation design before starting the first story.
 
@@ -396,4 +414,4 @@ Use the Sprint 1 guide structure for orientation, but its compact scenario/AC su
 
 Potential future guide names, under the existing per-Sprint implementation-guide convention, are `US-AUTH-005-guide.md`, `US-GAR-001-guide.md`, `US-WAR-001-guide.md` and `US-WAR-002-guide.md`. **None is created by this task.** Prepare only the guide needed for the current selected story when that follow-up work is authorized; a complete four-guide packet is not an implementation gate.
 
-This task creates only this Sprint 2 planning artifact. Requirements, architecture, backlog/story files, Sprint 1 references, production code, tests, migrations, configuration and CI remain unchanged.
+The original planning task created this artifact only. The 2026-11-05 revision synchronizes the approved taxonomy/properties with affected requirements, stories and supporting documents. It retains the four selected stories and their order, US-AUTH-005, architecture selections and the implementation-guide standards above. No production code, tests, migrations, API contracts, configuration, CI or new guide is created or changed by this revision.

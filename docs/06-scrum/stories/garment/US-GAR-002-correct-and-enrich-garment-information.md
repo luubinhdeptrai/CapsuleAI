@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-008](../../product-backlog.md#pbi-008--correct-and-enrich-garment-information-with-readiness-guidance) |
@@ -14,6 +14,7 @@
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Trustworthy Wardrobe Understanding |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Synchronized approved garment taxonomy and optional-property authority; no new Sprint selection or AI implementation. |
 
 ## 1. Story
 
@@ -24,6 +25,8 @@ As an authenticated owner, I want to review, enrich and explicitly confirm suppo
 Keep garment knowledge trustworthy and help users supply the information needed for defensible advice.
 
 ## 3. Scope
+
+The eight categories and exact ten Dresses/Jumpsuits subtypes follow [PRD Sections 13.2/13.5](../../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Optional subtype must match its category. Brand text and purchase Price (decimal amount plus explicit ISO 4217 currency) follow FR-GAR-012/013 and BRULE-GAR-010; neither is mandatory for saving or readiness. Price cannot be inferred from a photograph; any future Brand proposal requires explicit acceptance and cannot overwrite confirmed information. This adds no Brand-recognition feature. Future editing supports revising or clearing these values; category changes require review of incompatible subtypes. The bounded optional subtype/Brand/Price creation fields now belong to US-GAR-001; other enrichment and editing remain this story. The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
 
 Supported descriptor review during entry and later edit; explicit acceptance, rule-specific readiness guidance, preserved user authority and affected-advice currentness.
 
@@ -37,13 +40,15 @@ Supported descriptor review during entry and later edit; explicit acceptance, ru
 
 Present accepted/proposed/unknown information distinctly and allow the supported subtype, layering, bulk, fit, silhouette, color/palette, pattern/noise, climate, style/occasion and material information defined in SRS Section 4.10 to be reviewed and corrected.
 
+The optional-property and classification rules in Section 3 apply to this accepted outcome, including preservation of valid supplied values and correction/clearing of invalid category/subtype or incomplete Price pairs.
+
 ### AC-02 — Apply supported consistency
 
 Reject unsupported values or inconsistent revisions without replacing accepted data. Bulk and Visual Noise use 1–5 bounds; SOLID implies NONE density. OTHER/UNKNOWN is accepted only where the source vocabulary defines it.
 
 ### AC-03 — Keep saving and readiness separate
 
-Confirmed Primary Category and Dominant Color remain the saveable minimum. Readiness needs common pattern/climate information and applicable TOP/OUTERWEAR layering, with bulk only for the layered checks requiring it. Missing required information blocks only the relevant evaluation; optional descriptors are not universal save/readiness gates.
+Confirmed Primary Category and Dominant Color remain the saveable minimum. For TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES under the established composition, readiness needs common pattern/climate information and applicable TOPS/OUTERWEAR layering, with bulk only for the layered checks requiring it. Missing required information blocks only the relevant evaluation; optional descriptors are not universal save/readiness gates.
 
 ### AC-04 — Preserve uncertainty
 
@@ -92,6 +97,8 @@ Minimum-only creation is [US-GAR-001](../garment/US-GAR-001-add-garment-manually
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
 
 ## 10. Open Refinement Notes
+
+PRD OPQ-012–014 track unresolved category policy and optional-field validation. No missing policy authorizes fabricated readiness or silent user-value changes.
 
 No new behavior decision is required by the current sources. Supported controls, contracts and concurrent-edit mechanics remain selected-story JIT detail; Developers still assess delivery feasibility and size.
 

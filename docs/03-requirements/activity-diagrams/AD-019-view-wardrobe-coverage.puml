@@ -1,4 +1,8 @@
 @startuml
+' 2026-11-05 taxonomy clarification: TOP/BOTTOM/FOOTWEAR below are outfit roles,
+' mapped from TOPS/(PANTS or SKIRTS)/SHOES; optional outer role from OUTERWEAR.
+' DRESSES_JUMPSUITS/BAGS/HEADWEAR composition/readiness remains PRD OPQ-012.
+' This activity does not establish complete Coverage for unsupported compositions.
 ' Source Use Case: UC-019 — View Wardrobe Coverage
 ' Primary Specification: ../use-cases/UC-019-view-wardrobe-coverage.md
 ' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
@@ -82,4 +86,9 @@ repeat while (Request again after revision/recovery?) is (Yes) not (No)
 :Finish with stated current or limited assessment outcome;
 stop
 
+note right
+  TOP / BOTTOM / FOOTWEAR are retained outfit roles,
+  mapped from TOPS / PANTS-or-SKIRTS / SHOES.
+  New category evaluation policies remain open (PRD OPQ-012).
+end note
 @enduml

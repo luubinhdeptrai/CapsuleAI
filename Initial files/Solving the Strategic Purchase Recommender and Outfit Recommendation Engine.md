@@ -1,3 +1,9 @@
+> **CapsuleAI application note — 2026-11-05.** The research text and citations below are preserved. Current requirements are governed by [PRD Sections 13/34.1](../docs/02-product/PRD.md), [SRS](../docs/03-requirements/SRS.md) and [Business Rules](../docs/03-requirements/business-rules.md). Primary categories are TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS and HEADWEAR; category and optional subtype are distinct from outfit roles. Existing separated-garment validity is retained; Dresses/Jumpsuits/accessory composition and readiness require OPQ-012, not automatic slot substitution. Exactly ten Dresses/Jumpsuits subtype choices are approved.
+>
+> Brand is optional confirmed user text. Price is optional user-reported purchase price with decimal amount and explicit ISO 4217 currency, distinct from commercial catalogue prices or model utility. Neither is a mandatory compatibility input or readiness gate. Price cannot be extracted from a photograph; any future Brand suggestion requires confirmation. Imageless manual creation remains valid, and accepted information cannot be silently overwritten. Research image/embedding/model proposals do not mandate an image, learned model, new AI feature or personal-data training in the MVP/Sprint 2.
+>
+> Research scoring or slot examples do not replace the canonical Wardrobe Multiplier: incremental unique valid outfit count on a consistent assessment basis. Unconfirmed items cannot become owned garments through reduced confidence weighting; body/gender context remains optional and non-restrictive. Read the original findings, evidence and limitations below as research, not newly selected product or architecture decisions.
+
 # Solving the Strategic Purchase Recommender and Outfit Recommendation Engine	
 
 ## 1\. Summary

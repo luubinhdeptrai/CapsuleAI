@@ -10,8 +10,9 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
+| Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 
@@ -37,7 +38,7 @@ The User chooses to edit that garment.
 
 1. The User requests editing for the selected garment.
 2. CapsuleAI presents its accepted profile and supported editable information, with relevant unknown/uncertain states.
-3. The User revises the intended values using the supported vocabularies.
+3. The User revises intended values using the supported vocabularies, including optional Brand text and purchase Price, or clears optional information. A category change requires correction or clearing of an incompatible subtype. Price, if supplied, includes both decimal amount and explicit ISO 4217 currency; incomplete pairs return for correction before acceptance.
 4. CapsuleAI presents the proposed revision and identifies missing required or incompatible values and applicable readiness implications.
 5. The User explicitly confirms the intended supported changes.
 6. CapsuleAI acknowledges the accepted revision and shows the new authoritative profile/readiness.
@@ -49,7 +50,7 @@ The User chooses to edit that garment.
 
 At Main Step 3:
 
-1. The User changes only intended fields and leaves unknown optional material/shape/color/context detail unknown.
+1. The User changes only intended fields and leaves unknown optional Brand/Price/material/shape/color/context detail unknown.
 2. Resume at Main Step 4; completing every rich descriptor is not required for a supported edit.
 
 ### A2 — Enrich readiness information
@@ -117,6 +118,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-001` | User confirmation/correction establishes authoritative values. |
+| `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
 | `BRULE-GAR-002` | The confirmed Saveable minimum remains meaningful. |
 | `BRULE-GAR-003` | Edits can change applicable readiness without universal descriptor requirements. |
 | `BRULE-GAR-004` | Classification/context vocabulary is bounded. |
@@ -131,7 +133,7 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-03` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-WAR-002`, `FEAT-GAR-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-WAR-003`, `FR-WAR-006`, `FR-GAR-002`, `FR-GAR-003`, `FR-GAR-004`, `FR-GAR-005`, `FR-GAR-006`, `FR-GAR-007`, `FR-GAR-008`, `FR-GAR-009`, `FR-GAR-010`, `FR-GAR-011`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-WAR-003`, `FR-WAR-006`, `FR-GAR-002`, `FR-GAR-003`, `FR-GAR-004`, `FR-GAR-005`, `FR-GAR-006`, `FR-GAR-007`, `FR-GAR-008`, `FR-GAR-009`, `FR-GAR-010`, `FR-GAR-011`, `FR-AUTH-008`; `FR-GAR-001`, `FR-GAR-012`, `FR-GAR-013` |
 | [Software Requirements — Data](../SRS.md) | `DATA-GAR-002`, `DATA-GAR-003`, `DATA-GAR-005`, `DATA-INT-001`, `DATA-INT-004` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-GAR-001`, `ERR-GAR-002`, `ERR-ANL-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-004`, `COM-001`, `COM-002` |
@@ -141,6 +143,10 @@ The following references constrain this interaction; detailed policy remains in 
 | [Capabilities](../../01-business/BRD.md) | `CAP-03`, `CAP-04` |
 
 ## 13. Special Requirements / Constraints
+
+All eight categories and category-specific optional subtype choices follow [PRD Section 13.2](../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Exactly ten Dresses/Jumpsuits subtypes are supported, with no automatic layer/length/occasion derivation from their names. FR-GAR-012/013 and BRULE-GAR-010 govern optional Brand and purchase Price: confirmed values remain authoritative, photographs never establish Price, and future Brand suggestions require acceptance. No image upload or later analysis silently overwrites either property.
+
+The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The User can correct supported dimensions without re-running analysis. Automated proposals cannot silently overwrite confirmed edits.
@@ -161,10 +167,12 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction.
+PRD OPQ-012–014 now track unresolved category readiness/composition and optional-field/subtype policies. Earlier issue review below predates this revision.
+
+The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-009-edit-garment.puml)
+Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this textual specification
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram retains the actor/goal boundary; the textual specification and linked existing Activity Diagram, where present, define workflow behavior. This revision creates no replacement focused diagram.

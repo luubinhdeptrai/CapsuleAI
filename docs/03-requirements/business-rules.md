@@ -4,7 +4,8 @@
 
 | Field | Value |
 |---|---|
-| Version / Status | 0.1.2 / Baseline Draft |
+| Version / Status | 0.2 / Baseline Draft |
+| Product revision | 2026-11-05: approved taxonomy and optional Brand/purchase Price; existing rule IDs retained, BRULE-GAR-010 added; unresolved policies traced to PRD Section 34.1. |
 | Last Updated | 2026-10-06 |
 | Primary Owner | Business Analyst / Product Owner |
 | Reviewers | Engineering / QA |
@@ -26,7 +27,7 @@ This specification defines reusable CapsuleAI domain invariants and decisions fo
 
 ### 1.2 Scope
 
-Rules cover private account identity, user-controlled context, confirmed garment information, current owned outfits, Shuffle, feedback, user-reported Wear Events, history/utilization, the Personalized Everyday Capsule, capability-based gaps, and hypothetical strategic shopping. The MVP supports TOP, BOTTOM, OUTERWEAR, and FOOTWEAR.
+Rules cover private account identity, user-controlled context, confirmed garment information, current owned outfits, Shuffle, feedback, user-reported Wear Events, history/utilization, the Personalized Everyday Capsule, capability-based gaps, and hypothetical strategic shopping. The MVP supports TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR.
 
 Observable interaction sequences and quality acceptance remain in the SRS. This document does not specify implementation mechanisms, physical data structures, interfaces, model design, ranking algorithms, or downstream artifacts. SRS recognition benchmarks, image limits, password/token lifetimes, and performance criteria retain their existing authority; only reusable domain policies are extracted here.
 
@@ -191,11 +192,13 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 
 | Garment / Evaluation | Required Information |
 |---|---|
-| All primary categories | Primary Category, Dominant Color, Pattern Type, Climate/Season Suitability. |
-| TOP / OUTERWEAR | Applicable Layering Level in addition to common information. |
+| TOPS, PANTS, SKIRTS, OUTERWEAR, SHOES under the established composition | Primary Category, Dominant Color, Pattern Type, Climate/Season Suitability. |
+| TOPS / OUTERWEAR | Applicable Layering Level in addition to common information. |
 | Layered compatibility where bulk matters | Applicable Bulk Index; missing required bulk cannot pass that check. |
 | Strongly recommended | Subtype, including defined OTHER/UNKNOWN fallback; not a universal blocker. |
-| Not universally required | Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags, Occasion Tags. |
+| Not universally required | Brand and Price never gate readiness. Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags, Occasion Tags. |
+
+The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
 
 Bulk is conditional on layered compatibility, not a universal saving or readiness gate. Supporting a rich descriptor does not make it universally mandatory.
 
@@ -207,17 +210,20 @@ Bulk is conditional on layered compatibility, not a universal saving or readines
 
 ### BRULE-GAR-004 — Controlled Classification and Context Vocabularies
 
-**Rule:** Primary Category is restricted to the four values below. Subtypes are bounded within their parent category; OTHER/UNKNOWN is a subtype fallback, not a fifth primary category. Style and Occasion use the same controlled values across profile and assessment operations.
+**Rule:** Primary Category is restricted to the eight values below. Subtype may be omitted for every category; a supplied value must belong to its parent. Invalid pairs require correction or clearing, never silent reassignment. OTHER/UNKNOWN is valid only where listed, never an additional primary category. DRESSES_JUMPSUITS has exactly ten subtypes, with omission for unknown information; display names and overlapping meanings follow PRD Section 13.2. BAGS/HEADWEAR subtype vocabularies remain pending OPQ-014. Style and Occasion use the same controlled values across profile and assessment operations.
 
 | Vocabulary | Initial Values |
 |---|---|
-| Primary Category | `TOP`, `BOTTOM`, `OUTERWEAR`, `FOOTWEAR` |
+| Primary Category | `TOPS`, `DRESSES_JUMPSUITS`, `PANTS`, `SKIRTS`, `OUTERWEAR`, `SHOES`, `BAGS`, `HEADWEAR` |
 | Style | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
 | Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
-| TOP Subtype | `T_SHIRT`, `SHIRT`, `POLO`, `BLOUSE`, `SWEATER`, `HOODIE`, `TANK_TOP`, `OTHER`, `UNKNOWN` |
-| BOTTOM Subtype | `JEANS`, `TROUSERS`, `CHINOS`, `SHORTS`, `SKIRT`, `LEGGINGS`, `OTHER`, `UNKNOWN` |
+| TOPS Subtype | `T_SHIRT`, `SHIRT`, `POLO`, `BLOUSE`, `SWEATER`, `HOODIE`, `TANK_TOP`, `OTHER`, `UNKNOWN` |
+| DRESSES_JUMPSUITS Subtype | `DAY_DRESS`, `T_SHIRT_DRESS`, `SHIRT_DRESS`, `SWEATSHIRT_DRESS`, `SWEATER_DRESS`, `JACKET_DRESS`, `SUSPENDER_DRESS`, `JUMPSUIT`, `PARTY_DRESS`, `MINI_DRESS` |
+| PANTS Subtype | `JEANS`, `TROUSERS`, `CHINOS`, `SHORTS`, `LEGGINGS`, `OTHER`, `UNKNOWN` |
+| SKIRTS Subtype | `SKIRT`, `OTHER`, `UNKNOWN` |
+| BAGS / HEADWEAR Subtype | No approved bounded values yet; omission supported. |
 | OUTERWEAR Subtype | `JACKET`, `BLAZER`, `COAT`, `CARDIGAN`, `OVERSHIRT`, `OTHER`, `UNKNOWN` |
-| FOOTWEAR Subtype | `SNEAKERS`, `LOAFERS`, `DRESS_SHOES`, `BOOTS`, `SANDALS`, `FLATS`, `HEELS`, `OTHER`, `UNKNOWN` |
+| SHOES Subtype | `SNEAKERS`, `LOAFERS`, `DRESS_SHOES`, `BOOTS`, `SANDALS`, `FLATS`, `HEELS`, `OTHER`, `UNKNOWN` |
 | Capsule Need Dimensions | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
 | AI Confidence | High Confidence; Needs Review; Uncertain. |
 | Provenance | AI Suggested; User Confirmed; User Corrected; User Entered. |
@@ -291,13 +297,27 @@ High Confidence is prohibited when evidence is unavailable/materially conflictin
 
 **Source:** FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001.
 
+### 4.7 Optional Brand and Purchase Price
+
+### BRULE-GAR-010 — Optional Brand and Purchase Price Authority
+
+**Rule:** Brand is optional user-entered text across all eight categories, with no fixed enum or external catalogue. Preserve the confirmed value; unknown is not a fabricated brand. Price is the optional user-reported purchase price of the owned garment, represented by a decimal amount together with an explicit ISO 4217 currency code. An amount without currency, or currency without amount, is incomplete supplied information and must be corrected or cleared before confirmation; omitting both is valid and does not mean zero. Never infer currency from location or perform floating-point monetary calculations. This is not market/resale/replacement value or a retailer/affiliate price; no conversion feature is introduced. Neither field is a save or readiness requirement. Price must not be inferred from a photograph; any future Brand suggestion remains unconfirmed until user acceptance. Later analysis or image upload must not silently replace confirmed Brand or Price.
+
+Future edits may revise or clear these properties with explicit user confirmation. Supplied valid values participate in the same accepted garment addition and safe-retry outcome; they do not create separate ownership or duplicate accepted additions. Applicable monetary/Brand validation details remain open under PRD OPQ-013 and must be resolved before dependent implementation, without defaulting or silently altering confirmed values.
+
+**Applies To:** manual entry, inspection, future editing and assisted-review protection across all eight categories.
+
+**Source:** FR-GAR-012, FR-GAR-013, FR-GAR-011, DATA-GAR-002, DATA-GAR-003, DATA-INT-001, DATA-INT-004; PRD Sections 13.5/34.1.
+
 ## 5. Outfit Validity Rules
+
+TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
 
 ### 5.1 Structural Composition
 
 ### BRULE-OUT-001 — Supported MVP Outfit Composition
 
-**Rule:** A valid MVP outfit contains exactly 1 TOP + 1 BOTTOM + 1 FOOTWEAR, with 0 or 1 OUTERWEAR. No additional slot, repeated item in a slot, or unsupported category forms an additional MVP composition. Composition alone does not establish full validity.
+**Rule:** Under the established separated-garment template, a valid outfit contains exactly 1 TOP + 1 BOTTOM + 1 FOOTWEAR role, with 0 or 1 OUTERWEAR role. No additional slot, repeated item in a slot, or unsupported role forms an additional composition. Composition alone does not establish full validity.
 
 **Applies To:** Daily Outfit, Shuffle, Coverage counts, Multiplier sets.
 
@@ -819,7 +839,7 @@ These tables restate the named rules for fixture construction. They do not intro
 
 ### 14.1 Garment Saveability / Readiness
 
-The confirmed minimum is Primary Category and Dominant Color. Common readiness information includes those fields plus usable Pattern Type and Climate/Season Suitability. Applicable checks include required TOP/OUTERWEAR layering and conditional layered bulk.
+The confirmed minimum is Primary Category and Dominant Color. This table applies only where an evaluation policy is established: TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES need usable pattern and climate information; TOPS/OUTERWEAR need applicable layering and layered bulk remains conditional. For unresolved category policies under PRD OPQ-012, the minimum still saves, but this table cannot establish readiness. Brand/Price and omitted subtype do not add save gates.
 
 | Confirmed Minimum | Common Readiness Information Usable | Applicable Layering Satisfied | Applicable Bulk Satisfied | Saveable | Recommendation-Ready for Evaluation |
 |---|---|---|---|---|---|
@@ -1001,6 +1021,7 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 | BRULE-GAR-007 | AI-REQ-001, AI-REQ-004, AI-REQ-005, AI-REQ-012, AI-REQ-013, ERR-AI-002 | FEAT-AI-002, FEAT-GAR-001 | BR-002, BR-003, BR-004 | CAP-02, CAP-03, CAP-04 |
 | BRULE-GAR-008 | AI-REQ-006, AI-REQ-007, AI-REQ-009, FR-GAR-010, DATA-GAR-003 | FEAT-GAR-001, FEAT-AI-002 | BR-002, BR-003, BR-022 | CAP-04, CAP-02, CAP-03 |
 | BRULE-GAR-009 | FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001 | FEAT-WAR-002, FEAT-MULT-001, FEAT-ANL-002, FEAT-AI-002, FEAT-PERS-002, FEAT-ANL-001 | BR-002, BR-005, BR-014, BR-016, BR-011, BR-006 | CAP-03, CAP-04, CAP-09, CAP-08, CAP-07, CAP-02, CAP-06 |
+| BRULE-GAR-010 | FR-GAR-012, FR-GAR-013, FR-GAR-011, DATA-GAR-002, DATA-GAR-003, DATA-INT-001, DATA-INT-004 | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002 | BR-002, BR-003, BR-005 | CAP-02, CAP-03, CAP-04 |
 | BRULE-OUT-001 | FR-OUT-004, DATA-OUT-001 | FEAT-OUT-001, FEAT-MULT-001 | BR-007, BR-009, BR-008, BR-016 | CAP-05, CAP-06, CAP-09, CAP-08 |
 | BRULE-OUT-002 | FR-OUT-001, FR-WAR-005, FR-MULT-001, DATA-INT-002 | FEAT-OUT-001, FEAT-WAR-002, FEAT-MULT-001, FEAT-ANL-002 | BR-007, BR-005, BR-015, BR-016, BR-014 | CAP-05, CAP-06, CAP-03, CAP-04, CAP-09, CAP-08, CAP-07 |
 | BRULE-OUT-003 | FR-OUT-004, FR-GAR-005, FR-OUT-015 | FEAT-OUT-001, FEAT-GAR-001, FEAT-OUT-003 | BR-007, BR-009, BR-003 | CAP-05, CAP-06, CAP-04 |

@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-003 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-012](../../product-backlog.md#pbi-012--add-a-photo-supported-garment-with-manual-confirmation) |
@@ -14,6 +14,7 @@
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Trustworthy Wardrobe Understanding |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Synchronized approved garment taxonomy and optional-property authority; no new Sprint selection or AI implementation. |
 
 ## 1. Story
 
@@ -24,6 +25,8 @@ As an authenticated owner, I want to attach a permitted garment photo and confir
 Make owned clothing recognizable visually while preserving manual entry independently of automated analysis.
 
 ## 3. Scope
+
+The eight categories and exact ten Dresses/Jumpsuits subtypes follow [PRD Sections 13.2/13.5](../../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Optional subtype must match its category. Brand text and purchase Price (decimal amount plus explicit ISO 4217 currency) follow FR-GAR-012/013 and BRULE-GAR-010; neither is mandatory for saving or readiness. Price cannot be inferred from a photograph; any future Brand proposal requires explicit acceptance and cannot overwrite confirmed information. This adds no Brand-recognition feature.
 
 Camera/library alternatives, supported input validation, replacement/cancellation and a useful photo-supported confirmed garment; imageless manual continuity remains available.
 
@@ -36,6 +39,8 @@ Camera/library alternatives, supported input validation, replacement/cancellatio
 ### AC-01 — Choose a permitted route
 
 Offer capture or photo-library selection with lighting/visibility guidance. Camera denial/unavailability does not remove permitted library or imageless manual entry; library input does not require camera permission.
+
+The optional-property and classification rules in Section 3 apply to this accepted outcome, including preservation of valid supplied values and correction/clearing of invalid category/subtype or incomplete Price pairs.
 
 ### AC-02 — Validate supported input
 
@@ -88,6 +93,8 @@ Imageless manual entry is [US-GAR-001](../garment/US-GAR-001-add-garment-manuall
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
 
 ## 10. Open Refinement Notes
+
+PRD OPQ-012–014 track unresolved category policy and optional-field validation. No missing policy authorizes fabricated readiness or silent user-value changes.
 
 The input boundaries are fixed by SRS Section 3.4.1. Permission/media realization and actual device evidence remain delivery work; no new image quota or technical save design is specified.
 
