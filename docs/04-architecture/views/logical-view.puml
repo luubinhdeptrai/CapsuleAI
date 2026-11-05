@@ -1,4 +1,6 @@
 @startuml
+' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
+' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Logical View
 ' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
 ' Source: ADD v0.1 + Selected Architecture Decisions v0.1.1 (ADA-001-018 Selected)
@@ -82,11 +84,11 @@ rectangle "CapsuleAI Business Core - Modular Monolith" as Core #FFFFFF {
         component "Personalization Profile / Selected Context\nDeclared styles, common need priorities\nOptional body/gender and effective withdrawal\nLocation choice; UC-006 environmental acquisition\nConsumers share current / limited context" as Personal #F0FDFA
     }
     package "Wardrobe" as Wardrobe <<logical context>> #DCFCE7 {
-        component "Confirmed Garment / Wardrobe Authority\nGarment identity; confirmation / correction truth\nSaveable minimum; eligibility / readiness policy\nBrowse, search, edit, remove; private media\nAnalysis drafts never establish ownership" as Garments #F0FDF4
+        component "Confirmed Garment / Wardrobe Authority\nGarment identity; confirmation / correction truth\nSaveable minimum; unevaluated eligibility boundary\nBrowse, search, edit, remove; private media\nAnalysis drafts never establish ownership" as Garments #F0FDF4
     }
     package "Outfit Advice and Use" as Outfits <<logical context>> #FEF3C7 {
         component "Owned-Outfit Advice / Reported Use\nDaily choices, Shuffle and soft ranking\nOutfit-targeted feedback; distinct Wear Events\nHistory, utilization, effective aged evidence\nCoherent survivor effects; minimal history\nOriginal local grouping / absolute elapsed aging" as Advice #FFFBEB
-        component "Outfit Evaluation Semantics\nGarment-identity-set outfit identity\nHard validity; uses Wardrobe readiness meaning\nOwned / historical / hypothetical distinction\nCaller-supplied inputs; independent of Daily" as Evaluation <<published contract>> #FDE68A
+        component "Outfit Evaluation Semantics\nGarment-identity-set outfit identity\nHard validity; uses confirmed Wardrobe properties; policy deferred\nOwned / historical / hypothetical distinction\nCaller-supplied inputs; independent of Daily" as Evaluation <<published contract>> #FDE68A
     }
     package "Wardrobe Intelligence" as Intelligence <<logical context>> #EDE9FE {
         component "Coverage / Gaps / Candidate Utility\nWeighted needs; capability gaps; sufficient data\nHypothetical candidates; complete Multiplier\nSame-basis count, states and new-outfit previews\nQualified optional shopping advice\nCandidates/previews create no ownership or Wear" as Assessments #F5F3FF
@@ -101,10 +103,10 @@ Personal --> Weather : environmental evidence / ACL
 Garments --> AI : bounded assistance / ACL
 Garments --> Media : authorized media / lifecycle
 
-Advice --> Garments : current garments / readiness
+Advice --> Garments : current garments / approved properties
 Advice --> Personal : declared context
 Advice --> Evaluation : identity / validity
-Assessments --> Garments : baseline / readiness
+Assessments --> Garments : baseline / approved properties
 Assessments --> Personal : needs / context
 Assessments --> Evaluation : shared outfit semantics
 Assessments --> Shopping : optional evidence / navigation; ACL
@@ -125,11 +127,11 @@ legend bottom
   AI returns preview + proposals, never confirmation. Private media association/purge is recoverable.
   Current request occasion stays separate from common needs; manual location does not need permission.
   Wardrobe detail combines published garment and reported-use queries without mutual owner calls.
-  Wardrobe publishes readiness for owned/candidate evaluation without adding hypothetical ownership.
+  Wardrobe publishes confirmed approved properties; future engine eligibility policy remains deferred.
   Intelligence applies the published policy to complete sets, never to Daily's displayed subset.
   Relevant inputs/rules changing require reevaluation or Outdated before current advice is claimed.
   Revocation, effective removal, Wear effects and current assessment basis need immediate coherence.
-  New Wear acceptance coordinates current Wardrobe ownership/readiness with Outfit Advice and Use.
+  New Wear acceptance coordinates current Wardrobe ownership and accepted properties with Outfit Advice and Use.
   Owners coordinate locally; later design may use local ACID. Exact transactions remain unresolved.
   Mutation owners retain durable logical-action outcomes; retry differs from a new Wear intention.
   Required physical deletion is owner-accountable, durable/resumable work after effective removal.
@@ -138,6 +140,10 @@ legend bottom
   No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
   Derived-result ownership does not select a permanent store; Clean realization is in Implementation View.
   Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Final property model: exactly 13 source-approved properties; all applicable
+  creation/persistence/detail fields belong to selected Sprint 2 work.
+  Future composition/compatibility/eligibility policy is deferred.
+  No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
 
 @enduml

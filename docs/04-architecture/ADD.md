@@ -1,5 +1,7 @@
 # CapsuleAI — Architecture Design Document
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -7,7 +9,7 @@
 | Artifact | Architecture Design Document (ADD) |
 | Version | 0.1.5 |
 | Status | Baseline Draft |
-| Last Updated | 2026-10-20 |
+| Last Updated | 2026-11-05 |
 | Owner | Architect / Tech Lead, with Backend, AI, Mobile and QA input; Product/BA for requirement implications |
 | Architecture Decision Baseline | ADA-001–018 Selected; no override or deferral |
 | Selection Authority | [Selected Architecture Decisions](selected-architecture-decisions.md), v0.1; Project Owner / Backend Developer, 2026-10-10 |
@@ -30,7 +32,7 @@ Input versions identify the baselines re-read for authoring. Subsequent navigati
 
 **2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
-The Wardrobe owner retains optional Brand text and user-reported purchase Price (decimal amount plus explicit ISO 4217 currency) within the confirmed garment profile (FR-GAR-012/013; DATA-GAR-002; BRULE-GAR-010). These logical properties do not change module boundaries, PostgreSQL authority, JDBC/Flyway, accepted architecture decisions or the media/AI boundary. Price is separate from optional commercial-provider evidence; retailer freshness rules do not govern it. Physical storage/contracts remain selected-story JIT work. Category-specific readiness remains SRS Section 3.5.1, including unresolved policies; Brand/Price do not gate it.
+The Wardrobe owner retains all 13 applicable approved fashion properties from the source authority, plus necessary owner/confirmation/version/provenance/action-outcome metadata and optional media. Persist accepted values and optional distinct Materials under the existing PostgreSQL/JDBC/Flyway direction; this creates no schema or API. Future eligibility/composition/compatibility policy is deferred, not a hidden garment field or current ready/ineligible judgment.
 
 ## 2. Introduction
 
@@ -70,7 +72,7 @@ These are cohesive **responsibility concerns, not a duplicate module/context lis
 | Responsibility Concern | Obligation to Allocate |
 | --- | --- |
 | Account access and personal context | Authorized identity/session/recovery; optional preferences and common needs distinct from the current request occasion; removed optional context stops effective use. |
-| Wardrobe and garment authority | Saveable/readiness distinctions; confirmed/corrected profiles, current ownership, browsing and maintenance; private media; minimal removed-item historical meaning. |
+| Wardrobe and garment authority | saved ownership / unevaluated eligibility distinctions; confirmed/corrected profiles, current ownership, browsing and maintenance; private media; minimal removed-item historical meaning. |
 | Styling and shared evaluation meaning | Current eligible inputs, canonical outfit identity, hard validity, personalized ranking, Shuffle invariants and explainable results. |
 | Feedback, reported use and history | Exact-outfit feedback, distinct logical Wear intentions, original-local-day/absolute-time meanings, survivor effects, utilization and effective behavioral evidence. |
 | Wardrobe intelligence and strategic shopping | Contextual weighted Coverage, capability-first Gaps, complete same-basis candidate utility and hypothetical previews; credible optional commerce and independent measurement. |
@@ -90,7 +92,7 @@ Requirements constrain observable meaning; selections constrain its architectura
 | Connected Vietnam-first Android 10+ / iOS 15+; Vietnamese initial UI | SRS Sections 1.2/2.3; LOC-001–005; PRD OPQ-002 | Preserve permission/manual alternatives, canonical meanings independent of display labels, account-safe client state and accessible outcomes. Mobile framework remains unspecified. |
 | Selected system/runtime/data direction | ADA-001–004/007/011–013/015–018; selected record | Modular business core, private separate Python analysis, one PostgreSQL authority and private media; inward dependencies, logical owners and public semantic contracts; no dedicated cache or broker initially. |
 | Persistent usable access and distinct revocation | FR-AUTH-004/007/009/010/013/014/017/018; DATA-AUTH-005; ADA-008 | Valid JWT plus usable account/session authority. Access lasts 15 minutes, session at most 30 days across consumed refresh rotation; reset is 30-minute single-success-use with replacement. Logout is current-session-only; reuse affects its session; completed reset revokes all account Refresh Sessions. |
-| Confirmed truth and bounded garment domain | DATA-INT-001/002; BRULE-GAR-001–003/009; BRULE-OUT-001/008/009 | TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; confirmed category/color is Saveable without an image. Evaluation-specific readiness and hard validity remain separate from ranking and saving. |
+| Confirmed truth and bounded garment domain | DATA-INT-001/002; BRULE-GAR-001–003/009; BRULE-OUT-001/008/009 | Exactly 13 source-owned properties and eight categories; Category/Color plus confirmation save, all other applicable fields are optional. No obsolete fields, readiness gate or fixed category-role composition is active; future evaluation policy is deferred. |
 | Qualified image input and complete processing | SRS Section 3.4.1; NFR-PERF-001; ADA-004/005 | Supported JPEG/JPG, PNG, HEIC/HEIF; maximum 15 MB, shortest dimension ≥512 pixels. Full processing includes usable preview plus reviewable proposals; user confirmation remains separate. |
 | Complete-operation timing and distinct workload meanings | NFR-PERF-001/002; NFR-TEST-003; NFR-SCA-001/002; SRS Section 12.3 | p95 ≤5 seconds for post-transfer processing; p95 <3 seconds for first complete daily result with exactly 100 confirmed garments. Use reference hardware/network and 5 warm-ups then ≥100 measured runs. The 20-user integrity workload is separate, not a timing guarantee. |
 | Necessary private use and lifecycle | NFR-PRIV-001/002; DATA-RET-001–003; SRS Section 12.1; ADA-007/012/014 | Immediate effective removal; applicable physical deletion within 30 days; user-linked measurement no longer linked beyond its 90-day limit. Necessary minimal functional history is distinct. MVP personal data is excluded from model training/improvement. |
@@ -148,7 +150,7 @@ Sources: SRS NFR-PERF-002, NFR-SCA-001, NFR-TEST-003 and Section 12.3; UC-011; A
 | Artifact | Current-wardrobe recommendation operation. |
 | Response | Evaluate eligible inputs, apply hard validity before ranking and make the first complete recommendation result set available, retaining actual fewer/no-valid outcomes where appropriate. |
 | Response Measure | p95 <3 seconds from accepted request to the first complete result set. Use 5 warm-ups then ≥100 measured executions, retain legitimate slow runs and record conditions. No silent omission of eligible inputs, duplicate padding or invalid alternatives. |
-| Architectural Tactics | ADA-001/003/010/011/014/016/017; ASR-PERF-001 / ASR-CON-001. Obtain coherent authoritative inputs through published local owners; filter applicable readiness/validity before personalized ranking. Profile complete computation and data access without a dedicated cache, eligible-input truncation or duplicate padding; collect full-result timing and manifest evidence. |
+| Architectural Tactics | ADA-001/003/010/011/014/016/017; ASR-PERF-001 / ASR-CON-001. Obtain coherent authoritative inputs through published local owners; filter eligibility under a future approved policy/validity before personalized ranking. Profile complete computation and data access without a dedicated cache, eligible-input truncation or duplicate padding; collect full-result timing and manifest evidence. |
 
 ### 6.3 QA-AVL-01 — Optional dependency failure preserves value
 
@@ -174,7 +176,7 @@ Sources: SRS NFR-REL-001, FR-AI-003/007/008/010, AI-REQ-007, DATA-INT-001 and ER
 | Stimulus | Image assistance cannot provide useful information; the User supplies and confirms the manual minimum. Later automated output disagrees with the accepted values. |
 | Environment | Authorized connected entry, exercising all agreed representative AI-failure cases; manual saving capability remains usable. |
 | Artifact | Garment confirmation and authoritative wardrobe profile. |
-| Response | Permit imageless manual review/confirmation, acknowledge accepted creation separately from draft/failure, explain applicable readiness and retain confirmed/corrected values after later analysis. |
+| Response | Permit imageless manual review/confirmation, acknowledge accepted creation separately from draft/failure, explain eligibility under a future approved policy and retain confirmed/corrected values after later analysis. |
 | Response Measure | Manual creation succeeds in every agreed representative AI-failure case when the confirmed minimum is accepted. An unconfirmed/canceled attempt establishes no garment; retry of an accepted addition creates no unexplained duplicate; later analysis silently overwrites no authoritative value. |
 | Architectural Tactics | ADA-003/004/005/009/015/018; ASR-REL-001. Place canonical acceptance under user confirmation, with a usable imageless/manual path independent of AI. Persist the accepted logical addition coherently; keep proposals/late analysis outside that authority. Expose draft, failed, uncertain and accepted meaning to prevent retry duplication or automated overwrite. |
 
@@ -287,7 +289,7 @@ Sources: SRS FR-OUT-003/007/009, FR-ANL-010–015, FR-GAP-004, FR-MULT-002–008
 | Environment | Authorized current wardrobe and hypothetical candidate with explicit readiness, priorities, context and relevant rule version; fixtures include complete, zero, partial, unavailable and changed-basis conditions. |
 | Artifact | Valid outfit identity, Coverage/Gaps and Multiplier count/state/previews. |
 | Response | Use identity-set uniqueness and applicable hard validity consistently, apply Coverage sufficiency/weighted meaning, and claim exact candidate utility only from complete same-basis sets. |
-| Response Measure | Permuting the same constituent identities adds no outfit. Existing complete 41-current/58-expanded fixture gives +17; identical completed sets give Evaluated Zero/+0. Missing/partial/unavailable evaluation yields no exact +N or false +0, and relevant changes yield Outdated until current evaluation is established. Existing weighted Coverage fixture B09 gives 50; missing positive priorities/required ready roles yields no fabricated 0% or gap. Previews contain the hypothetical candidate and share the count's basis; assessment/viewing changes neither ownership nor Wear history. |
+| Response Measure | Permuting the same constituent identities adds no outfit. Existing complete 41-current/58-expanded fixture gives +17; identical completed sets give Evaluated Zero/+0. Missing/partial/unavailable evaluation yields no exact +N or false +0, and relevant changes yield Outdated until current evaluation is established. Existing weighted Coverage fixture B09 gives 50; missing positive priorities/required evidence required by a future evaluation policy yields no fabricated 0% or gap. Previews contain the hypothetical candidate and share the count's basis; assessment/viewing changes neither ownership nor Wear history. |
 | Architectural Tactics | ADA-009/010/015–018; ASR-CON-001. Assign accountable shared validity/identity semantics and use authorized current owner inputs with coherent basis checks. Establish Coverage sufficiency and complete unique current/expanded sets before exact utility, associating count/reasons/previews with that basis. Detect relevant changes, withhold current exact claims and prevent candidate evaluation from mutating ownership/history. |
 
 ### 6.13 QA-USE-02 — Accessible actions and state meaning
@@ -312,7 +314,7 @@ Sources: SRS Section 8.1, AI-REQ-010/011/014, NFR-TEST-002 and NFR-USE-002; PBI-
 | --- | --- |
 | Stimulus Source | QA/AI contributors executing the established acceptance evaluation. |
 | Stimulus | Evaluate garment assistance against the locked qualified-image benchmark and inspect its evidence. |
-| Environment | Locked set of ≥400 qualified images with ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; human category and controlled dominant-color-family ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
+| Environment | Locked set of ≥400 qualified images with ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; human category and approved source-Color ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
 | Artifact | Garment-assistance results, benchmark/label manifests and independent preview review. |
 | Response | Produce inspectable results tied to qualified inputs and the evaluated implementation, reporting category and dominant-color correctness separately from preview usability and richer attributes. |
 | Response Measure | Evidence establishes the required set size/balance and evaluation isolation. Category accuracy is ≥90% overall and ≥85% within each primary-category group; dominant-color accuracy is ≥90% overall, reported separately. Preview review checks identifiable garment, preserved major regions, non-obstructive background and sufficient correction/confirmation information under SRS Section 3.4.1; no preview percentage or equal-accuracy rich-attribute claim is introduced. |
@@ -462,7 +464,7 @@ Ports define interaction dependencies, adapters implement access/transport, and 
 
 **Basis:** ASR-REL-001/PERF-001/INT-001/SEC-002; SI-001, NFR-REL-001, DATA-INT-001, AI-REQ-007; SRS Section 3.4.1; UC-007/AD-007. **Selections:** ADA-004–007/009/013/015/018.
 
-The private Python runtime analyzes the selected qualified image and returns both a usable preview and reviewable proposals/uncertainty. The core awaits a bounded complete result; pending/timeout/failure remains explicit and manual entry stays independently usable. Confidence/provenance and Saveable/readiness meanings stay distinct. User confirmation/correction, not AI completion, establishes the canonical profile. Late or retried output cannot overwrite accepted values or create an owned garment.
+The private Python runtime analyzes the selected qualified image and returns both a usable preview and reviewable proposals/uncertainty. The core awaits a bounded complete result; pending/timeout/failure remains explicit and manual entry stays independently usable. Confidence/provenance and saved ownership / unevaluated eligibility meanings stay distinct. User confirmation/correction, not AI completion, establishes the canonical profile. Late or retried output cannot overwrite accepted values or create an owned garment.
 
 Private object storage is a media resource reached through an application-controlled authorized delivery boundary. Object existence, a completed upload or a long-lived bearer link does not establish current access authority. Database acceptance and media operations need recoverable association/cleanup; no single cross-resource atomic transaction is claimed. Imageless manual creation requires neither successful media upload nor analysis.
 
@@ -488,7 +490,7 @@ Request-time assessment obtains authorized current inputs through published owne
 
 Daily advice filters hard constraints before soft preferences, including declared context and effective age-weighted behavioral evidence. Shuffle changes the chosen slot while retaining other constituents/context and validating the resulting outfit. A completed smaller/no-valid choice set is honest; invalid alternatives, padding and silent omission are unacceptable.
 
-Coverage applies the authoritative positive-priority weighted needs and sufficient-data gates. Missing necessary priorities/ready roles cannot become 0% or a fabricated Gap. A Gap is an underserved capability/bottleneck supported by the evaluated context, not a mandatory named product.
+Coverage applies the authoritative positive-priority weighted needs and sufficient-data gates. Missing necessary priorities/evidence required by a future evaluation policy cannot become 0% or a fabricated Gap. A Gap is an underserved capability/bottleneck supported by the evaluated context, not a mandatory named product.
 
 Multiplier completes the relevant current and hypothetical expanded unique valid sets on the same context/rule/identity basis. Their incremental set difference establishes +N, not the displayed daily recommendation subset. Exact/fully evaluated +0 require completion/readiness/uniqueness evidence. **Exact, Evaluated Zero, Incomplete, Unavailable and Outdated** remain separate meanings; missing data, timeout or partial computation cannot become +0. Candidate-bearing previews, count and explanation share the same evaluated basis, and assessment/viewing changes no ownership/Wear state.
 
@@ -498,7 +500,7 @@ Relevant wardrobe, confirmed/candidate attributes, context or rule changes requi
 
 **Basis:** ASR-USE-001; NFR-USE/ACC/MNT/SUP, LOC-001–005; QA-USE-01/02, QA-MNT-01 and QA-SUP-01. **Selections:** ADA-005/006/010/014/015/018.
 
-Published outcomes carry canonical meaning, applicable evidence/limitations and available recovery so mobile does not infer acceptance or currentness from a count, image or technical transport success. Keep draft/accepted/uncertain, Saveable/readiness, confidence/provenance, inaccessible/unavailable/empty and current/historical/hypothetical states distinguishable. No backend failure is labeled empty inventory, evaluated zero or completed mutation.
+Published outcomes carry canonical meaning, applicable evidence/limitations and available recovery so mobile does not infer acceptance or currentness from a count, image or technical transport success. Keep draft/accepted/uncertain, saved ownership / unevaluated eligibility, confidence/provenance, inaccessible/unavailable/empty and current/historical/hypothetical states distinguishable. No backend failure is labeled empty inventory, evaluated zero or completed mutation.
 
 Separate controlled semantic values from Vietnamese display labels. A label change cannot silently modify confirmed values, vocabulary meaning or domain behavior; QA-MNT-01 remains the before/after regression obligation. Mobile supplies meaningful accessible names/roles/states, text scaling and primary-action operability under QA-USE-02. Core/ACLs preserve the information needed to explain states beyond color/images; accessibility remains integrated client/core evidence.
 

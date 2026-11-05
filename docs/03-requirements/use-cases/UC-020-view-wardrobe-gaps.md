@@ -1,5 +1,7 @@
 # UC-020 — View Wardrobe Gaps
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -163,9 +165,9 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-020-view-wardrobe-gaps.puml)
+Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this specification.
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The existing master diagram defines actor/goal scope; this specification and its linked Activity Diagram define behavior. No missing focused artifact is recreated by this revision.
 
 ## 17. Activity Diagram
 

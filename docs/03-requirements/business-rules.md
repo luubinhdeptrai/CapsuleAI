@@ -1,17 +1,19 @@
 # CapsuleAI — Business Rules
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Introduction
 
 | Field | Value |
 |---|---|
-| Version / Status | 0.2 / Baseline Draft |
-| Product revision | 2026-11-05: approved taxonomy and optional Brand/purchase Price; existing rule IDs retained, BRULE-GAR-010 added; unresolved policies traced to PRD Section 34.1. |
-| Last Updated | 2026-10-06 |
+| Version / Status | 0.3 / Baseline Draft |
+| Product revision | 2026-11-05: final 13-property/source-vocabulary approval; all applicable properties included in Sprint 2; obsolete attributes and eligibility/composition predicates superseded with IDs retained. |
+| Last Updated | 2026-11-05 |
 | Primary Owner | Business Analyst / Product Owner |
 | Reviewers | Engineering / QA |
-| Business Source | [BRD v0.3](../01-business/BRD.md) |
-| Product Source | [PRD v0.2](../02-product/PRD.md) |
-| Software Requirements Source | [SRS v0.3](SRS.md) |
+| Business Source | [BRD v0.5](../01-business/BRD.md) |
+| Product Source | [PRD v0.4](../02-product/PRD.md) |
+| Software Requirements Source | [SRS v0.5](SRS.md) |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Authoritative Location | `docs/03-requirements/business-rules.md` |
 
@@ -20,10 +22,11 @@
 | 0.1 | 2026-10-06 | Initial extraction of reusable MVP domain rules, vocabularies, formulas, precedence, decision tables, boundary cases, and source traceability. Temporal rules and boundary examples define deterministic evidence interpretation. |
 | 0.1.1 | 2026-10-06 | Defined completed elapsed 24-hour periods for behavioral age/recency and the latest surviving Wear Event as the normalized Wear-group evidence anchor. No other rule semantics changed. |
 | 0.1.2 | 2026-10-06 | Defined purpose-limited private data use, removal/measurement retention, weather and commercial freshness, and navigation-independent utility; normalized current rule presentation and preserved established domain semantics. |
+| 0.3 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 
 ### 1.1 Purpose
 
-This specification defines reusable CapsuleAI domain invariants and decisions for Product, Engineering, QA, and subsequent behavioral modeling. It consolidates the rules needed to determine garment readiness, outfit validity, effective behavioral evidence, contextual coverage, candidate utility, and assessment states.
+This specification defines reusable CapsuleAI domain invariants and decisions for Product, Engineering, QA, and subsequent behavioral modeling. It consolidates the rules for garment saving and unevaluated eligibility, plus future outfit validity, effective behavioral evidence, contextual coverage, candidate utility, and assessment states.
 
 ### 1.2 Scope
 
@@ -62,13 +65,13 @@ Apply the following order within the relevant domain operation. Steps 1–6 cons
 | 1 | User authorization / ownership boundaries | Only the authorized user's information may be used or changed. |
 | 2 | Current ownership and active state | Removed items and unowned candidates cannot enter current daily outfits. |
 | 3 | Authoritative confirmed information | User-confirmed/corrected/entered-and-confirmed values take precedence over automated proposals. |
-| 4 | Garment Recommendation-Readiness | Missing required compatibility information prevents the evaluation needing it. |
-| 5 | Outfit hard validity | Enforce composition, eligibility, layering, applicable bulk, and severe-pattern/noise limits. |
+| 4 | Garment saving and eligibility | Category/one Color plus confirmation save; eligibility is not evaluated and optional omissions do not imply unsuitability. |
+| 5 | Future outfit validity | Composition/compatibility/eligibility policy is deferred; authorization and identity remain active boundaries. |
 | 6 | Available environmental/contextual hard validity | Enforce applicable environmental compatibility; unavailable weather follows the explicit fallback. |
 | 7 | Soft personalization / ranking | Rank already-valid choices using available preferences and evidence. |
 | 8 | Diversity / recency adjustments | Apply soft penalties or the permitted boost within the preceding boundaries. |
 
-Soft ranking SHALL NEVER make a hard-invalid outfit valid. Positive personalization SHALL NEVER override unauthorized ownership, removed state, missing required readiness, structural invalidity, layering/bulk incompatibility, applicable hard environmental incompatibility, or severe pattern/noise invalidity.
+Soft ranking cannot override authorization, confirmed ownership or a future approved hard rule. No previous property-based compatibility predicate is active; do not infer eligibility from optional absence or undefined policy.
 
 Candidate evaluation is a separately identified hypothetical scope: the candidate may join expanded hypothetical sets, while every owned constituent remains subject to the same applicable rules. History preserves prior meaning without restoring current eligibility. See BRULE-OUT-002, BRULE-OUT-008, BRULE-HIST-002, and BRULE-MULT-001.
 
@@ -188,78 +191,51 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 
 ### BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness
 
-**Rule:** Readiness requires the applicable compatibility information below, supplied authoritatively or derived from justified evidence without overwriting user values. A Saveable garment may remain unready for a decision requiring an UNKNOWN/unavailable field; retain the garment and identify the missing information.
+**Status: revised; old predicates superseded.**
 
-| Garment / Evaluation | Required Information |
-|---|---|
-| TOPS, PANTS, SKIRTS, OUTERWEAR, SHOES under the established composition | Primary Category, Dominant Color, Pattern Type, Climate/Season Suitability. |
-| TOPS / OUTERWEAR | Applicable Layering Level in addition to common information. |
-| Layered compatibility where bulk matters | Applicable Bulk Index; missing required bulk cannot pass that check. |
-| Strongly recommended | Subtype, including defined OTHER/UNKNOWN fallback; not a universal blocker. |
-| Not universally required | Brand and Price never gate readiness. Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags, Occasion Tags. |
+**Rule:** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
-
-Bulk is conditional on layered compatibility, not a universal saving or readiness gate. Supporting a rich descriptor does not make it universally mandatory.
-
-**Applies To:** Daily Outfit, Shuffle, Coverage, hypothetical Multiplier combinations.
-
-**Source:** FR-GAR-004, FR-GAR-005, FR-GAR-006, DATA-GAR-005, ERR-GAR-002.
+**Source:** FR-GAR-004/005, DATA-GAR-005, ERR-GAR-002; final Product Owner property-model decision.
 
 ### 4.4 Classification and Descriptor Rules
 
 ### BRULE-GAR-004 — Controlled Classification and Context Vocabularies
 
-**Rule:** Primary Category is restricted to the eight values below. Subtype may be omitted for every category; a supplied value must belong to its parent. Invalid pairs require correction or clearing, never silent reassignment. OTHER/UNKNOWN is valid only where listed, never an additional primary category. DRESSES_JUMPSUITS has exactly ten subtypes, with omission for unknown information; display names and overlapping meanings follow PRD Section 13.2. BAGS/HEADWEAR subtype vocabularies remain pending OPQ-014. Style and Occasion use the same controlled values across profile and assessment operations.
+**Rule:** Category is one of the eight approved codes. Every supplied optional Subtype must belong to that Category and its complete approved source list; missing Subtype is valid. No invented fallback or silent replacement is permitted. MINI_DRESS and other overlapping names remain subtypes without automatic derivation. All Bags/Headwear choices are approved, not pending research.
 
-| Vocabulary | Initial Values |
-|---|---|
-| Primary Category | `TOPS`, `DRESSES_JUMPSUITS`, `PANTS`, `SKIRTS`, `OUTERWEAR`, `SHOES`, `BAGS`, `HEADWEAR` |
-| Style | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
-| Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
-| TOPS Subtype | `T_SHIRT`, `SHIRT`, `POLO`, `BLOUSE`, `SWEATER`, `HOODIE`, `TANK_TOP`, `OTHER`, `UNKNOWN` |
-| DRESSES_JUMPSUITS Subtype | `DAY_DRESS`, `T_SHIRT_DRESS`, `SHIRT_DRESS`, `SWEATSHIRT_DRESS`, `SWEATER_DRESS`, `JACKET_DRESS`, `SUSPENDER_DRESS`, `JUMPSUIT`, `PARTY_DRESS`, `MINI_DRESS` |
-| PANTS Subtype | `JEANS`, `TROUSERS`, `CHINOS`, `SHORTS`, `LEGGINGS`, `OTHER`, `UNKNOWN` |
-| SKIRTS Subtype | `SKIRT`, `OTHER`, `UNKNOWN` |
-| BAGS / HEADWEAR Subtype | No approved bounded values yet; omission supported. |
-| OUTERWEAR Subtype | `JACKET`, `BLAZER`, `COAT`, `CARDIGAN`, `OVERSHIRT`, `OTHER`, `UNKNOWN` |
-| SHOES Subtype | `SNEAKERS`, `LOAFERS`, `DRESS_SHOES`, `BOOTS`, `SANDALS`, `FLATS`, `HEELS`, `OTHER`, `UNKNOWN` |
-| Capsule Need Dimensions | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
-| AI Confidence | High Confidence; Needs Review; Uncertain. |
-| Provenance | AI Suggested; User Confirmed; User Corrected; User Entered. |
+The [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns garment values. Profile style preferences, request Occasion and common needs keep their separate SRS Section 4.10 vocabularies; they are not garment Style or a garment Occasion property.
 
-**Applies To:** garment classification, profile choices, recommendation and analytics context.
-
-**Source:** FR-GAR-001, FR-GAR-002, FR-PROF-002, FR-PROF-004, DATA-GAR-002.
+**Source:** FR-GAR-001/002, DATA-GAR-002; FR-PROF-002/004 for separate context.
 
 ### BRULE-GAR-005 — Bounded Garment Descriptors
 
-**Rule:** Descriptors use exactly the following values/scales. Unknown or unavailable information is distinct from a real scale value. Descriptor support does not change the saving and applicable readiness rules.
+**Rule:** Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-| Additional Descriptor | Values / Scale |
-|---|---|
-| Pattern Type | `SOLID`, `STRIPE`, `PLAID`, `FLORAL`, `GRAPHIC`, `POLKA_DOT`, `ABSTRACT`, `ANIMAL_PRINT`, `OTHER`, `UNKNOWN` |
-| Pattern Density | `NONE`, `LOW`, `MEDIUM`, `HIGH`; SOLID → NONE. |
-| Visual Noise | 1 Very Low; 2 Low; 3 Medium; 4 High; 5 Very High. |
-| Layering Level | `BASE`, `MID`, `OUTER`, `SHELL`, `NOT_APPLICABLE`, `UNKNOWN` |
-| Bulk Index | 1 Very Light; 2 Light; 3 Medium; 4 Bulky; 5 Very Bulky. |
-| Fit | `SLIM`, `REGULAR`, `RELAXED`, `OVERSIZED`, `UNKNOWN` |
-| Climate / Environmental Suitability | `HOT`, `WARM`, `MILD`, `COOL`, `COLD`, `ALL_SEASON`, `UNKNOWN`; this is the primary MVP interpretation of Climate/Season Suitability. |
-| Dominant Color Family | `BLACK`, `WHITE`, `GRAY`, `BEIGE`, `BROWN`, `RED`, `ORANGE`, `YELLOW`, `GREEN`, `BLUE`, `PURPLE`, `PINK`, `MULTICOLOR`, `OTHER`, `UNKNOWN` |
-| Color Temperature | `WARM`, `COOL`, `NEUTRAL`, `UNKNOWN` |
-| Palette Role | `ANCHOR`, `ACCENT`, `UNKNOWN` |
+| # | Property | Applicability | Required for Saving | Meaning / Value Authority |
+|---|---|---|---|---|
+| 1 | Category | All categories | Yes | One of eight category codes. |
+| 2 | Subtype | All categories | No | Optional category-valid selection from the complete approved list. |
+| 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
+| 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
+| 5 | Pattern | All categories | No | One optional approved Pattern. |
+| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 7 | Fit | Tops | No | Optional approved Fit. |
+| 8 | Neckline | Tops | No | Optional approved Neckline. |
+| 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
+| 10 | Length | Tops and Pants | No | Category-specific approved Length values. |
+| 11 | Silhouette | Pants | No | Optional approved Silhouette. |
+| 12 | Brand | All categories | No | Optional user-entered text; no enum/catalogue. |
+| 13 | Price | All categories | No | Optional amount originally paid: decimal amount and explicit ISO 4217 currency. |
 
-**Applies To:** garment review/editing, compatibility, confidence ground truth.
+Complete values are in the [source authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md); no reduced local list, automatic compatibility descriptor or extra attribute is permitted.
 
-**Source:** FR-GAR-007, FR-GAR-008, FR-GAR-009, DATA-GAR-002.
+**Source:** FR-GAR-002/006–010/012/013, DATA-GAR-002.
 
 ### BRULE-GAR-006 — Descriptor Consistency and Unknown Information
 
-**Rule:** Pattern Type SOLID implies Pattern Density NONE. Climate/Season Suitability uses environmental bands rather than a mandatory calendar-season taxonomy. UNKNOWN/unavailable information cannot establish compatibility that requires it. Derivation requires supporting evidence; missing descriptors, colors, material, or optional context must not be fabricated to pass a check.
+**Rule:** Unknown optional information remains absent rather than an invented value. Material selections form distinct semantic values, without percentages/proportions. Color is one approved dominant value; Pattern is one optional value. Validate applicability and supplied labels before confirmation; correct/clear invalid or inapplicable fields without silent substitution or discard. No cross-property inference is approved merely because a subtype overlaps length, style or occasion. Etc is not a Style value. Removed descriptors cannot be reconstructed as hidden fields or readiness gates.
 
-**Applies To:** profile confirmation, readiness, outfit and hypothetical validity.
-
-**Source:** FR-GAR-005, FR-GAR-009, DATA-GAR-002, AI-REQ-008.
+**Source:** FR-GAR-002/006–010, DATA-GAR-002, AI-REQ-008.
 
 ### 4.5 Confidence and Provenance Rules
 
@@ -311,25 +287,23 @@ Future edits may revise or clear these properties with explicit user confirmatio
 
 ## 5. Outfit Validity Rules
 
-TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
 ### 5.1 Structural Composition
 
 ### BRULE-OUT-001 — Supported MVP Outfit Composition
 
-**Rule:** Under the established separated-garment template, a valid outfit contains exactly 1 TOP + 1 BOTTOM + 1 FOOTWEAR role, with 0 or 1 OUTERWEAR role. No additional slot, repeated item in a slot, or unsupported role forms an additional composition. Composition alone does not establish full validity.
+**Status: superseded policy; retained historical ID.**
 
-**Applies To:** Daily Outfit, Shuffle, Coverage counts, Multiplier sets.
+The previous fixed composition or removed-property compatibility rule is no longer active. Future engine development must approve composition/compatibility using the current property model. No legacy role mapping, derived descriptor, readiness gate or replacement algorithm is selected here.
 
-**Source:** FR-OUT-004, DATA-OUT-001.
+**Source:** supersession of FR-OUT-004 and FR-GAR-005; current FR-GAR-004 and PRD OPQ-015.
 
 ### 5.2 Garment Eligibility
 
 ### BRULE-OUT-002 — Current Daily Garment Eligibility
 
-**Rule:** Every current daily constituent must be confirmed, active, currently owned by the authorized user, and Recommendation-Ready for applicable checks. Removed garments and hypothetical candidates are excluded. Historical snapshots do not restore eligibility. The isolated candidate exception applies only to hypothetical evaluation/previews under BRULE-MULT-001.
-
-**Applies To:** Daily Outfit, Shuffle, current Coverage and Multiplier owned baseline.
+**Rule:** Daily constituents must be authorized, confirmed, active and currently owned; removed garments, drafts and hypothetical candidates cannot become current ownership. Recommendation eligibility has not been evaluated. Future engine policy, not accepted saving or optional information absence, determines whether a combination can be recommended. The candidate exception remains limited to hypothetical evaluation.
 
 **Source:** FR-OUT-001, FR-WAR-005, FR-MULT-001, DATA-INT-002.
 
@@ -337,69 +311,55 @@ TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not curren
 
 ### BRULE-OUT-003 — Compatible Layering Roles
 
-**Rule:** When OUTERWEAR is present, the inner TOP has BASE or MID and the outer garment has OUTER or SHELL where applicable. Required unknown/unavailable roles cannot establish compatible layering. A role used for another evaluation does not relax this layered-outfit condition.
+**Status: superseded policy; retained historical ID.**
 
-**Applies To:** layered Daily Outfit, Shuffle, Coverage and candidate combinations.
+The previous fixed composition or removed-property compatibility rule is no longer active. Future engine development must approve composition/compatibility using the current property model. No legacy role mapping, derived descriptor, readiness gate or replacement algorithm is selected here.
 
-**Source:** FR-OUT-004, FR-GAR-005, FR-OUT-015.
+**Source:** supersession of FR-OUT-004 and FR-GAR-005; current FR-GAR-004 and PRD OPQ-015.
 
 ### 5.4 Bulk Compatibility
 
 ### BRULE-OUT-004 — Applicable Bulk Relationship
 
-**Rule:** Where bulk applies to both layered constituents, `outerwear.bulkIndex >= innerTop.bulkIndex` is required. Equality satisfies the relationship. Missing required bulk fails the applicable readiness/compatibility decision and must not be invented; this does not introduce a universal bulk requirement for saving or every unlayered outfit.
+**Status: superseded policy; retained historical ID.**
 
-**Applies To:** applicable layered combinations.
+The previous fixed composition or removed-property compatibility rule is no longer active. Future engine development must approve composition/compatibility using the current property model. No legacy role mapping, derived descriptor, readiness gate or replacement algorithm is selected here.
 
-**Source:** FR-OUT-004, FR-GAR-005, FR-GAR-006, FR-OUT-015.
+**Source:** supersession of FR-OUT-004 and FR-GAR-005; current FR-GAR-004 and PRD OPQ-015.
 
 ### 5.5 Environmental Compatibility
 
 ### BRULE-OUT-005 — Environmental Bands and Suitability
 
-**Rule:** Available temperature belongs to the following band:
+**Status: superseded policy; retained historical ID.**
 
-| Active Band | Temperature |
-|---|---|
-| HOT | ≥30°C |
-| WARM | ≥24°C and <30°C |
-| MILD | ≥18°C and <24°C |
-| COOL | ≥12°C and <18°C |
-| COLD | <12°C |
+The previous fixed composition or removed-property compatibility rule is no longer active. Future engine development must approve composition/compatibility using the current property model. No legacy role mapping, derived descriptor, readiness gate or replacement algorithm is selected here.
 
-When environmental hard filtering applies, confirmed suitability must support the active band. ALL_SEASON supports the environmental bands; UNKNOWN does not establish required compatibility. No automatic outerwear temperature threshold is added to the zero-or-one composition rule.
-
-**Applies To:** environment-aware Daily Outfit, Shuffle, Coverage, Multiplier.
-
-**Source:** FR-OUT-002, FR-OUT-004, FR-GAR-009.
+**Source:** supersession of FR-OUT-004 and FR-GAR-005; current FR-GAR-004 and PRD OPQ-015.
 
 ### BRULE-OUT-006 — Unavailable Environmental Context
 
-**Rule:** Missing weather alone must not reject every outfit. When usable current weather is unavailable under BRULE-PROF-003's freshness/2-second boundary, skip only unavailable environmental hard filtering where appropriate, enforce remaining readiness/hard validity and disclose the context limitation. Do not substitute invented weather.
+**Rule:** Preserve actual request/weather context and the existing freshness/2-second acquisition boundary. Missing weather is disclosed and not fabricated; it does not by itself label saved garments unsuitable. Future approved engine policy determines defensible reduced-context evaluation; this rule does not restore removed garment suitability attributes.
 
-**Applies To:** recommendation and related evaluations with unavailable weather.
-
-**Source:** ERR-WEATHER-001, FR-OUT-012, FR-WEATHER-004.
+**Source:** BRULE-PROF-003, ERR-WEATHER-001, FR-OUT-012, FR-WEATHER-004.
 
 ### 5.6 Pattern / Visual Noise Compatibility
 
 ### BRULE-OUT-007 — Severe Pattern and Visual Noise Limit
 
-**Rule:** Among TOP, BOTTOM, and OUTERWEAR, at most one garment may have Visual Noise ≥4 OR Pattern Density HIGH. A garment satisfying both counts once. FOOTWEAR is excluded from this specific count. Moderate patterns may coexist and remain soft ranking considerations; a generic one-patterned-garment limit does not replace this rule.
+**Status: superseded policy; retained historical ID.**
 
-**Applies To:** all current and hypothetical valid outfit combinations.
+The previous fixed composition or removed-property compatibility rule is no longer active. Future engine development must approve composition/compatibility using the current property model. No legacy role mapping, derived descriptor, readiness gate or replacement algorithm is selected here.
 
-**Source:** FR-OUT-004, FR-GAR-009, FR-OUT-015.
+**Source:** supersession of FR-OUT-004 and FR-GAR-005; current FR-GAR-004 and PRD OPQ-015.
 
 ### 5.7 Hard vs Soft Factors
 
 ### BRULE-OUT-008 — Validity Before Personalized Ranking
 
-**Rule:** Authorization, active ownership, confirmed information, applicable readiness, composition, layering, applicable bulk/environment, and severe-pattern/noise compatibility constrain validity. Color harmony, style, current occasion, Like/Dislike, Wear/history, recency/diversity, and optional body/gender are soft ranking factors. Soft scores cannot admit invalid combinations or impose body/gender category restrictions. Declared style/current occasion influence initial valid choices without a behavioral-history quota; no changed result is required when useful valid alternatives do not exist.
+**Rule:** Preserve authorized confirmed ownership and valid-before-ranking intent. Actual composition/compatibility/eligibility policy is deferred to engine development; no old property predicate or category-to-role mapping is active. Soft preferences cannot override a future approved hard rule or impose body/gender category restrictions. User-profile context and feedback/history remain separate from the 13 garment properties.
 
-**Applies To:** candidate generation, ranking, Shuffle, analytics and shopping utility.
-
-**Source:** FR-OUT-003, FR-OUT-005, FR-PERS-006, FR-PERS-010, FR-PERS-011.
+**Source:** FR-OUT-003/005, FR-PERS-006/010/011; Section 3.7.1 of SRS.
 
 ### 5.8 Distinct Choices
 
@@ -483,7 +443,7 @@ Apply the existing recency and optional overlooked-garment boundaries using comp
 | Exact-outfit recency of 0–2 completed elapsed days | Strong soft diversity penalty. |
 | Exact-outfit recency of 3–7 completed elapsed days | Mild soft diversity penalty. |
 | Exact-outfit recency of >7 completed elapsed days | No recency penalty. |
-| Recommendation-Ready garment with no recorded wear for ≥14 completed elapsed days | May receive a small soft utilization/diversity boost. |
+| Recommendation-Garment with future approved eligibility and no recorded wear for ≥14 completed elapsed days | May receive a small soft utilization/diversity boost. |
 
 The ≥14-day boundary uses the existing applicable evidence anchor. If the sources/evidence do not establish that anchor, do not invent a start date or treat garment creation as an assumed origin. This elapsed-day interpretation introduces no new garment-lifecycle event. Penalties never invalidate an outfit. The optional boost cannot override hard validity, strong explicit negative feedback, or current context relevance. No extra numerical penalty/boost magnitude is specified.
 
@@ -673,11 +633,9 @@ Both sums use positive-weight needs only. The result is a contextual 0–100 sco
 
 ### BRULE-COV-005 — Numeric Availability vs Insufficient Information
 
-**Rule:** A numeric Coverage score requires at least one positive-priority need and at least one Recommendation-Ready TOP, BOTTOM, and FOOTWEAR. Recommendation-Ready OUTERWEAR is additionally required only when the evaluated need/environment requires it. Required information must support a defensible assessment. Failed sufficiency produces insufficient/incomplete information, not 0%. With sufficient described inputs but no valid combinations, evaluated zero is legitimate. Missing weather follows BRULE-OUT-006 rather than invented environmental context.
+**Rule:** A numeric Coverage score requires positive-priority needs plus complete evaluation under a future approved composition, compatibility and sufficient-evidence policy. The old ready-role gate is superseded for all categories. Undefined policy or missing evaluation evidence yields an unevaluated/incomplete assessment, not 0% or a fabricated gap. Existing priorities, ratios and weighted formula remain future product requirements; their arithmetic alone does not prove compatibility.
 
-**Applies To:** Coverage availability, zero interpretation, Gap Analysis prerequisites.
-
-**Source:** FR-ANL-011, FR-ANL-015, FR-ANL-013, ERR-ANL-001, ERR-WEATHER-001.
+**Source:** FR-ANL-011/013/015, ERR-ANL-001; SRS Sections 3.7.1/3.14.1.
 
 ### 10.6 Outdated Coverage
 
@@ -749,7 +707,7 @@ O produces unique valid outfit combinations under the shared context/rule basis.
 
 ### BRULE-MULT-004 — Exact Evaluation Prerequisites
 
-**Rule:** An exact +N New Outfits requires sufficient candidate readiness, applicable readiness for owned garments used in relevant combinations, required relevant context, complete current and expanded evaluations, complete uniqueness/deduplication, and the same context/rule version/identity semantics for both sets. Displayed advice subsets do not substitute for the complete evaluation. Newly enabled previews contain and identify the hypothetical candidate and share the evaluated context. Missing optional commercial fields do not defeat these prerequisites.
+**Rule:** An exact +N New Outfits requires an approved future engine policy and sufficient evaluated evidence for candidate and owned combinations, required relevant context, complete current and expanded evaluations, complete uniqueness/deduplication, and the same context/rule version/identity semantics for both sets. Displayed advice subsets do not substitute for the complete evaluation. Newly enabled previews contain and identify the hypothetical candidate and share the evaluated context. Missing optional commercial fields do not defeat these prerequisites.
 
 **Applies To:** exact counts, reasons and hypothetical previews.
 
@@ -835,59 +793,31 @@ Price, material, durability/longevity, retailer and link are optional, credible/
 
 ## 14. Decision Tables
 
-These tables restate the named rules for fixture construction. They do not introduce new policy. A check marked Yes is established from the relevant confirmed/justified information; a non-applicable layering, bulk, or OUTERWEAR check is satisfied without demanding that field. Missing required evidence cannot be treated as Yes.
+These tables restate current rules and explicitly mark superseded policies. Missing optional properties do not affect saving. No fixture authorizes a removed descriptor or a recommendation algorithm; future evaluation fixtures require approved policy.
 
-### 14.1 Garment Saveability / Readiness
+### 14.1 Garment Saving and Unevaluated Eligibility
 
-The confirmed minimum is Primary Category and Dominant Color. This table applies only where an evaluation policy is established: TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES need usable pattern and climate information; TOPS/OUTERWEAR need applicable layering and layered bulk remains conditional. For unresolved category policies under PRD OPQ-012, the minimum still saves, but this table cannot establish readiness. Brand/Price and omitted subtype do not add save gates.
+| Confirmed supported Category and Color | Supplied optional values valid/applicable | Saving | Recommendation eligibility |
+|---|---|---|---|
+| No | Any | Correct the minimum; no confirmed entry. | Not evaluated. |
+| Yes | No | Correct or clear invalid supplied information; do not silently replace it. | Not evaluated. |
+| Yes | Yes, including all omitted optional properties | Accept with every supplied valid value; image/AI are not prerequisites. | Not evaluated; no invalid/unsuitable/ineligible inference. |
 
-| Confirmed Minimum | Common Readiness Information Usable | Applicable Layering Satisfied | Applicable Bulk Satisfied | Saveable | Recommendation-Ready for Evaluation |
-|---|---|---|---|---|---|
-| No | — | — | — | No | No |
-| Yes | No | — | — | Yes | No |
-| Yes | Yes | No | — | Yes | No |
-| Yes | Yes | Yes | No | Yes | No |
-| Yes | Yes | Yes | Yes | Yes | Yes |
-
-Manual absence of an image and missing optional rich descriptors do not change a Yes saving result. A required UNKNOWN value makes its corresponding readiness predicate No. Readiness is not full outfit validity.
-
-**Rules:** BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006.
+**Rules:** BRULE-GAR-001–006/010. Metadata and optional media are outside the 13 fashion properties.
 
 ### 14.2 Outfit Validity
 
-Eligibility includes authorization, current confirmed active ownership, and applicable readiness; the candidate exception is confined to hypothetical sets. Layering/bulk must satisfy any applicable checks. Environmental No means available applicable context is incompatible; Unavailable uses the explicit fallback while preserving every other hard rule.
-
-| Composition | Eligible Constituents | Layering | Bulk | Environmental Check | Severe-Pattern Limit | Outcome |
-|---|---|---|---|---|---|---|
-| No | — | — | — | — | — | Invalid |
-| Yes | No | — | — | — | — | Invalid |
-| Yes | Yes | No | — | — | — | Invalid |
-| Yes | Yes | Yes | No | — | — | Invalid |
-| Yes | Yes | Yes | Yes | No | — | Invalid |
-| Yes | Yes | Yes | Yes | Yes or Unavailable | No | Invalid |
-| Yes | Yes | Yes | Yes | Yes | Yes | Valid |
-| Yes | Yes | Yes | Yes | Unavailable | Yes | Valid with disclosed missing context |
-
-Positive feedback cannot alter an Invalid outcome. An unestablished required check cannot support a Valid claim; retain the applicable insufficient-information explanation.
-
-**Rules:** BRULE-OUT-001–BRULE-OUT-008, BRULE-GAR-003.
+The old fixed composition and removed-property decision table is superseded (BRULE-OUT-001/003–005/007). No replacement truth table is approved. Future engine work must establish composition, compatibility and sufficient evidence before valid outfit claims; ownership and identity invariants remain.
 
 ### 14.3 Coverage Availability
 
-The ready-role predicates use current eligible wardrobe items. The OUTERWEAR predicate is Yes when not required by the evaluation, or when the additional required ready role exists. Defensible counting still uses the mapped context and all hard rules.
+| Positive needs | Approved engine policy and complete evidence | Numeric result |
+|---|---|---|
+| No | Any | Insufficient needs; no numeric score. |
+| Yes | No | Unevaluated/incomplete; no fabricated zero or gap. |
+| Yes | Yes | Apply existing ratios/weights only to the defensible complete valid-outfit counts. |
 
-| Positive Need Exists | Ready TOP | Ready BOTTOM | Ready FOOTWEAR | Applicable OUTERWEAR Requirement Satisfied | Outcome |
-|---|---|---|---|---|---|
-| No | — | — | — | — | Insufficient Information; no denominator-based score |
-| Yes | No | — | — | — | Insufficient Information |
-| Yes | Yes | No | — | — | Insufficient Information |
-| Yes | Yes | Yes | No | — | Insufficient Information |
-| Yes | Yes | Yes | Yes | No | Insufficient Information |
-| Yes | Yes | Yes | Yes | Yes | Numeric Coverage available from defensible valid counts |
-
-Zero valid combinations after sufficient evaluation may produce numeric 0%; absence of a ready role cannot. Missing weather alone follows the environmental fallback rather than becoming a fabricated weather value or automatic zero.
-
-**Rules:** BRULE-COV-001–BRULE-COV-005, BRULE-OUT-006.
+**Rules:** BRULE-COV-002–005. This table supplies no engine algorithm or garment eligibility gate.
 
 ### 14.4 Multiplier Freshness and Evaluation State
 
@@ -899,7 +829,7 @@ Freshness classifies a **previous assessment**; evaluation state classifies a **
 | Yes | No | Outdated; previous exact count/previews cannot be presented as current |
 | Yes | Yes | Freshness alone does not change its recorded completion/state; apply its actual evidence |
 
-For a current attempt, required inputs include candidate readiness, applicable owned readiness, relevant context, and a consistent context/rule/identity basis. Complete evaluation includes both sets and full uniqueness/deduplication.
+For a current attempt, required inputs include future candidate-evaluation evidence, applicable future owned-combination evidence, relevant context, and a consistent context/rule/identity basis. Complete evaluation includes both sets and full uniqueness/deduplication.
 
 | Evaluation Capability Available | Required Inputs / Shared Basis Sufficient | Full Evaluation Completed | Newly Enabled Unique Count | Current Attempt State / Presentation |
 |---|---|---|---|---|
@@ -968,13 +898,13 @@ Fixtures specify the relevant facts only; other applicable validity predicates a
 
 | Case | Controlled Facts | Expected Domain Result | Rules |
 |---|---|---|---|
-| B01 — Saveable but unready | Category/color confirmed; Pattern Type UNKNOWN or required climate information unavailable | Saveable entry remains owned; decisions requiring the missing field cannot use it as ready | BRULE-GAR-002, BRULE-GAR-003, BRULE-GAR-006 |
-| B02 — Layering / bulk unknown | Layered combination needs a TOP role or applicable Bulk Index that is unavailable | Do not fabricate BASE or bulk; no valid layered combination from that unsupported check, while saving remains permitted | BRULE-GAR-003, BRULE-OUT-003, BRULE-OUT-004 |
-| B03 — Environmental edges / absence | Temperature exactly 30°C, 24°C, 18°C, or 12°C; separately, no usable weather but remaining hard checks pass | HOT, WARM, MILD, COOL respectively; unavailable-weather variant retains remaining valid choices with disclosed limitation | BRULE-OUT-005, BRULE-OUT-006 |
-| B04 — Severe pattern count | One TOP has both noise 4 and HIGH density; BOTTOM noise 3/MEDIUM. Variant: BOTTOM also noise 4. FOOTWEAR severity varied independently | First pair contributes one severe counted item; variant contributes two and is invalid; FOOTWEAR does not alter this specific count | BRULE-OUT-007 |
-| B05 — Permutation | TOP A + BOTTOM B + FOOTWEAR C is presented in another order | One identity-set combination for advice, feedback, Coverage, Wear grouping, and Multiplier; no extra unique outfit | BRULE-OUT-009, BRULE-MULT-002 |
-| B06 — Shuffle invariants | Replace selected TOP A with valid TOP D; separate variant has no compatible replacement | Only TOP changes; other identities/context stay fixed. No-replacement variant retains selection; neither action creates Like/Dislike/Wear | BRULE-OUT-010 |
-| B07 — Defensible zero vs missing FOOTWEAR | Positive need and ready TOP/BOTTOM/FOOTWEAR exist, but every combination violates the severe-pattern limit. Variant has no ready FOOTWEAR | Complete valid count can be zero and Coverage 0%; missing-ready-role variant is Insufficient Information, not 0% | BRULE-COV-003–BRULE-COV-005, BRULE-OUT-007 |
+| B01 — Minimum-only save | Confirmed supported Category/Color; all optional properties omitted | Owned entry saves; eligibility remains not evaluated, without unsuitable/ineligible claims | BRULE-GAR-002/003/006 |
+| B02 — Superseded compatibility fixture | Former property-based layered check | Historical only; no implementation test or removed-field requirement | BRULE-OUT-003/004 superseded |
+| B03 — Missing weather context | Usable weather is absent | Disclose missing request context without inventing garment properties or eligibility | BRULE-PROF-003, BRULE-OUT-006 |
+| B04 — Superseded pattern-conflict fixture | Former removed-property conflict count | Historical only; future engine policy is deferred | BRULE-OUT-007 superseded |
+| B05 — Permutation | Constituent identities A, B and C (illustrative, not an approved composition) is presented in another order | One identity-set combination for advice, feedback, Coverage, Wear grouping, and Multiplier; no extra unique outfit | BRULE-OUT-009, BRULE-MULT-002 |
+| B06 — Shuffle invariants | Replace selected selected garment A with valid alternative D; separate variant has no compatible replacement | Only the selected garment changes under a future approved policy; other identities/context stay fixed. No-replacement variant retains selection; neither action creates Like/Dislike/Wear | BRULE-OUT-010 |
+| B07 — Evaluated zero versus absent policy | Positive need, but engine policy/evidence unavailable | No numeric Coverage or fabricated gap; future completed evaluation may establish zero independently | BRULE-COV-003–005 |
 | B08 — No active need | All six common priorities are 0 | No positive denominator; no numeric CoverageScore or fabricated purchase gap | BRULE-COV-002, BRULE-COV-005, BRULE-GAP-002 |
 | B09 — Weighted formula | Formula-only inputs: Everyday weight 3 with 1 valid outfit; Work weight 1 with ≥3; all other weights 0 | Need ratios 1/3 and 1; CoverageScore = 50. Zero-priority needs contribute nothing | BRULE-COV-002–BRULE-COV-004 |
 | B10 — Intentional same-day repeat | Two new accepted intentions for the same valid exact outfit on one original event-local day | Two historical reports; at most one +2 Wear increment before decay, not +4 | BRULE-WEAR-001, BRULE-WEAR-002, BRULE-PERS-005 |
@@ -984,7 +914,7 @@ Fixtures specify the relevant facts only; other applicable validity predicates a
 | B14 — Removal with survivor | Remove the latest of two same-outfit/day reports, then the last surviving report | First removal retains the single increment and moves its absolute anchor to the survivor; recalculate age/decay/recency. Last removal eliminates the group's contribution. Underlying Outfit/Garments and unrelated reports remain | BRULE-WEAR-005, BRULE-PERS-005–BRULE-PERS-006 |
 | B15 — Removed garment in history | A garment referenced by old reports is removed from active wardrobe | History remains understandable as Removed from wardrobe; new current advice/Coverage/Multiplier exclude it and affected assessments refresh or become outdated | BRULE-GAR-009, BRULE-HIST-002, BRULE-COV-006, BRULE-MULT-008 |
 | B16 — Complete Multiplier | Complete shared-basis sets contain 41 current and 58 expanded unique valid outfits, including all current ones. Variant has identical current/expanded sets | First gives +17 New Outfits with candidate-bearing previews; completed empty difference gives Evaluated Zero and +0 | BRULE-MULT-002–BRULE-MULT-005 |
-| B17 — Non-exact Multiplier | Missing required candidate readiness; unavailable evaluation capability; or changed relevant wardrobe after a prior exact result | Respectively Incomplete, Unavailable, or prior result Outdated; none supports current exact +N or a fabricated +0; no arbitrary TTL restores exactness | BRULE-MULT-006–BRULE-MULT-009 |
+| B17 — Non-exact Multiplier | Missing required future candidate-evaluation evidence; unavailable evaluation capability; or changed relevant wardrobe after a prior exact result | Respectively Incomplete, Unavailable, or prior result Outdated; none supports current exact +N or a fabricated +0; no arbitrary TTL restores exactness | BRULE-MULT-006–BRULE-MULT-009 |
 | B18 — Confidence guard | Reliable evidence at 0.85, 0.60, or below 0.60; variant has 0.99 but materially conflicting evidence | Default High Confidence, Needs Review, Uncertain respectively; guarded variant cannot be High Confidence. All still require confirmation | BRULE-GAR-001, BRULE-GAR-007, BRULE-GAR-008 |
 | B19 — Behavioral elapsed-time boundary | Anchor `2026-01-01T10:00:00Z`; evaluate at `2026-02-01T09:59:00Z` (30 days 23h59m) and `2026-02-01T10:00:00Z` (exactly 31 days) | First evaluation: 30 completed elapsed days, 100% influence. Second: 31 completed elapsed days, 50%. Local calendar-date difference does not replace absolute elapsed time | BRULE-PERS-003 |
 | B20 — Normalized group anchor | Same user/outfit/original local date and UTC+07:00 timezone: accepted events at 08:00, 13:00, 20:00; remove 20:00, then 13:00, then 08:00 | Three initial reports, one +2 increment before aging, anchor 20:00. Removal gives two reports/anchor 13:00, then one/anchor 08:00, then no surviving group contribution; each step recalculates elapsed age and applicable decay/recency | BRULE-PERS-005–BRULE-PERS-006, BRULE-WEAR-005 |
@@ -1097,8 +1027,8 @@ Review checks consistency and traceability. Implementation mechanisms and formal
 The Business Analyst / Product Owner, with Engineering and QA review, evaluates the following gates before accepting this rule baseline for downstream use:
 
 - Rule identifiers are stable and source-linked; no upstream requirement, scope, vocabulary, formula, or threshold is silently changed.
-- Saving and applicable Recommendation-Readiness decisions are explicit; authoritative information and UNKNOWN behavior remain distinct.
-- Composition, ownership, layering, bulk, environment, severe-pattern rules, and hard-versus-soft precedence determine valid outcomes.
+- Saving and recommendation eligibility as not evaluated decisions are explicit; authoritative information and UNKNOWN behavior remain distinct.
+- Ownership and identity remain defined; former composition/removed-property rules are superseded and future engine policy must be approved before valid-outfit claims.
 - Shuffle preserves fixed context/constituents and never implies feedback or wear.
 - Feedback strengths, aging bands, outfit/day normalization, recency, and optional diversity effects are consistent. Completed elapsed-day aging/recency and the latest surviving accepted Wear-group anchor are deterministic, including recalculation after accepted correction/removal.
 - Logical Wear identity, deliberate repetition, original event-local time, bounded correction, effective removal, and resulting history/signals are consistent.

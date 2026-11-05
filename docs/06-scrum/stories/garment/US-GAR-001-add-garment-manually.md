@@ -1,12 +1,14 @@
 # US-GAR-001 — Add an owned garment manually
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-001 |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
@@ -26,7 +28,9 @@ A minimum-only manual entry provides owned inventory immediately. Review, confir
 
 ## 3. Scope
 
-Imageless manual entry of the supported Primary Category and Dominant Color with optional subtype, Brand and purchase Price, review/correction of entered information, explicit confirmation, cancellation, accepted creation and safe failed/uncertain-save handling. Explain applicable Recommendation-Readiness after acceptance with the bounded optional fields approved for this story; other rich enrichment and later editing remain PBI-008.
+Input, validation, confirmation, authorized persistence and accepted-value preservation for all 13 applicable properties: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. The [source catalogue](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns full lists/applicability. Category and one dominant Color plus explicit confirmation are the minimum; every other applicable field is optional. Images and AI are independent future routes. Preserve cancellation, failed/uncertain acceptance, safe retries and account isolation. Later editing remains PBI-008; no current property is deferred to enrichment.
+
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
 ## 4. Preconditions
 
@@ -35,13 +39,13 @@ Imageless manual entry of the supported Primary Category and Dominant Color with
 
 ## 5. Acceptance Criteria
 
-### AC-01 — Create a minimum-confirmed manual garment
+### AC-01 — Create and preserve an explicitly confirmed garment
 
-**Given** I have authorized access and choose imageless manual entry
+**Given** authorized manual entry with supported Category, one approved dominant Color and any supplied valid applicable optional properties
 
-**When** I enter a supported Primary Category and Dominant Color, review them, explicitly confirm the minimum and submit, and creation is accepted
+**When** I review and explicitly confirm them and creation is accepted
 
-**Then** CapsuleAI acknowledges one confirmed owned garment with the accepted minimum and any supplied valid subtype, Brand and purchase Price, makes it available in my current wardrobe, and explains applicable readiness separately from successful saving.
+**Then** exactly one owned garment is acknowledged, all accepted applicable values are durably preserved and available for rereading, and recommendation eligibility remains not evaluated.
 
 ### AC-02 — Continue independently of image and AI
 
@@ -59,13 +63,13 @@ Imageless manual entry of the supported Primary Category and Dominant Color with
 
 **Then** the review reflects the latest supported values and permits explicit confirmation of that revised minimum. Merely entering or changing a draft does not establish a confirmed owned garment.
 
-### AC-04 — Use the established classification and color choices
+### AC-04 — Validate the complete approved classification and vocabularies
 
-**Given** I enter the manual minimum
+**Given** I enter any of the eight approved Categories
 
-**When** I select category/color information
+**When** I supply Subtype, Color or another controlled property
 
-**Then** Primary Category is restricted to TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. Dominant Color keeps the bounded SRS vocabulary. Optional subtype must match its category; DRESSES_JUMPSUITS offers exactly the ten display/code pairs in PRD Section 13.2. OTHER/UNKNOWN is accepted only where defined. Reject an unsupported pair with correction/clear guidance, not a silent category change; omission remains valid for all eight categories.
+**Then** use the complete source lists: every category subtype, exactly ten Dresses/Jumpsuits choices, all Colors/Materials/Patterns/named Styles and category details. Validate parent/applicability; reject unsupported selections with correction/clear guidance, without silent replacement, invented fallback or Etc value. Color is exactly one dominant selection, including Colorful.
 
 ### AC-05 — Correct a missing or unconfirmed minimum
 
@@ -75,33 +79,29 @@ Imageless manual entry of the supported Primary Category and Dominant Color with
 
 **Then** CapsuleAI identifies the missing confirmation/information and retains the draft for correction. No authoritative garment is created, and existing wardrobe information remains unchanged until accepted creation.
 
-### AC-06 — Save without rich descriptors
+### AC-06 — Support all applicable properties while keeping optional values optional
 
-**Given** I explicitly confirm the minimum but omit subtype, Brand, Price or other rich descriptors
+**Given** I confirm valid Category and Color
 
-**When** creation is accepted
+**When** I omit or provide the other applicable properties
 
-**Then** the entry remains Saveable and owned. Missing subtype, Brand, Price, Pattern, Fit, Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags or Occasion Tags does not become a universal save blocker.
+**Then** omission does not block saving. Support all 13 properties in this Sprint: optional Subtype, zero or multiple distinct Materials, one optional Pattern, Style, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand text and purchase Price. Material duplicates add no semantic material; no percentages/proportions are fabricated. Price uses decimal amount plus explicit ISO 4217 currency together or is cleared; missing Price is unknown, not zero. Preserve all accepted values without float calculations, image/location inference or currency conversion.
 
-Supplied Brand is user-entered text, not an enum. Supplied Price means user-reported purchase price and requires both a decimal amount and explicit ISO 4217 currency; an incomplete pair is corrected or cleared before confirmation. No location default, fabricated amount or floating-point monetary calculation is allowed. Preserve accepted values; absent Price is unknown, not zero (FR-GAR-012/013; BRULE-GAR-010).
+### AC-07 — Apply category-specific detail validation
 
-### AC-07 — Explain missing common compatibility information
+**Given** I supply category-specific information or change Category before confirmation
 
-**Given** the accepted garment meets the minimum but for TOPS, PANTS, SKIRTS, OUTERWEAR or SHOES a required common compatibility field, such as Dominant Color, Pattern Type or Climate/Season Suitability, is UNKNOWN or unavailable
+**When** CapsuleAI validates my entry
 
-**When** CapsuleAI presents the post-save readiness explanation
+**Then** Fit, Neckline and Sleeve Length apply only to Tops; Length uses the separate Tops/Pants lists and Silhouette applies only to Pants. Other categories receive no such fields. Invalid/inapplicable supplied information is identified for correction or clearing rather than silently discarded; applicable optional omission remains valid.
 
-**Then** it identifies the missing common information and explains that decisions requiring it cannot treat the garment as ready. The owned entry is retained; missing values are not fabricated and accepted saving is not presented as failed.
+### AC-08 — Keep eligibility unevaluated without rejecting the garment
 
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
+**Given** my garment satisfies saving requirements
 
-### AC-08 — Explain applicable layering and bulk requirements
+**When** creation is accepted or its outcome is inspected
 
-**Given** the accepted garment lacks applicable Layering Level for TOPS/OUTERWEAR or Bulk Index needed for a layered compatibility decision
-
-**When** CapsuleAI explains readiness
-
-**Then** it identifies the applicable missing information for the affected decision. Layering is applied to TOPS/OUTERWEAR and Bulk Index only where layered compatibility requires it; unavailable required information cannot pass that check, while bulk is not a universal saving/readiness gate.
+**Then** no readiness predicate is evaluated or required. Do not label the garment ready, invalid, unsuitable or ineligible because a future engine policy is undefined or optional values are missing. Preserve normal wardrobe access and truthful missing-value information; no mandatory readiness enum/column is prescribed.
 
 ### AC-09 — Retain user authority
 
@@ -147,27 +147,27 @@ The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWE
 
 **Given** I use the Vietnamese manual-entry interaction with a screen reader or text scaled up to 200%
 
-**When** I review/correct the minimum, confirm, or encounter missing-field/save/readiness guidance
+**When** I review/correct the minimum, confirm, or encounter missing-field/save/guidance that eligibility is not evaluated
 
-**Then** the fields, correction and confirmation actions and result states remain operable and understandable through meaningful labels/states beyond color alone. Guidance distinguishes draft, saved ownership, failed/unconfirmed save and applicable readiness.
+**Then** the fields, correction and confirmation actions and result states remain operable and understandable through meaningful labels/states beyond color alone. Guidance distinguishes draft, saved ownership, failed/unconfirmed save and eligibility under a future approved policy.
 
 ## 6. Business Rules and Constraints
 
-- BRULE-AUTH-001 and BRULE-GAR-001–BRULE-GAR-006 preserve authorized ownership, entered-and-confirmed authority, the Saveable minimum, applicable readiness and bounded vocabularies.
-- Confirmation establishes canonical information; it does not prove physical composition or make unknown compatibility information valid. Rich optional fields stay optional; readiness is not a guarantee of a valid outfit.
+- BRULE-AUTH-001 and BRULE-GAR-001–BRULE-GAR-006 preserve authorized ownership, entered-and-confirmed authority, the Saveable minimum, eligibility under a future approved policy and bounded vocabularies.
+- Confirmation establishes canonical information; it does not prove physical composition or make unknown compatibility information valid. All applicable optional fields remain supported; eligibility is not evaluated and no valid-outfit guarantee follows from saving.
 - The initial interface and guidance are Vietnamese on Android 10+ and iOS 15+; this specification is English. Story actions and states retain meaningful accessible names, roles and labels beyond color, operability at text scaling up to 200%, and the SRS primary touch-target criteria (approximately 48 dp on Android / 44 pt on iOS). Private information is used only for necessary authorized product purposes; MVP personal data is excluded from AI training/improvement and unrestricted sharing.
 
 ## 7. Dependencies
 
 - Parent PBI hard capability dependency: PBI-004's usable authenticated access; [US-AUTH-002](../auth/US-AUTH-002-log-in.md) and [US-AUTH-003](../auth/US-AUTH-003-resume-session.md) supply access and continuity where applicable.
 - PBI-007's [US-WAR-001](../wardrobe/US-WAR-001-browse-current-wardrobe.md) and [US-WAR-002](../wardrobe/US-WAR-002-inspect-owned-garment.md) are useful inspection paths after acceptance; creating the minimum is not conditional on completing those whole stories.
-- PBI-003 provides useful common interaction support, not an additional hard capability dependency. PBI-008 enriches descriptors later; PBI-012/PBI-013 add photo/AI routes. None is a prerequisite to manual creation.
+- PBI-003 provides useful common interaction support, not an additional hard capability dependency. PBI-008 edits accepted properties later; all applicable creation fields are included here; PBI-012/PBI-013 add photo/AI routes. None is a prerequisite to manual creation.
 
 - Related drafts now document [US-GAR-002](../garment/US-GAR-002-correct-and-enrich-garment-information.md) enrichment, [US-GAR-003](../garment/US-GAR-003-add-photo-supported-garment.md) photo-supported input and [US-GAR-004](../garment/US-GAR-004-review-ai-assisted-garment-proposals.md) assistance. None becomes a prerequisite to this minimum-confirmed imageless outcome.
 
 ## 8. Out of Scope
 
-Optional subtype, Brand and purchase Price entry are included here by the approved revision. Other rich descriptor entry/enrichment and later editing remain PBI-008. Photo capture/selection, image validation and photo-supported entry are PBI-012; AI proposals, confidence and processed preview are PBI-013. General browsing/detail are PBI-007, measurement is PBI-009, and search/removal belong to PBI-015/PBI-016. No new quota, mandatory image/AI, inventory sorting, analytics event or implementation design is added.
+All 13 applicable properties are included in manual creation. Later editing remains PBI-008. Photo capture/selection, image validation and photo-supported entry are PBI-012; AI proposals, confidence and processed preview are PBI-013. General browsing/detail are PBI-007, measurement is PBI-009, and search/removal belong to PBI-015/PBI-016. No new quota, mandatory image/AI, inventory sorting, analytics event or implementation design is added.
 
 ## 9. Traceability
 
@@ -184,7 +184,7 @@ Optional subtype, Brand and purchase Price entry are included here by the approv
 
 ## 10. Open Refinement Notes
 
-**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records open category-readiness/composition, optional-field validation and subtype-vocabulary questions. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
+**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 
 **2026-10-21 refinement draft.** Retain manual entry, review, explicit confirmation and safe acceptance as one outcome. AC-12 makes repeated delivery/retry of one logical addition explicit without prescribing a deduplication mechanism (DATA-INT-004). Verify an imageless minimum-only saved entry, retained UNKNOWN/readiness meaning, cancellation, denied ownership and interrupted acceptance. Confirm mobile Add/acknowledgment/inspection feasibility and Developers' complexity assessment (Q-02/Q-04/Q-05). Other rich entry, images and AI remain later capabilities; the later approved optional subtype/Brand/Price extension is included here.
 

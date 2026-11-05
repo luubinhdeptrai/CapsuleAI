@@ -1,5 +1,7 @@
 # UC-011 — Get Outfit Recommendations
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -80,7 +82,7 @@ At Main Step 6:
 
 At Main Step 3:
 
-1. CapsuleAI explains the missing applicable ready roles/attributes or assessment context rather than asserting a completed count.
+1. CapsuleAI explains the missing applicable evidence required by a future evaluation policy/attributes or assessment context rather than asserting a completed count.
 2. The User can enrich confirmed garments, add items or adjust available context; accepted wardrobe information remains intact and no fixed onboarding quota is imposed.
 
 ### E2 — Weather unavailable or stale
@@ -131,13 +133,13 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-003` | Only applicable ready confirmed inputs enter current recommendations. |
-| `BRULE-OUT-001` | An outfit has exactly one TOP, BOTTOM and FOOTWEAR, with zero or one OUTERWEAR. |
+| `BRULE-OUT-001` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-002` | Exclude removed, unowned and hypothetical items from daily advice. |
-| `BRULE-OUT-003` | Apply compatible known layering roles when relevant. |
-| `BRULE-OUT-004` | Enforce the applicable outer/inner bulk relationship. |
-| `BRULE-OUT-005` | Use the established environmental suitability policy when context is available. |
+| `BRULE-OUT-003` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
+| `BRULE-OUT-004` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
+| `BRULE-OUT-005` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-006` | Missing weather permits disclosed reduced-context advice where remaining validity is defensible. |
-| `BRULE-OUT-007` | Apply the severe-pattern/visual-noise limit rather than a blanket patterned-item ban. |
+| `BRULE-OUT-007` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-008` | Hard validity precedes all soft preferences. |
 | `BRULE-OUT-009` | Garment-identity sets define distinct choices; show actual available counts. |
 | `BRULE-PROF-001` | Optional body/gender influence is soft and does not prohibit categories. |
@@ -162,7 +164,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The first complete recommendation result targets p95 <3 seconds from accepted request with required context available and exactly 100 confirmed garments (NFR-PERF-002). SRS Sections 2.3/12.3 define reference devices/network, 5 warm-ups and ≥100 measured runs with legitimate slow runs retained. Eligible inputs cannot be omitted; 20-user functional integrity is separate from this p95 workload.

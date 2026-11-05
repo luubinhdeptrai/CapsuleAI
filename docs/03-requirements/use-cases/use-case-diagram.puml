@@ -175,7 +175,7 @@ endlegend
 ' FEAT-PROF-002 | direct | UC-006 | Permission-based/manual location, retry and environmental context; used by recommendations and assessments.
 ' FEAT-AI-001 | embedded | UC-007 | Camera/gallery entry and AI preview are the assisted alternative, with manual fallback.
 ' FEAT-AI-002 | embedded | UC-007 | Imageless manual entry plus user review, correction and explicit confirmation.
-' FEAT-GAR-001 | embedded | UC-007, UC-008, UC-009 | Rich descriptors, uncertainty, authority and evaluation-specific readiness.
+' FEAT-GAR-001 | embedded | UC-007, UC-008, UC-009 | Rich descriptors, uncertainty, authority and eligibility under a future policy.
 ' FEAT-WAR-001 | direct | UC-008 | Browse wardrobe and inspect garment details, including imageless entries.
 ' FEAT-WAR-002 | direct | UC-009, UC-010 | Confirmed edit/remove; removal affects active ownership without erasing history.
 ' FEAT-WAR-003 | embedded | UC-008 | Search, filter, inspect and reset browsing conditions.

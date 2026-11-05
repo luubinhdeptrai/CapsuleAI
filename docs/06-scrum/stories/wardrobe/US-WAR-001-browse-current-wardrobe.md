@@ -1,12 +1,14 @@
 # US-WAR-001 — Browse my current wardrobe
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WAR-001 |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
@@ -26,7 +28,7 @@ The collection overview helps me recognize my possessions even before any outfit
 
 ## 3. Scope
 
-Read-only current wardrobe browsing with identifiable summaries, visible imageless/incomplete entries, applicable readiness meaning, loading/empty/unavailable distinctions, Add Garment access and selection of an owned garment for detail.
+Read-only current wardrobe browsing with identifiable summaries, visible imageless/incomplete entries, eligibility under a future approved policy meaning, loading/empty/unavailable distinctions, Add Garment access and selection of an owned garment for detail.
 
 ## 4. Preconditions
 
@@ -35,21 +37,21 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 ## 5. Acceptance Criteria
 
-### AC-01 — Recognize current confirmed possessions
+### AC-01 — Recognize current confirmed possessions across all categories
 
-**Given** my current wardrobe contains confirmed active garments
+**Given** my current wardrobe contains confirmed active garments in any of the eight approved categories
 
-**When** I open Wardrobe and retrieval succeeds
+**When** authorized retrieval succeeds
 
-**Then** CapsuleAI presents identifiable current owned entries across all eight approved categories with their confirmed category, available subtype, dominant color and available image/visual. Summaries correspond to the correct garments; missing subtype, Brand, Price or image does not conceal an otherwise saved entry. Optional confirmed Brand and purchase Price with currency remain available through detail; this does not require all fields on every card.
+**Then** summaries identify the correct possessions using accepted Category, Color and available identifying information such as Subtype/image. Missing optional properties or images never hide a saved item. Detail can retrieve all available applicable accepted properties; the collection need not return every detailed property.
 
-### AC-02 — Keep imageless and unready garments visible
+### AC-02 — Keep minimum-only and imageless garments visible
 
-**Given** my current wardrobe contains an imageless, minimum-confirmed garment that lacks applicable compatibility information
+**Given** an owned garment has no image or only the confirmed Category/Color minimum
 
-**When** the overview loads successfully
+**When** the overview loads
 
-**Then** the garment remains identifiable and selectable through its accepted information. Applicable guidance distinguishes Saveable ownership from Recommendation-Readiness without calling the entry unsaved or requiring an image/rich profile to browse. Unresolved Dresses/Jumpsuits/Bags/Headwear evaluation policy is explained as not yet defined, rather than hiding the garment or claiming readiness.
+**Then** it remains identifiable and selectable. Eligibility is not evaluated; do not infer ready, invalid, unsuitable or ineligible from missing optional information or undefined future engine policy.
 
 ### AC-03 — Distinguish loading from loaded emptiness
 
@@ -121,11 +123,11 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 **When** I identify an entry, open detail, choose Add Garment or follow empty/loading/unavailable guidance
 
-**Then** these entries, actions and states remain operable and understandable through meaningful accessible names/roles/states and information beyond image or color alone; no image, incomplete readiness and unavailable retrieval retain their distinct meanings.
+**Then** these entries, actions and states remain operable and understandable through meaningful accessible names/roles/states and information beyond image or color alone; missing image, unevaluated eligibility and unavailable retrieval retain their distinct meanings.
 
 ## 6. Business Rules and Constraints
 
-- BRULE-AUTH-001 and BRULE-GAR-001–BRULE-GAR-003 constrain authorized current ownership, confirmed information and retention of Saveable entries despite missing readiness fields.
+- BRULE-AUTH-001 and BRULE-GAR-001–BRULE-GAR-003 constrain authorized current ownership, confirmed information and retention of Saveable entries despite unevaluated eligibility fields.
 - BRULE-HIST-002 keeps removed historical meaning separate from active inventory. Where reported-use information is displayed, BRULE-HIST-001 prohibits interpreting no recorded use as physical nonuse; detailed conditional use presentation is covered by US-WAR-002.
 - The initial interface and guidance are Vietnamese on Android 10+ and iOS 15+; this specification is English. Story actions and states retain meaningful accessible names, roles and labels beyond color, operability at text scaling up to 200%, and the SRS primary touch-target criteria (approximately 48 dp on Android / 44 pt on iOS). Private information is used only for necessary authorized product purposes; MVP personal data is excluded from AI training/improvement and unrestricted sharing.
 
@@ -157,7 +159,7 @@ Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich ent
 
 ## 10. Open Refinement Notes
 
-**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records open category-readiness/composition, optional-field validation and subtype-vocabulary questions. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
+**2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 
 **2026-10-21 refinement draft.** Retain browsing and its empty-state value separately from garment detail. The existing criteria already distinguish accepted entries, loading/unavailable data, unusable access and genuinely empty inventory; no new browsing behavior is needed. Agree representative empty and populated account fixtures, previous-account isolation and Add/detail handoff evidence with Developers (Q-02/Q-04/Q-05). PBI-006 supplies useful populated examples, not a hard prerequisite to empty browsing; future search/filtering and use analytics remain excluded.
 

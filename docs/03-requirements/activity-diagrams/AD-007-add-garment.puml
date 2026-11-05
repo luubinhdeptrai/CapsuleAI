@@ -1,4 +1,6 @@
 @startuml
+' Final 13-property authority: ../../../Initial files/Image to Properties Extraction.md
+' Prior property-based readiness branches superseded; eligibility is not evaluated.
 ' Source Use Case: UC-007 — Add Garment
 ' Primary Specification: ../use-cases/UC-007-add-garment.md
 ' Supporting Authorities: ../SRS.md (v0.4); ../business-rules.md (v0.2)
@@ -47,8 +49,8 @@ confidence and provenance;
         endif
     else (Manual)
         |User|
-        :Enter category/color and optionally
-valid subtype, Brand and purchase Price with currency;
+        :Enter Category and one Color; offer all applicable
+approved properties, multiple Materials and category details;
         |CapsuleAI|
         :Prepare entered information for review without analysis;
     endif
@@ -85,7 +87,7 @@ and missing applicable compatibility information;
     |CapsuleAI|
     if (Confirmed minimum and supplied values valid?) then (No)
         :Identify missing/unconfirmed minimum or
-invalid subtype / incomplete Price pair;
+invalid vocabulary, category applicability or Price pair;
         :Retain draft for correction;
     endif
 repeat while (Minimum or supplied values need correction?) is (Yes) not (No)
@@ -110,23 +112,14 @@ repeat
 repeat while (Accepted creation not established?) is (Yes) not (No)
 :Acknowledge one confirmed owned garment;
 :Keep confirmed/corrected values authoritative;
-:Check whether an applicable readiness policy is defined;
-if (Policy defined for this evaluation?) then (Yes)
-    :Evaluate applicable Recommendation-Readiness;
-else (No)
-    :Retain Saveable entry and explain unresolved policy;
-    stop
-endif
-if (Applicable readiness satisfied?) then (Yes)
-    :Show readiness for supported evaluations;
-else (No)
-    :Retain Saveable owned entry;
-    :Explain missing information for affected decisions;
-endif
+:Preserve all accepted applicable values for rereading;
+:Explain recommendation eligibility is not evaluated;
 note right
-  Saveable ownership is separate from readiness.
-  Unknown compatibility fields are not fabricated.
-  Brand and Price never gate readiness.
+  Exactly 13 approved properties; Category/Color minimum.
+  Optional Material accepts multiple distinct approved values.
+  Category-specific applicability must be validated.
+  Missing optional values/image never block saving.
+  No ready, invalid, unsuitable or ineligible inference.
 end note
 stop
 

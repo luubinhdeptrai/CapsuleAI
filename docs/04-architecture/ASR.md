@@ -1,5 +1,7 @@
 # CapsuleAI — Architecturally Significant Requirements
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -180,7 +182,7 @@ Transaction realization, persistence, deduplication mechanisms and communication
 
 #### Requirement
 
-CapsuleAI shall preserve consistent confirmed authority, applicable readiness, hard-validity and constituent-identity-set meanings across daily recommendations, Shuffle, feedback/Wear targets, Coverage/Gaps and hypothetical candidate evaluation. Hard validity shall precede soft personalization. Coverage shall retain its contextual, positive-priority-weighted meaning and sufficient-data gate. Wardrobe Multiplier shall count incremental unique valid outfits from complete current and expanded sets under the same context/rule basis. Relevant input/rule changes shall require reevaluation or explicit outdated status.
+CapsuleAI shall preserve consistent confirmed authority, eligibility under a future approved policy, hard-validity and constituent-identity-set meanings across daily recommendations, Shuffle, feedback/Wear targets, Coverage/Gaps and hypothetical candidate evaluation. Hard validity shall precede soft personalization. Coverage shall retain its contextual, positive-priority-weighted meaning and sufficient-data gate. Wardrobe Multiplier shall count incremental unique valid outfits from complete current and expanded sets under the same context/rule basis. Relevant input/rule changes shall require reevaluation or explicit outdated status.
 
 #### Why Architecturally Significant
 
@@ -328,7 +330,7 @@ Deployment topology, monitoring tools, backup/recovery tactics and operating pla
 
 #### Requirement
 
-CapsuleAI shall provide the Vietnamese mobile experience with understandable, accessible actions, explanations, state distinctions and recovery choices. Connected capabilities shall supply truthful meaning for draft/accepted authority, Saveable/readiness, confidence/provenance, current/historical/hypothetical information and complete/insufficient/unavailable/outdated results. Display-label changes and later language additions shall preserve canonical semantics and existing confirmed information.
+CapsuleAI shall provide the Vietnamese mobile experience with understandable, accessible actions, explanations, state distinctions and recovery choices. Connected capabilities shall supply truthful meaning for draft/accepted authority, saved ownership / unevaluated eligibility, confidence/provenance, current/historical/hypothetical information and complete/insufficient/unavailable/outdated results. Display-label changes and later language additions shall preserve canonical semantics and existing confirmed information.
 
 #### Why Architecturally Significant
 
@@ -404,7 +406,7 @@ These are source-derived behavior groups, not proposed services, bounded context
 | Functional Area | Significant Behavior / Why Architecture Cares | Related Use Cases / Activities | Main Formal ASRs |
 | --- | --- | --- | --- |
 | Authentication / Session / Recovery | Private authority, separate sessions, rotation/reuse, reset replacement/consumption and completion-based revocation coordinate access and sensitive state. | UC-001–004; AD-004 | ASR-SEC-001, ASR-REL-001, ASR-INT-001 |
-| Garment Digitization and User Confirmation | Image/manual alternatives, explicit canonical confirmation, confidence/provenance, Saveable versus readiness, later automated disagreement and dependent changes constrain authority and completion. Routine browsing/editing matters here only where authority, ownership or uncertain outcomes are affected. | UC-007–010; AD-007 | ASR-REL-001, ASR-CON-001, ASR-PERF-001, ASR-SEC-002 |
+| Garment Digitization and User Confirmation | Image/manual alternatives, explicit canonical confirmation, confidence/provenance, saved ownership versus unevaluated eligibility, later automated disagreement and dependent changes constrain authority and completion. Routine browsing/editing matters here only where authority, ownership or uncertain outcomes are affected. | UC-007–010; AD-007 | ASR-REL-001, ASR-CON-001, ASR-PERF-001, ASR-SEC-002 |
 | Outfit Recommendation and Shuffle | Current owned inputs, validity before ranking, distinct identity sets, actual available choice, fixed-slot/context replacement and changed-basis detection must stay coherent. | UC-011/012; AD-011/012 | ASR-CON-001, ASR-PERF-001, ASR-INT-001, ASR-USE-001 |
 | Wear Events and Personalization | Explicit intentions versus retries, individual correction/removal, original local meaning, absolute aging, survivor effects and distinct history/ranking evidence create substantial state coordination. | UC-013–018; AD-014/016/017 | ASR-REL-001, ASR-SEC-002, ASR-CON-001 |
 | Wardrobe Coverage / Gaps | Positive-priority contextual assessment, sufficient-data gate, unique valid need evidence, weighted score and capability-first bottlenecks require shared domain meaning and honest currentness. | UC-019/020; AD-019/020 | ASR-CON-001, ASR-USE-001, ASR-TEST-001 |
@@ -422,7 +424,7 @@ An **ASR** is a selected requirement cluster with substantial architectural infl
 | Vietnamese initial UI; English documentation | PRD OPQ-002; LOC-001–005; NFR-MNT-001 | Canonical category/subtype, style/occasion, confidence and provenance meanings remain independent of display labels; later language readiness adds no second MVP UI language. |
 | Email/password with JWT access/refresh direction | PRD OPQ-008; SRS Sections 2.4/3.1.1; FR-AUTH-009/010/013/014 | 15-minute access, maximum 30-day session, consumed refresh rotation and affected-session reuse response. Storage, keys and revocation mechanisms remain undecided. |
 | Existing account/recovery policy | FR-AUTH-004/007/015–018; DATA-AUTH-002/005; BRULE-AUTH-002–006 | Separate current-session logout versus completed-reset all-Refresh-Session revocation; 30-minute single-success-use reset with replacement; normalized unique email and exact 12–128-character password meaning. No social, OTP or guest MVP access. |
-| Bounded garment and outfit domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; approved vocabularies; confirmed category/color Saveable minimum with imageless manual creation; evaluation-specific readiness; hard validity before soft preference. The retained separated-garment outfit template uses TOP/BOTTOM/FOOTWEAR roles mapped from TOPS/(PANTS or SKIRTS)/SHOES plus optional OUTERWEAR; new category composition/readiness is pending PRD OPQ-012. |
+| Bounded garment and outfit domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | Exactly 13 source-owned properties and eight categories; Category/Color plus confirmation save, all other applicable fields are optional. No obsolete fields, readiness gate or fixed category-role composition is active; future evaluation policy is deferred. |
 | Supported garment-image input | SRS Section 3.4.1; FR-AI-001/002/004; UC-007 | JPEG/JPG, PNG and HEIC/HEIF; maximum 15 MB; shortest dimension ≥512 pixels. Preview usability and recognition accuracy differ; no mandatory white background or image-saving gate. |
 | Private, necessary-purpose processing | NFR-PRIV-001/002; BRULE-AUTH-007; SI-002/003, COM-003 | No MVP personal-data AI training/improvement, public wardrobes, user-to-user sharing, unrestricted disclosure or sale. Future training needs separate explicit opt-in and approved product/privacy change. |
 | Existing lifecycle boundaries | FR-WAR-005, FR-WEAR-007, FR-MET-006; DATA-RET-001–003; SRS Section 12.1 | Immediate effective garment/event exclusion; 30-day applicable physical deletion; separate maximum 90-day user-linked measurement before deletion/aggregation/de-identification; necessary minimal history distinct from ranking expiry. |

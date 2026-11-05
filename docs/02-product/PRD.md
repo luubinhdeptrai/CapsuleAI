@@ -1,22 +1,24 @@
 # CapsuleAI — Product Requirements Document
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
 | Document Name | CapsuleAI — Product Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Last Updated | 2026-11-05 |
 | Primary Owner | Product Owner / Product |
 | Approval Authority | Product Owner / Product Decision Authority |
 | Reviewers | Business Analyst, UX/Product Design, Tech Lead, AI/ML Engineering, QA/Testing |
-| Business Source of Truth | [docs/01-business/BRD.md](../01-business/BRD.md), version 0.4 |
+| Business Source of Truth | [docs/01-business/BRD.md](../01-business/BRD.md), version 0.5 |
 | Process Authority | [CapsuleAI_Scrum_Development_Workflow.md](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Development Model | Scrum / Agile |
 | Authoritative Product Location | `docs/02-product/PRD.md`, after review and acceptance |
-| Product revision | 2026-11-05: Approved eight-category taxonomy, ten Dresses/Jumpsuits subtypes and optional Brand/purchase Price; Price meaning and explicit currency approved by the user. Existing IDs and unrelated scope preserved; OPQ-012–014 remain open. |
+| Product revision | 2026-11-05: final 13-property/source-vocabulary approval; all applicable properties included in Sprint 2; obsolete attributes and eligibility/composition predicates superseded with IDs retained. |
 
 ### 1.1 Purpose and Authority
 
@@ -28,7 +30,7 @@ The BRD's approved business decisions govern this document even though its docum
 
 | Source | Use in This PRD |
 |---|---|
-| [BRD v0.4](../01-business/BRD.md) | Authoritative positioning, BG-01–BG-04, BR-001–BR-024, CAP-01–CAP-10, scope, personas, constraints, and trust commitments. |
+| [BRD v0.5](../01-business/BRD.md) | Authoritative positioning, BG-01–BG-04, BR-001–BR-024, CAP-01–CAP-10, scope, personas, constraints, and trust commitments. |
 | [Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) | Process authority for artifact order, ownership, traceability, review, and change propagation. |
 | Existing root PRD (historical source; not present in this checkout) | Earlier capture/review, outfit choice, item shuffle, and shopping-preview experiences; normalized against the BRD. |
 | [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md) | Consolidated context and explicit decisions in Section 15; technical descriptions remain outside this PRD. |
@@ -59,6 +61,7 @@ Conflict precedence is: explicit BRD decisions; explicit later CapsuleAI decisio
 | 0.1 | 2026-10-05 | Created normalized PRD from BRD v0.2 and existing sources; expanded journeys, feature behavior, acceptance criteria, experience states, and traceability without changing the business baseline. | Baseline Draft |
 | 0.2 | 2026-10-05 | Resolved OPQ-001–OPQ-010 and synchronized journeys, features, Wear Event semantics, authentication, garment completeness, confidence experience, coverage context, and candidate information. Business effects are synchronized with BRD v0.3; document approval is not implied. | Baseline Draft |
 | 0.3 | 2026-11-05 | Adopted approved taxonomy, optional properties and explicit Price approval; OPQ-011 records approval and OPQ-012–014 track unresolved policy. | Baseline Draft |
+| 0.4 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. | Baseline Draft |
 
 ### 1.4 Artifact Boundary
 
@@ -142,8 +145,8 @@ These are product navigation responsibilities, not mandated tab placement, gestu
 | Welcome / Account Access | Product value introduction; email/password registration/login and email password reset with actionable errors. | Enter progressive onboarding, recover access, or return to the personal experience. |
 | Onboarding / Preferences | Style, common occasion priorities for the Personalized Everyday Capsule, optional body/gender, and location choice/limited-context explanation. | Follow progressive setup, skip optional context, use the recommended first-garment action or enter Today/Wardrobe; return later through Profile. |
 | Today | Current context and entry to daily outfit choices. | Adjust occasion/context; request outfits; add a garment; access outfit detail. |
-| Wardrobe Overview | Garment cards/available visuals, category/color, readiness guidance, and meaningful utilization indicators. | Browse, search, filter, open detail, add garment. |
-| Add Garment / Processing / Review | Capture/gallery/manual entry, preview/proposals, three confidence states, saveable minimum and readiness guidance, and user confirmation. | Retry, correct, enter manually, confirm, or cancel; return to Wardrobe. |
+| Wardrobe Overview | Garment cards/available visuals, category/color, guidance that eligibility is not evaluated, and meaningful utilization indicators. | Browse, search, filter, open detail, add garment. |
+| Add Garment / Processing / Review | Capture/gallery/manual entry, preview/proposals, three confidence states, saveable minimum and guidance that eligibility is not evaluated, and user confirmation. | Retry, correct, enter manually, confirm, or cancel; return to Wardrobe. |
 | Garment Detail | Confirmed profile, provenance/uncertainty where useful, and recorded use. | Edit, remove, or return to wardrobe/results. |
 | Outfit Results / Detail | Outfit visualization, context, concise reasons, and garment details. | Shuffle an item; Like/Dislike; Wear This Today; inspect a garment. |
 | Insights / Wear History | Wear Events with local date/time, multiple events per day, garment utilization/variety, historical snapshots, and recording limitations. | Inspect/correct/remove an individual event; inspect historical garments; open coverage. |
@@ -203,8 +206,8 @@ Journey identifiers describe end-to-end experiences. Detailed behavior and accep
 1. From Today or Wardrobe, the user captures an image, selects one from the gallery, or chooses manual entry.
 2. Image guidance helps avoid unclear garment photos; processing shows progress rather than a completed entry.
 3. The user sees an available processed preview and proposed garment information, including uncertainty where relevant.
-4. The user reviews suggestions shown as High Confidence, Needs Review, or Uncertain; confirms/corrects category and dominant color; and can use bounded subtype choices with OTHER/UNKNOWN only where defined. Manual entry does not require an image.
-5. With confirmed category and dominant color, the user can save the garment without completing every rich descriptor. The entry shows whether additional applicable pattern, layering, or season information is needed to establish recommendation readiness; saved ownership alone does not justify an unevaluable combination.
+4. The user reviews suggestions shown as High Confidence, Needs Review, or Uncertain; confirms/corrects category and dominant color; and can use every approved category-valid subtype from the source catalogue without invented fallback choices. Manual entry does not require an image.
+5. With confirmed Category and one approved Color, save while omitting optional fields and preserving all supplied applicable values. Recommendation eligibility is not evaluated.
 
 **Recovery:** Poor images support replacement; AI failure supports retry or manual continuation. Low confidence never silently becomes authoritative data. Canceling a draft does not create a confirmed garment.
 
@@ -513,12 +516,12 @@ Users may mark some needs as more relevant than others. Common need priorities a
 **Product behavior:**
 
 1. Present proposals using High Confidence, Needs Review, and Uncertain; distinguish AI Suggested, User Confirmed, User Corrected, and User Entered provenance. Even high-confidence proposals remain reviewable.
-2. Prioritize category and dominant-color confirmation; offer optional subtype, Brand and Price; offer pattern, applicable layering, and season information to improve readiness. Other rich descriptors remain available without becoming universal save blockers.
+2. Offer all 13 applicable properties from Section 13, including optional multiple Materials, category-specific details, Brand and Price; validate only supplied optional information. Category and one dominant Color plus confirmation remain the minimum.
 3. Allow manual entry without AI success or an image. Unknown optional information stays unknown rather than fabricated.
-4. Save after explicit confirmation of category and dominant color. Saveable ownership and recommendation readiness are separate: additional applicable information may be needed to establish compatibility.
-5. Show the garment/readiness guidance in Wardrobe; confirmed/corrected values are authoritative regardless of prior AI confidence, and later analysis cannot silently overwrite them.
+4. Save after explicit confirmation of Category and Color, preserving every supplied valid applicable property. Recommendation eligibility is not evaluated and is not a save gate.
+5. Show accepted garment information and guidance that eligibility has not been evaluated in Wardrobe; confirmed/corrected values are authoritative regardless of prior AI confidence, and later analysis cannot silently overwrite them.
 
-**User controls:** Review, edit, replace uncertain information, retry analysis, enter manually, confirm, or cancel. **Product states:** Proposal available, High Confidence, Needs Review, Uncertain, reviewing, manual entry, confirming, saved/saveable, recommendation-ready, needs additional details, save failed.
+**User controls:** Review, edit, replace uncertain information, retry analysis, enter manually, confirm, or cancel. **Product states:** Proposal available, High Confidence, Needs Review, Uncertain, reviewing, manual entry, confirming, saved/saveable, recommendation eligibility not evaluated, save failed.
 
 **Failure / fallback:** Keep the distinction between unsaved work and confirmed data clear. Offer retry while preserving entered work where practical; do not report success after a failed confirmation.
 
@@ -530,107 +533,64 @@ Users may mark some needs as more relevant than others. Common need priorities a
 - **AC-04:** An uncertain material suggestion can be corrected or left unknown without a false claim of certainty.
 - **AC-05:** A later analysis does not silently replace a previously confirmed user value.
 - **AC-06:** A failed save is not shown as a successful wardrobe addition; retry does not result in an unexplained duplicate.
-- **AC-07:** Confirmed category and dominant color allow saving without subtype, Brand, Price, material, an image for manual entry, advanced color values, silhouette, or every rich descriptor.
-- **AC-08:** Omitted subtype is valid for every category; OTHER/UNKNOWN subtype choices are allowed only for categories defining them in Section 13.2. A supplied subtype must belong to the selected category; unsupported pairs require correction or clearing, not silent reassignment.
-- **AC-09:** A saved entry lacking applicable compatibility information can request additional details without fabricating them or claiming recommendation readiness.
+- **AC-07:** Confirmed category and dominant color allow saving without subtype, Brand, Price, material, an image for manual entry, any other optional applicable property.
+- **AC-08:** Omitted subtype is valid for every category. A supplied subtype must belong to its category and the complete approved source list; unsupported pairs require correction or clearing, not silent reassignment or an invented fallback.
+- **AC-09:** A saved entry remains usable with missing optional properties. Recommendation eligibility has not been evaluated; do not label it ready, invalid, unsuitable or ineligible because an engine policy is undefined.
 - **AC-10:** High Confidence does not remove correction authority; Needs Review prompts checking, and Uncertain encourages correction/manual input without primary raw confidence numbers.
 
-**Out of scope / deferred detail:** The saveable minimum and confidence experience are resolved in Sections 13.3–13.4. Exact recommendation-readiness validation/derivation rules, confidence thresholds, representation, save mechanics, and technical retry behavior belong downstream. Rich descriptors are not all mandatory for saving.
+**Out of scope / deferred detail:** The saveable minimum and confidence experience are resolved in Sections 13.3–13.4. Recommendation policy is deferred to engine development. Confidence thresholds, representation, save mechanics and technical retry behavior remain in their owning SRS/JIT artifacts. Rich descriptors are not all mandatory for saving.
 
 ## 13. Garment Intelligence Features
 
-### 13.1 FEAT-GAR-001 — Rich Garment Intelligence Experience
+### 13.1 FEAT-GAR-001 — Approved Garment Property Experience
 
-**Purpose:** Represent the garment information needed for styling, coverage, and candidate comparison.
+**Purpose / user value:** Let users create, review and inspect trustworthy garment information using the complete approved property model. Related business sources: BR-002/003/005/007/009/022; CAP-03/04; BG-01–04.
 
-**User value:** Users can understand and correct what the product knows about an item beyond a basic category/color tag.
+The [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns the exact vocabulary labels and applicability. Its complete lists are approved, including every category's subtypes; earlier research-only status and older reduced vocabularies are superseded. This PRD describes behavior and references that single vocabulary authority.
 
-**Related BRD:** BR-002, BR-003, BR-007, BR-009, BR-022; CAP-04; BG-01–BG-04. **Primary users:** All personas.
+| # | Property | Applicability | Required for Saving | Meaning / Value Authority |
+|---|---|---|---|---|
+| 1 | Category | All categories | Yes | One of eight category codes. |
+| 2 | Subtype | All categories | No | Optional category-valid selection from the complete approved list. |
+| 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
+| 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
+| 5 | Pattern | All categories | No | One optional approved Pattern. |
+| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 7 | Fit | Tops | No | Optional approved Fit. |
+| 8 | Neckline | Tops | No | Optional approved Neckline. |
+| 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
+| 10 | Length | Tops and Pants | No | Category-specific approved Length values. |
+| 11 | Silhouette | Pants | No | Optional approved Silhouette. |
+| 12 | Brand | All categories | No | Optional user-entered text; no enum/catalogue. |
+| 13 | Price | All categories | No | Optional amount originally paid: decimal amount and explicit ISO 4217 currency. |
 
-**Entry points / trigger:** Garment review, garment detail/edit, and relevant candidate information. **Preconditions:** A proposed or confirmed garment profile; unknown attributes stay distinct from confirmed values. Saving requires only confirmed category/dominant color; recommendation readiness depends on applicable compatibility information.
-
-**Product behavior:** Show category and dominant color prominently for saving, and offer subtype/pattern/season/applicable layering to improve readiness. Richer descriptors remain available in understandable secondary review/detail; users need not calculate color coordinates or complete every descriptor. Sections 13.2–13.4 define the controlled subtypes, completeness distinction, and confidence/provenance experience.
-
-| Dimension | What Users See / Understand | AI Assistance, Correction, and Uncertainty |
-|---|---|---|
-| Classification | Eight primary categories and category-specific optional subtypes in Section 13.2. | Supplied subtype must belong to its category; omission never blocks saving. Classification does not by itself prove outfit compatibility. |
-| Layering & Shape | Layering role, relative bulk, fit, and silhouette in understandable terms. | Users can review/correct suggestions; missing information remains clear. Internal levels or numeric bulk measures need not be exposed as raw technical values. |
-| Color | Dominant and secondary colors, warm/cool color character, and palette role where useful. HEX/HSL describe precise color information conceptually. | Swatches/names help correction; detailed color values may be shown in secondary detail without mandatory coordinate entry. Lighting-based uncertainty is explained where relevant. |
-| Pattern | Pattern type, relative pattern density, and visual busyness/noise. | Suggested descriptors are editable; the product does not assume every pattern is confidently recognized. |
-| Context | Season suitability, occasion associations, and style associations. | AI suggestions can be accepted or corrected; associations inform suitability rather than rigid stereotypes. |
-| Material | Suggested or user-entered material and its uncertainty/confidence. | Image-based inference is not verification. Users can correct it or leave it unknown; a suggestion alone cannot support a certain durability claim. |
-| Brand and Price | Optional brand text and user-reported purchase amount with explicit currency, for all categories (Section 13.5). | Preserve confirmed values; unknown stays unknown. Price is not inferred from appearance; Brand recognition is not promised. |
-
-**User controls:** Inspect each dimension, correct supported descriptors, confirm, and revisit through edit. **Product states:** AI Suggested, High Confidence / Needs Review / Uncertain, User Confirmed / User Corrected / User Entered, saveable, recommendation-ready, needs additional details, editing.
-
-**Failure / fallback:** Missing dimensions remain explicit; manual input is available where appropriate. Do not promise equal predictive accuracy across the richer attributes.
+**Product behavior:** Manual entry offers all applicable properties during Sprint 2. Review validates supplied values and category applicability, permits optional omissions, and explicitly confirms the accepted information. Preserve all accepted values through persistence and inspection. Unsupported/inapplicable values require correction or clearing; no silent substitution, fabricated value or additional property is allowed. Optional images and future AI suggestions stay separate from the confirmed profile.
 
 **Feature-level acceptance criteria:**
 
-- **AC-01:** Review and detail cover classification, layering/shape, color, pattern, contextual attributes, material, and optional Brand/Price without requiring technical schema knowledge.
-- **AC-02:** Each supported dimension can be reviewed and corrected through understandable controls; final user values remain authoritative.
-- **AC-03:** Material uncertainty is visible when relevant and cannot be mistaken for verified fabric composition.
-- **AC-04:** Unknown information is not silently displayed as a confident prediction or user confirmation.
-- **AC-05:** Classification uses the eight approved categories and bounded subtype vocabularies, with OTHER/UNKNOWN only where defined; technical color detail is not mandatory for saving.
-- **AC-06:** The user can save with confirmed category/dominant color and understand when additional applicable pattern/layering/season information is needed for recommendations.
-- **AC-07:** Confidence and provenance remain distinct: a High Confidence AI suggestion is not automatically User Confirmed, while confirmed/corrected values become authoritative.
+- **AC-01:** Entry and inspection support all 13 applicable properties in the catalogue, with one dominant Color and optional multiple distinct Materials.
+- **AC-02:** Every supplied controlled value uses the authority's complete list and applicable category; invalid pairs/fields can be corrected or cleared without silent replacement.
+- **AC-03:** Optional Material may be empty, one or multiple values; duplicates add no semantic material and no percentages or physical-composition certainty are fabricated.
+- **AC-04:** Unknown information remains absent or qualified; it is not a confident prediction or user confirmation.
+- **AC-05:** All eight categories and all listed subtypes are supported, including exactly ten Dresses/Jumpsuits values. Preserve overlapping subtype labels without deriving another property automatically; Etc is never an accepted Style.
+- **AC-06:** Category plus one approved Color and explicit confirmation permit saving without any optional property, image, successful AI or recommendation gate. Eligibility is not evaluated, rather than ready, unsuitable or ineligible.
+- **AC-07:** Confirmation/provenance remain distinct from AI confidence; later output cannot silently replace accepted properties, including Brand/Price.
 
-**Out of scope / deferred detail:** The initial subtype vocabulary, saveable minimum, and confidence states are resolved below. Detailed compatibility semantics, other descriptor values/scales, internal HEX/HSL representation, exact readiness rules, and inference algorithms remain downstream.
+**Delivery boundary:** All applicable creation properties and detail retrieval are included in the selected Sprint 2 stories. Later editing, photo/AI assistance and recommendation engines retain their separate PBIs; no whole-MVP API/schema design is required now.
 
 ### 13.2 Controlled Initial Garment Subtypes
 
-The eight approved primary categories below replace the earlier four-category classification. Display names and identifiers are product vocabulary, not physical database types or outfit slots. Existing subtypes are retained under their corresponding categories: TOP becomes TOPS, FOOTWEAR becomes SHOES, and the earlier BOTTOM vocabulary separates into PANTS and SKIRTS. No stored-data migration is prescribed here.
+The [approved Category/Subtype catalogue](../../Initial%20files/Image%20to%20Properties%20Extraction.md#31-category-and-subtype) contains every supported subtype for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS and HEADWEAR. Use the complete lists without adding obsolete OTHER/UNKNOWN choices. The ten Dresses/Jumpsuits codes remain unchanged. Labels for other lists are the current authority; any technical representation must preserve them without inventing subtype values.
 
-| Display Name | Canonical Identifier |
-|---|---|
-| Tops | `TOPS` |
-| Dresses/Jumpsuits | `DRESSES_JUMPSUITS` |
-| Pants | `PANTS` |
-| Skirts | `SKIRTS` |
-| Outerwear | `OUTERWEAR` |
-| Shoes | `SHOES` |
-| Bags | `BAGS` |
-| Headwear | `HEADWEAR` |
+Subtype is optional, but a supplied value must belong to the selected category. A category change requires review of incompatible subtype and category-specific fields. MINI_DRESS may overlap length and PARTY_DRESS occasion as concepts, but no extra Length applicability or garment Occasion property follows. JACKET_DRESS remains under Dresses/Jumpsuits; JUMPSUIT stays in that combined category. Further categories or vocabulary values require Product Owner approval.
 
-| Primary Category | Supported Subtypes |
-|---|---|
-| TOPS | `T_SHIRT`, `SHIRT`, `POLO`, `BLOUSE`, `SWEATER`, `HOODIE`, `TANK_TOP`, `OTHER`, `UNKNOWN` |
-| DRESSES_JUMPSUITS | Exactly the ten values in the table below. |
-| PANTS | `JEANS`, `TROUSERS`, `CHINOS`, `SHORTS`, `LEGGINGS`, `OTHER`, `UNKNOWN` |
-| SKIRTS | `SKIRT`, `OTHER`, `UNKNOWN` (retained existing skirt/fallback vocabulary; finer choices are not approved). |
-| OUTERWEAR | `JACKET`, `BLAZER`, `COAT`, `CARDIGAN`, `OVERSHIRT`, `OTHER`, `UNKNOWN` |
-| SHOES | `SNEAKERS`, `LOAFERS`, `DRESS_SHOES`, `BOOTS`, `SANDALS`, `FLATS`, `HEELS`, `OTHER`, `UNKNOWN` |
-| BAGS | No bounded subtype vocabulary approved yet; omit subtype pending OPQ-014. |
-| HEADWEAR | No bounded subtype vocabulary approved yet; omit subtype pending OPQ-014. |
+### 13.3 Saving and Deferred Recommendation Eligibility
 
-| Dresses/Jumpsuits Display Name | Canonical Identifier |
-|---|---|
-| Day Dress | `DAY_DRESS` |
-| T-Shirt Dress | `T_SHIRT_DRESS` |
-| Shirt Dress | `SHIRT_DRESS` |
-| Sweatshirt Dress | `SWEATSHIRT_DRESS` |
-| Sweater Dress | `SWEATER_DRESS` |
-| Jacket Dress | `JACKET_DRESS` |
-| Suspender Dress | `SUSPENDER_DRESS` |
-| Jumpsuit | `JUMPSUIT` |
-| Party Dress | `PARTY_DRESS` |
-| Mini Dress | `MINI_DRESS` |
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-Subtype is optional for all eight categories. A supplied subtype must belong to its selected category; a category change requires review of an incompatible subtype rather than silent reassignment. OTHER/UNKNOWN are choices only where listed, never extra primary categories. DRESSES_JUMPSUITS has exactly ten values; an omitted subtype represents unknown information without inventing an eleventh choice. Broader fashion lists in the image research note are not automatically approved controlled values.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-MINI_DRESS may describe length and PARTY_DRESS occasion, but both remain subtype choices without automatically setting those separate attributes. JACKET_DRESS remains under DRESSES_JUMPSUITS, not OUTERWEAR; JUMPSUIT remains in the combined category. Overlapping descriptions may fit an item; the user selects its subtype, and no automatic priority, layer, climate or compatibility inference is introduced. More detailed overlap/disambiguation policy remains OPQ-014.
-
-### 13.3 Saveable vs Recommendation-Ready Garment
-
-| Completeness Level | Product Information / Behavior |
-|---|---|
-| Saveable Garment | User confirms Primary Category and Dominant Color. Manual creation does not require an image. Subtype, Brand, Price, material, secondary colors, advanced coordinates, silhouette, advanced style tags, and all other rich descriptors are not required merely to save. |
-| Recommendation-Ready Garment | For the established separated-garment template, enough applicable compatibility information exists: Primary Category, Dominant Color, Pattern Type, Layering Level where applicable, and Season Suitability are conceptually required or derived where justified. Subtype is strongly recommended; Bulk Index and Fit are useful but not universally mandatory. |
-| Optional for readiness | Brand and Price never gate readiness. Material, Silhouette, Secondary Colors, precise HEX/HSL display, Style Tags, and Occasion Tags are not universally required. |
-
-A confirmed owned item can be saveable while still needing additional details for valid advice. The product explains which information would improve readiness, retains the entry, and never silently fabricates missing attributes. Derivation must be supported by available information and must not silently replace user-confirmed profile values. If compatibility cannot be established, do not claim a valid outfit merely because its garments are saved. Exact validation/derivation rules belong in SRS/Business Rules.
-
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
+Removed fashion properties and the earlier readiness policy are explicitly superseded in the authority's Section 5. User-profile preferences, request occasion/weather and technical metadata remain separate. Their existence cannot recreate removed garment fields or a hidden compatibility gate.
 
 ### 13.4 Confidence and Provenance Experience
 
@@ -648,11 +608,9 @@ Provenance distinguishes **AI Suggested**, **User Confirmed**, **User Corrected*
 
 ### 13.5 Optional Brand and Purchase Price
 
-Brand is optional user-entered text across all eight categories, with no fixed enum or external catalogue. Preserve the confirmed value; unknown is not a fabricated brand. Price is the optional user-reported purchase price of the owned garment, represented by a decimal amount together with an explicit ISO 4217 currency code. An amount without currency, or currency without amount, is incomplete supplied information and must be corrected or cleared before confirmation; omitting both is valid and does not mean zero. Never infer currency from location or perform floating-point monetary calculations. This is not market/resale/replacement value or a retailer/affiliate price; no conversion feature is introduced. Neither field is a save or readiness requirement. Price must not be inferred from a photograph; any future Brand suggestion remains unconfirmed until user acceptance. Later analysis or image upload must not silently replace confirmed Brand or Price.
+Brand is optional user-entered text for every category, with no enum/catalogue or recognition feature. Price is the optional amount originally paid for the garment, expressed as a decimal amount and explicit ISO 4217 currency code. Amount/currency must be supplied together or cleared; unknown Price is not zero. No location default, appearance inference, floating-point monetary value or currency conversion is introduced. Preserve accepted values through creation/detail and future editing; automated output cannot silently overwrite them.
 
-Manual entry supports these optional properties alongside optional subtype. A valid supplied value is reviewed, confirmed and retained with the owned garment; detail displays it and future editing can revise or clear it under the existing authority rules. Browsing must keep entries accessible regardless of missing optional fields; this does not require all properties on every wardrobe card. Price is personal garment information under existing ownership/privacy controls, not commercial evidence subject to retailer freshness rules.
-
-OPQ-013 records unresolved amount limits, zero/negative-price treatment, precision/rounding, currency-list maintenance and Brand length/blank/normalization policies. Resolve applicable validation choices before implementing dependent behavior; do not silently choose defaults. These open details do not change the approved optional meaning, decimal representation or explicit-currency requirement.
+This is personal purchase information, distinct from retailer/affiliate guidance and its freshness rules. PRD OPQ-013 retains genuinely unresolved monetary-validation details. Brand bounds/normalization and technical serialization are proportional JIT work under existing conventions; they must not silently change confirmed information.
 
 ## 14. Wardrobe Management Features
 
@@ -669,9 +627,9 @@ OPQ-013 records unresolved amount limits, zero/negative-price treatment, precisi
 **Product behavior:**
 
 1. Show owned garment cards with an available image/visual, category/subtype, and dominant color; manually created garments remain accessible without an image.
-2. Where applicable, distinguish saveable entries needing additional compatibility information from recommendation-ready garments.
+2. Where applicable, distinguish saveable entries needing additional compatibility information from recommendation-garments evaluated under a future approved policy.
 3. Offer relevant recorded-use indicators with clear meaning, including no recorded Wear Events.
-4. Open garment detail for confirmed information across all eight categories, including available subtype, Brand and purchase Price with currency (Section 13.5), useful provenance/uncertainty, readiness guidance, and utilization. Unknown optional fields remain unknown and never hide an owned garment.
+4. Open garment detail for confirmed information across all eight categories, including available subtype, Brand and purchase Price with currency (Section 13.5), useful provenance/uncertainty, guidance that eligibility is not evaluated, and utilization. Unknown optional fields remain unknown and never hide an owned garment.
 5. Provide Add Garment and access to search/filter/edit/remove actions.
 6. Distinguish empty wardrobe from loading, unavailable information, and no matching search results.
 
@@ -686,7 +644,7 @@ OPQ-013 records unresolved amount limits, zero/negative-price treatment, precisi
 - **AC-03:** Empty wardrobes explain the value of adding garments and provide an Add Garment action.
 - **AC-04:** No recorded wear is labeled as missing history rather than proof that a garment is never worn.
 - **AC-05:** A data-loading failure is distinguishable from an empty wardrobe.
-- **AC-06:** A manually saved garment without an image remains identifiable/accessibly displayed; an incomplete entry provides useful readiness guidance.
+- **AC-06:** A manually saved garment without an image remains identifiable/accessibly displayed; an incomplete entry provides useful guidance that eligibility is not evaluated.
 
 **Out of scope / deferred detail:** Pixel layout, collection organization, advanced sorting, pagination, and storage are not defined here. Shared/public wardrobes are outside MVP.
 
@@ -765,12 +723,12 @@ OPQ-013 records unresolved amount limits, zero/negative-price treatment, precisi
 
 **Related BRD:** BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-022, BR-024; CAP-05, CAP-06; BG-02, BG-03. **Primary users:** Especially Indecisive Professional; useful to all personas.
 
-**Entry points / trigger:** Today, a recommendation request, or changed relevant context. **Preconditions:** Current confirmed wardrobe and enough applicable garment/context information to establish valid combinations. Saveable entries may still need pattern, season, or applicable layering detail; do not infer readiness from ownership alone. Missing optional personalization does not independently block recommendations.
+**Entry points / trigger:** Today, a recommendation request, or changed context. **Preconditions:** Authorized current confirmed wardrobe; future engine composition/compatibility/evidence policy must be approved before useful valid advice can be established. Saving does not evaluate eligibility, and omitted optional garment properties or personal context alone do not label a garment unsuitable.
 
 **Product behavior:**
 
 1. Make the active occasion, style preference, and available environmental context understandable.
-2. Establish applicable compatibility information, then apply hard validity constraints for required roles, layering, weather/season, strong incompatibility, and pattern/noise conflicts. Explain when additional garment detail is needed rather than inventing it.
+2. During future engine development, establish approved composition/compatibility and sufficient evidence before claiming validity; apply only approved policy before ranking. No former property predicate or fixed category-role mapping remains active.
 3. Rank only valid candidates using color harmony, style, occasion, explicit feedback, recorded wear/recency, diversity, and relevant optional soft context.
 4. Present at least three distinct valid outfits when the wardrobe/context permits; garment-identity combinations repeated in a different order are not new outfits.
 5. Show fewer valid choices or none with an explanation when appropriate, without duplicate padding or invalid substitutions.
@@ -1190,10 +1148,10 @@ States communicate what the user can rely on and what to do next. They are produ
 | Account | Authenticated | Open the correct user's experience; distinguish session renewal from empty data. |
 | Account | Onboarding incomplete | Follow progressive setup; explain missing context and allow return later. Optional body/gender, location permission, and first garment do not block access. |
 | Wardrobe | Empty | Explain that adding owned garments unlocks styling/insights; provide Add Garment and manual entry. |
-| Wardrobe | Partially populated | Show saved garments and applicable readiness limits; suggest useful additions/details without fabricated ownership or an arbitrary quota. |
+| Wardrobe | Partially populated | Show saved garments and applicable unevaluated eligibility; suggest useful additions/details without fabricated ownership or an arbitrary quota. |
 | Garment | Saveable | Confirmed category/dominant color permit saving; manual entry needs no image or complete rich profile. |
-| Garment | Recommendation-ready | Enough applicable compatibility information supports valid advice; ownership alone is not readiness. |
-| Garment | Needs additional details | Keep the saved entry; explain relevant missing pattern/season/applicable layering information without inventing values. |
+| Garment | Eligibility not evaluated | The current phase evaluates saving validity only; do not infer ready, unsuitable or ineligible from missing optional information or undefined engine policy. |
+| Garment | Optional information absent | Retain the owned entry and show available accepted values without an enrichment or eligibility gate. |
 | Wardrobe | Sufficient for a context | Enable supported recommendations/assessments; do not claim universal completeness. |
 | Wardrobe | Search/filter has no matches | Show active conditions and a clear change/reset action; do not imply the wardrobe itself is empty. |
 | Garment processing | Image selected | Show the chosen image with replace/cancel and a clear next step. |
@@ -1359,12 +1317,12 @@ No cache timings, storage policies, framework choices, or vendor-specific guaran
 
 ## 26. MVP Scope
 
-The MVP delivers the connected experience: email/password access and progressive profile setup → digitize → confirm/save garment intelligence → manage wardrobe/readiness → receive context-aware outfits → provide feedback/record Wear Events → understand Personalized Everyday Capsule coverage/gaps → evaluate candidates → inspect multiplier/previews → optionally visit an external destination.
+The MVP delivers the connected experience: email/password access and progressive profile setup → digitize → confirm/save garment intelligence → manage accepted wardrobe information → receive context-aware outfits → provide feedback/record Wear Events → understand Personalized Everyday Capsule coverage/gaps → evaluate candidates → inspect multiplier/previews → optionally visit an external destination.
 
 | MVP Capability | Required Product Outcome | Features |
 |---|---|---|
 | Private mobile access and context | Vietnamese Android/iOS UI; email/password, email reset/logout, progressive setup, controlled preferences/common needs, optional body/gender/location, manual location. | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 |
-| Trustworthy digital wardrobe | Capture/gallery/manual entry, confidence/provenance, confirmed category/color saveability, progressive readiness, bounded subtypes, and management with preserved removed-garment history. | FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001, FEAT-WAR-001–FEAT-WAR-003 |
+| Trustworthy digital wardrobe | Capture/gallery/manual entry, confidence/provenance, confirmed category/color saveability, unevaluated recommendation eligibility, bounded subtypes, and management with preserved removed-garment history. | FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001, FEAT-WAR-001–FEAT-WAR-003 |
 | Daily styling | Owned, valid, explained distinct choices; relevant style/occasion/weather; compatible single-item shuffle. | FEAT-OUT-001–FEAT-OUT-003 |
 | Active learning and recorded use | Like/Dislike and multiple intentional Wear Events per local day, individual correction/removal, time-aware history/snapshots, meaningful normalized personalization, utilization/variety/recency. | FEAT-PERS-001–FEAT-PERS-003, FEAT-ANL-001 |
 | Wardrobe intelligence | One Personalized Everyday Capsule using relevant common needs/style/climate/current wardrobe; contextual explainable coverage/gaps and insufficient/no-gap states. | FEAT-ANL-002, FEAT-GAP-001 |
@@ -1412,7 +1370,7 @@ These possibilities have no MVP feature acceptance criteria or committed deliver
 | DEP-001 | Usable garment images support useful analysis/preview. | Image guidance, replacement, and manual entry. |
 | DEP-002 | AI availability and usable predictions support reduced effort. | Explicit uncertainty and manual continuation; user authority preserved. |
 | DEP-003 | Location/environmental context supports relevant weather advice. | Manual location, clear missing context, and qualified reduced-context advice. |
-| DEP-004 | Applicable confirmed garment information and relevant Personalized Everyday Capsule need priorities/context support valid outfits/coverage. | Progressive readiness and partial-data guidance; no universal checklist or invented completeness. |
+| DEP-004 | Applicable confirmed garment information and relevant Personalized Everyday Capsule need priorities/context support valid outfits/coverage. | Deferred engine-policy and truthful missing-data guidance; no universal checklist or invented completeness. |
 | DEP-005 | Credible candidate attributes and available destinations support evaluation/optional shopping. | Utility without links; qualified optional guidance; no-useful-candidate/unavailable-link states. |
 | DEP-006 | Mobile availability and private handling of information support trusted participation. | Android/iOS core journeys, authorized access, clear permissions and recovery. |
 
@@ -1438,7 +1396,7 @@ These remain hypotheses, not research findings. No numerical adoption, retention
 |---|---|---|
 | RSK-001 — AI quality | Frequent corrections, wrong attributes, unusable previews. | Explain uncertainty, simplify review, preserve manual entry, assess attribute quality separately. |
 | RSK-002 — Setup burden | Users stop before building useful inventory. | Low-friction entry, guidance, progressive optional context, specific next steps. |
-| RSK-003 — Small inventory | Too few compatible/readiness-supported outfits or weak coverage evidence. | Progressive detail guidance and honest limited-choice/insufficient-data states; no fabricated attributes, duplicate padding, or fake scores. |
+| RSK-003 — Small inventory | Too few outfits supported by a future approved policy or weak coverage evidence. | Progressive detail guidance and honest limited-choice/insufficient-data states; no fabricated attributes, duplicate padding, or fake scores. |
 | RSK-004 — Recommendation trust | Users cannot understand or rely on advice. | Validity-first choices, inspectable context, understandable explanations. |
 | RSK-005 — Rigid fashion rules | Advice feels narrow or inappropriate. | Separate validity from soft preferences; validate domain rules and avoid universal stereotypes. |
 | RSK-006 — Sensitive personalization | Body/gender feels compulsory or restrictive. | Optional/editable/removable context and no category prohibition. |
@@ -1459,7 +1417,7 @@ This sequence expresses capability dependencies and a possible integration order
 | Digital Wardrobe | Image/manual ingestion, rich confirmation, and current wardrobe management. |
 | Context-Aware Styling | Validity-first, personalized explained outfits and item shuffle using confirmed wardrobe/context. |
 | Behavioral Learning and Utilization | Like/Dislike, multiple intentional Wear Events, correction/removal, historical snapshots, and useful non-distorted personalization/utilization. |
-| Wardrobe Intelligence | Personalized Everyday Capsule needs/context, explainable coverage/gaps, and readiness/sparse-data behavior. |
+| Wardrobe Intelligence | Personalized Everyday Capsule needs/context, explainable coverage/gaps, and deferred eligibility and sparse-data behavior. |
 | Strategic Shopping | Credible candidates, multiplier, hypothetical previews, optional external navigation, and meaningful measurement. |
 | Connected MVP Validation / Hardening | End-to-end trust, recovery, mobile usability, quality targets, and traceability evidence. |
 
@@ -1551,7 +1509,7 @@ The ten decisions below were explicitly approved by the user on October 5, 2026.
 | OPQ-001 | One Personalized Everyday Capsule using common occasion priorities, style, climate/context, and confirmed wardrobe; the initial six need dimensions are in Section 11.3. No universal checklist or rigid persona-specific profiles. | Resolved | JRN-01/JRN-06; FEAT-PROF-001, FEAT-ANL-002, FEAT-GAP-001; BRD OBQ-001. |
 | OPQ-002 | Vietnamese initial MVP UI; English documentation and English-friendly localization-ready domain terms. Additional UI languages, especially English, are future-only. | Resolved | Overview, onboarding, all user-facing content, quality/scope; BRD OBQ-002. |
 | OPQ-003 | Small controlled/versionable style and occasion vocabularies in Section 11.3 and the then-current four-category subtypes, superseded by OPQ-011 and Section 13.2. Fallbacks remain category-specific. | Resolved | FEAT-PROF-001, FEAT-GAR-001, ingestion and recommendation context. |
-| OPQ-004 | Save with confirmed Primary Category and Dominant Color; no image required for manual creation. Readiness depends on applicable compatibility information, with optional rich descriptors and no fabrication. | Resolved | JRN-02; FEAT-AI-002, FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001; Section 13.3. |
+| OPQ-004 | Save with confirmed Primary Category and Dominant Color; no image required for manual creation. Historical property-based readiness is superseded by OPQ-015: eligibility is not evaluated; all non-minimum applicable properties are optional and never fabricated. | Resolved | JRN-02; FEAT-AI-002, FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001; Section 13.3. |
 | OPQ-005 | High Confidence / Needs Review / Uncertain, with understandable review prompts; AI Suggested / User Confirmed / User Corrected / User Entered provenance. Final user values are authoritative; numeric thresholds remain downstream. | Resolved | FEAT-AI-001/FEAT-AI-002/FEAT-GAR-001; states/explainability; Section 13.4. |
 | OPQ-006 | Multiple distinct intentional Wear Events per local day, including separate uses of the same outfit; local date/time and available context/occasion, individual correction/removal, duplicate protection, and no disproportionate artificial preference amplification. | Resolved | JRN-04/JRN-05; FEAT-PERS-002/FEAT-PERS-003/FEAT-ANL-001; states/measurement. |
 | OPQ-007 | Removed garments leave active ownership/current recommendations/coverage/multiplier baseline; historical Wear Events/outfit records preserve understandable snapshots labeled “Removed from wardrobe.” | Resolved | JRN-03; FEAT-WAR-002, FEAT-ANL-001, coverage/multiplier, explainability. |
@@ -1559,22 +1517,23 @@ The ten decisions below were explicitly approved by the user on October 5, 2026.
 | OPQ-009 | Welcome → Register/Login → Style → Common Needs → Optional Personal Context → Location/manual/skip → recommended non-blocking First Garment → Today/Wardrobe. No arbitrary inventory quota. | Resolved | JRN-01, navigation, profile, account/empty-wardrobe states. |
 | OPQ-010 | Usable candidates show applicable visual/identity/category/subtype/gap/attributes/+N/reason/previews; credible price/material/longevity/retailer/link remain optional. No fabricated claims or opaque vanity scores. | Resolved | JRN-07; FEAT-SHOP-001/FEAT-SHOP-002/FEAT-MULT-001; display/states/explanations. |
 
-No genuinely new open product question was identified. Numerical confidence thresholds, exact compatibility/readiness rules, need mappings/weights, score formulas, Wear Event normalization/duplicate handling, and security/snapshot implementation remain normal SRS/Business Rules/design work. They must honor these resolved product semantics rather than reopen them.
+Historical decisions remain traceable. OPQ-015 now governs the garment model and readiness deferral; OPQ-013 retains only genuinely unresolved validation details. Future compatibility/composition design is outside Sprint 2 and cannot reuse removed attributes without new approval.
 
 ### 34.1 Approved Taxonomy Revision and Open Follow-up Decisions
 
 | ID | Decision / Question | Status | Impact |
 |---|---|---|---|
 | OPQ-011 | Eight primary categories, exactly ten Dresses/Jumpsuits subtypes, optional subtype/Brand/Price; Price means user-reported purchase price with decimal amount and explicit ISO 4217 currency. | User-approved; recorded 2026-11-05 | Sections 12–14; BRD BR-002/003/005; SRS FR-GAR-001–006/011–013 and DATA-GAR-002; selected Sprint 2 wardrobe stories. |
-| OPQ-012 | Define composition and evaluation-specific readiness for Dresses/Jumpsuits, Bags and Headwear, including applicability of pattern, climate, layering and bulk. Existing rules cannot simply treat these as TOP/BOTTOM or require clothing layers on accessories. | Open product decision | Future advice, Coverage and Multiplier; saving and inspection are supported without inventing readiness. |
+| OPQ-012 | Previous category-specific readiness question is superseded: all recommendation eligibility/composition/compatibility policy is deferred to engine development, without ready/ineligible claims in Sprint 2. | Resolved deferral; future design | All eight categories; no hidden garment descriptors or old category-to-role mapping. |
 | OPQ-013 | Decide monetary amount bounds, zero/negative handling, precision/rounding and supported currency-list policy; decide Brand length, blank handling and any normalization that affects user values. No location default or exchange-rate behavior is approved. | Open policy / selected-story JIT validation | Before implementing affected optional-field validation; approved meaning and optionality remain fixed. |
-| OPQ-014 | Approve any Bags/Headwear subtype vocabulary and further subtype-overlap guidance. Existing research lists are proposals, not enums. | Open product refinement | Omitted subtype remains valid; exactly ten Dresses/Jumpsuits choices remain intact. |
+| OPQ-014 | All explicitly listed category subtypes and fashion vocabularies are approved in Image to Properties Extraction.md. Overlap never implies automatic property derivation. | Resolved by final Product Owner decision | Complete vocabulary applies now; no pending Bags/Headwear subtype approval. |
+| OPQ-015 | Exactly 13 source-owned properties, all listed values approved, multiple Materials, one dominant Color, category applicability, removed obsolete attributes, deferred eligibility and all applicable properties in Sprint 2. | Final Product Owner approval, 2026-11-05 | Supersedes conflicting OPQ-003/004/011–014 property/readiness descriptions; unrelated profile/context decisions remain valid. |
 
 ## 35. Approval / Exit Criteria
 
 ### 35.1 Product Review and Acceptance Gate
 
-PRD v0.3 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
+PRD v0.4 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
 
 - All ten capabilities and all 24 business requirements are represented, with no unexplained omission or business-scope change.
 - The seven core journeys, navigation, and 22 stable feature specifications give a coherent connected MVP experience.
@@ -1603,7 +1562,7 @@ Both documents remain Baseline Draft until review/acceptance is recorded. Produc
 | Positioning | Personalized wardrobe intelligence and decision support with three connected pillars. |
 | Users / market | Same personas; Vietnam-first Android/iOS MVP with Vietnamese UI, English documentation, and later localization readiness. |
 | Initial categories | Tops, Dresses/Jumpsuits, Pants, Skirts, Outerwear, Shoes, Bags, and Headwear; category codes and subtypes in Section 13.2. |
-| Entry and information | Controlled subtypes and confidence/provenance; save with confirmed category/color, including imageless manual entry; progressive recommendation readiness and user authority. |
+| Entry and information | Controlled subtypes and confidence/provenance; save with confirmed category/color, including imageless manual entry; unevaluated recommendation eligibility and user authority. |
 | Recommendations | Owned garments; hard validity before soft ranking; at least three distinct valid choices when available. |
 | Interactions | Fixed-other-item Shuffle; active Like/Dislike and multiple intentional Wear Events per local day, with individual correction/removal and protection against distorted repetition. |
 | Inclusion | Optional editable/removable body/gender; no category restriction; optional device location with manual alternative. |

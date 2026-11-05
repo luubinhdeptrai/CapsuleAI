@@ -1,5 +1,7 @@
 # UC-009 — Edit Garment
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -10,7 +12,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
@@ -38,10 +40,10 @@ The User chooses to edit that garment.
 
 1. The User requests editing for the selected garment.
 2. CapsuleAI presents its accepted profile and supported editable information, with relevant unknown/uncertain states.
-3. The User revises intended values using the supported vocabularies, including optional Brand text and purchase Price, or clears optional information. A category change requires correction or clearing of an incompatible subtype. Price, if supplied, includes both decimal amount and explicit ISO 4217 currency; incomplete pairs return for correction before acceptance.
-4. CapsuleAI presents the proposed revision and identifies missing required or incompatible values and applicable readiness implications.
+3. The User revises intended values using the supported vocabularies, including all applicable source-approved properties and multiple distinct Materials, or clears optional information. A category change requires correction or clearing of an incompatible subtype. Price, if supplied, includes both decimal amount and explicit ISO 4217 currency; incomplete pairs return for correction before acceptance.
+4. CapsuleAI presents the proposed revision and identifies missing required or incompatible values and eligibility under a future approved policy implications.
 5. The User explicitly confirms the intended supported changes.
-6. CapsuleAI acknowledges the accepted revision and shows the new authoritative profile/readiness.
+6. CapsuleAI acknowledges the accepted revision and shows the new authoritative accepted profile / unevaluated eligibility.
 7. CapsuleAI refreshes affected advice/assessments or identifies them as requiring reevaluation rather than presenting prior results as current.
 
 ## 7. Alternative Flows
@@ -53,12 +55,11 @@ At Main Step 3:
 1. The User changes only intended fields and leaves unknown optional Brand/Price/material/shape/color/context detail unknown.
 2. Resume at Main Step 4; completing every rich descriptor is not required for a supported edit.
 
-### A2 — Enrich readiness information
+### A2 — Add previously unknown optional information
 
-At Main Step 3:
-
-1. The User supplies missing applicable pattern/climate/layering/bulk information.
-2. CapsuleAI explains the updated rule-specific readiness without claiming that readiness alone guarantees a valid outfit; resume at Main Step 4.
+1. The User supplies intended applicable properties from the approved source list.
+2. CapsuleAI validates vocabulary/applicability and permits confirmation without requiring every optional field.
+3. Accepted edits preserve user authority; eligibility is not evaluated and no compatibility descriptor is derived.
 
 ### A3 — Cancel before acceptance
 
@@ -100,7 +101,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - Accepted revised values are canonical and cannot be silently replaced by later automated output.
-- Current profile/readiness reflects the accepted revision; affected recommendations, Coverage and Multiplier refresh or clearly become outdated.
+- Current accepted profile / unevaluated eligibility reflects the accepted revision; affected recommendations, Coverage and Multiplier refresh or clearly become outdated.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -120,7 +121,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-GAR-001` | User confirmation/correction establishes authoritative values. |
 | `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
 | `BRULE-GAR-002` | The confirmed Saveable minimum remains meaningful. |
-| `BRULE-GAR-003` | Edits can change applicable readiness without universal descriptor requirements. |
+| `BRULE-GAR-003` | Edits can change eligibility under a future approved policy without universal descriptor requirements. |
 | `BRULE-GAR-004` | Classification/context vocabulary is bounded. |
 | `BRULE-GAR-005` | Editable descriptors retain approved values/scales. |
 | `BRULE-GAR-006` | Consistency and unknown handling prevent invented compatibility. |
@@ -144,14 +145,14 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-All eight categories and category-specific optional subtype choices follow [PRD Section 13.2](../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Exactly ten Dresses/Jumpsuits subtypes are supported, with no automatic layer/length/occasion derivation from their names. FR-GAR-012/013 and BRULE-GAR-010 govern optional Brand and purchase Price: confirmed values remain authoritative, photographs never establish Price, and future Brand suggestions require acceptance. No image upload or later analysis silently overwrites either property.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
+The [property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns every vocabulary label; all applicable properties belong to Sprint 2 manual creation and detail. Metadata/provenance/media are separate. Price is the original amount paid with decimal amount and explicit currency; Brand is text. No future AI output silently overwrites accepted values.
+
 - The User can correct supported dimensions without re-running analysis. Automated proposals cannot silently overwrite confirmed edits.
 - A failed assessment refresh is not presented as a current result for the revised profile.
-
 - Confirmed corrections support accurate private functionality, without MVP personal-data AI training. Last accepted values remain authoritative after known failure.
 
 ## 14. Related Use Cases

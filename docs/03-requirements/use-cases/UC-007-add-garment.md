@@ -1,5 +1,7 @@
 # UC-007 — Add Garment
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -10,7 +12,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
@@ -41,9 +43,9 @@ The User chooses Add Garment.
 3. The User chooses image assistance, captures or selects a permitted image, and submits it.
 4. CapsuleAI validates the image, displays pending analysis, then presents an available usable processed preview and reviewable attribute proposals with understandable confidence/provenance.
 5. The User reviews the proposed information, corrects it when necessary, and supplies missing information needed for the intended profile.
-6. CapsuleAI presents the reviewed values, checks supplied category/subtype and optional Price amount/currency consistency, and identifies whether the Saveable minimum is confirmed and which applicable compatibility information remains missing. Incompatible subtype or incomplete Price pairs return to review for correction or clearing; omitted optional fields remain valid.
+6. CapsuleAI presents all supplied applicable property values, validates source vocabulary and category applicability (including distinct Materials and one dominant Color), and checks confirmation of the Category/Color minimum. Invalid/inapplicable input or an incomplete Price pair returns for correction or clearing; optional omissions remain valid.
 7. The User explicitly confirms the supported Primary Category and Dominant Color and submits the garment profile.
-8. CapsuleAI acknowledges accepted creation, shows the confirmed entry in the current wardrobe and explains applicable Recommendation-Readiness or additional-detail needs.
+8. CapsuleAI acknowledges one accepted owned garment with every supplied valid applicable value preserved for rereading; recommendation eligibility is not evaluated.
 
 ## 7. Alternative Flows
 
@@ -52,7 +54,7 @@ The User chooses Add Garment.
 At Main Step 3:
 
 1. The User chooses manual entry without supplying an image or waiting for analysis.
-2. CapsuleAI accepts manual garment information, including Primary Category and Dominant Color, optional subtype, optional Brand text and optional purchase Price as decimal amount with explicit ISO 4217 currency. Other rich descriptors remain optional; image/AI success is not required.
+2. CapsuleAI offers all 13 applicable properties from the source catalogue. Category and one approved dominant Color are required; Subtype, multiple distinct Materials, Pattern, Style, applicable category details, Brand and purchase Price are optional. Image/AI success is not required.
 3. Resume at Main Step 5 for review and explicit confirmation; analysis success is not required.
 
 ### A2 — Camera/gallery choice or image replacement
@@ -70,13 +72,13 @@ At Main Step 5:
 2. The User corrects or enters supported values, leaving unknown optional material/descriptors qualified or unknown.
 3. Resume at Main Step 6; certainty is not a mandatory saving gate once the confirmed minimum is supplied.
 
-### A4 — Saveable but not Recommendation-Ready
+### A4 — Save with optional information absent
 
 At Main Step 6:
 
-1. The reviewed profile meets the confirmed category/color minimum but lacks an applicable compatibility field.
-2. The User confirms saving at Main Step 7 without completing every rich descriptor.
-3. CapsuleAI retains owned Saveable status and explains that decisions requiring missing/UNKNOWN information cannot use it as ready.
+1. The reviewed profile has valid confirmed Category and Color but omits some or all optional properties.
+2. The User confirms saving without completing them.
+3. CapsuleAI retains one owned garment, preserves every supplied accepted value and truthfully reports missing information. Eligibility is not evaluated; optional absence does not establish invalidity or unsuitability.
 
 ### A5 — Cancel before confirmation
 
@@ -173,17 +175,15 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-All eight categories and category-specific optional subtype choices follow [PRD Section 13.2](../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Exactly ten Dresses/Jumpsuits subtypes are supported, with no automatic layer/length/occasion derivation from their names. FR-GAR-012/013 and BRULE-GAR-010 govern optional Brand and purchase Price: confirmed values remain authoritative, photographs never establish Price, and future Brand suggestions require acceptance. No image upload or later analysis silently overwrites either property.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
+The [property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns every vocabulary label; all applicable properties belong to Sprint 2 manual creation and detail. Metadata/provenance/media are separate. Price is the original amount paid with decimal amount and explicit currency; Brand is text. No future AI output silently overwrites accepted values.
+
 - Image formats are JPEG/JPG, PNG and HEIC/HEIF, with maximum 15 MB and shortest dimension at least 512 pixels. A plain/white background is not required.
 - A usable preview identifies the garment, preserves major regions and supports review despite non-obstructive background; preview quality and attribute certainty are distinct.
-- Default confidence states and evidence guards follow BRULE-GAR-007; understandable Vietnamese labels are primary. Even High Confidence requires confirmation.
-- For TOPS/PANTS/SKIRTS/OUTERWEAR/SHOES under the established composition, common readiness includes category/color, usable pattern and climate suitability; TOPS/OUTERWEAR need applicable layering, and bulk is required only for applicable layered compatibility. Rich color/shape/material/context detail is supported without universal saving gates.
 - NFR-PERF-001 targets p95 ≤5 seconds after image transfer and accepted analysis through usable preview plus reviewable proposals, under the reference conditions in SRS Sections 2.3/12.3. Pending work is not a saved garment.
-
 - Images, confirmed/entered attributes and corrections support garment functionality and authorized validation; personal garment data is not used for MVP AI training/improvement. Future training needs separate explicit opt-in and approved product/privacy change.
 - Formal timing validation uses the SRS reference devices/network, 5 warm-ups then ≥100 measured executions and no exclusion of legitimate slow runs. The p95 ≤5-second start/end boundary is unchanged.
 
@@ -193,7 +193,7 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 - [UC-008 — View Wardrobe](UC-008-view-wardrobe.md): Inspect the confirmed entry.
 - [UC-009 — Edit Garment](UC-009-edit-garment.md): Enrich or correct an existing garment later.
-- [UC-011 — Get Outfit Recommendations](UC-011-get-outfit-recommendations.md): Use only applicable ready owned garments in daily advice.
+- [UC-011 — Get Outfit Recommendations](UC-011-get-outfit-recommendations.md): Use only applicable owned garments evaluated under a future approved policy in daily advice.
 - [UC-002 — Log In](UC-002-log-in.md): Reestablish usable authorized access if it is lost.
 
 ## 15. Open Issues

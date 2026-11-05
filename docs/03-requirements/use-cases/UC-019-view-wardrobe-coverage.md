@@ -1,5 +1,7 @@
 # UC-019 — View Wardrobe Coverage
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -50,7 +52,7 @@ The User requests wardrobe coverage.
 At Main Step 4:
 
 1. The sufficient-data gate is met, but no hard-valid combinations support the relevant needs.
-2. CapsuleAI shows a genuinely evaluated 0% with explanatory evidence; it is not substituted for missing priorities, ready roles or required information.
+2. CapsuleAI shows a genuinely evaluated 0% with explanatory evidence; it is not substituted for missing priorities, evidence required by a future evaluation policy or required information.
 
 ### A2 — All relevant needs covered / no important gap
 
@@ -75,12 +77,12 @@ At Main Step 4:
 
 ## 8. Exception / Failure Flows
 
-### E1 — Insufficient priorities, ready roles or required information
+### E1 — Insufficient priorities, evidence required by a future evaluation policy or required information
 
 At Main Step 3:
 
 1. CapsuleAI explains the missing assessment conditions and withholds a false numeric 0%.
-2. A numeric score requires at least one positive priority and applicable ready TOP, BOTTOM and FOOTWEAR, with OUTERWEAR only when required by the evaluated need/environment, plus defensible required inputs.
+2.  Engine composition/compatibility and sufficient-evidence policy are deferred; do not map categories into former roles or require removed garment properties.
 3. The User may update the relevant profile, garment or context information and request again; no missing-product demand is fabricated.
 
 ### E2 — Environmental information unavailable/stale
@@ -159,7 +161,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The six needs are Everyday/Casual, Work, School/University, Formal, Travel and Sport. Current request occasion and common need priorities serve different purposes.

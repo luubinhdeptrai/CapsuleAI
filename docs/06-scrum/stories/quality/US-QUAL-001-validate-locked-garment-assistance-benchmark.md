@@ -41,7 +41,7 @@ Use at least 400 qualified images, including at least 50 for each TOPS, DRESSES_
 
 ### AC-02 — Establish ground truth
 
-Retain supported-category and controlled dominant-color-family labels, qualification decisions and labeling/adjudication evidence. Follow the SRS protocol: two independent annotators should label the benchmark, with disagreements resolved by adjudication.
+Retain supported-category and approved source-Color labels, qualification decisions and labeling/adjudication evidence. Follow the SRS protocol: two independent annotators should label the benchmark, with disagreements resolved by adjudication.
 
 ### AC-03 — Measure category independently
 
@@ -49,7 +49,7 @@ Report primary-category recognition accuracy of at least 90% overall and at leas
 
 ### AC-04 — Measure color separately
 
-Report at least 90% overall dominant-color-family accuracy on the same locked qualified set. Category accuracy, color accuracy and preview usability are separate results; floors are not extended to every rich attribute.
+Report at least 90% overall approved source-Color accuracy on the same locked qualified set. Category accuracy, color accuracy and preview usability are separate results; floors are not extended to every rich attribute.
 
 ### AC-05 — Assess usable previews
 

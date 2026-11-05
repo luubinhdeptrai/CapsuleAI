@@ -1,5 +1,7 @@
 # CapsuleAI Product Backlog
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
@@ -299,9 +301,7 @@ Provide useful wardrobe entry immediately, including when no image or AI service
 
 **Scope Summary**
 
-**2026-11-05 approved taxonomy/property alignment:** The approved scope supports all eight primary categories and optional category-valid subtype, Brand and user-reported purchase Price. Exactly ten Dresses/Jumpsuits subtypes follow PRD Section 13.2. Missing optional values do not block category/color confirmation; valid supplied values persist with the same safe-retry outcome. FR-GAR-001–006/011–013, DATA-GAR-002 and BRULE-GAR-004/010 govern this addition.
-
-Create an owned garment through imageless manual entry with explicit confirmation of Primary Category and Dominant Color. Support review, correction, cancellation and safe resolution of uncertain saves. Keep Saveable ownership separate from applicable Recommendation-Readiness and explain missing compatibility information without fabricating it.
+Implement manual input, source-vocabulary/category validation, explicit confirmation, authorized PostgreSQL persistence, safe retry and rereading for all 13 applicable properties. Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined. Eligibility is not evaluated. Photo/AI remain PBI-012/013; future editing remains PBI-008. FR-GAR-001–013 (FR-GAR-005 superseded), DATA-GAR-001–005 and BRULE-GAR-001–010 govern this outcome.
 
 **Key Dependencies**
 
@@ -317,7 +317,7 @@ BG-01; BR-002, BR-004; CAP-03, CAP-04; JRN-02, FEAT-AI-002, FEAT-GAR-001; FR-AI-
 
 **Refinement Notes**
 
-Retain US-GAR-001 as one confirmed manual-add outcome, including cancellation and safe resolution of uncertain acceptance. Repeated delivery or retry must not create additional accepted garments for the same logical addition (DATA-INT-004). Retain an accepted but unready owned garment and explain missing information. Review mobile Add/acceptance/inspection evidence and story complexity (Q-02/Q-05). Optional subtype, Brand text and purchase Price (decimal amount plus explicit ISO 4217 currency) are included in the approved manual-creation revision. Other rich descriptor enrichment is PBI-008, photo input PBI-012 and AI assistance PBI-013; AI success is never a prerequisite.
+Retain one confirmed-add outcome with cancellation, immutable accepted values and single-effect retry. Verify all categories and complete vocabularies, minimum-only/full/partial profiles, applicability, multiple Materials, owner isolation and durable rereading. All applicable properties are now in this story; later editing/photo/AI remain separate.
 
 ### PBI-007 — Browse current wardrobe and inspect owned garments
 
@@ -333,9 +333,7 @@ Let users understand their possessions and distinguish accepted inventory from i
 
 **Scope Summary**
 
-**2026-11-05 approved taxonomy/property alignment:** Browse and inspect all eight categories, including saveable entries with unresolved evaluation policy. Detail retains valid subtype, optional Brand and purchase Price with explicit currency; unknown is not fabricated or replaced by zero. This is existing creation/browse/detail work, not additional stories (FR-GAR-012/013; DATA-GAR-002; BRULE-GAR-010).
-
-Show the current wardrobe, garment detail, accepted profile and applicable readiness guidance, including imageless and incomplete entries. Distinguish a genuinely empty wardrobe, loading and unavailable access/data; offer Add Garment without a quota. Display supported use indicators when reported-use capabilities are available, without claiming physical non-use.
+Browse identifiable current owned garments across eight categories; retrieve all available applicable accepted properties in detail, including multiple distinct Materials and optional Brand/Price. Collection summaries need not return every detail field. Keep imageless/minimum-only entries accessible, disclose unevaluated eligibility, and preserve empty/unavailable/unauthorized and reported-use distinctions. FR-WAR-001/002, FR-GAR-004, DATA-GAR-002/005 govern this outcome.
 
 **Key Dependencies**
 
@@ -367,9 +365,7 @@ Keep garment knowledge trustworthy and help users supply the information needed 
 
 **Scope Summary**
 
-**2026-11-05 approved taxonomy/property alignment:** Future editing can revise or clear Brand/Price and revalidate subtype after category changes. Bounded optional subtype/Brand/Price entry at creation is now PBI-006; other rich enrichment and editing stay here. FR-GAR-012/013 and BRULE-GAR-010 apply; PRD OPQ-012–014 retain unresolved policy details.
-
-Review, correct and confirm supported rich descriptors during entry or later editing: bounded subtype, layering/bulk/fit/silhouette, color/palette, pattern/noise, climate, style/occasion, uncertain material, optional Brand and purchase Price. Explain rule-specific readiness and leave optional or unsupported values unknown. Accepted edits preserve user authority and refresh affected advice or mark it outdated.
+The heading retains the legacy PBI title for stable navigation; old readiness meaning is superseded. This PBI covers future correction/editing of the approved 13-property model, optional clearing, source/category validation and user-confirmed authority. All applicable property input is already in PBI-006/Sprint 2; no listed property is deferred here. Eligibility remains not evaluated; refresh future affected advice only when actual evaluation exists.
 
 **Key Dependencies**
 
@@ -659,9 +655,7 @@ Reduce daily decision effort with distinct wearable combinations of current owne
 
 **Scope Summary**
 
-**2026-11-05 approved taxonomy/property alignment:** The established outfit template uses composition roles TOP/BOTTOM/FOOTWEAR mapped from TOPS/(PANTS or SKIRTS)/SHOES, with optional OUTERWEAR. New wardrobe categories do not imply new supported compositions. Dresses/Jumpsuits, Bags and Headwear readiness/composition remain PRD OPQ-012; do not fabricate ready/complete results while those policies are unresolved.
-
-Use applicable Recommendation-Ready confirmed garments and declared style/current occasion. Apply all hard composition, layering, bulk, pattern and available environmental constraints before soft ranking. Present at least three distinct choices when available, actual one/two/none otherwise, with concise reasons and identified context. Distinguish completed zero from insufficient, unavailable or outdated advice and support disclosed missing-weather fallback.
+Future owned-outfit advice preserves identity, authorization and validity-before-ranking intent. All composition/compatibility/eligibility policy is deferred to recommendation-engine development. Former fixed roles and removed-property predicates are superseded for every category; do not infer compatibility from saving or optional property absence.
 
 **Key Dependencies**
 
@@ -949,9 +943,7 @@ Help users understand how their owned wardrobe supports their relevant everyday 
 
 **Scope Summary**
 
-**2026-11-05 approved taxonomy/property alignment:** The established outfit template uses composition roles TOP/BOTTOM/FOOTWEAR mapped from TOPS/(PANTS or SKIRTS)/SHOES, with optional OUTERWEAR. New wardrobe categories do not imply new supported compositions. Dresses/Jumpsuits, Bags and Headwear readiness/composition remain PRD OPQ-012; do not fabricate ready/complete results while those policies are unresolved.
-
-Assess the Personalized Everyday Capsule using current confirmed eligible garments, six mapped common needs, positive priority weights, style and defensible context. Show contextual weighted Coverage with concise per-need support, only when sufficient-information conditions hold. Distinguish evaluated zero, insufficient information, unavailable and outdated results; changes require refresh or explicit outdated status.
+Future contextual Coverage preserves existing priorities, ratio and weighted formula, but numeric results require a future approved engine composition/compatibility/sufficient-evidence policy. The old ready-role gate is superseded; absent policy/evidence is unevaluated/incomplete, not zero or a purchase gap.
 
 **Key Dependencies**
 

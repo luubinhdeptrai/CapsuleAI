@@ -1,4 +1,6 @@
 @startuml
+' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
+' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Implementation View
 ' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
 ' Source: ADD v0.1 (authoring input navigation v0.1.1); Selected Architecture Decisions v0.1.2,
@@ -35,11 +37,11 @@
 ' Grouped adapters represent several focused implementations, not one universal adapter class.
 ' Public contract models are owner-controlled language; no private aggregate/entity exposure.
 '
-' Immediate coordination: current authority, garment exclusion/readiness, profile withdrawal,
+' Immediate coordination: current authority, garment exclusion and accepted properties, profile withdrawal,
 ' new Wear ownership validation, survivor effects and same-basis assessments use public owners.
 ' Application owns invariant participants and durable logical-action outcome; outer transaction
 ' wiring may coordinate local ACID through public operations, never another owner's repository.
-' New Wear: Outfit Advice and Use coordinates Wardrobe current ownership/readiness participation.
+' New Wear: Outfit Advice and Use coordinates Wardrobe current ownership and accepted properties participation.
 ' Garment removal does not call back into Outfit Advice and Use; current owner queries exclude
 ' removed inputs, and minimal historical snapshots preserve necessary past meaning independently.
 ' Wardrobe detail composition belongs to inbound use-case coordination: public Wardrobe and
@@ -48,7 +50,7 @@
 ' Protected callers consume usable authority and owners enforce affected-information ownership.
 ' Repeated security/measurement arrows omitted; omission grants no authorization bypass.
 '
-' Evaluation policy receives caller-supplied published inputs including Wardrobe readiness meaning.
+' Evaluation policy receives caller-supplied published inputs including approved Wardrobe property meanings.
 ' It does not fetch a Daily ranked subset or current owner state; Intelligence owns full-set
 ' orchestration and uses the same policy without duplicating identity/hard-validity rules.
 ' Outfit identity uses garment-identity sets; owned/historical/hypothetical meaning stays distinct.
@@ -152,10 +154,10 @@ package "Spring Boot Business Core - ONE Modular Monolith application" as Core #
     }
 
     package "Wardrobe : wardrobe" as Wardrobe #DCFCE7 {
-        component "api\nWardrobe Public Contract\nConfirmed inputs / ownership / readiness" as WardrobeAPI <<public>> #BBF7D0
+        component "api\nWardrobe Public Contract\nConfirmed properties / ownership" as WardrobeAPI <<public>> #BBF7D0
         component "adapter.in\nGarment / Wardrobe API Adapter" as WardrobeIn <<private adapter>> #FAFFFA
         component "application\nConfirm / Correct / Maintain use cases\nAccepted actions; media lifecycle work" as WardrobeApp <<private core>> #F0FDF4
-        component "domain\nGarment truth / Membership\nSaveable; evaluation readiness" as WardrobeDomain <<private core>> #F0FDF4
+        component "domain\nGarment truth / Membership\nSaving and accepted property validation" as WardrobeDomain <<private core>> #F0FDF4
         component "application.ports\nOwned Wardrobe Persistence\nGarment Analysis / Media Storage" as WardrobePorts <<private ports>> #F0FDF4
         component "adapter.out.persistence\nWardrobe Persistence Adapter\nConfirmed state / actions / durable work" as WardrobeStore <<private adapter>> #FAFFFA
         component "adapter.out.integration\nPython AI Adapter / ACL\nObject Storage Adapter" as WardrobeExternal <<private adapter>> #FAFFFA
@@ -241,7 +243,7 @@ IntelligenceApp --> IntelligencePorts
 IntelligenceStore .up.|> IntelligencePorts
 IntelligenceExternal .up.|> IntelligencePorts
 IntelligenceStore -[norank]-> DB : own state only
-IntelligenceExternal -[norank]-> WardrobeAPI : baseline / readiness
+IntelligenceExternal -[norank]-> WardrobeAPI : baseline / approved properties
 IntelligenceExternal -[norank]-> ContextAPI : needs / context
 IntelligenceExternal -[norank]-> Evaluation : caller-input policy
 IntelligenceExternal --> Shopping : optional evidence / chosen handoff
@@ -292,5 +294,9 @@ legend bottom
   No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
   Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
   Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Final property model: exactly 13 source-approved properties; all applicable
+  creation/persistence/detail fields belong to selected Sprint 2 work.
+  Future composition/compatibility/eligibility policy is deferred.
+  No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
 @enduml

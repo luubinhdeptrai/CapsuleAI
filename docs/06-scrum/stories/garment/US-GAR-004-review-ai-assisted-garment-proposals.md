@@ -1,12 +1,14 @@
 # US-GAR-004 — Review AI-assisted garment proposals before confirmation
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-004 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-013](../../product-backlog.md#pbi-013--review-ai-assisted-garment-proposals-before-confirmation) |
@@ -26,9 +28,11 @@ Reduce repetitive garment entry while keeping the final wardrobe representation 
 
 ## 3. Scope
 
-The eight categories and exact ten Dresses/Jumpsuits subtypes follow [PRD Sections 13.2/13.5](../../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Optional subtype must match its category. Brand text and purchase Price (decimal amount plus explicit ISO 4217 currency) follow FR-GAR-012/013 and BRULE-GAR-010; neither is mandatory for saving or readiness. Price cannot be inferred from a photograph; any future Brand proposal requires explicit acceptance and cannot overwrite confirmed information. This adds no Brand-recognition feature.
+Use all applicable properties and complete approved vocabularies from the [source authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-Pending analysis, usable preview plus reviewable supported proposals, guarded confidence/provenance, confirmation and retry/replacement/manual recovery.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
+All applicable property input is already included in Sprint 2 manual creation; this story retains only its separate future editing, photo or AI-assisted outcome. Future suggestions require explicit acceptance and cannot overwrite confirmed values; Price never comes from appearance. Metadata/media are separate, not extra properties.
 
 ## 4. Preconditions
 
@@ -98,7 +102,7 @@ Photo-supported manual input is [US-GAR-003](../garment/US-GAR-003-add-photo-sup
 
 ## 10. Open Refinement Notes
 
-PRD OPQ-012–014 track unresolved category policy and optional-field validation. No missing policy authorizes fabricated readiness or silent user-value changes.
+PRD OPQ-015 resolves property/vocabulary scope and eligibility deferral. OPQ-013 retains genuine validation details; optional absence never authorizes fabricated values or eligibility claims.
 
 CAT-Q05: AI/QA with PO/BA must establish evidence for the required High Confidence attribute/model quality and any stricter calibration. No High Confidence claim is justified by an unvalidated raw score.
 

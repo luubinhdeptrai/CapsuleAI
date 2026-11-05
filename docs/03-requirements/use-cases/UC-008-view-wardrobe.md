@@ -1,5 +1,7 @@
 # UC-008 — View Wardrobe
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -10,7 +12,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
@@ -41,7 +43,7 @@ The User opens the wardrobe or requests garment search/detail.
 3. The User browses or enters descriptor search and category/color filter conditions.
 4. CapsuleAI shows active conditions and the matching current garments.
 5. The User selects a garment to inspect.
-6. CapsuleAI presents its confirmed profile for any of the eight supported categories, including available valid subtype, optional Brand text and optional purchase Price with explicit currency, available image/provenance/uncertainty, applicable readiness guidance and supported recorded-use information. Missing optional properties never hide the item; unknown Price is not zero or a current retailer quotation.
+6. CapsuleAI presents all available applicable accepted properties from the source catalogue, including multiple distinct Materials, one dominant Color, category-specific details, Brand and original purchase Price with currency; available image/provenance remain separate. Missing optional values are not fabricated and eligibility is not evaluated. Collection summaries need only sufficient identifying information, not the complete detail payload.
 7. The User returns to browsing or chooses a separate supported maintenance/insight action.
 
 ## 7. Alternative Flows
@@ -71,7 +73,7 @@ At Main Step 2:
 
 At Main Step 6:
 
-1. CapsuleAI keeps the entry identifiable without an image, explains missing applicable readiness fields and labels missing reports as no recorded use.
+1. CapsuleAI keeps the entry identifiable without an image, explains missing eligibility under a future approved policy fields and labels missing reports as no recorded use.
 2. The User can inspect/enrich the garment without an inference that it has never been physically worn.
 
 ## 8. Exception / Failure Flows
@@ -118,7 +120,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-001` | Confirmed garment values govern displayed current information. |
 | `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
-| `BRULE-GAR-003` | Show applicable readiness without hiding Saveable but unready entries. |
+| `BRULE-GAR-003` | Show eligibility under a future approved policy without hiding Saveable but unready entries. |
 | `BRULE-HIST-001` | Usage indicators are reported evidence, not verified physical behavior. |
 | `BRULE-HIST-002` | Historical removed snapshots do not enter current inventory. |
 
@@ -139,14 +141,13 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-All eight categories and category-specific optional subtype choices follow [PRD Section 13.2](../../02-product/PRD.md#132-controlled-initial-garment-subtypes). Exactly ten Dresses/Jumpsuits subtypes are supported, with no automatic layer/length/occasion derivation from their names. FR-GAR-012/013 and BRULE-GAR-010 govern optional Brand and purchase Price: confirmed values remain authoritative, photographs never establish Price, and future Brand suggestions require acceptance. No image upload or later analysis silently overwrites either property.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-The established pattern/climate checks continue for TOPS, PANTS, SKIRTS, OUTERWEAR and SHOES. Applicable layering remains required for TOPS/OUTERWEAR; bulk remains conditional on the layered check. DRESSES_JUMPSUITS, BAGS and HEADWEAR need an explicit product decision on composition and required compatibility inputs (PRD OPQ-012). Until resolved, retain and expose these saveable garments, explain that the relevant evaluation policy is not yet defined, and do not assert readiness or fabricate missing attributes. This limitation is distinct from a user omitting known required information. Brand and Price neither establish nor block readiness.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
-- Search/filtering is embedded in View Wardrobe rather than a new use case. Supported descriptor search and category/color filters have visible conditions and reset.
-- No image, no recorded use, missing readiness, loading and unavailable data remain distinct meanings.
+The [property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns every vocabulary label; all applicable properties belong to Sprint 2 manual creation and detail. Metadata/provenance/media are separate. Price is the original amount paid with decimal amount and explicit currency; Brand is text. No future AI output silently overwrites accepted values.
 
+- No image, no recorded use, unevaluated eligibility, loading and unavailable data remain distinct meanings.
 - Viewing is confined to the current authorized wardrobe. Historical references retain only necessary meaning and do not expose indefinitely retained original removed-garment images.
 
 ## 14. Related Use Cases

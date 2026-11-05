@@ -1,5 +1,7 @@
 # CapsuleAI — Architecture Decision Analysis
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -8,7 +10,7 @@
 | Version | 0.2.7 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
-| Last Updated | 2026-10-20 |
+| Last Updated | 2026-11-05 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
@@ -1159,7 +1161,7 @@ How should each business module organize its internals so domain rules and appli
 
 #### Why This Decision Is Needed Now
 
-**Important Before ADD.** The shared validity, authority and evidence obligations need a dependency direction before the Implementation View can establish module internals. ASR-CON-001 and ASR-TEST-001 justify isolation; they do not mandate a textbook layering scheme or make every folder a Critical architectural choice. A bounded deferral must preserve inward dependencies and private internals as explicit open design constraints, with Architect/Backend ownership and resolution before the dependent Implementation View.
+**Important Before ADD.** The shared future evaluation-policy, authority and evidence obligations need a dependency direction before the Implementation View can establish module internals. ASR-CON-001 and ASR-TEST-001 justify isolation; they do not mandate a textbook layering scheme or make every folder a Critical architectural choice. A bounded deferral must preserve inward dependencies and private internals as explicit open design constraints, with Architect/Backend ownership and resolution before the dependent Implementation View.
 
 #### Related ASRs
 
@@ -1540,7 +1542,7 @@ These v0.2 analytical interactions and conditional evolution possibilities remai
 | ADA-010 ↔ ADA-009/011/014 | Accepted corrections/removals and current evaluation basis govern derived reuse. Benchmark optimization cannot replace full Multiplier evidence with displayed daily choices or a cached prior count. |
 | ADA-006 ↔ ADA-005/007/014 | Boundaries must retain truthful dependency outcomes, minimal disclosure, authorized private media and inspectable complete timing. A provider adapter cannot excuse a bearer-access or lifecycle mismatch. |
 | ADA-013 ↔ ADA-014 and all Critical decisions | Recovery evidence needs durable accepted state and repeatable operation. Minimal deployment is conditional on actual resources; monitoring tools alone do not prove resilience. |
-| All choices ↔ ASR-USE-001 | Backend outcomes must retain confidence/provenance, Saveable/readiness, uncertain mutation and non-exact assessment meaning. Mobile accessibility/usability remains integrated work, not a framework side effect. |
+| All choices ↔ ASR-USE-001 | Backend outcomes must retain confidence/provenance, saved ownership / unevaluated eligibility, uncertain mutation and non-exact assessment meaning. Mobile accessibility/usability remains integrated work, not a framework side effect. |
 
 If the human overrides an option, evaluate these dependent recommendations rather than mixing incompatible assumptions. No individual High-confidence recommendation makes the whole set selected.
 

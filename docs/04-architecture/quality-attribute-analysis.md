@@ -1,5 +1,7 @@
 # CapsuleAI — Quality Attribute Analysis
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -7,7 +9,7 @@
 | Artifact | Quality Attribute Analysis |
 | Version | 0.1.8 |
 | Status | Baseline Draft |
-| Last Updated | 2026-10-20 |
+| Last Updated | 2026-11-05 |
 | Ownership | Software Architect / Tech Lead; review with Developers, QA and Product |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 16–19, 39–43 and 46 |
 | Method Reference | 14 Quality Attributes — architecture learning material (historical source; not present in this checkout) |
@@ -167,7 +169,7 @@ Sources: SRS NFR-REL-001, FR-AI-003/007/008/010, AI-REQ-007, DATA-INT-001 and ER
 | Stimulus | Image assistance cannot provide useful information; the User supplies and confirms the manual minimum. Later automated output disagrees with the accepted values. |
 | Environment | Authorized connected entry, exercising all agreed representative AI-failure cases; manual saving capability remains usable. |
 | Artifact | Garment confirmation and authoritative wardrobe profile. |
-| Response | Permit imageless manual review/confirmation, acknowledge accepted creation separately from draft/failure, explain applicable readiness and retain confirmed/corrected values after later analysis. |
+| Response | Permit imageless manual review/confirmation, acknowledge accepted creation separately from draft/failure, explain eligibility under a future approved policy and retain confirmed/corrected values after later analysis. |
 | Response Measure | Manual creation succeeds in every agreed representative AI-failure case when the confirmed minimum is accepted. An unconfirmed/canceled attempt establishes no garment; retry of an accepted addition creates no unexplained duplicate; later analysis silently overwrites no authoritative value. |
 
 ### 8.2 QA-REL-02 — Wear retries, correction and survivor effects
@@ -355,13 +357,13 @@ Sources: SRS FR-OUT-003/007/009, FR-ANL-010–015, FR-GAP-004, FR-MULT-002–008
 | Environment | Authorized current wardrobe and hypothetical candidate with explicit readiness, priorities, context and relevant rule version; fixtures include complete, zero, partial, unavailable and changed-basis conditions. |
 | Artifact | Valid outfit identity, Coverage/Gaps and Multiplier count/state/previews. |
 | Response | Use identity-set uniqueness and applicable hard validity consistently, apply Coverage sufficiency/weighted meaning, and claim exact candidate utility only from complete same-basis sets. |
-| Response Measure | Permuting the same constituent identities adds no outfit. Existing complete 41-current/58-expanded fixture gives +17; identical completed sets give Evaluated Zero/+0. Missing/partial/unavailable evaluation yields no exact +N or false +0, and relevant changes yield Outdated until current evaluation is established. Existing weighted Coverage fixture B09 gives 50; missing positive priorities/required ready roles yields no fabricated 0% or gap. Previews contain the hypothetical candidate and share the count's basis; assessment/viewing changes neither ownership nor Wear history. |
+| Response Measure | Permuting the same constituent identities adds no outfit. Existing complete 41-current/58-expanded fixture gives +17; identical completed sets give Evaluated Zero/+0. Missing/partial/unavailable evaluation yields no exact +N or false +0, and relevant changes yield Outdated until current evaluation is established. Existing weighted Coverage fixture B09 gives 50; missing positive priorities/required evidence required by a future evaluation policy yields no fabricated 0% or gap. Previews contain the hypothetical candidate and share the count's basis; assessment/viewing changes neither ownership nor Wear history. |
 
 ## 16. Usability
 
 **Definition and drivers.** Let the target audience understand and operate trustworthy wardrobe journeys. Accessibility and localization are included here. NFR-USE-001/002, NFR-ACC-001/002 and LOC-001–005 implement BR-022/023 and the three personas. SRS Section 12.4, PBI-003/036/037 and all current story AC for accessible guidance cover both successful and limited outcomes.
 
-**Risks and architectural implications.** Users may confuse confidence with truth, an unready garment with an unsaved one, a failed retrieval with emptiness, or a hypothetical preview with ownership. Image/color-only meaning and inaccessible primary actions can block participation. Later design must support correct state, limitation and explanation information for mobile presentation, preserving Vietnamese semantics, accessible action meaning and original event-local time. Backend behavior alone cannot establish mobile accessibility or representative-user usability.
+**Risks and architectural implications.** Users may confuse confidence with truth, an garment with unevaluated eligibility with an unsaved one, a failed retrieval with emptiness, or a hypothetical preview with ownership. Image/color-only meaning and inaccessible primary actions can block participation. Later design must support correct state, limitation and explanation information for mobile presentation, preserving Vietnamese semantics, accessible action meaning and original event-local time. Backend behavior alone cannot establish mobile accessibility or representative-user usability.
 
 **Backend Developer Relevance.** Eventually supply honest outcomes, accepted values, missing-input reasons and assessment basis that the mobile experience can explain. Preserve diacritics and time meaning. Work with mobile/UX/QA on integrated evidence; do not expose implementation traces as product explanations.
 
@@ -377,7 +379,7 @@ Sources: SRS NFR-USE-001, LOC-001 and Section 12.4; PRD Sections 21–25; PBI-03
 | Stimulus | Attempt the prescribed core tasks without facilitator intervention, including interpreting relevant results/limitations. |
 | Environment | Vietnamese supported mobile experience; at least 5 participants total across personas where practical; representative implemented tasks and known fixture states. |
 | Artifact | Register/Log In; Add Garment; Get Outfits with Shuffle; Record and correct/remove Wear; Coverage and Gaps; Candidate/Multiplier evaluation. |
-| Response | Provide understandable actions, confirmation/readiness, explanations and recovery so Users can complete the relevant task and interpret its outcome. |
+| Response | Provide understandable actions, confirmation / unevaluated eligibility, explanations and recovery so Users can complete the relevant task and interpret its outcome. |
 | Response Measure | Target ≥80% unaided completion for each evaluated representative core task; zero unresolved Critical usability blockers for acceptance; target average SUS ≥68 as a validation aid. Record per-task results and findings, not an invented growth KPI or 5-participant-per-persona requirement. |
 
 ### 16.2 QA-USE-02 — Accessible actions and state meaning
@@ -411,7 +413,7 @@ Sources: SRS Section 8.1, AI-REQ-010/011/014, NFR-TEST-002 and NFR-USE-002; PBI-
 | --- | --- |
 | Source of Stimulus | QA/AI contributors executing the established acceptance evaluation. |
 | Stimulus | Evaluate garment assistance against the locked qualified-image benchmark and inspect its evidence. |
-| Environment | Locked set of ≥400 qualified images with ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; human category and controlled dominant-color-family ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
+| Environment | Locked set of ≥400 qualified images with ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR; human category and approved source-Color ground truth. Two independent annotators should label with disagreement adjudicated; the locked corpus is excluded from training/tuning after lock. |
 | Artifact | Garment-assistance results, benchmark/label manifests and independent preview review. |
 | Response | Produce inspectable results tied to qualified inputs and the evaluated implementation, reporting category and dominant-color correctness separately from preview usability and richer attributes. |
 | Response Measure | Evidence establishes the required set size/balance and evaluation isolation. Category accuracy is ≥90% overall and ≥85% within each primary-category group; dominant-color accuracy is ≥90% overall, reported separately. Preview review checks identifiable garment, preserved major regions, non-obstructive background and sufficient correction/confirmation information under SRS Section 3.4.1; no preview percentage or equal-accuracy rich-attribute claim is introduced. |
@@ -473,7 +475,7 @@ The following are existing imposed boundaries or mandated policies. Their relate
 | Connected Vietnam-first mobile MVP; Android 10+ and iOS 15+ | BR-023; PRD Sections 2/26/27; SRS Sections 1.2/2.3 | Preserve supported platforms and permission alternatives. No consumer web/desktop, guaranteed offline mode or client framework is mandated. Reference hardware/network is validation configuration, not a user purchase minimum. |
 | Vietnamese initial UI, English documentation and canonical meanings independent of labels | PRD OPQ-002; LOC-001–005; NFR-MNT-001 | Support current localization and later label additions without a second MVP language or changed confirmed data. |
 | Email/password access with mandated JWT access/refresh direction and session/recovery policy | PRD OPQ-008; SRS Sections 2.4/3.1.1; FR-AUTH-* | Preserve 15-minute access, maximum 30-day session, rotation/reuse and revocation boundaries, 30-minute single-use/replacement reset, normalized unique email and exact 12–128-character password policy. No social/guest MVP access; mechanisms, keys and storage remain open. |
-| Eight-category, confirmed-authority and validity-first domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR, approved bounded vocabularies, manual Saveable minimum and applicable readiness constrain supported behavior. Domain rules are behavioral obligations, not a mandated database or internal module map. |
+| Eight-category, confirmed-authority and validity-first domain | SRS Sections 3.5.1/3.7.1/4.10; BRULE-GAR/OUT | Exactly 13 source-owned properties and eight categories; Category/Color plus confirmation save, all other applicable fields are optional. No obsolete fields, readiness gate or fixed category-role composition is active; future evaluation policy is deferred. |
 | Preserved event identity/time and assessment meaning | FR-WEAR-*; FR-PERS-*; FR-ANL-*; FR-MULT-*; DATA-OUT-*, DATA-ANL-* and DATA-WEAR-* | Keep intentional reports, safe logical retries, original local grouping/absolute aging, contextual Coverage and complete same-basis incremental utility. No new event architecture, enumeration strategy or arbitrary assessment TTL is prescribed. |
 | Purpose-limited private information; no MVP personal-data AI training; minimal external exchange | NFR-PRIV-001/002; SI-002/003; COM-003; BRULE-AUTH-007 | Constrain permitted processing/exchange. Future personal-data training requires separate explicit opt-in and approved product/privacy change; current corrections/feedback do not authorize it. |
 | Immediate effective removal, 30-day applicable physical deletion and 90-day user-linked measurement maximum | DATA-RET-001–003; FR-WAR-005; FR-WEAR-007; FR-MET-006; SRS Section 12.1 | Preserve necessary minimal history separately from removed images/nonessential data and measurement. Enforcement technology remains open; no account-delete/export product or statutory certification is added. |
@@ -524,7 +526,7 @@ Detailed scenario source lines and attribute drivers are the primary traceabilit
 | [BRD v0.3](../01-business/BRD.md) | BG-01–04; BR-001–024; CAP-01–10; personas, trust, scope, metrics, risks and dependencies. Highest-ranked drivers particularly reach BR-002/004/009/011/014–017/021–024 and MET-Q01–Q07. |
 | [PRD v0.2](../02-product/PRD.md), Sections 21–29 and 34 | Complete FEAT/JRN experience, state/explanation/privacy/quality expectations and resolved OPQ-001–010. |
 | [SRS v0.3](../03-requirements/SRS.md), Sections 2.3/2.4, 3–9 and 12 | Authoritative functional/data/interface/quality obligations, numerical measures, operating configuration, AI acceptance and failure boundaries. |
-| [Business Rules v0.1.2](../03-requirements/business-rules.md), Sections 1.6, 2–15 | All 11 rule families: authority, applicable readiness, validity/ranking, Wear/time/effects, history, Coverage/Gaps, complete hypothetical utility and optional commercial guidance. |
+| [Business Rules v0.1.2](../03-requirements/business-rules.md), Sections 1.6, 2–15 | All 11 rule families: authority, eligibility under a future approved policy, validity/ranking, Wear/time/effects, history, Coverage/Gaps, complete hypothetical utility and optional commercial guidance. |
 | [Master Use Case Diagram](../03-requirements/use-cases/use-case-diagram.puml) and all 23 [Use Case Specifications](../03-requirements/use-cases/) | Actors/goals, interaction and failure outcomes. UC-001–006 inform private access/context; UC-007–010 authority/current ownership; UC-011–018 advice and behavioral integrity; UC-019–023 explainable intelligence and optional navigation. |
 | All 12 [Activity Diagrams](../03-requirements/activity-diagrams/) | AD-004/006/007/011/012/014/016/017/019/020/021/022 project established complex flows, especially dependency boundaries, accepted mutations, state truth and assessment exactness. |
 | [Product Goal v0.1.1](../06-scrum/product-goal.md), Sections 3–8 | Trustworthy understanding, easier decisions, owned-garment value, actionable needs and informed additions; no new business KPI. |

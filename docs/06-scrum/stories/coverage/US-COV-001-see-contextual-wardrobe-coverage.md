@@ -1,12 +1,14 @@
 # US-COV-001 — See a defensible contextual Wardrobe Coverage Score
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-COV-001 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-026](../../product-backlog.md#pbi-026--see-a-defensible-personalized-wardrobe-coverage-score) |
@@ -26,13 +28,13 @@ Help users understand how their owned wardrobe supports their relevant everyday 
 
 ## 3. Scope
 
-TOP, BOTTOM and FOOTWEAR below are retained outfit-composition roles, not current primary-category codes: TOP uses TOPS; BOTTOM uses PANTS or SKIRTS; FOOTWEAR uses SHOES; the optional outer role uses OUTERWEAR. This preserves the existing separated-garment template and its validity checks. DRESSES_JUMPSUITS, BAGS and HEADWEAR are supported wardrobe categories, but their composition and evaluation-specific readiness policies remain open (PRD OPQ-012). Do not force them into those roles or claim complete Coverage/Multiplier results for an unsupported composition. No slot infrastructure or new recommendation algorithm is prescribed.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
 Completed contextual Coverage, sufficient-data gate, unique-valid need support, source weighted formula, concise evidence and honest noncurrent/non-numeric states.
 
 ## 4. Preconditions
 
-- Authorized current wardrobe/profile/context are accessible; positive needs and ready roles are assessment conditions, not gates to opening Coverage.
+- Authorized current wardrobe/profile/context are accessible; positive needs and evidence required by a future evaluation policy are assessment conditions, not gates to opening Coverage.
 
 ## 5. Acceptance Criteria
 
@@ -40,9 +42,9 @@ Completed contextual Coverage, sufficient-data gate, unique-valid need support, 
 
 Show the current confirmed eligible wardrobe, relevant declared style/environment, six common needs and mapped occasions, priority choices and limitations used for one Personalized Everyday Capsule.
 
-### AC-02 — Respect sufficient data
+### AC-02 — Require future approved evaluation policy before a numeric score
 
-A numeric score requires a positive-priority need and at least one applicable ready TOP, BOTTOM and FOOTWEAR, plus OUTERWEAR only when required by the evaluated need/environment and defensible required inputs. All-zero priorities or a missing required ready role produce insufficient information, not 0%.
+A numeric score requires positive-priority needs and complete evaluation under a future approved composition/compatibility/sufficiency policy. The old ready-role gate is superseded; absent policy/evidence produces an unevaluated/incomplete result, never 0% or a fabricated gap. Existing weights/formula remain future product requirements.
 
 ### AC-03 — Count full valid support
 
@@ -58,7 +60,7 @@ Per-need 0/1/2/3/4 valid outfits yield 0%/approximately 33%/approximately 67%/10
 
 ### AC-06 — Separate evaluated zero
 
-With sufficient described ready inputs but no valid combinations, completed evaluated zero is legitimate and explained. Missing/failed/unavailable evaluation is not completed zero or proof of a mandatory missing product.
+With sufficient described inputs evaluated under a future policy but no valid combinations, completed evaluated zero is legitimate and explained. Missing/failed/unavailable evaluation is not completed zero or proof of a mandatory missing product.
 
 ### AC-07 — Honor context and changes
 

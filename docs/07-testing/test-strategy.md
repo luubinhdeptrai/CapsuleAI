@@ -1,5 +1,7 @@
 # CapsuleAI — Test Strategy
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -68,14 +70,14 @@ Run real domain policies without Spring, database, HTTP, external providers or D
 
 | Rule Area | Direct Verification Focus | Authority |
 | --- | --- | --- |
-| Garment truth and readiness | Confirmed category/color is Saveable without image/AI; required unknown information prevents only the evaluation needing it; layering/bulk are conditional; confidence never substitutes for confirmation. | BRULE-GAR-001–008 |
-| Outfit validity and identity | Exact supported composition, eligible owned constituents, layering, bulk equality, environmental bands/fallback, severe-pattern/noise count, and permutation-invariant identity. Strong personalization cannot admit an invalid outfit. | BRULE-OUT-001–009 |
+| Garment truth, properties and unevaluated eligibility | Confirmed Category/one Color saves without image/AI; every applicable optional property is supported/preserved, all source lists/applicability apply, Material is a distinct collection, and no ready/ineligible assertion is fabricated. | BRULE-GAR-001–010; source catalogue |
+| Future outfit validity and identity | Former fixed-role/removed-property predicates are superseded. Validate identity and owner boundaries; engine compatibility tests require a future approved policy and cannot reintroduce removed fields. | BRULE-OUT-001–009, superseded status respected |
 | Shuffle | Only the selected slot changes; other identities/context stay fixed; when no alternative exists, retain selection; no inferred Like/Dislike/Wear. | BRULE-OUT-010 |
 | Feedback and Wear | Effective outfit-targeted feedback, reported Wear strength, retry versus new intention, one outfit/original-day ranking increment, survivor-anchor recalculation and elapsed-time aging. History count remains distinct from ranking normalization. | BRULE-PERS-001–006, BRULE-WEAR-001–006, BRULE-HIST-001–003 |
-| Coverage and gaps | Positive-priority weighting, sufficient ready roles, zero versus insufficient information, mapped-occasion deduplication and capability gaps supported by evidence. | BRULE-COV-001–006, BRULE-GAP-001/002 |
+| Coverage and gaps | Positive-priority weighting, sufficient evidence required by a future evaluation policy, zero versus insufficient information, mapped-occasion deduplication and capability gaps supported by evidence. | BRULE-COV-001–006, BRULE-GAP-001/002 |
 | Wardrobe Multiplier | Complete same-basis unique-set difference; candidate-bearing previews; Exact/Evaluated Zero/Incomplete/Unavailable/Outdated; no ownership or Wear from hypothetical evaluation. | BRULE-MULT-001–009, BRULE-SHOP-002 |
 
-Reuse the controlled fixtures in [Business Rules Sections 14–15](../03-requirements/business-rules.md): weighted Coverage 50, complete 41→58 sets giving +17, equal bulk, permutation identity, and survivor/aging boundaries. Formula-only fixtures do not prove enumeration: add small explicit garment/outfit sets with independently known members. Vary one relevant predicate while keeping others valid; do not accidentally test rejection for the wrong reason. For ranking, use controlled alternatives and equal conditions to verify the required influence; avoid asserting a universal exact ranking order unsupported by the rules.
+Reuse current Business Rules Sections 14–15: minimum/full/partial properties, owner access, accepted-action retry and future arithmetic/identity/time fixtures. Superseded composition/removed-property examples are historical and have no active test obligation. Future Coverage/Multiplier arithmetic uses explicit independently supplied valid-set fixtures only after an engine policy is approved; arithmetic alone proves no compatibility.
 
 ## 7. Application / Use Case Testing
 
@@ -190,7 +192,7 @@ Keep a small stable set of integrated journeys as delivered capabilities become 
 | Candidate Journey, Not Sprint Selection | Critical Outcome | Existing Interaction Sources |
 | --- | --- | --- |
 | Private access and returning use | Register/login, renew, logout, account switch and recover without exposing the wrong account or losing accepted information. Controlled email supports recovery; security permutations remain in lower layers. | UC-001–004; AD-004; US-AUTH-001–005 |
-| Trustworthy wardrobe creation/inspection | Confirm an imageless manual entry, browse and inspect its accepted profile/readiness. Later assisted entry adds correction/manual fallback and late-output protection. | UC-007/008; AD-007; US-GAR-001, US-WAR-001/002 |
+| Trustworthy wardrobe creation/inspection | Confirm an imageless manual entry, browse and inspect its accepted accepted profile / unevaluated eligibility. Later assisted entry adds correction/manual fallback and late-output protection. | UC-007/008; AD-007; US-GAR-001, US-WAR-001/002 |
 | Use owned clothing and report wear | Receive valid choices, Shuffle one slot, report Wear, then correct/remove one report with coherent history and personalization meaning. | UC-011/012/014–017; AD-011/012/014/016/017 |
 | Understand and evaluate improvement | View contextual Coverage/Gaps, evaluate a candidate, inspect hypothetical new outfits and optionally return from external navigation without creating ownership/Wear. Include a truthful non-exact outcome. | UC-019–023; AD-019–022 |
 
@@ -198,7 +200,7 @@ These are candidate coverage groups, not a requirement to combine everything int
 
 ## 14. Test Data, Time and Isolation
 
-For the approved taxonomy/property change, plan source-linked tests for all eight categories and exactly ten Dresses/Jumpsuits subtype pairs, optional subtype omission, invalid parent/subtype pairs, and omitted/present Brand and purchase Price. Assert decimal amount plus explicit currency fidelity, incomplete-pair correction, no inferred defaults or image-derived Price, confirmed-value protection, and unknown rather than zero. Keep saveable entries visible for every category; verify established readiness checks and explicit unresolved-policy explanations separately. Exercise owner isolation and same-addition retry without losing optional values. These are planned verification obligations for FR-GAR-001–006/011–013, DATA-GAR-002 and BRULE-GAR-010, not executed tests. Resolve PRD OPQ-013 before encoding unapproved amount/Brand edge-case expectations. No wardrobe schema/API or AI model is implemented by this revision.
+Plan catalogue-driven coverage for all 13 applicable properties and every approved value: 84 category-valid Subtypes, 34 single dominant Colors, 28 Materials with zero/one/multiple/duplicate selections, 24 single optional Patterns, 17 named Styles with Etc rejected, and every Tops/Pants-specific detail. Verify supplied invalid/inapplicable input, optional omissions, exact accepted-value persistence/reread, Brand text, decimal Price/currency, missing rather than zero, no image/default inference, ownership and safe retries. Detail returns all applicable accepted properties; summaries remain identifiable without every detail field. Eligibility is not evaluated, with no readiness gate or ready/unsuitable/ineligible inference. These are planned verification obligations, not executed product tests.
 
 Use small explicit fixtures with stable identities and readable builders/factories where repetition warrants them. Each test creates its own state and obtains its expected result from requirements. Factories should expose relevant values rather than hide scenario-critical defaults. Use synthetic accounts, local delivery destinations, disposable secrets and approved nonpersonal media; no production database exports or real-user wardrobes in ordinary test runs.
 

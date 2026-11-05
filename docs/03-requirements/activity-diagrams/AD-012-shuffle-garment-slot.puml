@@ -1,4 +1,6 @@
 @startuml
+' Final property-model decision: no current readiness algorithm or category-role mapping.
+' Future evaluation branches require approved engine policy; no removed fields are required.
 ' Source Use Case: UC-012 — Shuffle Garment Slot
 ' Primary Specification: ../use-cases/UC-012-shuffle-garment-slot.md
 ' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
@@ -37,7 +39,7 @@ repeat
     |CapsuleAI|
     :Identify different eligible owned alternatives
 for only the selected slot;
-    :Apply readiness and full-outfit hard compatibility;
+    :Use future approved engine policy for full-outfit compatibility;
     if (Replacement result available?) then (Yes)
         if (Compatible alternative exists?) then (Yes)
             :Replace only selected slot;
