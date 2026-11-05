@@ -41,7 +41,7 @@ class AccountSchemaIT extends IdentityIntegrationTestSupport {
 
         assertThatThrownBy(() -> insertAccountRow("dup@example.com"))
                 .isInstanceOf(DataIntegrityViolationException.class);
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @Test
@@ -52,7 +52,7 @@ class AccountSchemaIT extends IdentityIntegrationTestSupport {
         assertThat(accounts.addIfEmailAvailable(first)).isTrue();
         assertThat(accounts.addIfEmailAvailable(second)).isFalse();
 
-        Map<String, Object> row = jdbc.sql("SELECT id, password_hash, display_name FROM identity_account")
+        Map<String, Object> row = jdbc.sql("SELECT id, password_hash, display_name FROM identity.identity_account")
                 .query()
                 .singleRow();
         assertThat(row.get("id")).isEqualTo(first.id());
@@ -65,7 +65,7 @@ class AccountSchemaIT extends IdentityIntegrationTestSupport {
         String decomposed = Normalizer.normalize("Nguy\u1EC5n \u00C1nh", Normalizer.Form.NFD);
         accounts.addIfEmailAvailable(account("nfd@example.com", "{test}hash", Optional.of(new DisplayName(decomposed))));
 
-        String stored = jdbc.sql("SELECT display_name FROM identity_account WHERE email = 'nfd@example.com'")
+        String stored = jdbc.sql("SELECT display_name FROM identity.identity_account WHERE email = 'nfd@example.com'")
                 .query(String.class)
                 .single();
 
@@ -76,7 +76,7 @@ class AccountSchemaIT extends IdentityIntegrationTestSupport {
 
     private void insertAccountRow(String email) {
         jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, created_at)
                         VALUES (:id, :email, '{test}hash', now())
                         """)
                 .param("id", UUID.randomUUID())

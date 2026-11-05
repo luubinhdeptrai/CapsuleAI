@@ -39,14 +39,14 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(content().string(not(containsString(password))));
 
-        Map<String, Object> row = jdbc.sql("SELECT email, password_hash FROM identity_account")
+        Map<String, Object> row = jdbc.sql("SELECT email, password_hash FROM identity.identity_account")
                 .query()
                 .singleRow();
         assertThat(row.get("email")).isEqualTo("person@example.com");
         assertThat((String) row.get("password_hash"))
                 .startsWith("{pbkdf2-sha256-v1}")
                 .doesNotContain(password);
-        assertThat(jdbc.sql("SELECT created_at FROM identity_account").query(OffsetDateTime.class).single()
+        assertThat(jdbc.sql("SELECT created_at FROM identity.identity_account").query(OffsetDateTime.class).single()
                 .toInstant()).isEqualTo(clock.instant());
         assertThat(output.getAll()).doesNotContain(password);
     }
@@ -62,7 +62,7 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .getContentAsString(StandardCharsets.UTF_8);
 
         assertThat(JsonPath.<String>read(body, "$.displayName")).isEqualTo(name);
-        assertThat(jdbc.sql("SELECT display_name FROM identity_account").query(String.class).single())
+        assertThat(jdbc.sql("SELECT display_name FROM identity.identity_account").query(String.class).single())
                 .isEqualTo(name);
     }
 
@@ -76,7 +76,7 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(jsonPath("$.fieldErrors[?(@.field == 'password')].code", hasItem("REQUIRED")))
                 .andExpect(jsonPath("$.fieldErrors[?(@.field == 'confirmPassword')].code", hasItem("REQUIRED")));
 
-        assertThat(countRows("identity_account")).isZero();
+        assertThat(countRows("identity.identity_account")).isZero();
     }
 
     @Test
@@ -85,10 +85,10 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("confirmPassword"))
                 .andExpect(jsonPath("$.fieldErrors[0].code").value("MISMATCH"));
-        assertThat(countRows("identity_account")).isZero();
+        assertThat(countRows("identity.identity_account")).isZero();
 
         register("fix@example.com", PASSWORD).andExpect(status().isCreated());
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("password"))
                 .andExpect(jsonPath("$.fieldErrors[0].code").value(expectedCode));
 
-        assertThat(countRows("identity_account")).isZero();
+        assertThat(countRows("identity.identity_account")).isZero();
     }
 
     @ParameterizedTest
@@ -112,13 +112,13 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
     @Test
     void duplicateNormalizedEmailIsRejectedAndTheExistingAccountIsUnchanged() throws Exception {
         register("person@example.com", PASSWORD).andExpect(status().isCreated());
-        Map<String, Object> before = jdbc.sql("SELECT * FROM identity_account").query().singleRow();
+        Map<String, Object> before = jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow();
 
         register("  PERSON@Example.COM ", "a different password 2026")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_REGISTERED"));
 
-        assertThat(jdbc.sql("SELECT * FROM identity_account").query().singleRow()).isEqualTo(before);
+        assertThat(jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow()).isEqualTo(before);
     }
 
     @Test
@@ -130,7 +130,7 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_REGISTERED"));
 
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @Test
@@ -138,7 +138,7 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
         register("person@example.com", PASSWORD).andExpect(status().isCreated());
         register("person+wardrobe@example.com", PASSWORD).andExpect(status().isCreated());
 
-        assertThat(countRows("identity_account")).isEqualTo(2);
+        assertThat(countRows("identity.identity_account")).isEqualTo(2);
     }
 
     @Test
@@ -149,6 +149,6 @@ class RegistrationApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
 
-        assertThat(countRows("identity_account")).isZero();
+        assertThat(countRows("identity.identity_account")).isZero();
     }
 }

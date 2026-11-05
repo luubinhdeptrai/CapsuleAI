@@ -10,6 +10,12 @@
  * Derived assessment results are not assumed to require a permanent result
  * store; detailed persistence choices belong to selected future work.
  *
+ * <p>Persistence: when this module first persists state, its tables go into the
+ * PostgreSQL schema {@code wardrobe_intelligence} and are named {@code wardrobe_intelligence_*}.
+ * No other module reads, writes, joins or references them by foreign key; other
+ * modules use this module's published {@code api} (architecture refinement AR-01-AR-04,
+ * {@code docs/engineering/backend-conventions.md} Section 2).
+ *
  * <p>Architecture reference:
  * {@code docs/04-architecture/views/implementation-view.puml}.
  */

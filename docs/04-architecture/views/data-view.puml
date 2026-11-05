@@ -2,7 +2,9 @@
 ' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Data View
-' Version: 0.2; Status: Baseline Draft; Product-property synchronization: 2026-11-05.
+' Version: 0.3; Status: Baseline Draft; Product-property synchronization: 2026-11-05.
+' 2026-11-06: physical ownership note for the Product Owner-approved refinement AR-01-AR-08
+' (selected-architecture-decisions.md Section 8). Logical concepts and owners are unchanged.
 ' Purpose: Simple logical data ownership overview; concepts are NOT physical tables.
 ' Primary Sources: SRS v0.4; Business Rules v0.2; ADD v0.1.4;
 ' Selected Architecture Decisions v0.1.5 (ADA-001-018 unchanged);
@@ -128,6 +130,10 @@ Media -[hidden]down-> DB
 
 note as Boundaries
   All owners retain necessary state in ONE PostgreSQL.
+  AR-01-AR-04: each owner has its own schema - identity, personal_context, wardrobe,
+  outfit_advice_and_use, wardrobe_intelligence, product_measurement; tables <schema>_<name>.
+  No cross-owner join, table access, view or foreign key; owner ids are plain values.
+  Implemented today: identity schema (Flyway V6); others are created by their first story.
   Garment: 13 source-approved properties across eight categories.
   Category + one Color + confirmation save; other applicable values optional.
   Material is a distinct-value collection; category details follow source applicability.

@@ -58,7 +58,7 @@ class ConcurrentRegistrationIT extends IdentityIntegrationTestSupport {
 
         assertThat(Collections.frequency(outcomes, "CREATED")).isOne();
         assertThat(Collections.frequency(outcomes, "DUPLICATE")).isEqualTo(equivalentEmails.size() - 1);
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_account WHERE email = 'race@example.com'")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_account WHERE email = 'race@example.com'")
                 .query(Long.class).single()).isOne();
     }
 }

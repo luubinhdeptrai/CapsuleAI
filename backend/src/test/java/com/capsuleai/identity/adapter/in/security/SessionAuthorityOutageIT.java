@@ -219,7 +219,7 @@ class SessionAuthorityOutageIT extends IdentityIntegrationTestSupport {
                 .andExpect(jsonPath("$.refreshToken").doesNotExist());
         databaseConnectionOutage.end();
 
-        assertThat(countRows("identity_session")).isZero();
+        assertThat(countRows("identity.identity_session")).isZero();
     }
 
     @Test
@@ -267,7 +267,7 @@ class SessionAuthorityOutageIT extends IdentityIntegrationTestSupport {
     }
 
     private long countRevokedSessions() {
-        return jdbc.sql("SELECT count(*) FROM identity_session WHERE revoked_at IS NOT NULL")
+        return jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revoked_at IS NOT NULL")
                 .query(Long.class)
                 .single();
     }

@@ -137,7 +137,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
                         registrationBody("unlisted@example.com", PASSWORD, PASSWORD, null))))
                 .andExpect(status().isForbidden());
 
-        assertThat(countRows("identity_account")).isZero();
+        assertThat(countRows("identity.identity_account")).isZero();
     }
 
     @Test
@@ -207,7 +207,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
 
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @Test
@@ -220,7 +220,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
                 .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.accessToken").doesNotExist());
 
-        assertThat(countRows("identity_session")).isZero();
+        assertThat(countRows("identity.identity_session")).isZero();
     }
 
     @Test
@@ -288,7 +288,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
     }
 
     private long countRevokedSessions() {
-        return jdbc.sql("SELECT count(*) FROM identity_session WHERE revoked_at IS NOT NULL")
+        return jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revoked_at IS NOT NULL")
                 .query(Long.class)
                 .single();
     }

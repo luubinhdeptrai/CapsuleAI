@@ -5,10 +5,10 @@
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
 | Story / parent PBI | US-GAR-001 — Add an owned garment manually / [PBI-006](../../../product-backlog.md#pbi-006--add-a-confirmed-garment-manually) |
 | Implementation order | **2 of 4** (US-AUTH-005 → **US-GAR-001** → US-WAR-001 → US-WAR-002) |
-| Starts from | "Stage 1": the baseline `1d0bc83` plus everything in the [US-AUTH-005 guide](US-AUTH-005-guide.md) |
+| Starts from | "Stage 1": Stage 0 (the corrected Sprint 1 baseline, [README §3](README.md#3-repository-baseline)) plus everything in the [US-AUTH-005 guide](US-AUTH-005-guide.md) |
 | Leaves | "Stage 2": the Wardrobe model, persistence and creation API that US-WAR-001 and US-WAR-002 reuse |
 | Read with | [README](README.md), [shared architecture](shared-architecture.md) |
-| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 2 commit; full four-stage `clean verify`: 360 unit and 217 integration tests passed). Not applied to this repository, not run in hosted CI. US-GAR-001 is **not Done**. |
+| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 2 commit: `clean verify` passed with 373 unit and 199 integration tests; full four-stage result: 382 and 228). Not applied to this repository, not run in hosted CI. US-GAR-001 is **not Done**. |
 
 Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** proposed technical decision of this guide, **[OPEN]** unresolved. Sections 3–8 are verbatim source text.
 
@@ -21,9 +21,9 @@ Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** prop
 | Story ID / name | US-GAR-001 — Add an owned garment manually |
 | Parent PBI | PBI-006 (Garment domain, Digital Wardrobe theme) |
 | User value | A trustworthy, owned wardrobe entry from an explicitly confirmed Category and one dominant Color, without an image or AI; every other approved property can be added and is kept exactly. |
-| Backend objective | The Wardrobe module's first real code: the 13-property model with all approved vocabularies and category applicability; validation that identifies every invalid/inapplicable value without substituting or discarding it; owner-scoped PostgreSQL persistence (Flyway V7); an authenticated, idempotent `POST /api/v1/wardrobe/garments` with at most one accepted garment per logical addition; truthful "eligibility not evaluated". |
+| Backend objective | The Wardrobe module's first real code: the 13-property model with all approved vocabularies and category applicability; validation that identifies every invalid/inapplicable value without substituting or discarding it; owner-scoped PostgreSQL persistence (Flyway V8); an authenticated, idempotent `POST /api/v1/wardrobe/garments` with at most one accepted garment per logical addition; truthful "eligibility not evaluated". |
 | Hard dependencies | Usable authenticated access (Sprint 1, unchanged by Stage 1). The approved [garment-property authority](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). US-AUTH-005 is **not** a technical prerequisite, but its Stage 1 code is the starting state. |
-| Scope (backend) | Package `com.capsuleai.wardrobe` (domain, application, ports, JDBC adapter, web adapter, configuration); V7; CORS `Idempotency-Key`; OpenAPI v0.6.0; generalized contract test; CI; README. |
+| Scope (backend) | Package `com.capsuleai.wardrobe` (domain, application, ports, JDBC adapter, web adapter, configuration); V8; CORS `Idempotency-Key`; OpenAPI v0.6.0; generalized contract test; CI; README. |
 | Out of scope | Images, AI suggestions, editing (PBI-008), removal (PBI-016), search/filter (PBI-015), recommendation eligibility or any compatibility rule, a server-side draft store, mobile screens. |
 | Expected outcome | AC-01–AC-13 backend parts implemented and verified; AC-14 (accessibility) and client draft handling remain client evidence; OPQ-013 validation choices awaiting PO confirmation. |
 
@@ -36,10 +36,12 @@ Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** prop
 | `IdentitySecurityConfiguration` | Default-deny: `/api/v1/wardrobe/**` is protected automatically (JWT + usable session). Its CORS bean allows `Authorization`, `Content-Type`, `Accept`. |
 | `IdentityConfiguration.identityClock()` | The application's only `Clock` bean (tests replace it with `MutableClock`). |
 | Spring `JdbcClient`, `PlatformTransactionManager` | Persistence and transaction infrastructure used by Identity. |
-| Flyway V1–V6 | V6 added `identity_password_reset`. Next free version: **V7**. |
+| Flyway V1–V7 | V6 moved the Sprint 1 tables into the `identity` schema; V7 added `identity.identity_password_reset`. Next free version: **V8**. |
+| Schemas | `identity` (Identity's tables) and `public` (only Flyway's history). **No `wardrobe` schema exists**: this story's V8 creates it (AR-01). Wardrobe never reads, joins or references `identity.*` (AR-02–AR-04). |
+| `foundation/IsolatedMigrationDatabase.java` (test) | A separate empty database for upgrade tests; `GarmentSchemaIT` upgrades from V7 to V8 on it. |
 | `IdentityIntegrationTestSupport`, `IdentityTestConfiguration` | Shared real-application test context (PostgreSQL container, MockMvc, `MutableClock`, recording reset sender). |
 | `IdentityOpenApiContractIT` | Checks **every** `/api/` handler against `docs/05-api/openapi.yaml`; it calls each documented operation without a token. |
-| `ArchitectureDependencyTest` | Already lists `wardrobe` as an owner: nothing outside it may use its domain/application/adapter packages, and its domain/application must stay framework-free. |
+| `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` | `BusinessModule` already registers `wardrobe` with schema `wardrobe`. Other modules may use only its `api`; its domain/application stay framework-free; Spring JDBC only in its persistence adapter; its SQL may name only `wardrobe.*`, always qualified; V8 may touch only the `wardrobe` schema. |
 | `docs/05-api/openapi.yaml` v0.5.0 | Identity only; explicitly "does not introduce endpoints for ... wardrobe data". |
 
 
@@ -47,17 +49,17 @@ Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** prop
 
 ## 3. Original Business Requirements — Verbatim
 
-All wording in Sections 3–8 is copied mechanically from the repository at `1d0bc83`; nothing is paraphrased. Only the targets of links inside a quotation are rewritten, so that they open the same file and heading from this guide's folder. The link text is unchanged. The **Source** line above each quotation names its file, heading and line range.
+All wording in Sections 3–8 is copied mechanically from the repository at Stage 0; nothing is paraphrased. Only the targets of links inside a quotation are rewritten, so that they open the same file and heading from this guide's folder. The link text is unchanged. The **Source** line above each quotation names its file, heading and line range.
 
 ### 3.1 Business goal, requirements and capabilities
 
-**Source:** [BRD.md — 7. Business Goals](../../../../01-business/BRD.md#7-business-goals) · lines 140–140 at `1d0bc83`
+**Source:** [BRD.md — 7. Business Goals](../../../../01-business/BRD.md#7-business-goals) · lines 140–140 at Stage 0
 
 > | ID | Goal | Rationale | Expected Business / User Value | Related Product Capabilities |
 > |---|---|---|---|---|
 > | BG-01 | Reduce Wardrobe Digitization Effort | Manual setup delays access to useful wardrobe advice. | Faster access to a trustworthy digital closet with less repetitive entry. | CAP-01–CAP-04 |
 
-**Source:** [BRD.md — 15.1 Wardrobe Digitization and Management](../../../../01-business/BRD.md#151-wardrobe-digitization-and-management) · lines 462–465 at `1d0bc83`
+**Source:** [BRD.md — 15.1 Wardrobe Digitization and Management](../../../../01-business/BRD.md#151-wardrobe-digitization-and-management) · lines 462–465 at Stage 0
 
 > | ID | Requirement | Business Rationale | Priority | Related Goals |
 > |---|---|---|---|---|
@@ -66,7 +68,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 > | BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually. | Preserve value when automation is unavailable or inaccurate. | Must | BG-01 |
 > | BR-005 | Users must be able to maintain, browse, search, and filter an accurate current wardrobe, including adding, changing, and removing garments. | Decisions must reflect accessible, current possessions. | Must | BG-01, BG-02, BG-03 |
 
-**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 288–289 at `1d0bc83`
+**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 288–289 at Stage 0
 
 > | ID | Capability | Business Purpose |
 > |---|---|---|
@@ -75,7 +77,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 3.2 BRD §13.2, referenced by BR-003
 
-**Source:** [BRD.md — 13.2 Garment Intelligence and User Authority](../../../../01-business/BRD.md#132-garment-intelligence-and-user-authority) · lines 297–321 at `1d0bc83`
+**Source:** [BRD.md — 13.2 Garment Intelligence and User Authority](../../../../01-business/BRD.md#132-garment-intelligence-and-user-authority) · lines 297–321 at Stage 0
 
 > ### 13.2 Garment Intelligence and User Authority
 >
@@ -109,7 +111,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 This file is the Product Owner-approved source of truth for the 13 properties, their applicability and every vocabulary value.
 
-**Source:** [Image to Properties Extraction.md](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md) · complete file at `1d0bc83`
+**Source:** [Image to Properties Extraction.md](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md) · complete file at Stage 0
 
 > # CapsuleAI — Approved Garment Properties
 >
@@ -221,7 +223,7 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 
 Only its application note applies; the research body introduces no garment property, readiness rule or algorithm for this story.
 
-**Source:** [Solving the Strategic Purchase Recommender and Outfit Recommendation Engine.md](../../../../../Initial%20files/Solving%20the%20Strategic%20Purchase%20Recommender%20and%20Outfit%20Recommendation%20Engine.md) · lines 1–5 at `1d0bc83`
+**Source:** [Solving the Strategic Purchase Recommender and Outfit Recommendation Engine.md](../../../../../Initial%20files/Solving%20the%20Strategic%20Purchase%20Recommender%20and%20Outfit%20Recommendation%20Engine.md) · lines 1–5 at Stage 0
 
 > > **Current CapsuleAI application note — 2026-11-05.** The [approved garment-property file](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md) is the authority for exactly 13 properties, their applicability and every explicitly listed value. All its former research-candidate fashion lists are now approved. Category/one dominant Color plus confirmation save; Material supports multiple distinct selections, other applicable properties are optional, and images/metadata remain separate.
 > >
@@ -231,7 +233,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 4.3 JRN-02 and FEAT-AI-002
 
-**Source:** [PRD.md — 8.2 JRN-02 — Garment Digitization](../../../../02-product/PRD.md#82-jrn-02--garment-digitization) · lines 202–233 at `1d0bc83`
+**Source:** [PRD.md — 8.2 JRN-02 — Garment Digitization](../../../../02-product/PRD.md#82-jrn-02--garment-digitization) · lines 202–233 at Stage 0
 
 > ### 8.2 JRN-02 — Garment Digitization
 >
@@ -266,7 +268,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > A prediction can still require correction even when usable. Only the user's confirmation creates the authoritative wardrobe entry; AI availability and optional profile data are not conditions for manual completion. **Features:** FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001.
 
-**Source:** [PRD.md — 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry](../../../../02-product/PRD.md#122-feat-ai-002--review-confirmation-and-manual-entry) · lines 506–541 at `1d0bc83`
+**Source:** [PRD.md — 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry](../../../../02-product/PRD.md#122-feat-ai-002--review-confirmation-and-manual-entry) · lines 506–541 at Stage 0
 
 > ### 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry
 >
@@ -307,7 +309,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 4.4 FEAT-GAR-001 and its subsections
 
-**Source:** [PRD.md — 13.1 FEAT-GAR-001 — Approved Garment Property Experience](../../../../02-product/PRD.md#131-feat-gar-001--approved-garment-property-experience) · lines 545–579 at `1d0bc83`
+**Source:** [PRD.md — 13.1 FEAT-GAR-001 — Approved Garment Property Experience](../../../../02-product/PRD.md#131-feat-gar-001--approved-garment-property-experience) · lines 545–579 at Stage 0
 
 > ### 13.1 FEAT-GAR-001 — Approved Garment Property Experience
 >
@@ -345,7 +347,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Delivery boundary:** All applicable creation properties and detail retrieval are included in the selected Sprint 2 stories. Later editing, photo/AI assistance and recommendation engines retain their separate PBIs; no whole-MVP API/schema design is required now.
 
-**Source:** [PRD.md — 13.2 Controlled Initial Garment Subtypes](../../../../02-product/PRD.md#132-controlled-initial-garment-subtypes) · lines 581–585 at `1d0bc83`
+**Source:** [PRD.md — 13.2 Controlled Initial Garment Subtypes](../../../../02-product/PRD.md#132-controlled-initial-garment-subtypes) · lines 581–585 at Stage 0
 
 > ### 13.2 Controlled Initial Garment Subtypes
 >
@@ -353,7 +355,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > Subtype is optional, but a supplied value must belong to the selected category. A category change requires review of incompatible subtype and category-specific fields. MINI_DRESS may overlap length and PARTY_DRESS occasion as concepts, but no extra Length applicability or garment Occasion property follows. JACKET_DRESS remains under Dresses/Jumpsuits; JUMPSUIT stays in that combined category. Further categories or vocabulary values require Product Owner approval.
 
-**Source:** [PRD.md — 13.3 Saving and Deferred Recommendation Eligibility](../../../../02-product/PRD.md#133-saving-and-deferred-recommendation-eligibility) · lines 587–593 at `1d0bc83`
+**Source:** [PRD.md — 13.3 Saving and Deferred Recommendation Eligibility](../../../../02-product/PRD.md#133-saving-and-deferred-recommendation-eligibility) · lines 587–593 at Stage 0
 
 > ### 13.3 Saving and Deferred Recommendation Eligibility
 >
@@ -363,7 +365,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > Removed fashion properties and the earlier readiness policy are explicitly superseded in the authority's Section 5. User-profile preferences, request occasion/weather and technical metadata remain separate. Their existence cannot recreate removed garment fields or a hidden compatibility gate.
 
-**Source:** [PRD.md — 13.4 Confidence and Provenance Experience](../../../../02-product/PRD.md#134-confidence-and-provenance-experience) · lines 595–607 at `1d0bc83`
+**Source:** [PRD.md — 13.4 Confidence and Provenance Experience](../../../../02-product/PRD.md#134-confidence-and-provenance-experience) · lines 595–607 at Stage 0
 
 > ### 13.4 Confidence and Provenance Experience
 >
@@ -379,7 +381,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > Provenance distinguishes **AI Suggested**, **User Confirmed**, **User Corrected**, and **User Entered**. Provenance answers how a value was established, while confidence qualifies an AI proposal. After user confirmation/correction, the user's value is authoritative regardless of the earlier AI confidence; neither confidence nor confirmation claims verified physical fabric composition.
 
-**Source:** [PRD.md — 13.5 Optional Brand and Purchase Price](../../../../02-product/PRD.md#135-optional-brand-and-purchase-price) · lines 609–613 at `1d0bc83`
+**Source:** [PRD.md — 13.5 Optional Brand and Purchase Price](../../../../02-product/PRD.md#135-optional-brand-and-purchase-price) · lines 609–613 at Stage 0
 
 > ### 13.5 Optional Brand and Purchase Price
 >
@@ -389,7 +391,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 4.5 Approved taxonomy decisions and open follow-ups
 
-**Source:** [PRD.md — 34.1 Approved Taxonomy Revision and Open Follow-up Decisions](../../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) · lines 1522–1530 at `1d0bc83`
+**Source:** [PRD.md — 34.1 Approved Taxonomy Revision and Open Follow-up Decisions](../../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) · lines 1522–1530 at Stage 0
 
 > ### 34.1 Approved Taxonomy Revision and Open Follow-up Decisions
 >
@@ -405,7 +407,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.1 Garment ingestion (SRS §3.4) and manual-entry requirements
 
-**Source:** [SRS.md — 3.4 Garment Ingestion](../../../../03-requirements/SRS.md#34-garment-ingestion) · lines 227–236 at `1d0bc83`
+**Source:** [SRS.md — 3.4 Garment Ingestion](../../../../03-requirements/SRS.md#34-garment-ingestion) · lines 227–236 at Stage 0
 
 > ### 3.4 Garment Ingestion
 >
@@ -418,7 +420,7 @@ Only its application note applies; the research body introduces no garment prope
 > | Confirm category and dominant color | Create the authoritative owned entry and show guidance that eligibility is not evaluated. |
 > | Cancel or processing fails | Do not create a confirmed item; allow appropriate replacement/retry/manual continuation. |
 
-**Source:** [SRS.md — 3.4.1 Image Input and Preview Criteria](../../../../03-requirements/SRS.md#341-image-input-and-preview-criteria) · lines 256–263 at `1d0bc83`
+**Source:** [SRS.md — 3.4.1 Image Input and Preview Criteria](../../../../03-requirements/SRS.md#341-image-input-and-preview-criteria) · lines 256–263 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -429,7 +431,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.2 Garment intelligence (SRS §3.5, §3.5.1)
 
-**Source:** [SRS.md — 3.5 Garment Intelligence](../../../../03-requirements/SRS.md#35-garment-intelligence) · lines 267–277 at `1d0bc83`
+**Source:** [SRS.md — 3.5 Garment Intelligence](../../../../03-requirements/SRS.md#35-garment-intelligence) · lines 267–277 at Stage 0
 
 > ### 3.5 Garment Intelligence
 >
@@ -443,7 +445,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > The old readiness predicates are superseded. Retained superseded/deferred IDs establish no implementation obligation for removed fields. Optional absence is separate from invalid supplied input, failed persistence and lost authorization.
 
-**Source:** [SRS.md — 3.5.1 Saving and Deferred Recommendation Eligibility](../../../../03-requirements/SRS.md#351-saving-and-deferred-recommendation-eligibility) · lines 282–294 at `1d0bc83`
+**Source:** [SRS.md — 3.5.1 Saving and Deferred Recommendation Eligibility](../../../../03-requirements/SRS.md#351-saving-and-deferred-recommendation-eligibility) · lines 282–294 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -463,7 +465,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.3 Optional Brand and Purchase Price (SRS §3.5.2)
 
-**Source:** [SRS.md — 3.5.2 Optional Brand and Purchase Price](../../../../03-requirements/SRS.md#352-optional-brand-and-purchase-price) · lines 296–300 at `1d0bc83`
+**Source:** [SRS.md — 3.5.2 Optional Brand and Purchase Price](../../../../03-requirements/SRS.md#352-optional-brand-and-purchase-price) · lines 296–300 at Stage 0
 
 > #### 3.5.2 Optional Brand and Purchase Price
 >
@@ -473,7 +475,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.4 Authorization
 
-**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 188–189 at `1d0bc83`
+**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 188–189 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -482,7 +484,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.5 Data requirements
 
-**Source:** [SRS.md — 4.3 Garment & Wardrobe Data](../../../../03-requirements/SRS.md#43-garment--wardrobe-data) · lines 657–661 at `1d0bc83`
+**Source:** [SRS.md — 4.3 Garment & Wardrobe Data](../../../../03-requirements/SRS.md#43-garment--wardrobe-data) · lines 657–661 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -492,14 +494,14 @@ Only its application note applies; the research body introduces no garment prope
 > | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
 > | DATA-GAR-005 | The system shall represent active/removed ownership independently from missing optional properties and unevaluated recommendation eligibility, without requiring a readiness flag, NOT_EVALUATED enum, compatibility field or physical schema prescribed by this SRS. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: ownership and unevaluated eligibility remain distinct; no property gate. |
 
-**Source:** [SRS.md — 4.7 Data Integrity](../../../../03-requirements/SRS.md#47-data-integrity) · lines 693–696 at `1d0bc83`
+**Source:** [SRS.md — 4.7 Data Integrity](../../../../03-requirements/SRS.md#47-data-integrity) · lines 693–696 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | DATA-INT-001 | The system shall prevent an AI proposal or later analysis from silently superseding a confirmed/corrected garment value. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002 | T: authority preservation. |
 > | DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions. | MVP | FEAT-AI-002, FEAT-PERS-002; BR-005, BR-011 | T: interrupted additions/Wear actions; retry versus explicit same-outfit/day repeat. |
 
-**Source:** [SRS.md — 4.10 Controlled Vocabularies and Descriptor Scales](../../../../03-requirements/SRS.md#410-controlled-vocabularies-and-descriptor-scales) · lines 715–745 at `1d0bc83`
+**Source:** [SRS.md — 4.10 Controlled Vocabularies and Descriptor Scales](../../../../03-requirements/SRS.md#410-controlled-vocabularies-and-descriptor-scales) · lines 715–745 at Stage 0
 
 > ### 4.10 Controlled Vocabularies and Descriptor Scales
 >
@@ -535,14 +537,14 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.6 Interfaces
 
-**Source:** [SRS.md — 5.1 User Interfaces](../../../../03-requirements/SRS.md#51-user-interfaces) · lines 758–760 at `1d0bc83`
+**Source:** [SRS.md — 5.1 User Interfaces](../../../../03-requirements/SRS.md#51-user-interfaces) · lines 758–760 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | UI-004 | The system shall display garment identity/category/color, guidance that eligibility is not evaluated, and available image without hiding imageless manual entries. | MVP | FEAT-WAR-001, FEAT-GAR-001; BR-005, BR-003 | I: cards and minimum-only detail. |
 > | UI-006 | The system shall require explicit confirmation for an authoritative garment entry and expose correction/manual controls. | MVP | FEAT-AI-002; BR-002 | D: proposal to corrected confirmation. |
 
-**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–789 at `1d0bc83`
+**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–789 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -551,20 +553,20 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.7 Error and failure requirements
 
-**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 982–984 at `1d0bc83`
+**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 982–984 at Stage 0
 
 > ## 9. Error and Failure Requirements
 >
 > These requirements specify recoverable outcomes, not exception types or infrastructure retry algorithms. Previously confirmed information remains authoritative. An interrupted response is not proof that an action failed; uncertain outcomes must remain distinguishable from accepted results, and recovery must not create accidental duplicate logical actions.
 
-**Source:** [SRS.md — 9.3 Garment Completeness](../../../../03-requirements/SRS.md#93-garment-completeness) · lines 1005–1006 at `1d0bc83`
+**Source:** [SRS.md — 9.3 Garment Completeness](../../../../03-requirements/SRS.md#93-garment-completeness) · lines 1005–1006 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
 > | ERR-GAR-001 | Save attempted without the saveable minimum. | The system shall explain missing confirmed Primary Category or Dominant Color and retain the draft for correction rather than save it as an authoritative garment. | User supplies/changes the missing information; existing garments remain unchanged. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: each minimum value missing. |
 > | ERR-GAR-002 | Recommendation eligibility has not been evaluated. | The system shall disclose the unevaluated state without calling the garment invalid, unsuitable or ineligible; the previous missing-compatibility-field error is superseded. | Retain accepted information and ordinary wardrobe access; no enrichment gate. | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005, BR-022 | T/I: no unsupported eligibility claim or save/browse/detail gate. |
 
-**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1048 at `1d0bc83`
+**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1048 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
@@ -572,33 +574,33 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.8 Security, privacy, reliability, accessibility and localization
 
-**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 809–810 at `1d0bc83`
+**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 809–810 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-SEC-001 | The system shall permit zero successful unauthorized cross-user wardrobe/image accesses in the agreed validation scenarios. | MVP | FEAT-AUTH-001, FEAT-WAR-001; BR-021 | T: two-account and unauthenticated attempts; MET-Q06. |
 > | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
 
-**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–817 at `1d0bc83`
+**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–817 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
 
-**Source:** [SRS.md — 6.4 Reliability](../../../../03-requirements/SRS.md#64-reliability) · lines 824–824 at `1d0bc83`
+**Source:** [SRS.md — 6.4 Reliability](../../../../03-requirements/SRS.md#64-reliability) · lines 824–824 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-REL-001 | The system shall preserve manual garment creation in all agreed representative AI-failure scenarios without changing confirmed information into an unconfirmed proposal. | MVP | FEAT-AI-001, FEAT-AI-002; BR-002, BR-004 | T: agreed unavailable/failed/uncertain analysis cases; MET-Q05. |
 
-**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at `1d0bc83`
+**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-ACC-001 | The system shall communicate meaningful confidence, unevaluated eligibility, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
 > | NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
 
-**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at `1d0bc83`
+**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -607,7 +609,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ## 6. Original Business Rules — Verbatim
 
-**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 80–86 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 80–86 at Stage 0
 
 > ### BRULE-AUTH-001 — Authorized Personal Operations
 >
@@ -617,7 +619,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-AUTH-008, ERR-AUTH-001, DATA-GAR-001.
 
-**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 130–138 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 130–138 at Stage 0
 
 > ### BRULE-AUTH-007 — Purpose-Limited Private Data Use
 >
@@ -629,7 +631,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-AUTH-008, NFR-PRIV-001, NFR-PRIV-002, SI-002, SI-003, COM-003, FR-MET-006, DATA-RET-001, DATA-RET-002, DATA-RET-003.
 
-**Source:** [business-rules.md — BRULE-GAR-001 — Canonical Garment Authority](../../../../03-requirements/business-rules.md#brule-gar-001--canonical-garment-authority) · lines 172–178 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-001 — Canonical Garment Authority](../../../../03-requirements/business-rules.md#brule-gar-001--canonical-garment-authority) · lines 172–178 at Stage 0
 
 > ### BRULE-GAR-001 — Canonical Garment Authority
 >
@@ -639,7 +641,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** DATA-GAR-001, FR-GAR-011, AI-REQ-001, AI-REQ-007, DATA-INT-001.
 
-**Source:** [business-rules.md — BRULE-GAR-002 — Saveable Minimum](../../../../03-requirements/business-rules.md#brule-gar-002--saveable-minimum) · lines 182–188 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-002 — Saveable Minimum](../../../../03-requirements/business-rules.md#brule-gar-002--saveable-minimum) · lines 182–188 at Stage 0
 
 > ### BRULE-GAR-002 — Saveable Minimum
 >
@@ -649,7 +651,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-003, FR-AI-003, FR-AI-008, FR-AI-009, ERR-GAR-001.
 
-**Source:** [business-rules.md — BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness](../../../../03-requirements/business-rules.md#brule-gar-003--evaluation-specific-recommendation-readiness) · lines 192–198 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness](../../../../03-requirements/business-rules.md#brule-gar-003--evaluation-specific-recommendation-readiness) · lines 192–198 at Stage 0
 
 > ### BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness
 >
@@ -659,7 +661,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-004/005, DATA-GAR-005, ERR-GAR-002; final Product Owner property-model decision.
 
-**Source:** [business-rules.md — BRULE-GAR-004 — Controlled Classification and Context Vocabularies](../../../../03-requirements/business-rules.md#brule-gar-004--controlled-classification-and-context-vocabularies) · lines 202–208 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-004 — Controlled Classification and Context Vocabularies](../../../../03-requirements/business-rules.md#brule-gar-004--controlled-classification-and-context-vocabularies) · lines 202–208 at Stage 0
 
 > ### BRULE-GAR-004 — Controlled Classification and Context Vocabularies
 >
@@ -669,7 +671,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-001/002, DATA-GAR-002; FR-PROF-002/004 for separate context.
 
-**Source:** [business-rules.md — BRULE-GAR-005 — Bounded Garment Descriptors](../../../../03-requirements/business-rules.md#brule-gar-005--bounded-garment-descriptors) · lines 210–232 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-005 — Bounded Garment Descriptors](../../../../03-requirements/business-rules.md#brule-gar-005--bounded-garment-descriptors) · lines 210–232 at Stage 0
 
 > ### BRULE-GAR-005 — Bounded Garment Descriptors
 >
@@ -695,7 +697,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-002/006–010/012/013, DATA-GAR-002.
 
-**Source:** [business-rules.md — BRULE-GAR-006 — Descriptor Consistency and Unknown Information](../../../../03-requirements/business-rules.md#brule-gar-006--descriptor-consistency-and-unknown-information) · lines 234–238 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-006 — Descriptor Consistency and Unknown Information](../../../../03-requirements/business-rules.md#brule-gar-006--descriptor-consistency-and-unknown-information) · lines 234–238 at Stage 0
 
 > ### BRULE-GAR-006 — Descriptor Consistency and Unknown Information
 >
@@ -703,7 +705,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-002/006–010, DATA-GAR-002, AI-REQ-008.
 
-**Source:** [business-rules.md — BRULE-GAR-008 — Provenance Is Distinct from Confidence](../../../../03-requirements/business-rules.md#brule-gar-008--provenance-is-distinct-from-confidence) · lines 258–264 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-008 — Provenance Is Distinct from Confidence](../../../../03-requirements/business-rules.md#brule-gar-008--provenance-is-distinct-from-confidence) · lines 258–264 at Stage 0
 
 > ### BRULE-GAR-008 — Provenance Is Distinct from Confidence
 >
@@ -713,7 +715,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** AI-REQ-006, AI-REQ-007, AI-REQ-009, FR-GAR-010, DATA-GAR-003.
 
-**Source:** [business-rules.md — BRULE-GAR-010 — Optional Brand and Purchase Price Authority](../../../../03-requirements/business-rules.md#brule-gar-010--optional-brand-and-purchase-price-authority) · lines 278–286 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-GAR-010 — Optional Brand and Purchase Price Authority](../../../../03-requirements/business-rules.md#brule-gar-010--optional-brand-and-purchase-price-authority) · lines 278–286 at Stage 0
 
 > ### BRULE-GAR-010 — Optional Brand and Purchase Price Authority
 >
@@ -727,7 +729,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ## 7. Original User Story and Acceptance Criteria — Verbatim
 
-**Source:** [US-GAR-001-add-garment-manually.md](../../../stories/garment/US-GAR-001-add-garment-manually.md) · complete file at `1d0bc83`
+**Source:** [US-GAR-001-add-garment-manually.md](../../../stories/garment/US-GAR-001-add-garment-manually.md) · complete file at Stage 0
 
 > # US-GAR-001 — Add an owned garment manually
 >
@@ -929,7 +931,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 8.1 UC-007 — Add Garment (complete)
 
-**Source:** [UC-007-add-garment.md](../../../../03-requirements/use-cases/UC-007-add-garment.md) · complete file at `1d0bc83`
+**Source:** [UC-007-add-garment.md](../../../../03-requirements/use-cases/UC-007-add-garment.md) · complete file at Stage 0
 
 > # UC-007 — Add Garment
 >
@@ -1149,7 +1151,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 8.2 AD-007 — Add Garment activity diagram (complete PlantUML source)
 
-**Source:** [AD-007-add-garment.puml](../../../../03-requirements/activity-diagrams/AD-007-add-garment.puml) · complete file at `1d0bc83`
+**Source:** [AD-007-add-garment.puml](../../../../03-requirements/activity-diagrams/AD-007-add-garment.puml) · complete file at Stage 0
 
 ```plantuml
 @startuml
@@ -1282,7 +1284,7 @@ stop
 
 ### 8.3 Applicable architecture decisions
 
-**Source:** [selected-architecture-decisions.md — ADA-009 — Logical-action idempotency and accepted effects](../../../../04-architecture/selected-architecture-decisions.md#ada-009--logical-action-idempotency-and-accepted-effects) · lines 141–149 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-009 — Logical-action idempotency and accepted effects](../../../../04-architecture/selected-architecture-decisions.md#ada-009--logical-action-idempotency-and-accepted-effects) · lines 142–150 at Stage 0
 
 > ## ADA-009 — Logical-action idempotency and accepted effects
 >
@@ -1294,7 +1296,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-015 — Internal Module Architecture](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) · lines 201–209 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-015 — Internal Module Architecture](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) · lines 202–210 at Stage 0
 
 > ## ADA-015 — Internal Module Architecture
 >
@@ -1306,7 +1308,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-016 — Context Data Ownership](../../../../04-architecture/selected-architecture-decisions.md#ada-016--context-data-ownership) · lines 211–219 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-016 — Context Data Ownership](../../../../04-architecture/selected-architecture-decisions.md#ada-016--context-data-ownership) · lines 212–220 at Stage 0
 
 > ## ADA-016 — Context Data Ownership
 >
@@ -1318,7 +1320,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-017 — Inter-Context Communication](../../../../04-architecture/selected-architecture-decisions.md#ada-017--inter-context-communication) · lines 221–229 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-017 — Inter-Context Communication](../../../../04-architecture/selected-architecture-decisions.md#ada-017--inter-context-communication) · lines 222–230 at Stage 0
 
 > ## ADA-017 — Inter-Context Communication
 >
@@ -1330,7 +1332,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-018 — Context Model Isolation and Anti-Corruption](../../../../04-architecture/selected-architecture-decisions.md#ada-018--context-model-isolation-and-anti-corruption) · lines 231–239 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-018 — Context Model Isolation and Anti-Corruption](../../../../04-architecture/selected-architecture-decisions.md#ada-018--context-model-isolation-and-anti-corruption) · lines 232–240 at Stage 0
 
 > ## ADA-018 — Context Model Isolation and Anti-Corruption
 >
@@ -1342,6 +1344,75 @@ stop
 >
 > **Status:** Selected
 
+**Source:** [selected-architecture-decisions.md — 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) · lines 286–351 at Stage 0
+
+> ## 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas
+>
+> ### 8.1 Refinement Record
+>
+> | Field | Value |
+> | --- | --- |
+> | Refinement IDs | AR-01–AR-08 |
+> | Refines | ADA-016 (primary), ADA-017 and ADA-018; consistent with ADA-001, ADA-003, ADA-009, ADA-012 and ADA-015 |
+> | Approved By | Product Owner |
+> | Approval Date | 2026-11-06 |
+> | Status | Approved; realized for the implemented Identity module (Flyway V6) and enforced by automated tests (Section 8.5) |
+> | Nature | A stricter, explicit realization of the selected options. ADA-016 selected logical, context-owned persistence inside one PostgreSQL database and left "final contexts, schemas and FK/access rules" downstream. ADD Section 9.4 likewise left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban". This refinement decides those details. It changes no selected option, selection basis, backend impact or historical revision above, and it was not in force when ADA-016 was selected. |
+>
+> ### 8.2 Rules
+>
+> | ID | Rule | Consequence for code, SQL and migrations |
+> | --- | --- | --- |
+> | AR-01 | **One PostgreSQL schema per persistence owner.** Every business module that persists its own state owns exactly one dedicated schema inside the single CapsuleAI database (ADA-003 unchanged). | The schema name is the module name in snake_case (Section 8.3). Tables are named `<schema>_<name>` and are always referenced as `<schema>.<schema>_<name>`. A module's schema is created by the migration of the first story that persists its state; no empty or speculative schema or table is created in advance. Flyway's default schema holds only Flyway's own `flyway_schema_history`. |
+> | AR-02 | **No cross-context SQL joins.** A query joins only tables of its own owner's schema, even though every schema is in the same database. | Information owned elsewhere is obtained through the owner's published API and combined in application code, or through a deliberately designed published read contract. |
+> | AR-03 | **No direct cross-context persistence access.** A module does not query, modify or depend on another owner's tables, table layout, JDBC repositories, persistence models or private domain models. No database view, function, trigger or rule bypasses an owner. | Only a module's own persistence adapter (`adapter.out.persistence`) issues SQL against its schema. A repository never becomes a generic repository for another context's data. |
+> | AR-04 | **No cross-context foreign keys.** Foreign keys stay inside one owner's schema. | A reference to another owner's entity (for example `wardrobe.wardrobe_garment.owner_account_id`) is a plain identifier. Its validity comes from the owner's published contract at the time of the operation, not from the database. Section 8.4 states the lifecycle consequences. |
+> | AR-05 | **Published module APIs.** Inter-context collaboration uses the owner's `api` package. | Authenticated requests reuse Identity's `AuthenticatedAccount` principal, which the security chain verifies against the persistent session; no per-request account lookup is added. A contract such as an account-existence lookup is created only when a real use case needs it. |
+> | AR-06 | **No internal HTTP.** Modules call each other's published Java APIs in-process (ADA-001, ADA-017). | HTTP remains for real external boundaries (mobile clients, providers). |
+> | AR-07 | **Deliberate transactional consistency.** One database still allows local ACID transactions, but a module never joins another owner's transaction by touching its tables. | A transaction spanning owners is coordinated explicitly through the owners' published operations. Its invariant and participants are documented with their service-extraction coupling (ADA-009, ADD Section 9.2), and partial failure is never hidden. The business requirement decides whether owners communicate by synchronous call or by event (ADA-017); this rule does not. |
+> | AR-08 | **Automated enforcement.** The rules are verified by build-time tests (Section 8.5), not only by naming. | The application uses one database role with access to every schema. **Database privileges therefore do not enforce context isolation at runtime**; code ownership, published contracts and the tests do. Dedicated per-owner roles and data sources are not selected; they would add configuration and transaction complexity without a current requirement. |
+>
+> ### 8.3 Persistence Owners and Schemas
+>
+> The owners are the five logical contexts of the accepted [Logical View](../../../../04-architecture/views/logical-view.puml) and the Product Measurement supporting capability. The [Implementation View](../../../../04-architecture/views/implementation-view.puml) gives Product Measurement its own measurement persistence and lifecycle. No other context is introduced.
+>
+> | Owner (package) | Schema / table prefix | Owned state (Data View) | Published contracts | May depend on (published APIs only) | Status |
+> | --- | --- | --- | --- | --- | --- |
+> | Identity (`identity`) | `identity` / `identity_` | Account, credentials, persistent sessions, refresh tokens, password-reset interactions | `AuthenticatedAccount`, `SessionAuthority` (implemented) | None | **Implemented:** `identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token` (moved by V6) |
+> | Personal Context (`personalcontext`) | `personal_context` / `personal_context_` | Profile, declared preferences and needs, selected location, translated environmental evidence | Declared, current and limited context | Identity | Not implemented; no schema yet |
+> | Wardrobe (`wardrobe`) | `wardrobe` / `wardrobe_` | Confirmed garments and their properties, Materials, media associations, garment action outcomes, minimal removed-garment snapshots | Confirmed properties and current ownership | Identity | Not implemented; Sprint 2 (US-GAR-001) creates the schema |
+> | Outfit Advice and Use (`outfitadviceanduse`) | `outfit_advice_and_use` / `outfit_advice_and_use_` | Feedback, Wear events, history, effective evidence, advice action outcomes | Advice, feedback, Wear and reported use; Outfit Evaluation Semantics | Identity, Wardrobe, Personal Context | Not implemented |
+> | Wardrobe Intelligence (`wardrobeintelligence`) | `wardrobe_intelligence` / `wardrobe_intelligence_` | Only justified owned source/action/work state; no result store mandated | Coverage, Gaps, candidate utility, shopping | Identity, Wardrobe, Personal Context, Outfit Evaluation Semantics | Not implemented |
+> | Product Measurement (`productmeasurement`, supporting) | `product_measurement` / `product_measurement_` | Purpose-limited, user-linked measurement evidence with its own retention | Measurement intake (local events) | Identity; receives facts from other owners | Not implemented |
+>
+> ### 8.4 Cross-Owner Lifecycle Consistency
+>
+> Because AR-04 forbids cross-schema foreign keys, the database neither prevents nor cascades a reference to another owner's entity. Consistency is an application responsibility:
+>
+> - **Creation and use:** an owner stores another owner's identifier only as the result of that owner's published contract in the same operation, for example the authenticated account from `AuthenticatedAccount`. The identifier alone does not prove the referenced entity still exists.
+> - **Removal or deletion:** no account-deletion capability is selected today. A future one must be an explicit, durable and resumable application process (ADA-012). Identity publishes the lifecycle fact or operation. Every owner removes or de-identifies its own data through its own application services and persistence, within the applicable retention rules (DATA-RET-001–003, ADD Section 9.3). Cross-schema `ON DELETE CASCADE` is not available, and one owner must not imitate it by deleting another owner's rows.
+> - **Verification:** where a real use case needs to confirm another owner's entity, that owner publishes a narrow contract for it (AR-05).
+>
+> ### 8.5 Enforcement and Its Limits
+>
+> | Check | Verifies |
+> | --- | --- |
+> | `ArchitectureDependencyTest` (ArchUnit) | Modules use each other only through `api`; published APIs expose no private domain or application model; Spring JDBC stays in persistence adapters and configuration; no dependency cycle between modules; domain and application code stay framework-free; every module package is registered with its schema. Deliberate-violation fixtures prove that each rule fails when broken. |
+> | `PersistenceOwnershipSqlTest` | Production SQL (Java string literals and text blocks) names only its own module's schema and always schema-qualifies owner tables. Every migration after V6 changes exactly one owner schema, so it cannot create a cross-schema foreign key, view or join. It is a focused scanner, not a SQL parser; its conventions are listed in the test. |
+> | `DatabaseSchemaOwnershipIT` | On the fully migrated database, through the PostgreSQL catalog: only registered owner schemas exist besides Flyway's default schema; that schema holds only `flyway_schema_history`; every table is in its owner's schema; no foreign key or view crosses schemas; owner schemas hold no routines. |
+> | `IdentitySchemaRelocationIT` | V6 on a realistic Sprint 1 database: every row, index and constraint survives, the adapters work on the upgraded data, the history remains valid, and a restart applies nothing. |
+>
+> These checks run in `mvnw clean verify`, and the CI report guard requires them. They detect violations at build time; they do not restrict a running application, because the single database role can access every schema (AR-08).
+>
+> ### 8.6 Realization for the Implemented Identity Module
+>
+> V1–V5 created the Identity tables unqualified in Flyway's default schema. They have been applied to persistent databases and are never edited. The forward migration `V6__move_identity_tables_into_identity_schema.sql` creates the `identity` schema and moves the three tables with `ALTER TABLE ${flyway:defaultSchema}.<table> SET SCHEMA identity`:
+>
+> - It keeps every row, index, constraint and foreign key, copies nothing, and runs in one transaction.
+> - Flyway's configuration and history location are unchanged, so V1–V5 are not re-applied.
+> - All Identity SQL is now schema-qualified.
+> - V6 needs the migrating role to own the three tables (a requirement of `SET SCHEMA`) and to hold `CREATE` on the database. This is true wherever the same role ran V1–V5; otherwise V6 fails without changing anything.
+
 ### 8.4 Who implements each flow step
 
 | UC-007 flow | Backend (this guide) | Mobile client | Other story / future PBI |
@@ -1349,7 +1420,7 @@ stop
 | Main 1–2: request entry; offer camera/gallery/manual | — | Add Garment entry, manual route | Image routes: PBI-012 |
 | Main 3–5, A2, A3: image, analysis, proposals | — | — | PBI-012/013 (not in Sprint 2) |
 | A1: imageless manual entry, all 13 properties | Accepts any subset of the approved properties with the required minimum | Fields, vocabularies (codes + Vietnamese labels) | — |
-| Main 6: validate vocabulary, applicability, Price pair | `GarmentEntryValidator` + V7 constraints; every problem reported in `fieldErrors` | Inline correction; keeps the draft | — |
+| Main 6: validate vocabulary, applicability, Price pair | `GarmentEntryValidator` + V8 constraints; every problem reported in `fieldErrors` | Inline correction; keeps the draft | — |
 | Main 7: explicit confirmation | `confirmed: true` required | Confirmation control | — |
 | Main 8: acknowledge one accepted garment; eligibility not evaluated | 201 with the stored garment and `recommendationEligibility: NOT_EVALUATED` | Acknowledgement | Browse/detail: US-WAR-001/002 |
 | A4: save with optional information absent | Absent values stored as NULL / no material rows | — | — |
@@ -1432,7 +1503,7 @@ flowchart TB
     jdbc --> ports
     jdbc --> domain
     config --> jdbc & app
-    jdbc --> pg[(PostgreSQL: wardrobe_garment,<br/>wardrobe_garment_material)]
+    jdbc --> pg[(PostgreSQL schema wardrobe:<br/>wardrobe_garment,<br/>wardrobe_garment_material)]
 ```
 
 Wardrobe depends on Identity **only** through `identity.api` (enforced by `ArchitectureDependencyTest`). Domain and application import no Spring, JDBC or Jackson types.
@@ -1495,7 +1566,9 @@ classDiagram
 
 API and database carry the **code** (the enum constant name); `label()` returns the exact approved label for clients and documentation. OpenAPI lists every code with its label as `oneOf: [{const, title}]`.
 
-### 10.4 Data model (V7)
+### 10.4 Data model (V8)
+
+Both tables live in Wardrobe's own schema, which V8 creates as the first Wardrobe migration (`CREATE SCHEMA IF NOT EXISTS wardrobe`): `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material` ([ARCH] AR-01). The only foreign key, material → garment, stays inside `wardrobe`; `owner_account_id` is a plain identifier taken from the authenticated principal, with no foreign key into `identity` ([ARCH] AR-04). Every statement in `JdbcGarmentRepository` names `wardrobe.<table>`; no Wardrobe SQL names an `identity` table ([ARCH] AR-02, AR-03).
 
 ```mermaid
 erDiagram
@@ -1617,7 +1690,8 @@ No row is locked explicitly: the unique constraint is the serialization point, a
 | Logical-action identity (TD-S2-14) | Client `Idempotency-Key` header (UUID), unique per owner, plus value fingerprint | Body field; server-generated draft id; dedupe by values | A header follows the IETF idempotency-key draft and keeps the body equal to the garment. Deduplicating by values would merge two genuinely separate similar garments, which AC-12 and the plan forbid. |
 | Price on the wire (TD-S2-11) | Decimal **string** | JSON number | JSON numbers are parsed as binary floating point by most clients, which the requirements forbid. |
 | Absent and inapplicable fields (TD-S2-15) | Always present, `null` | Omit inapplicable fields | Matches the existing contract convention ("every returned field is always present"), enforced by `IdentityOpenApiContractIT`; the category tells which fields apply. |
-| Owner integrity (TD-S2-09) | No FK into Identity | FK to `identity_account` | ADA-016: contexts own their persistence; ownership comes from the published authenticated identity. |
+| Owner integrity (TD-S2-09) | No FK into Identity | FK to `identity.identity_account` | ADA-016 and [ARCH] AR-04: contexts own their persistence; ownership comes from the published authenticated identity. |
+| Physical placement ([ARCH] AR-01) | Own schema `wardrobe`, created by V8 | Tables in `public` next to Flyway's history; one shared business schema | Required by the approved refinement: the schema expresses ownership, and the SQL and metadata tests can verify it. |
 | Confirmation (TD-S2-17) | Explicit `confirmed: true` | Implied by the POST | AC-05 distinguishes "missing" from "not confirmed"; an explicit flag lets the client prove the user confirmed. |
 | Provenance (TD-S2-16) | One `value_provenance = USER_ENTERED` per garment | Provenance per attribute | Manual creation establishes every value the same way; per-attribute provenance is needed only when AI suggestions exist (PBI-013). |
 | Eligibility (TD-S2-15) | Constant `recommendationEligibility: NOT_EVALUATED` in responses, no column | Readiness enum/column | The SRS forbids requiring a readiness field; a response constant is the smallest truthful contract. |
@@ -1631,7 +1705,7 @@ Every file this story adds or modifies, in implementation order (Stage 1 → Sta
 
 | # | Action | File | Layer | Purpose | Related requirements |
 |---|---|---|---|---|---|
-| P1 | [ADD] | `backend/src/main/resources/db/migration/V7__create_wardrobe_garment.sql` | Persistence (Flyway) | Creates `wardrobe_garment` and `wardrobe_garment_material` with vocabulary, applicability, Price, Brand and one-addition-per-key constraints. | DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016 |
+| P1 | [ADD] | `backend/src/main/resources/db/migration/V8__create_wardrobe_garment.sql` | Persistence (Flyway) | Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints. | DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016 |
 | P2 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/ControlledValue.java` | Domain | Common contract of every vocabulary enum: code (`name()`), approved label, exact-code lookup without fallback. | BRULE-GAR-004, BRULE-GAR-005, BRULE-GAR-006 |
 | P3 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/CategorySpecificProperty.java` | Domain | Names the five category-specific properties. | FR-GAR-007 |
 | P4 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentCategory.java` | Domain | The eight categories and the applicability rule `accepts(CategorySpecificProperty)`. | FR-GAR-001, FR-GAR-007, BRULE-GAR-004, BRULE-GAR-005 |
@@ -1684,8 +1758,8 @@ Every file this story adds or modifies, in implementation order (Stage 1 → Sta
 | T6 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/ImmediateWardrobeTransactions.java` | Test double | Runs work directly, counts transactions. | — |
 | T7 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentEntryValidatorTest.java` | Application unit test | Every category minimum, every subtype under its category, wrong-category, missing/unconfirmed, unsupported, materials, applicability, Length lists, Price pairs, key, Brand. | AC-03–AC-07, ERR-GAR-001 |
 | T8 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java` | Application unit test | One garment, replay, separate additions, key reuse, owner-scoped keys, no transaction for invalid input, failed commit. | AC-01, AC-11, AC-12 |
-| T9 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java` | Test infrastructure | Wardrobe ITs on the shared real application: empties wardrobe tables, adds garments through the protected API. | — |
-| T10 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java` | PostgreSQL integration test | Every V7 constraint on its own, and upgrade from V6 with existing Identity data. | DATA-GAR-002, DATA-INT-004, DoD §5 schema |
+| T9 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java` | Test infrastructure | Wardrobe ITs on the shared real application: empties the `wardrobe` tables, adds garments through the protected API. | — |
+| T10 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java` | PostgreSQL integration test | Every V8 constraint on its own, Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database. | DATA-GAR-002, DATA-INT-004, DoD §5 schema |
 | T11 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepositoryIT.java` | PostgreSQL integration test | Every vocabulary value, all 28 Materials, Brand and Price round-trip exactly. | DATA-GAR-002, AC-01, AC-06 |
 | T12 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/AddGarmentApiIT.java` | HTTP/security integration test | Minimum in all eight categories, full Top/Pants, inapplicable/missing/unsupported values, retry/reuse/separate additions, key, owner, unusable access, malformed JSON. | AC-01, AC-02, AC-04–AC-08, AC-10–AC-13 |
 | T13 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentCreationIT.java` | Concurrency integration test | Concurrent deliveries of one addition create one garment; separate additions all kept. | AC-12, DATA-INT-004 |
@@ -1699,21 +1773,22 @@ Implement in order. The vocabulary enums (Steps P4–P14) must match the authori
 
 There is no new configuration property or secret in this story. The migration (Step P1) is applied automatically by Flyway at startup and by every integration test.
 
-### Step P1 — [ADD] `V7__create_wardrobe_garment.sql`
+### Step P1 — [ADD] `V8__create_wardrobe_garment.sql`
 
 **Action:** [ADD]  
-**Path:** `backend/src/main/resources/db/migration/V7__create_wardrobe_garment.sql`  
+**Path:** `backend/src/main/resources/db/migration/V8__create_wardrobe_garment.sql`  
 **Layer:** Persistence (Flyway)
 
-**Purpose:** Creates `wardrobe_garment` and `wardrobe_garment_material` with vocabulary, applicability, Price, Brand and one-addition-per-key constraints.
+**Purpose:** Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints.
 
 **Requirement references:** DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016
 
-**Dependencies:** V6 (version order only; no foreign key into Identity)
+**Dependencies:** V7 (version order only; no object of another schema)
 
 **Significant choices.**
 
-- *No foreign key to `identity_account`* ([ARCH] ADA-016, TD-S2-09). Wardrobe receives the owner only through the published `AuthenticatedAccount` contract and owns its tables. Ownership integrity comes from deriving `owner_account_id` from the authenticated session on every write and filtering by it on every read.
+- *Own schema* ([ARCH] AR-01). As the first Wardrobe migration, V8 creates the module's schema with `CREATE SCHEMA IF NOT EXISTS wardrobe` and qualifies every object. `PersistenceOwnershipSqlTest` rejects a reference to any other schema, and `DatabaseSchemaOwnershipIT` checks the result in the PostgreSQL catalog.
+- *No foreign key to `identity.identity_account`* ([ARCH] ADA-016, AR-04, TD-S2-09). Wardrobe receives the owner only through the published `AuthenticatedAccount` contract and owns its tables. Ownership integrity comes from deriving `owner_account_id` from the authenticated session on every write and filtering by it on every read.
 - *CHECK constraints instead of lookup tables.* Each vocabulary is a CHECK `IN (...)`. Subtype-to-category consistency is one `CASE category WHEN ... THEN subtype IN (...)` constraint, and applicability is expressed per column (for example `fit IS NULL OR (category = 'TOPS' AND fit IN (...))`). The lists are generated from the same table as the Java enums, and `JdbcGarmentRepositoryIT` writes every value through the real repository, so Java and SQL cannot drift unnoticed.
 - *`NUMERIC` without scale* for `price_amount`: PostgreSQL then keeps the scale as entered (`12.50` stays `12.50`); CHECKs bound it to non-negative, under 10¹², at most 4 decimals, and amount/currency together.
 - *`UNIQUE (owner_account_id, creation_key)`* makes "at most one accepted garment per logical addition" a database fact.
@@ -1729,8 +1804,13 @@ There is no new configuration property or secret in this story. The migration (S
 -- one approved label of the garment-property authority. owner_account_id is the
 -- authenticated Identity account id: Wardrobe receives it through the published
 -- AuthenticatedAccount contract and deliberately has no foreign key into Identity's
--- private tables (ADA-016). removed_at NULL means "in the owner's current wardrobe".
-CREATE TABLE wardrobe_garment (
+-- private tables (ADA-016, AR-04). removed_at NULL means "in the owner's current wardrobe".
+--
+-- Owner: Wardrobe. This first Wardrobe migration creates the module's own schema
+-- (AR-01); every object below is in it, and no object refers to another schema.
+CREATE SCHEMA IF NOT EXISTS wardrobe;
+
+CREATE TABLE wardrobe.wardrobe_garment (
     id                   UUID        PRIMARY KEY,
     owner_account_id     UUID        NOT NULL,
     creation_key         UUID        NOT NULL,
@@ -1843,13 +1923,13 @@ CREATE TABLE wardrobe_garment (
 
 -- The owner's current wardrobe, newest first (US-WAR-001).
 CREATE INDEX ix_wardrobe_garment_owner_current
-    ON wardrobe_garment (owner_account_id, created_at DESC, id)
+    ON wardrobe.wardrobe_garment (owner_account_id, created_at DESC, id)
     WHERE removed_at IS NULL;
 
 -- Zero, one or several distinct Materials per garment (FR-GAR-010). The primary
 -- key makes a repeated selection impossible; no percentage is stored.
-CREATE TABLE wardrobe_garment_material (
-    garment_id UUID NOT NULL REFERENCES wardrobe_garment (id) ON DELETE CASCADE,
+CREATE TABLE wardrobe.wardrobe_garment_material (
+    garment_id UUID NOT NULL REFERENCES wardrobe.wardrobe_garment (id) ON DELETE CASCADE,
     material   TEXT NOT NULL,
     CONSTRAINT pk_wardrobe_garment_material PRIMARY KEY (garment_id, material),
     CONSTRAINT ck_wardrobe_garment_material CHECK (material IN (
@@ -3859,7 +3939,7 @@ public final class SpringWardrobeTransactions implements WardrobeTransactions {
 
 **Requirement references:** DATA-GAR-001/002, DATA-INT-004
 
-**Dependencies:** V7, `GarmentRepository`
+**Dependencies:** V8, `GarmentRepository`
 
 **Complete file:**
 
@@ -3909,8 +3989,8 @@ public final class JdbcGarmentRepository implements GarmentRepository {
             SELECT g.id, g.owner_account_id, g.creation_fingerprint, g.category, g.subtype, g.color,
                    g.pattern, g.style, g.fit, g.neckline, g.sleeve_length, g.length, g.silhouette,
                    g.brand, g.price_amount, g.price_currency, g.value_provenance, g.created_at, g.removed_at,
-                   ARRAY(SELECT m.material FROM wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials
-            FROM wardrobe_garment g
+                   ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials
+            FROM wardrobe.wardrobe_garment g
             """;
 
     private final JdbcClient jdbc;
@@ -3923,7 +4003,7 @@ public final class JdbcGarmentRepository implements GarmentRepository {
     public boolean addIfCreationKeyUnused(Garment garment, UUID creationKey, String creationFingerprint) {
         GarmentProfile profile = garment.profile();
         int inserted = jdbc.sql("""
-                        INSERT INTO wardrobe_garment (
+                        INSERT INTO wardrobe.wardrobe_garment (
                             id, owner_account_id, creation_key, creation_fingerprint, category, subtype, color,
                             pattern, style, fit, neckline, sleeve_length, length, silhouette, brand,
                             price_amount, price_currency, value_provenance, created_at)
@@ -3957,7 +4037,7 @@ public final class JdbcGarmentRepository implements GarmentRepository {
             return false;
         }
         for (GarmentMaterial material : profile.materials()) {
-            jdbc.sql("INSERT INTO wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
+            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
                     .param("garmentId", garment.id())
                     .param("material", material.name())
                     .update();
@@ -5783,7 +5863,7 @@ AFTER
 
 **Verified path at this stage:** `.github/workflows/backend-ci.yml` (state after US-AUTH-005). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — state after US-AUTH-005, starting at line 58. Unique anchor in the current file: `'surefire-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityApiExceptionHandlerTest.xml' = 5`
+**Change 1 of 2** — state after US-AUTH-005, starting at line 65. Unique anchor in the current file: `'surefire-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityApiExceptionHandlerTest.xml' = 5`
 
 BEFORE
 
@@ -5813,7 +5893,7 @@ AFTER
             'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 4
 ```
 
-**Change 2 of 2** — state after US-AUTH-005, starting at line 73. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3`
+**Change 2 of 2** — state after US-AUTH-005, starting at line 80. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3`
 
 BEFORE
 
@@ -5866,7 +5946,7 @@ AFTER
 
 **Verified path at this stage:** `backend/README.md` (state after US-AUTH-005). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 4** — state after US-AUTH-005, starting at line 5. Unique anchor in the current file: `CapsuleAI helps users understand their wardrobe, choose outfits and evaluate wardrobe improvements. This backend is its Java/Spring Boot business core, organized as one **Modular Monolith**.`
+**Change 1 of 5** — state after US-AUTH-005, starting at line 5. Unique anchor in the current file: `CapsuleAI helps users understand their wardrobe, choose outfits and evaluate wardrobe improvements. This backend is its Java/Spring Boot business core, organized as one **Modular Monolith**.`
 
 BEFORE
 
@@ -5896,7 +5976,7 @@ The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** th
 Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/maven-wrapper.properties), [Compose](../compose.yaml) and Boot's [4.1.1 dependency BOM](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom).
 ```
 
-**Change 2 of 4** — state after US-AUTH-005, starting at line 295. Unique anchor in the current file: `| 'local' profile | 'https://editor.swagger.io', unless 'CAPSULE_CORS_ALLOWED_ORIGINS' replaces the list |`
+**Change 2 of 5** — state after US-AUTH-005, starting at line 304. Unique anchor in the current file: `| 'local' profile | 'https://editor.swagger.io', unless 'CAPSULE_CORS_ALLOWED_ORIGINS' replaces the list |`
 
 BEFORE
 
@@ -5926,15 +6006,59 @@ To also allow a browser frontend during development, list its real dev-server or
 ```powershell
 ````
 
-**Change 3 of 4** — state after US-AUTH-005, starting at line 339. Unique anchor in the current file: `| Fast foundation — 'HarnessSmokeTest' | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |`
+**Change 3 of 5** — state after US-AUTH-005, starting at line 329. Unique anchor in the current file: `## 10. Database migrations`
+
+BEFORE
+
+````markdown
+## 10. Database migrations
+
+The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
+
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset` and the `PASSWORD_RESET` session-revocation reason. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
+```
+
+Expect successful rows for versions `1` to `7`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+
+```powershell
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
+```
+````
+
+AFTER
+
+````markdown
+## 10. Database migrations
+
+The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
+
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
+```
+
+Expect successful rows for versions `1` to `8`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+
+```powershell
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
+```
+````
+
+**Change 4 of 5** — state after US-AUTH-005, starting at line 365. Unique anchor in the current file: `| Identity unit — 'identity/**/*Test' | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation ('CorsPropertiesTest') | No database or Docker |`
 
 BEFORE
 
 ```markdown
-| Fast foundation — `HarnessSmokeTest` | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
-| Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API, owner boundaries, independent inbound/outbound adapters, plus deliberate-violation detectors | Compiled classes; no Docker/database |
 | Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation (`CorsPropertiesTest`) | No database or Docker |
 | Integration — `DatabaseSmokeIT` | Boot wiring, real SQL and no pending migration | Docker; disposable PostgreSQL |
+| Schema ownership — `DatabaseSchemaOwnershipIT` | On the migrated database: only owner schemas besides `public`; `public` holds only Flyway's history; tables in their owner's schema; no cross-schema foreign key or view | Docker; PostgreSQL catalog |
+| Identity relocation — `IdentitySchemaRelocationIT` | V6 on a realistic V1–V5 database with accepted accounts, sessions and refresh tokens: rows, indexes and constraints survive, adapters work, history stays valid, a restart applies nothing; fresh databases migrate completely | Docker; a separate database per test (`IsolatedMigrationDatabase`) |
 | Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; cross-origin browser access (`CorsSecurityIT`); concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
 
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
@@ -5943,18 +6067,18 @@ JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls se
 AFTER
 
 ```markdown
-| Fast foundation — `HarnessSmokeTest` | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
-| Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API, owner boundaries, independent inbound/outbound adapters, plus deliberate-violation detectors | Compiled classes; no Docker/database |
 | Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation (`CorsPropertiesTest`) | No database or Docker |
 | Integration — `DatabaseSmokeIT` | Boot wiring, real SQL and no pending migration | Docker; disposable PostgreSQL |
+| Schema ownership — `DatabaseSchemaOwnershipIT` | On the migrated database: only owner schemas besides `public`; `public` holds only Flyway's history; tables in their owner's schema; no cross-schema foreign key or view | Docker; PostgreSQL catalog |
+| Identity relocation — `IdentitySchemaRelocationIT` | V6 on a realistic V1–V5 database with accepted accounts, sessions and refresh tokens: rows, indexes and constraints survive, adapters work, history stays valid, a restart applies nothing; fresh databases migrate completely | Docker; a separate database per test (`IsolatedMigrationDatabase`) |
 | Wardrobe unit — `wardrobe/**/*Test` | Vocabularies checked against the approved property catalogue, Brand/Price rules, field-by-field entry validation, idempotent addition with fakes | No database or Docker |
-| Wardrobe integration — `wardrobe/**/*IT` | V7 constraints and upgrade, every vocabulary value round-trip, protected API, owner isolation, retries/concurrency, injected failures | Docker; real application, filter chain and PostgreSQL |
+| Wardrobe integration — `wardrobe/**/*IT` | V8 constraints, schema placement and upgrade, every vocabulary value round-trip, protected API, owner isolation, retries/concurrency, injected failures | Docker; real application, filter chain and PostgreSQL |
 | Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; cross-origin browser access (`CorsSecurityIT`); concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
 
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
 ```
 
-**Change 4 of 4** — state after US-AUTH-005, starting at line 434. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 5 of 5** — state after US-AUTH-005, starting at line 460. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
@@ -5965,7 +6089,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider.
 
-Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
+Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
 After normal foundation handoff, follow **Backlog Refinement → Sprint Planning → selected-story JIT design and automated implementation**. Add only needed APIs/data detail/interaction/state models. Do not predesign the whole MVP or duplicate baseline decisions into ADR files; ADA/Selected Decisions already record them.
 ```
@@ -5979,7 +6103,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. Wardrobe browsing and detail, garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider.
 
-Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
+Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
 After normal foundation handoff, follow **Backlog Refinement → Sprint Planning → selected-story JIT design and automated implementation**. Add only needed APIs/data detail/interaction/state models. Do not predesign the whole MVP or duplicate baseline decisions into ADR files; ADA/Selected Decisions already record them.
 ```
@@ -5990,7 +6114,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | --- | --- | --- |
 | Domain unit | `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `BrandTest`, `PurchasePriceTest` | Exact vocabularies against the authority; profile invariants; Brand/Price rules |
 | Application unit | `GarmentEntryValidatorTest`, `AddGarmentServiceTest` (+ two fakes) | Every validation outcome; idempotent acceptance semantics |
-| PostgreSQL | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT` | Constraints on their own; every value round-trips exactly; V6 → V7 upgrade |
+| PostgreSQL | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT` | Constraints on their own; every value round-trips exactly; V7 → V8 upgrade |
 | HTTP/security | `AddGarmentApiIT`, `CorsSecurityIT` (modified) | Real protected API, owner isolation, retries, unusable access, CORS header |
 | Concurrency / failure | `ConcurrentGarmentCreationIT`, `WardrobeFailureIT` | One effect per logical addition; rollback on a lost connection |
 | Contract | `IdentityOpenApiContractIT` (modified) | OpenAPI matches the Wardrobe handler, schemas and required fields |
@@ -6847,7 +6971,7 @@ class AddGarmentServiceTest {
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java`  
 **Layer:** Test infrastructure
 
-**Purpose:** Wardrobe ITs on the shared real application: empties wardrobe tables, adds garments through the protected API.
+**Purpose:** Wardrobe ITs on the shared real application: empties the `wardrobe` tables, adds garments through the protected API.
 
 **Requirement references:** —
 
@@ -6891,7 +7015,7 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 
     @BeforeEach
     protected void resetWardrobeState() {
-        jdbc.sql("TRUNCATE TABLE wardrobe_garment_material, wardrobe_garment").update();
+        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment").update();
     }
 
     /** POSTs one addition with the given logical-action key. */
@@ -6936,7 +7060,7 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
     }
 
     protected long countGarmentsOf(UUID ownerAccountId) {
-        return jdbc.sql("SELECT count(*) FROM wardrobe_garment WHERE owner_account_id = :owner")
+        return jdbc.sql("SELECT count(*) FROM wardrobe.wardrobe_garment WHERE owner_account_id = :owner")
                 .param("owner", ownerAccountId)
                 .query(Long.class)
                 .single();
@@ -6950,7 +7074,7 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java`  
 **Layer:** PostgreSQL integration test
 
-**Purpose:** Every V7 constraint on its own, and upgrade from V6 with existing Identity data.
+**Purpose:** Every V8 constraint on its own, Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database.
 
 **Requirement references:** DATA-GAR-002, DATA-INT-004, DoD §5 schema
 
@@ -6961,40 +7085,43 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 ```java
 package com.capsuleai.wardrobe.adapter.out.persistence;
 
+import com.capsuleai.foundation.IsolatedMigrationDatabase;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
-import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The V7 constraints on their own, without the application: the database
+ * The V8 constraints on their own, without the application: the database
  * refuses invalid vocabulary, applicability, Price, Brand and duplicate-addition
  * rows even if a future code path skipped validation (defence in depth).
  */
 class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
 
-    private static final String TRANSITION_SCHEMA = "wardrobe_transition_v7";
+    private static final String WARDROBE_VERSION = "8";
 
     @Autowired
     private Flyway flyway;
 
     @Autowired
-    private DataSource dataSource;
+    private PostgreSQLContainer server;
 
     @Test
     void wardrobeMigrationIsApplied() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .contains("7");
+                .contains(WARDROBE_VERSION);
         assertThat(flyway.info().pending()).isEmpty();
     }
 
@@ -7002,7 +7129,7 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     void aValidMinimumRowIsAccepted() {
         insertGarment(Map.of());
 
-        assertThat(countRows("wardrobe_garment")).isOne();
+        assertThat(countRows("wardrobe.wardrobe_garment")).isOne();
     }
 
     @Test
@@ -7037,7 +7164,7 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
         assertRejected(Map.of("price_amount", new BigDecimal("10"), "price_currency", "usd"));
 
         UUID id = insertGarment(Map.of("price_amount", new BigDecimal("12.50"), "price_currency", "USD"));
-        assertThat(jdbc.sql("SELECT price_amount::text FROM wardrobe_garment WHERE id = :id")
+        assertThat(jdbc.sql("SELECT price_amount::text FROM wardrobe.wardrobe_garment WHERE id = :id")
                 .param("id", id).query(String.class).single()).isEqualTo("12.50");
     }
 
@@ -7068,22 +7195,44 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     }
 
     @Test
-    void existingIdentityDataSurvivesTheUpgradeFromV6() {
-        try {
-            migrateTransitionSchema("6");
+    void wardrobeTablesLiveOnlyInTheWardrobeSchema() {
+        assertThat(jdbc.sql("SELECT tablename FROM pg_tables WHERE schemaname = 'wardrobe' ORDER BY tablename")
+                .query(String.class).list())
+                .containsExactly("wardrobe_garment", "wardrobe_garment_material");
+        assertThat(jdbc.sql("SELECT count(*) FROM pg_tables WHERE tablename LIKE 'wardrobe\\_%' AND schemaname <> 'wardrobe'")
+                .query(Long.class).single()).isZero();
+    }
+
+    /**
+     * A database in the state before this story (Sprint 1 and US-AUTH-005, V1-V7) is
+     * upgraded by exactly the Wardrobe migration, which creates Wardrobe's own schema and
+     * leaves Identity's data untouched.
+     */
+    @Test
+    void existingIdentityDataSurvivesTheUpgradeFromV7() {
+        try (IsolatedMigrationDatabase database = IsolatedMigrationDatabase.create(server, jdbc)) {
+            database.migrateTo("7");
+            JdbcClient existing = database.jdbc();
             UUID accountId = UUID.randomUUID();
-            jdbc.sql("INSERT INTO " + TRANSITION_SCHEMA + ".identity_account (id, email, password_hash, created_at) "
+            existing.sql("INSERT INTO identity.identity_account (id, email, password_hash, created_at) "
                             + "VALUES (:id, 'existing@example.com', '{test}hash', now())")
                     .param("id", accountId).update();
+            assertThat(existing.sql("SELECT to_regnamespace('wardrobe') IS NULL").query(Boolean.class).single())
+                    .as("no Wardrobe schema before its first story").isTrue();
 
-            migrateTransitionSchema(null);
+            assertThat(database.migrateTo(WARDROBE_VERSION).migrationsExecuted).isOne();
 
-            assertThat(jdbc.sql("SELECT count(*) FROM " + TRANSITION_SCHEMA + ".identity_account WHERE id = :id")
+            assertThat(existing.sql("SELECT count(*) FROM identity.identity_account WHERE id = :id")
                     .param("id", accountId).query(Long.class).single()).isOne();
-            assertThat(jdbc.sql("SELECT count(*) FROM " + TRANSITION_SCHEMA + ".wardrobe_garment")
-                    .query(Long.class).single()).isZero();
-        } finally {
-            jdbc.sql("DROP SCHEMA IF EXISTS " + TRANSITION_SCHEMA + " CASCADE").update();
+            assertThat(existing.sql("SELECT count(*) FROM wardrobe.wardrobe_garment").query(Long.class).single())
+                    .isZero();
+            List<String> crossSchemaForeignKeys = existing.sql("""
+                            SELECT k.conname FROM pg_constraint k
+                            JOIN pg_class src ON src.oid = k.conrelid
+                            JOIN pg_class dst ON dst.oid = k.confrelid
+                            WHERE k.contype = 'f' AND src.relnamespace <> dst.relnamespace
+                            """).query(String.class).list();
+            assertThat(crossSchemaForeignKeys).isEmpty();
         }
     }
 
@@ -7106,7 +7255,7 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
         columns.putAll(overrides);
         String names = String.join(", ", columns.keySet());
         String values = String.join(", ", columns.keySet().stream().map(name -> ":" + name).toList());
-        var statement = jdbc.sql("INSERT INTO wardrobe_garment (" + names + ", created_at) VALUES ("
+        var statement = jdbc.sql("INSERT INTO wardrobe.wardrobe_garment (" + names + ", created_at) VALUES ("
                 + values + ", now())");
         for (Map.Entry<String, Object> column : columns.entrySet()) {
             statement = statement.param(column.getKey(), column.getValue());
@@ -7116,22 +7265,10 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     }
 
     private void insertMaterial(UUID garmentId, String material) {
-        jdbc.sql("INSERT INTO wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
+        jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
                 .param("garmentId", garmentId)
                 .param("material", material)
                 .update();
-    }
-
-    /** Runs the real migration files into a scratch schema, up to {@code target} (null = latest). */
-    private void migrateTransitionSchema(String target) {
-        var configuration = Flyway.configure()
-                .dataSource(dataSource)
-                .schemas(TRANSITION_SCHEMA)
-                .locations("classpath:db/migration");
-        if (target != null) {
-            configuration.target(target);
-        }
-        configuration.load().migrate();
     }
 }
 ```
@@ -7184,7 +7321,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Every approved vocabulary value survives a real PostgreSQL round trip exactly,
- * which also proves the V7 CHECK lists and the Java vocabularies agree.
+ * which also proves the V8 CHECK lists and the Java vocabularies agree.
  */
 class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
 
@@ -7497,7 +7634,7 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.code").value("IDEMPOTENCY_KEY_REUSED"));
 
-        assertThat(jdbc.sql("SELECT color FROM wardrobe_garment WHERE owner_account_id = :owner")
+        assertThat(jdbc.sql("SELECT color FROM wardrobe.wardrobe_garment WHERE owner_account_id = :owner")
                 .param("owner", tokens.accountId()).query(String.class).list()).containsExactly("BLACK");
     }
 
@@ -7558,7 +7695,7 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
                         .content("{\"confirmed\":true,\"category\":\"TOPS\",\"color\":\"RED\"}"))
                 .andExpect(status().isUnauthorized());
 
-        assertThat(countRows("wardrobe_garment")).isZero();
+        assertThat(countRows("wardrobe.wardrobe_garment")).isZero();
     }
 
     private void expectAuthenticationRequired(String accessToken) throws Exception {
@@ -7804,7 +7941,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
                 .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
                 .andExpect(jsonPath("$.id").doesNotExist());
         assertThat(countGarmentsOf(tokens.accountId())).isZero();
-        assertThat(countRows("wardrobe_garment_material")).isZero();
+        assertThat(countRows("wardrobe.wardrobe_garment_material")).isZero();
 
         addGarment(tokens.accessToken(), key, minimumGarment("OUTERWEAR", "CAMEL")).andExpect(status().isCreated());
         assertThat(countGarmentsOf(tokens.accountId())).isOne();
@@ -7819,7 +7956,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         addGarment(tokens.accessToken(), UUID.randomUUID().toString(), minimumGarment("SHOES", "WHITE"))
                 .andExpect(status().isServiceUnavailable());
 
-        assertThat(jdbc.sql("SELECT id FROM wardrobe_garment WHERE owner_account_id = :owner")
+        assertThat(jdbc.sql("SELECT id FROM wardrobe.wardrobe_garment WHERE owner_account_id = :owner")
                 .param("owner", tokens.accountId()).query(UUID.class).list()).containsExactly(existing);
     }
 }
@@ -8042,7 +8179,7 @@ Set-Location 'D:\CapsuleAI\backend'
 .\mvnw.cmd --batch-mode --no-transfer-progress clean verify
 ```
 
-**Regression after this stage:** every Identity suite (including all US-AUTH-005 suites) and `ArchitectureDependencyTest`, which now has real Wardrobe classes to check. Expected: zero failures, errors or skips; read the counts from the reports.
+**Regression after this stage:** every Identity suite (including all US-AUTH-005 suites), `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest` (which now have real Wardrobe classes and SQL to check) and `DatabaseSchemaOwnershipIT` (which now sees the `wardrobe` schema). Expected: zero failures, errors or skips; read the counts from the reports.
 
 
 ---
@@ -8080,8 +8217,8 @@ Expected for step 4: `VALIDATION_FAILED` listing `confirmed` `NOT_CONFIRMED`, `f
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
-docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT category, subtype, color, brand, price_amount::text, price_currency, removed_at FROM wardrobe_garment ORDER BY created_at;"
-docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT material FROM wardrobe_garment_material;"
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT category, subtype, color, brand, price_amount::text, price_currency, removed_at FROM wardrobe.wardrobe_garment ORDER BY created_at;"
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT material FROM wardrobe.wardrobe_garment_material;"
 ```
 
 Expected: two garments (the retry did not add one); `price_amount` is exactly `299000`; materials `COTTON` and `SPANDEX_ELASTANE` once each.
@@ -8126,13 +8263,14 @@ Expected: two garments (the retry did not add one); `price_amount` is exactly `2
 | DATA-INT-004, ADA-009, FR-AI-010 | AC-12 | One effect per logical addition | `ConcurrentGarmentCreationIT`, `AddGarmentApiIT`, `AddGarmentServiceTest` | `concurrentDeliveriesOfOneAdditionCreateExactlyOneGarment`, `aRetryOfTheSameAdditionReturnsTheAlreadyAcceptedGarment`, `repeatingTheSameAdditionReturnsTheAcceptedGarmentWithoutASecondOne` | Concurrency / HTTP IT / unit |
 | ERR-NET-001, COM-002 | AC-11, AC-12 | Lost connection rolls back; retry safe | `WardrobeFailureIT` | `aFailedSaveIsRolledBackAndNotReportedAsCreatedAndTheRetryCreatesItOnce` | Failure IT |
 | FR-AUTH-008, NFR-SEC-001, BRULE-AUTH-001 | AC-13 | Owner isolation, unusable access | `AddGarmentApiIT` | `theOwnerIsAlwaysTheAuthenticatedAccountAndKeysAreScopedPerOwner`, `unusableAccessIsDeniedAndSavesNothing` | Security IT |
-| DoD §5 schema | — | V7 constraints and upgrade | `GarmentSchemaIT` | all 10 methods | PostgreSQL IT |
+| DoD §5 schema | — | V8 constraints and upgrade | `GarmentSchemaIT` | all 11 methods | PostgreSQL IT |
+| ADA-016, AR-01–AR-04 | — | Wardrobe tables only in `wardrobe`; no cross-schema foreign key; Wardrobe SQL names only `wardrobe.*` | `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` | `wardrobeTablesLiveOnlyInTheWardrobeSchema`, `existingIdentityDataSurvivesTheUpgradeFromV7`; all methods | PostgreSQL IT / unit |
 | DoD §5 API contract | — | OpenAPI = handlers | `IdentityOpenApiContractIT` | all 5 methods | Contract IT |
 | ADA-015, ADA-016 | — | Wardrobe uses only `identity.api`; framework-free core | `ArchitectureDependencyTest` | all methods | Architecture |
 
 ## 16. Definition of Done
 
-**Source:** [definition-of-done.md — 4. Common Definition of Done](../../../definition-of-done.md#4-common-definition-of-done) · lines 27–45 at `1d0bc83`
+**Source:** [definition-of-done.md — 4. Common Definition of Done](../../../definition-of-done.md#4-common-definition-of-done) · lines 27–45 at Stage 0
 
 > ## 4. Common Definition of Done
 >
@@ -8154,7 +8292,7 @@ Expected: two garments (the retry did not add one); `price_amount` is exactly `2
 >
 > Privacy, recovery, accessibility and other applicable constraints accompany each delivered capability. Later cross-MVP verification PBIs extend evidence; their backlog position does not postpone those obligations.
 
-Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **database schema** (V7 and upgrade test), **authorization/sensitive data** (owner isolation), **reliability/concurrency** (idempotency and failure tests).
+Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **database schema** (V8 and upgrade test), **authorization/sensitive data** (owner isolation), **reliability/concurrency** (idempotency and failure tests).
 
 | DoD area | Evidence for US-GAR-001 |
 | --- | --- |
@@ -8174,9 +8312,12 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 | Symptom | Cause / action |
 | --- | --- |
+| `relation "wardrobe_garment" does not exist` | Unqualified SQL: write `wardrobe.wardrobe_garment` (and `wardrobe.wardrobe_garment_material`). |
+| `PersistenceOwnershipSqlTest` fails | A statement names an unqualified or foreign table, or V8 names another schema. The message gives file, line and the qualified name; Wardrobe obtains Identity information only through `identity.api`. |
+| `DatabaseSchemaOwnershipIT`: table in the wrong schema | V8 created a table without `wardrobe.`; fix the migration before it is applied anywhere. |
 | `ApprovedGarmentVocabularyTest` fails with a label difference | An enum label was retyped. Copy it exactly from Step P4–P14 (watch `Tanks & Camils`, `Spandex (elastane)`, `Scoop (U)`, `3/4 Sleeve`, `Wide-leg`). |
 | `ApprovedGarmentVocabularyTest`: authority file not found | Tests run from `backend`; the file must be at `../Initial files/Image to Properties Extraction.md`. |
-| `JdbcGarmentRepositoryIT` fails with a CHECK violation | The V7 value list and the enum differ; regenerate neither by hand, compare both with the authority. |
+| `JdbcGarmentRepositoryIT` fails with a CHECK violation | The V8 value list and the enum differ; regenerate neither by hand, compare both with the authority. |
 | 401 on `POST /garments` with a fresh token | Missing `Bearer ` prefix, or the session was revoked (logout/reset). |
 | 400 `Idempotency-Key` `REQUIRED` from a browser | CORS must allow the header (Step P42); check the preflight's `Access-Control-Allow-Headers`. |
 | 422 `IDEMPOTENCY_KEY_REUSED` | The client reused a key for a different garment; generate one key per intended addition and reuse it only for retries. |
@@ -8188,7 +8329,7 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 ### 18.1 Implementation checklist
 
-- [ ] P1 `V7__create_wardrobe_garment.sql`
+- [ ] P1 `V8__create_wardrobe_garment.sql`
 - [ ] P2–P14 `ControlledValue`, `CategorySpecificProperty` and the eleven vocabulary enums (copied exactly)
 - [ ] P15–P21 `GarmentValueProblem`, `InvalidGarmentValueException`, `Brand`, `PurchasePrice`, `GarmentProfile`, `ValueProvenance`, `Garment`
 - [ ] P22–P24 ports

@@ -24,7 +24,7 @@ public final class JdbcAccountRepository implements AccountRepository {
     @Override
     public boolean addIfEmailAvailable(Account account) {
         int inserted = jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, display_name, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, display_name, created_at)
                         VALUES (:id, :email, :passwordHash, :displayName, :createdAt)
                         ON CONFLICT (email) DO NOTHING
                         """)
@@ -41,7 +41,7 @@ public final class JdbcAccountRepository implements AccountRepository {
     public Optional<Account> findByEmail(EmailAddress email) {
         return jdbc.sql("""
                         SELECT id, email, password_hash, display_name, created_at
-                        FROM identity_account
+                        FROM identity.identity_account
                         WHERE email = :email
                         """)
                 .param("email", email.value())

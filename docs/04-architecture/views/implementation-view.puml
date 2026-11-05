@@ -3,6 +3,11 @@
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Implementation View
 ' Version: 0.1; Status: Baseline Draft; Date: 2026-10-10
+' 2026-11-06 refinement AR-01-AR-08 (selected-architecture-decisions.md Section 8): each module's
+' adapter.out.persistence owns one PostgreSQL schema named after the module; no other module's SQL,
+' view or foreign key may reach it. Enforced by ArchitectureDependencyTest (api-only imports, JDBC only
+' in persistence adapters/configuration, no module cycles), PersistenceOwnershipSqlTest and
+' DatabaseSchemaOwnershipIT. Module boundaries and roles in this view are unchanged.
 ' Source: ADD v0.1 (authoring input navigation v0.1.1); Selected Architecture Decisions v0.1.2,
 ' ADA-001-018 Selected; approved Logical View v0.1, re-read immediately before drawing.
 ' Later navigation-only patches leave these design/selection inputs unchanged.
@@ -293,6 +298,7 @@ legend bottom
   Measurement failure cannot block/reverse core acceptance or fabricate recorded evidence.
   No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
   Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
+  2026-11-06 AR-01-AR-08: one schema per owner; api-only imports and owner-only SQL are test-enforced.
   Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.

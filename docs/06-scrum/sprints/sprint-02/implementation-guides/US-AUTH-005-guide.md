@@ -5,10 +5,10 @@
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
 | Story / parent PBI | US-AUTH-005 — Recover account access through email / [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
 | Implementation order | **1 of 4** (US-AUTH-005 → US-GAR-001 → US-WAR-001 → US-WAR-002) |
-| Starts from | Repository baseline: branch `sprint_02`, commit `1d0bc83`, clean working tree |
+| Starts from | "Stage 0": branch `sprint_02` at `dc4ddf3` plus the schema-ownership correction (V6 moves the Sprint 1 tables into the `identity` schema, Identity SQL is schema-qualified, architecture tests enforce AR-01–AR-08); see [README §3](README.md#3-repository-baseline) |
 | Leaves | "Stage 1": the state US-GAR-001 starts from |
 | Read with | [README](README.md) (workflow, commands) and [shared architecture](shared-architecture.md) (cross-story design, decision log) |
-| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 1 commit on top of `1d0bc83`; then the full four-stage `clean verify` passed with 360 unit and 217 integration tests). It has **not** been applied to this repository and has **not** run in hosted CI. US-AUTH-005 is **not Done**. |
+| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 1 commit on top of Stage 0: `clean verify` passed with 209 unit and 156 integration tests; the full four-stage result passed with 382 and 228). It has **not** been applied to this repository and has **not** run in hosted CI. US-AUTH-005 is **not Done**. |
 
 **How to use this guide.** Sections 3–8 reproduce every applicable source requirement **verbatim**, with links and line numbers, so you do not need to reopen the BRD, PRD, SRS, Business Rules, Story or Use Case. Section 9 says what they mean for the backend; Section 10 is the design; Sections 11–13 give every file change in order, with complete code or exact BEFORE/AFTER hunks; Sections 14–18 tell you how to prove it works and when you are finished.
 
@@ -25,13 +25,13 @@ Labels used throughout: **[REQ]** established requirement, **[ARCH]** establishe
 | User value | A registered user who forgot the password regains the **same** private account and wardrobe with a new password, through emailed single-use instructions. |
 | Backend objective | Account-safe Forgot Password initiation; secure, replaceable, 30-minute, single-success reset interactions persisted in PostgreSQL; purpose-minimal SMTP delivery after commit; an atomic accepted reset that sets the exact new password, consumes the interaction and revokes **every** active session of the account; no regression of Sprint 1 login, renewal and logout. |
 | Hard dependencies | The Sprint 1 Identity implementation (account, PBKDF2 hashing, `PasswordPolicy`, persistent sessions, JWT + session authority). An SMTP server for delivery (Mailpit locally). |
-| Scope (backend) | Three public operations under `/api/v1/auth/password-reset/`: `request`, `check`, `complete`; table `identity_password_reset` (Flyway V6); the `PASSWORD_RESET` revocation reason; an email boundary (port, SMTP adapter, asynchronous decorator); the reset/login race fix in `LogInService`; tests at every level; OpenAPI v0.5.0; CI report requirements; README. |
+| Scope (backend) | Three public operations under `/api/v1/auth/password-reset/`: `request`, `check`, `complete`; table `identity.identity_password_reset` (Flyway V7); the `PASSWORD_RESET` revocation reason; an email boundary (port, SMTP adapter, asynchronous decorator); the reset/login race fix in `LogInService`; tests at every level; OpenAPI v0.5.0; CI report requirements; README. |
 | Out of scope | Mobile screens, deep-link handling and Vietnamese UI text in the app; SMS/OTP/security questions/social recovery; email verification; account deletion; rate limiting (see [OPEN] OPEN-S2-04); choosing or contracting a production email provider. |
 | Expected outcome | Backend behavior for AC-01–AC-15 is implemented and automatically verified; AC-16 (accessibility) and the client parts of AC-01/AC-06/AC-12/AC-13/AC-15 remain client evidence; real-provider delivery evidence remains outstanding. |
 
 ## 2. Repository Baseline
 
-Verified at `1d0bc83` (branch `sprint_02`, clean). Java 21, Spring Boot 4.1.1, Spring Security 7.1.1, Spring JDBC (`JdbcClient`), Flyway (V1–V5), PostgreSQL 17.11, JUnit 6, AssertJ, Mockito, Testcontainers 2.0.5, ArchUnit 1.5.1, Maven Wrapper 3.9.16. No email library is on the classpath.
+Verified at Stage 0. Java 21, Spring Boot 4.1.1, Spring Security 7.1.1, Spring JDBC (`JdbcClient`), Flyway (V1–V6; V6 moved the Sprint 1 tables into the `identity` schema), PostgreSQL 17.11, JUnit 6, AssertJ, Mockito, Testcontainers 2.0.5, ArchUnit 1.5.1, Maven Wrapper 3.9.16. No email library is on the classpath.
 
 | Existing component (verified path under `backend/src/main/java/com/capsuleai/identity/`) | What it already provides | How recovery uses it |
 | --- | --- | --- |
@@ -39,26 +39,29 @@ Verified at `1d0bc83` (branch `sprint_02`, clean). Java 21, Spring Boot 4.1.1, S
 | `domain/PasswordPolicy.java` | 12–128 Unicode code points, no trimming/normalization, rejects unpaired surrogates | Validates the new password (AC-10, AC-11). |
 | `adapter/out/security/Pbkdf2PasswordHasher.java` via `application/ports/PasswordHasher.java` | Salted PBKDF2-HMAC-SHA256 | Hashes the new password exactly as entered. |
 | `domain/LoginSession.java`, `adapter/out/persistence/JdbcSessionRepository.java` | Persistent sessions, current-session `revoke`, locked refresh rotation | Extended with account-wide revocation. |
-| `domain/RevocationReason.java` | `LOGOUT`, `REFRESH_TOKEN_REUSE` (V5 CHECK constraint) | Extended with `PASSWORD_RESET` (V6). |
+| `domain/RevocationReason.java` | `LOGOUT`, `REFRESH_TOKEN_REUSE` (V5 CHECK constraint) | Extended with `PASSWORD_RESET` (V7). |
 | `application/LogInService.java` | Verifies the password **before** its session-creation transaction | Changed to recheck the credential under a shared account lock (race fix). |
 | `application/SessionAuthorityService.java` + `adapter/in/security/SessionAwareJwtAuthenticationConverter.java` | Every protected request re-reads its session row | Makes reset revocation take effect immediately for unexpired access tokens (AC-05). |
 | `adapter/in/web/AuthController.java`, `IdentityApiExceptionHandler.java` | Cohesive `/api/v1/auth` controller; scoped RFC 9457 errors with stable `code` | Recovery adds three handlers and one error mapping. |
 | `configuration/IdentitySecurityConfiguration.java` | One default-deny chain; `PUBLIC_ENDPOINTS` shared by `permitAll` and the bearer resolver; CORS | Recovery operations join `PUBLIC_ENDPOINTS`. |
 | `application/ports/IdentityTransactions.java`, `adapter/out/persistence/SpringIdentityTransactions.java` | Framework-free transaction boundary (READ COMMITTED) | Issuance and completion run inside it. |
-| Tests: `support/IdentityIntegrationTestSupport.java`, `support/IdentityTestConfiguration.java`, `support/MutableClock.java` | Real app + filter chain + Testcontainers PostgreSQL + controllable clock | Reused by every new integration test. |
+| Tests: `support/IdentityIntegrationTestSupport.java`, `support/IdentityTestConfiguration.java`, `support/MutableClock.java` | Real app + filter chain + Testcontainers PostgreSQL + controllable clock; the fixture reset truncates every table of the `identity` schema | Reused by every new integration test; the new reset table is cleared automatically. |
+| `backend/src/main/resources/db/migration/V6__move_identity_tables_into_identity_schema.sql` | The `identity` schema holding `identity_account`, `identity_session` and `identity_refresh_token`; all Identity SQL is written `identity.<table>` | The reset table joins the same schema; **V7** is the next free version (AR-01). |
+| `foundation/IsolatedMigrationDatabase.java` (test) | A separate empty database on the test server, migrated to any version | `PasswordResetSchemaIT` upgrades Sprint 1 data from V6 to V7 on it. |
+| `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` (test package `com.capsuleai.architecture`) | Enforce AR-01–AR-08: other modules use only a module's `api`; production SQL names only its own schema, always qualified; each migration after V6 changes one owner schema; on the migrated database every table is in its owner's schema and no foreign key crosses schemas. This story's code and migrations must pass them unchanged. |
 
-**State that matters for this story.** There is no reset table, no reset code and no email infrastructure. `AccountRepository` cannot change a password. `SessionRepository` revokes one session at a time. The [OpenAPI contract](../../../../05-api/openapi.yaml) (v0.4.1) explicitly lists password reset as not introduced. `.github/workflows/backend-ci.yml` runs only for pushes to `main` and pull requests targeting `main`.
+**State that matters for this story.** The Identity tables are in the `identity` schema; Flyway's history stays in the default schema (`public`), which holds no business table. There is no reset table, no reset code and no email infrastructure. `AccountRepository` cannot change a password. `SessionRepository` revokes one session at a time. The [OpenAPI contract](../../../../05-api/openapi.yaml) (v0.4.1) explicitly lists password reset as not introduced. `.github/workflows/backend-ci.yml` runs only for pushes to `main` and pull requests targeting `main`.
 
 
 ---
 
 ## 3. Original Business Requirements — Verbatim
 
-All wording in Sections 3–8 is copied mechanically from the repository at `1d0bc83`; nothing is paraphrased. Only the targets of links inside a quotation are rewritten, so that they open the same file and heading from this guide's folder. The link text is unchanged. The **Source** line above each quotation names its file, heading and line range.
+All wording in Sections 3–8 is copied mechanically from the repository at Stage 0; nothing is paraphrased. Only the targets of links inside a quotation are rewritten, so that they open the same file and heading from this guide's folder. The link text is unchanged. The **Source** line above each quotation names its file, heading and line range.
 
 ### 3.1 Business requirements BR-021 and BR-023
 
-**Source:** [BRD.md — 15.4 Privacy, Trust, and Evolution](../../../../01-business/BRD.md#154-privacy-trust-and-evolution) · lines 496–498 at `1d0bc83`
+**Source:** [BRD.md — 15.4 Privacy, Trust, and Evolution](../../../../01-business/BRD.md#154-privacy-trust-and-evolution) · lines 496–498 at Stage 0
 
 > | ID | Requirement | Business Rationale | Priority | Related Goals |
 > |---|---|---|---|---|
@@ -67,7 +70,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 3.2 Business capability CAP-01
 
-**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 286–286 at `1d0bc83`
+**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 286–286 at Stage 0
 
 > | ID | Capability | Business Purpose |
 > |---|---|---|
@@ -77,7 +80,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 4.1 JRN-01
 
-**Source:** [PRD.md — 8.1 JRN-01 — Account Onboarding & Personalization](../../../../02-product/PRD.md#81-jrn-01--account-onboarding--personalization) · lines 185–200 at `1d0bc83`
+**Source:** [PRD.md — 8.1 JRN-01 — Account Onboarding & Personalization](../../../../02-product/PRD.md#81-jrn-01--account-onboarding--personalization) · lines 185–200 at Stage 0
 
 > ### 8.1 JRN-01 — Account Onboarding & Personalization
 >
@@ -98,7 +101,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 4.2 FEAT-AUTH-001
 
-**Source:** [PRD.md — 10.1 FEAT-AUTH-001 — Personal Account Access and Session Continuity](../../../../02-product/PRD.md#101-feat-auth-001--personal-account-access-and-session-continuity) · lines 348–381 at `1d0bc83`
+**Source:** [PRD.md — 10.1 FEAT-AUTH-001 — Personal Account Access and Session Continuity](../../../../02-product/PRD.md#101-feat-auth-001--personal-account-access-and-session-continuity) · lines 348–381 at Stage 0
 
 > ### 10.1 FEAT-AUTH-001 — Personal Account Access and Session Continuity
 >
@@ -139,7 +142,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.1 Account & Authentication stimulus/response
 
-**Source:** [SRS.md — 3.1 Account & Authentication](../../../../03-requirements/SRS.md#31-account--authentication) · lines 148–157 at `1d0bc83`
+**Source:** [SRS.md — 3.1 Account & Authentication](../../../../03-requirements/SRS.md#31-account--authentication) · lines 148–157 at Stage 0
 
 > ### 3.1 Account & Authentication
 >
@@ -154,7 +157,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.2 Authentication and Recovery Rules (SRS §3.1.1)
 
-**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 159–177 at `1d0bc83`
+**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 159–177 at Stage 0
 
 > #### 3.1.1 Authentication and Recovery Rules
 >
@@ -178,7 +181,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.3 Functional requirements
 
-**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 182–198 at `1d0bc83`
+**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 182–198 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -194,7 +197,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.4 Data requirements
 
-**Source:** [SRS.md — 4.2 Account & Profile Data](../../../../03-requirements/SRS.md#42-account--profile-data) · lines 647–651 at `1d0bc83`
+**Source:** [SRS.md — 4.2 Account & Profile Data](../../../../03-requirements/SRS.md#42-account--profile-data) · lines 647–651 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -204,13 +207,13 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.5 External and communication interfaces
 
-**Source:** [SRS.md — 5.2 Software Interfaces](../../../../03-requirements/SRS.md#52-software-interfaces) · lines 773–773 at `1d0bc83`
+**Source:** [SRS.md — 5.2 Software Interfaces](../../../../03-requirements/SRS.md#52-software-interfaces) · lines 773–773 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | SI-003 | The system shall send Email Delivery Service only email and necessary recovery-delivery information, preserve account-existence-safe initiation responses, and distinguish requested/delivered recovery from a valid completed reset. | MVP | FEAT-AUTH-001; BR-021 | I/T: minimal delivery information, known/unknown initiation equivalence and requested/failed/expired/consumed/completed reset. |
 
-**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–790 at `1d0bc83`
+**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–790 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -220,20 +223,20 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.6 Error and failure requirements
 
-**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 982–984 at `1d0bc83`
+**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 982–984 at Stage 0
 
 > ## 9. Error and Failure Requirements
 >
 > These requirements specify recoverable outcomes, not exception types or infrastructure retry algorithms. Previously confirmed information remains authoritative. An interrupted response is not proof that an action failed; uncertain outcomes must remain distinguishable from accepted results, and recovery must not create accidental duplicate logical actions.
 
-**Source:** [SRS.md — 9.1 Access and Recovery](../../../../03-requirements/SRS.md#91-access-and-recovery) · lines 991–992 at `1d0bc83`
+**Source:** [SRS.md — 9.1 Access and Recovery](../../../../03-requirements/SRS.md#91-access-and-recovery) · lines 991–992 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
 > | ERR-AUTH-002 | Reset cannot complete, is expired, or has already been used. | The system shall reject failed, expired, or already-used recovery interactions without claiming reset completion, offering renewed recovery with account-existence-safe initiation wording. | Credentials and session state change only on an actually completed reset; successful reset revokes all Refresh Sessions and requires login. | FEAT-AUTH-001; BR-021 | T: 30-minute expiry, consumed interaction, delivery failure, known/unknown email. |
 > | ERR-AUTH-003 | Renewal is unusable, the session is revoked/expired, or rotated Refresh Token reuse is detected. | The system shall require renewed authentication for expired/revoked Refresh Sessions or detected rotated-token reuse, retaining the inaccessible-versus-empty distinction. | Protected session use pauses; reauthenticate. Reuse revokes the affected session, and logout does not automatically revoke other sessions. | FEAT-AUTH-001; BR-021 | T: maximum 30-day expiry and consumed refresh-token replay. |
 
-**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1049 at `1d0bc83`
+**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1049 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
@@ -242,27 +245,27 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.7 Security, privacy, usability and accessibility requirements
 
-**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 810–811 at `1d0bc83`
+**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 810–811 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
 > | NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review and known/unknown email response comparison. |
 
-**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–818 at `1d0bc83`
+**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–818 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
 > | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
-**Source:** [SRS.md — 6.6 Usability](../../../../03-requirements/SRS.md#66-usability) · lines 840–840 at `1d0bc83`
+**Source:** [SRS.md — 6.6 Usability](../../../../03-requirements/SRS.md#66-usability) · lines 840–840 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-USE-001 | The system shall make Vietnamese setup/confirmation / unevaluated eligibility/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
 
-**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at `1d0bc83`
+**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -271,7 +274,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ### 5.8 Localization requirements
 
-**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at `1d0bc83`
+**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -280,7 +283,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 ## 6. Original Business Rules — Verbatim
 
-**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 80–86 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 80–86 at Stage 0
 
 > ### BRULE-AUTH-001 — Authorized Personal Operations
 >
@@ -290,7 +293,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Source:** FR-AUTH-008, ERR-AUTH-001, DATA-GAR-001.
 
-**Source:** [business-rules.md — BRULE-AUTH-002 — Normalized Email Identity](../../../../03-requirements/business-rules.md#brule-auth-002--normalized-email-identity) · lines 88–96 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-002 — Normalized Email Identity](../../../../03-requirements/business-rules.md#brule-auth-002--normalized-email-identity) · lines 88–96 at Stage 0
 
 > ### BRULE-AUTH-002 — Normalized Email Identity
 >
@@ -302,7 +305,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Boundary:** ` Person@Example.com ` and `person@example.com` identify the same account; provider alias strings are not automatically merged.
 
-**Source:** [business-rules.md — BRULE-AUTH-003 — Password Value Preservation](../../../../03-requirements/business-rules.md#brule-auth-003--password-value-preservation) · lines 98–104 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-003 — Password Value Preservation](../../../../03-requirements/business-rules.md#brule-auth-003--password-value-preservation) · lines 98–104 at Stage 0
 
 > ### BRULE-AUTH-003 — Password Value Preservation
 >
@@ -312,7 +315,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Source:** FR-AUTH-001, FR-AUTH-002, FR-AUTH-015, DATA-AUTH-001.
 
-**Source:** [business-rules.md — BRULE-AUTH-004 — Password-Reset Interaction Validity](../../../../03-requirements/business-rules.md#brule-auth-004--password-reset-interaction-validity) · lines 106–112 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-004 — Password-Reset Interaction Validity](../../../../03-requirements/business-rules.md#brule-auth-004--password-reset-interaction-validity) · lines 106–112 at Stage 0
 
 > ### BRULE-AUTH-004 — Password-Reset Interaction Validity
 >
@@ -322,7 +325,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Source:** FR-AUTH-017, FR-AUTH-018, DATA-AUTH-005, ERR-AUTH-002.
 
-**Source:** [business-rules.md — BRULE-AUTH-005 — Completed Reset and Recovery Privacy](../../../../03-requirements/business-rules.md#brule-auth-005--completed-reset-and-recovery-privacy) · lines 114–120 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-005 — Completed Reset and Recovery Privacy](../../../../03-requirements/business-rules.md#brule-auth-005--completed-reset-and-recovery-privacy) · lines 114–120 at Stage 0
 
 > ### BRULE-AUTH-005 — Completed Reset and Recovery Privacy
 >
@@ -332,7 +335,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Source:** FR-AUTH-003, FR-AUTH-004, ERR-AUTH-002.
 
-**Source:** [business-rules.md — BRULE-AUTH-006 — Separate Sessions and Revocation](../../../../03-requirements/business-rules.md#brule-auth-006--separate-sessions-and-revocation) · lines 122–128 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-006 — Separate Sessions and Revocation](../../../../03-requirements/business-rules.md#brule-auth-006--separate-sessions-and-revocation) · lines 122–128 at Stage 0
 
 > ### BRULE-AUTH-006 — Separate Sessions and Revocation
 >
@@ -342,7 +345,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 >
 > **Source:** FR-AUTH-007, FR-AUTH-010, FR-AUTH-013, FR-AUTH-014, DATA-AUTH-005.
 
-**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 130–138 at `1d0bc83`
+**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 130–138 at Stage 0
 
 > ### BRULE-AUTH-007 — Purpose-Limited Private Data Use
 >
@@ -358,7 +361,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at `1d0
 
 The complete story file, including its metadata, every Acceptance Criterion with its original Given/When/Then, business rules, dependencies, scope exclusions, traceability and status.
 
-**Source:** [US-AUTH-005-recover-account-access.md](../../../stories/auth/US-AUTH-005-recover-account-access.md) · complete file at `1d0bc83`
+**Source:** [US-AUTH-005-recover-account-access.md](../../../stories/auth/US-AUTH-005-recover-account-access.md) · complete file at Stage 0
 
 > # US-AUTH-005 — Recover account access through email
 >
@@ -571,7 +574,7 @@ The complete story file, including its metadata, every Acceptance Criterion with
 
 ### 8.1 UC-004 — Reset Password (complete)
 
-**Source:** [UC-004-reset-password.md](../../../../03-requirements/use-cases/UC-004-reset-password.md) · complete file at `1d0bc83`
+**Source:** [UC-004-reset-password.md](../../../../03-requirements/use-cases/UC-004-reset-password.md) · complete file at Stage 0
 
 > # UC-004 — Reset Password
 >
@@ -749,11 +752,11 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > This diagram visualizes the established main, alternative, and failure flows of this Use Case; the textual specification remains the normative behavioral source.
 
-**Source defect (kept verbatim):** the last link of UC-004 points to `use-cases/diagrams/UC-004-reset-password.puml`, which does not exist at `1d0bc83`; UC-001 to UC-006 share the same pattern. This guide does not need it, because AD-004 (§8.2) is the complete flow diagram for this story. Report it to the document owner; it is not fixed here.
+**Source defect (kept verbatim):** the last link of UC-004 points to `use-cases/diagrams/UC-004-reset-password.puml`, which does not exist at Stage 0; UC-001 to UC-006 share the same pattern. This guide does not need it, because AD-004 (§8.2) is the complete flow diagram for this story. Report it to the document owner; it is not fixed here.
 
 ### 8.2 AD-004 — Reset Password activity diagram (complete PlantUML source)
 
-**Source:** [AD-004-reset-password.puml](../../../../03-requirements/activity-diagrams/AD-004-reset-password.puml) · complete file at `1d0bc83`
+**Source:** [AD-004-reset-password.puml](../../../../03-requirements/activity-diagrams/AD-004-reset-password.puml) · complete file at Stage 0
 
 ```plantuml
 @startuml
@@ -859,7 +862,7 @@ stop
 
 ### 8.3 UC-002 — Log In, main success scenario (return-to-login handoff only)
 
-**Source:** [UC-002-log-in.md — 6. Main Success Scenario](../../../../03-requirements/use-cases/UC-002-log-in.md#6-main-success-scenario) · lines 36–42 at `1d0bc83`
+**Source:** [UC-002-log-in.md — 6. Main Success Scenario](../../../../03-requirements/use-cases/UC-002-log-in.md#6-main-success-scenario) · lines 36–42 at Stage 0
 
 > ## 6. Main Success Scenario
 >
@@ -871,7 +874,7 @@ stop
 
 ### 8.4 Applicable architecture decisions
 
-**Source:** [selected-architecture-decisions.md — ADA-006 — External integration boundaries](../../../../04-architecture/selected-architecture-decisions.md#ada-006--external-integration-boundaries) · lines 111–119 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-006 — External integration boundaries](../../../../04-architecture/selected-architecture-decisions.md#ada-006--external-integration-boundaries) · lines 112–120 at Stage 0
 
 > ## ADA-006 — External integration boundaries
 >
@@ -883,7 +886,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-008 — Session, refresh and reset authority](../../../../04-architecture/selected-architecture-decisions.md#ada-008--session-refresh-and-reset-authority) · lines 131–139 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-008 — Session, refresh and reset authority](../../../../04-architecture/selected-architecture-decisions.md#ada-008--session-refresh-and-reset-authority) · lines 132–140 at Stage 0
 
 > ## ADA-008 — Session, refresh and reset authority
 >
@@ -895,7 +898,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-012 — Messaging and background coordination](../../../../04-architecture/selected-architecture-decisions.md#ada-012--messaging-and-background-coordination) · lines 171–179 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-012 — Messaging and background coordination](../../../../04-architecture/selected-architecture-decisions.md#ada-012--messaging-and-background-coordination) · lines 172–180 at Stage 0
 
 > ## ADA-012 — Messaging and background coordination
 >
@@ -907,7 +910,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-015 — Internal Module Architecture](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) · lines 201–209 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-015 — Internal Module Architecture](../../../../04-architecture/selected-architecture-decisions.md#ada-015--internal-module-architecture) · lines 202–210 at Stage 0
 
 > ## ADA-015 — Internal Module Architecture
 >
@@ -919,7 +922,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — ADA-016 — Context Data Ownership](../../../../04-architecture/selected-architecture-decisions.md#ada-016--context-data-ownership) · lines 211–219 at `1d0bc83`
+**Source:** [selected-architecture-decisions.md — ADA-016 — Context Data Ownership](../../../../04-architecture/selected-architecture-decisions.md#ada-016--context-data-ownership) · lines 212–220 at Stage 0
 
 > ## ADA-016 — Context Data Ownership
 >
@@ -931,6 +934,75 @@ stop
 >
 > **Status:** Selected
 
+**Source:** [selected-architecture-decisions.md — 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) · lines 286–351 at Stage 0
+
+> ## 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas
+>
+> ### 8.1 Refinement Record
+>
+> | Field | Value |
+> | --- | --- |
+> | Refinement IDs | AR-01–AR-08 |
+> | Refines | ADA-016 (primary), ADA-017 and ADA-018; consistent with ADA-001, ADA-003, ADA-009, ADA-012 and ADA-015 |
+> | Approved By | Product Owner |
+> | Approval Date | 2026-11-06 |
+> | Status | Approved; realized for the implemented Identity module (Flyway V6) and enforced by automated tests (Section 8.5) |
+> | Nature | A stricter, explicit realization of the selected options. ADA-016 selected logical, context-owned persistence inside one PostgreSQL database and left "final contexts, schemas and FK/access rules" downstream. ADD Section 9.4 likewise left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban". This refinement decides those details. It changes no selected option, selection basis, backend impact or historical revision above, and it was not in force when ADA-016 was selected. |
+>
+> ### 8.2 Rules
+>
+> | ID | Rule | Consequence for code, SQL and migrations |
+> | --- | --- | --- |
+> | AR-01 | **One PostgreSQL schema per persistence owner.** Every business module that persists its own state owns exactly one dedicated schema inside the single CapsuleAI database (ADA-003 unchanged). | The schema name is the module name in snake_case (Section 8.3). Tables are named `<schema>_<name>` and are always referenced as `<schema>.<schema>_<name>`. A module's schema is created by the migration of the first story that persists its state; no empty or speculative schema or table is created in advance. Flyway's default schema holds only Flyway's own `flyway_schema_history`. |
+> | AR-02 | **No cross-context SQL joins.** A query joins only tables of its own owner's schema, even though every schema is in the same database. | Information owned elsewhere is obtained through the owner's published API and combined in application code, or through a deliberately designed published read contract. |
+> | AR-03 | **No direct cross-context persistence access.** A module does not query, modify or depend on another owner's tables, table layout, JDBC repositories, persistence models or private domain models. No database view, function, trigger or rule bypasses an owner. | Only a module's own persistence adapter (`adapter.out.persistence`) issues SQL against its schema. A repository never becomes a generic repository for another context's data. |
+> | AR-04 | **No cross-context foreign keys.** Foreign keys stay inside one owner's schema. | A reference to another owner's entity (for example `wardrobe.wardrobe_garment.owner_account_id`) is a plain identifier. Its validity comes from the owner's published contract at the time of the operation, not from the database. Section 8.4 states the lifecycle consequences. |
+> | AR-05 | **Published module APIs.** Inter-context collaboration uses the owner's `api` package. | Authenticated requests reuse Identity's `AuthenticatedAccount` principal, which the security chain verifies against the persistent session; no per-request account lookup is added. A contract such as an account-existence lookup is created only when a real use case needs it. |
+> | AR-06 | **No internal HTTP.** Modules call each other's published Java APIs in-process (ADA-001, ADA-017). | HTTP remains for real external boundaries (mobile clients, providers). |
+> | AR-07 | **Deliberate transactional consistency.** One database still allows local ACID transactions, but a module never joins another owner's transaction by touching its tables. | A transaction spanning owners is coordinated explicitly through the owners' published operations. Its invariant and participants are documented with their service-extraction coupling (ADA-009, ADD Section 9.2), and partial failure is never hidden. The business requirement decides whether owners communicate by synchronous call or by event (ADA-017); this rule does not. |
+> | AR-08 | **Automated enforcement.** The rules are verified by build-time tests (Section 8.5), not only by naming. | The application uses one database role with access to every schema. **Database privileges therefore do not enforce context isolation at runtime**; code ownership, published contracts and the tests do. Dedicated per-owner roles and data sources are not selected; they would add configuration and transaction complexity without a current requirement. |
+>
+> ### 8.3 Persistence Owners and Schemas
+>
+> The owners are the five logical contexts of the accepted [Logical View](../../../../04-architecture/views/logical-view.puml) and the Product Measurement supporting capability. The [Implementation View](../../../../04-architecture/views/implementation-view.puml) gives Product Measurement its own measurement persistence and lifecycle. No other context is introduced.
+>
+> | Owner (package) | Schema / table prefix | Owned state (Data View) | Published contracts | May depend on (published APIs only) | Status |
+> | --- | --- | --- | --- | --- | --- |
+> | Identity (`identity`) | `identity` / `identity_` | Account, credentials, persistent sessions, refresh tokens, password-reset interactions | `AuthenticatedAccount`, `SessionAuthority` (implemented) | None | **Implemented:** `identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token` (moved by V6) |
+> | Personal Context (`personalcontext`) | `personal_context` / `personal_context_` | Profile, declared preferences and needs, selected location, translated environmental evidence | Declared, current and limited context | Identity | Not implemented; no schema yet |
+> | Wardrobe (`wardrobe`) | `wardrobe` / `wardrobe_` | Confirmed garments and their properties, Materials, media associations, garment action outcomes, minimal removed-garment snapshots | Confirmed properties and current ownership | Identity | Not implemented; Sprint 2 (US-GAR-001) creates the schema |
+> | Outfit Advice and Use (`outfitadviceanduse`) | `outfit_advice_and_use` / `outfit_advice_and_use_` | Feedback, Wear events, history, effective evidence, advice action outcomes | Advice, feedback, Wear and reported use; Outfit Evaluation Semantics | Identity, Wardrobe, Personal Context | Not implemented |
+> | Wardrobe Intelligence (`wardrobeintelligence`) | `wardrobe_intelligence` / `wardrobe_intelligence_` | Only justified owned source/action/work state; no result store mandated | Coverage, Gaps, candidate utility, shopping | Identity, Wardrobe, Personal Context, Outfit Evaluation Semantics | Not implemented |
+> | Product Measurement (`productmeasurement`, supporting) | `product_measurement` / `product_measurement_` | Purpose-limited, user-linked measurement evidence with its own retention | Measurement intake (local events) | Identity; receives facts from other owners | Not implemented |
+>
+> ### 8.4 Cross-Owner Lifecycle Consistency
+>
+> Because AR-04 forbids cross-schema foreign keys, the database neither prevents nor cascades a reference to another owner's entity. Consistency is an application responsibility:
+>
+> - **Creation and use:** an owner stores another owner's identifier only as the result of that owner's published contract in the same operation, for example the authenticated account from `AuthenticatedAccount`. The identifier alone does not prove the referenced entity still exists.
+> - **Removal or deletion:** no account-deletion capability is selected today. A future one must be an explicit, durable and resumable application process (ADA-012). Identity publishes the lifecycle fact or operation. Every owner removes or de-identifies its own data through its own application services and persistence, within the applicable retention rules (DATA-RET-001–003, ADD Section 9.3). Cross-schema `ON DELETE CASCADE` is not available, and one owner must not imitate it by deleting another owner's rows.
+> - **Verification:** where a real use case needs to confirm another owner's entity, that owner publishes a narrow contract for it (AR-05).
+>
+> ### 8.5 Enforcement and Its Limits
+>
+> | Check | Verifies |
+> | --- | --- |
+> | `ArchitectureDependencyTest` (ArchUnit) | Modules use each other only through `api`; published APIs expose no private domain or application model; Spring JDBC stays in persistence adapters and configuration; no dependency cycle between modules; domain and application code stay framework-free; every module package is registered with its schema. Deliberate-violation fixtures prove that each rule fails when broken. |
+> | `PersistenceOwnershipSqlTest` | Production SQL (Java string literals and text blocks) names only its own module's schema and always schema-qualifies owner tables. Every migration after V6 changes exactly one owner schema, so it cannot create a cross-schema foreign key, view or join. It is a focused scanner, not a SQL parser; its conventions are listed in the test. |
+> | `DatabaseSchemaOwnershipIT` | On the fully migrated database, through the PostgreSQL catalog: only registered owner schemas exist besides Flyway's default schema; that schema holds only `flyway_schema_history`; every table is in its owner's schema; no foreign key or view crosses schemas; owner schemas hold no routines. |
+> | `IdentitySchemaRelocationIT` | V6 on a realistic Sprint 1 database: every row, index and constraint survives, the adapters work on the upgraded data, the history remains valid, and a restart applies nothing. |
+>
+> These checks run in `mvnw clean verify`, and the CI report guard requires them. They detect violations at build time; they do not restrict a running application, because the single database role can access every schema (AR-08).
+>
+> ### 8.6 Realization for the Implemented Identity Module
+>
+> V1–V5 created the Identity tables unqualified in Flyway's default schema. They have been applied to persistent databases and are never edited. The forward migration `V6__move_identity_tables_into_identity_schema.sql` creates the `identity` schema and moves the three tables with `ALTER TABLE ${flyway:defaultSchema}.<table> SET SCHEMA identity`:
+>
+> - It keeps every row, index, constraint and foreign key, copies nothing, and runs in one transaction.
+> - Flyway's configuration and history location are unchanged, so V1–V5 are not re-applied.
+> - All Identity SQL is now schema-qualified.
+> - V6 needs the migrating role to own the three tables (a requirement of `SET SCHEMA`) and to hold `CREATE` on the database. This is true wherever the same role ran V1–V5; otherwise V6 fails without changing anything.
+
 ### 8.5 Who implements each flow step
 
 This table is engineering interpretation, not source text.
@@ -938,7 +1010,7 @@ This table is engineering interpretation, not source text.
 | UC-004 step / flow | Backend (this guide) | Mobile client | External | Other story |
 | --- | --- | --- | --- | --- |
 | Main 1–2: request, equivalent response | `POST /password-reset/request` → identical 202 for any well-formed email | Forgot Password screen; Vietnamese conditional message; screen-reader/200% (AC-16) | — | — |
-| Main 3: issue, replace earlier, arrange delivery | `RequestPasswordResetService`, V6, account lock, `AsyncPasswordResetInstructionSender` | — | — | — |
+| Main 3: issue, replace earlier, arrange delivery | `RequestPasswordResetService`, V7, account lock, `AsyncPasswordResetInstructionSender` | — | — | — |
 | Main 4: deliver, user opens | `SmtpPasswordResetInstructionSender` hands the email to SMTP | Opens `capsuleai://reset-password#token=…` and reads the fragment | Email Delivery Service (SMTP provider) delivers to the inbox | — |
 | Main 5 / A1: present new-password interaction while valid | `POST /password-reset/check` (204 / 400 `PASSWORD_RESET_INVALID`) | Shows the form only after 204 | — | — |
 | Main 6–7: submit, accept, change, consume, revoke all | `POST /password-reset/complete` → one transaction | Sends `token` + `newPassword` exactly as typed | — | US-AUTH-003 renewal and every protected request honor the revocation |
@@ -1019,7 +1091,7 @@ flowchart LR
     sender --> async[AsyncPasswordResetInstructionSender]
     async --> smtp[SmtpPasswordResetInstructionSender]
     smtp -->|SMTP| provider[(Email Delivery Service / Mailpit)]
-    accounts & resets & sessions --> pg[(PostgreSQL: identity_account, identity_password_reset, identity_session)]
+    accounts & resets & sessions --> pg[(PostgreSQL schema identity:<br/>identity_account, identity_password_reset,<br/>identity_session)]
 ```
 
 Everything stays inside the Identity module (ADA-015/016): domain and application classes are framework-free; JDBC, SMTP and Spring live in adapters and configuration.
@@ -1051,12 +1123,14 @@ All three are public (no bearer token; a stale `Authorization` header is ignored
 
 **[TECH] TD-S2-02: why three operations.** `request` and `complete` are required by the flow. `check` exists because AC-06/AC-08 require that *opening* an invalid link already reports rejection, before the user types a password. Using `POST` keeps the secret out of URLs, logs and proxies. **Why one invalid code:** unknown, expired, used and replaced all mean "this link can no longer change the password; request a new one". Distinguishing them would tell an attacker holding a leaked link whether the account recently reset its password, and the user's next step is the same.
 
-### 10.4 Data model (V6)
+### 10.4 Data model (V7)
+
+Table `identity.identity_password_reset`, created in Identity's own schema `identity` (AR-01). Its only foreign key, to `identity.identity_account`, stays inside that schema (AR-04). V7 names no other schema, which `PersistenceOwnershipSqlTest` checks.
 
 | Column | Type | Meaning |
 | --- | --- | --- |
 | `id` | UUID PK | Interaction id |
-| `account_id` | UUID FK → `identity_account` | Owner (Identity-internal FK) |
+| `account_id` | UUID FK → `identity.identity_account` | Owner (Identity-internal FK) |
 | `token_hash` | TEXT UNIQUE, `^[0-9a-f]{64}$` | SHA-256 of the 256-bit secret; the secret itself is never stored |
 | `issued_at`, `expires_at` | TIMESTAMPTZ; `expires_at > issued_at` and `≤ issued_at + 30 min` | Validity window |
 | `consumed_at` | TIMESTAMPTZ NULL | Set by an accepted reset |
@@ -1064,7 +1138,7 @@ All three are public (no bearer token; a stale `Authorization` header is ignored
 | — | CHECK `consumed_at IS NULL OR replaced_at IS NULL` | One outcome only |
 | — | UNIQUE INDEX on `account_id` WHERE both NULL | At most one open interaction per account |
 
-`identity_session.revocation_reason` now also accepts `PASSWORD_RESET`. No retention/deletion job is added for old rows ([OPEN] OPEN-S2-07; the plan forbids inventing a retention period).
+`identity.identity_session.revocation_reason` now also accepts `PASSWORD_RESET`. No retention/deletion job is added for old rows ([OPEN] OPEN-S2-07; the plan forbids inventing a retention period).
 
 ### 10.5 Transactions
 
@@ -1179,12 +1253,12 @@ sequenceDiagram
 
 ## 11. File Change Matrix
 
-Every file this story adds or modifies, in implementation order. `P` = production/configuration/documentation step, `T` = test step. Nothing is removed. The **Action** column is taken from the actual difference between `1d0bc83` and the Stage 1 code, so it cannot drift from Sections 12–13.
+Every file this story adds or modifies, in implementation order. `P` = production/configuration/documentation step, `T` = test step. Nothing is removed. The **Action** column is taken from the actual difference between Stage 0 and the Stage 1 code, so it cannot drift from Sections 12–13.
 
 | # | Action | File | Layer | Purpose | Related requirements |
 |---|---|---|---|---|---|
 | P1 | [MODIFY] | `backend/pom.xml` | Build | Adds `spring-boot-starter-mail` (Jakarta Mail through Spring's `JavaMailSender`), the only new runtime dependency. | SI-003, ADA-006 |
-| P2 | [ADD] | `backend/src/main/resources/db/migration/V6__create_identity_password_reset.sql` | Persistence (Flyway) | Creates `identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason. | DATA-AUTH-001, DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, BRULE-AUTH-004, ADA-008 |
+| P2 | [ADD] | `backend/src/main/resources/db/migration/V7__create_identity_password_reset.sql` | Persistence (Flyway) | Creates `identity.identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason. | DATA-AUTH-001, DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, BRULE-AUTH-004, ADA-008 |
 | P3 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetPolicy.java` | Domain | Single home of the 30-minute interaction lifetime. | FR-AUTH-017, BRULE-AUTH-004, SRS §3.1.1 |
 | P4 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetToken.java` | Domain | One issued interaction and the rule "usable = not consumed, not replaced, strictly before expiry". | FR-AUTH-017, FR-AUTH-018, DATA-AUTH-005, AC-07, AC-08, AC-09 |
 | P5 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetTokenHash.java` | Domain | SHA-256 hex digest of a reset secret; `toString()` never prints it. | DATA-AUTH-001, NFR-SEC-003 |
@@ -1241,7 +1315,7 @@ Every file this story adds or modifies, in implementation order. `P` = productio
 | T15 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java` | Test infrastructure — existing | Registers the recording sender as the `@Primary` instruction sender for Identity integration tests. | — |
 | T16 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityIntegrationTestSupport.java` | Test infrastructure — existing | Clears recorded instructions before each test; adds reset request/complete helpers. | — |
 | T17 | [MODIFY] | `backend/src/test/resources/application-test.properties` | Test configuration — existing | Mail and reset settings for the test profile; the recording sender means SMTP is never contacted. | — |
-| T18 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/persistence/PasswordResetSchemaIT.java` | PostgreSQL integration test | V6 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V5 with existing data. | DATA-AUTH-005, FR-AUTH-018, DoD §5 schema |
+| T18 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/persistence/PasswordResetSchemaIT.java` | PostgreSQL integration test | V7 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V6 with existing Sprint 1 data on a separate database. | DATA-AUTH-005, FR-AUTH-018, DoD §5 schema |
 | T19 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/PasswordResetApiIT.java` | HTTP/security integration test | Every AC path through the real filter chain and PostgreSQL, including secret-free logs and responses. | AC-01, AC-02, AC-04–AC-11, AC-13, AC-15, NFR-SEC-003 |
 | T20 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/ConcurrentPasswordResetIT.java` | Concurrency integration test | Competing completions, reset racing renewal, competing issuance — committed outcomes on real row locks. | AC-05, AC-07, AC-15, Sprint plan §11.1 concurrency |
 | T21 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/PasswordResetFailureIT.java` | Failure-injection integration test | A connection lost after the password change rolls the whole reset back; a failed issuance sends no email; both answer 503 and can be retried. | AC-13, AC-14, ERR-AUTH-002, ERR-DEP-001 |
@@ -1277,9 +1351,9 @@ Implement the steps in order; each one compiles on top of the previous ones. For
 
 **Why this dependency.** No outbound email infrastructure exists in the baseline. SMTP is a protocol, not a provider: the same adapter works with any SMTP service (a transactional email provider, a company relay, or Mailpit locally), so no provider SDK or account is selected here ([TECH] TD-S2-04). The version is managed by the Spring Boot 4.1.1 BOM, like every other starter.
 
-**Verified path at this stage:** `backend/pom.xml` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/pom.xml` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 37. Unique anchor in the current file: `<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 37. Unique anchor in the current file: `<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>`
 
 BEFORE
 
@@ -1313,33 +1387,37 @@ AFTER
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
 ```
 
-### Step P2 — [ADD] `V6__create_identity_password_reset.sql`
+### Step P2 — [ADD] `V7__create_identity_password_reset.sql`
 
 **Action:** [ADD]  
-**Path:** `backend/src/main/resources/db/migration/V6__create_identity_password_reset.sql`  
+**Path:** `backend/src/main/resources/db/migration/V7__create_identity_password_reset.sql`  
 **Layer:** Persistence (Flyway)
 
-**Purpose:** Creates `identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason.
+**Purpose:** Creates `identity.identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason.
 
 **Requirement references:** DATA-AUTH-001, DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, BRULE-AUTH-004, ADA-008
 
-**Dependencies:** V2 (`identity_account`), V5 (current revocation constraint)
+**Dependencies:** V6 (the `identity` schema holding the Sprint 1 tables), V2 (`identity.identity_account`), V5 (current revocation constraint)
 
 **How it works.** One row per issued interaction. Only the SHA-256 hash of the secret is stored, so a database reader cannot reset a password. `consumed_at` / `replaced_at` record the two ways an interaction can end, and a CHECK forbids both at once. The partial unique index `ux_identity_password_reset_open_per_account` is the database-level guarantee behind FR-AUTH-018: an account can never have two open interactions, even if a future code path skipped the account lock. The lifetime CHECK keeps any row from outliving 30 minutes.
 
-**Compatibility.** The migration only adds a table and widens one CHECK constraint; existing accounts, sessions and refresh tokens are untouched (proven by `PasswordResetSchemaIT.existingAccountsAndSessionsSurviveTheUpgradeFromV5`). V1–V5 are not edited.
+**Compatibility.** The migration only adds a table and widens one CHECK constraint; existing accounts, sessions and refresh tokens are untouched (proven by `PasswordResetSchemaIT.existingAccountsAndSessionsSurviveTheUpgradeFromV6`, which upgrades a separate database holding Sprint 1 data that V6 already moved into the `identity` schema). V1–V6 are not edited.
+
+**Ownership ([ARCH] AR-01, AR-04).** Every object is created in Identity's own `identity` schema, and the foreign key to `identity.identity_account` stays inside it. `PersistenceOwnershipSqlTest` rejects a migration that names a second schema or an unqualified table.
 
 **Complete file:**
 
 ```sql
 -- US-AUTH-005: persistent password-reset authority (ADA-008, DATA-AUTH-005).
+-- Owner: Identity. Every object is in the identity schema (AR-01); the foreign key
+-- stays inside it (AR-04). V6 created the schema and moved the Sprint 1 tables there.
 -- One row per issued interaction. Only the SHA-256 hash of its secret is stored.
 -- An interaction ends at most one way: consumed by an accepted reset, or replaced
 -- by a newer issuance (FR-AUTH-017, FR-AUTH-018). Expiry is enforced by comparing
 -- expires_at with the application clock.
-CREATE TABLE identity_password_reset (
+CREATE TABLE identity.identity_password_reset (
     id          UUID        PRIMARY KEY,
-    account_id  UUID        NOT NULL REFERENCES identity_account (id),
+    account_id  UUID        NOT NULL REFERENCES identity.identity_account (id),
     token_hash  TEXT        NOT NULL,
     issued_at   TIMESTAMPTZ NOT NULL,
     expires_at  TIMESTAMPTZ NOT NULL,
@@ -1360,16 +1438,16 @@ CREATE TABLE identity_password_reset (
 -- An account has at most one open (neither consumed nor replaced) interaction.
 -- Issuance replaces the open one before inserting, under the account row lock.
 CREATE UNIQUE INDEX ux_identity_password_reset_open_per_account
-    ON identity_password_reset (account_id)
+    ON identity.identity_password_reset (account_id)
     WHERE consumed_at IS NULL AND replaced_at IS NULL;
 
-CREATE INDEX ix_identity_password_reset_account ON identity_password_reset (account_id);
+CREATE INDEX ix_identity_password_reset_account ON identity.identity_password_reset (account_id);
 
 -- An accepted reset revokes every active session of the account with its own reason.
-ALTER TABLE identity_session
+ALTER TABLE identity.identity_session
     DROP CONSTRAINT ck_identity_session_revocation_reason;
 
-ALTER TABLE identity_session
+ALTER TABLE identity.identity_session
     ADD CONSTRAINT ck_identity_session_revocation_reason
         CHECK (revocation_reason IN ('LOGOUT', 'REFRESH_TOKEN_REUSE', 'PASSWORD_RESET'));
 ```
@@ -1537,11 +1615,11 @@ public record PasswordResetTokenHash(String value) {
 
 **Requirement references:** FR-AUTH-004, NFR-SEC-002, BRULE-AUTH-006
 
-**Dependencies:** V6 constraint
+**Dependencies:** V7 constraint
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/domain/RevocationReason.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/domain/RevocationReason.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 6. Unique anchor in the current file: `/** The user ended this session (US-AUTH-004, FR-AUTH-007). */`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 6. Unique anchor in the current file: `/** The user ended this session (US-AUTH-004, FR-AUTH-007). */`
 
 BEFORE
 
@@ -1582,9 +1660,9 @@ AFTER
 
 **Why locks belong in the port.** The application decides *when* the account must be held stable; the adapter decides *how* (`FOR SHARE` / `FOR UPDATE`). Keeping the method names business-meaningful (`lockCredentialAgainstChange`, `lockForCredentialChange`) keeps SQL out of the use cases (ADA-015).
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/ports/AccountRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/ports/AccountRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — repository baseline 1d0bc83, starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.application.ports;`
+**Change 1 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.application.ports;`
 
 BEFORE
 
@@ -1614,7 +1692,7 @@ import java.util.UUID;
 public interface AccountRepository {
 ```
 
-**Change 2 of 2** — repository baseline 1d0bc83, starting at line 19. Unique anchor in the current file: `boolean addIfEmailAvailable(Account account);`
+**Change 2 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 19. Unique anchor in the current file: `boolean addIfEmailAvailable(Account account);`
 
 BEFORE
 
@@ -1671,9 +1749,9 @@ AFTER
 
 **Dependencies:** `RevocationReason.PASSWORD_RESET`
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/ports/SessionRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/ports/SessionRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 26. Unique anchor in the current file: `*         already revoked or is not that account's session`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 26. Unique anchor in the current file: `*         already revoked or is not that account's session`
 
 BEFORE
 
@@ -2300,9 +2378,9 @@ public final class CompletePasswordResetService {
 
 **Sprint 1 behavior is unchanged** for every non-racing login: all `LoginApiIT`, `LogInServiceTest` and security tests still pass.
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/LogInService.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/LogInService.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — repository baseline 1d0bc83, starting at line 9. Unique anchor in the current file: `import com.capsuleai.identity.domain.Account;`
+**Change 1 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 9. Unique anchor in the current file: `import com.capsuleai.identity.domain.Account;`
 
 BEFORE
 
@@ -2331,7 +2409,7 @@ import com.capsuleai.identity.domain.ValueProblem;
 import java.time.Clock;
 ```
 
-**Change 2 of 2** — repository baseline 1d0bc83, starting at line 69. Unique anchor in the current file: `Instant accessTokenExpiresAt = SessionPolicy.accessTokenExpiresAt(now, session.expiresAt());`
+**Change 2 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 69. Unique anchor in the current file: `Instant accessTokenExpiresAt = SessionPolicy.accessTokenExpiresAt(now, session.expiresAt());`
 
 BEFORE
 
@@ -2381,9 +2459,9 @@ AFTER
 
 **Dependencies:** `AccountRepository` change
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcAccountRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcAccountRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 48. Unique anchor in the current file: `.query(JdbcAccountRepository::mapAccount)`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 48. Unique anchor in the current file: `.query(JdbcAccountRepository::mapAccount)`
 
 BEFORE
 
@@ -2409,7 +2487,7 @@ AFTER
     public Optional<PasswordHash> lockCredentialAgainstChange(UUID accountId) {
         return jdbc.sql("""
                         SELECT password_hash
-                        FROM identity_account
+                        FROM identity.identity_account
                         WHERE id = :id
                         FOR SHARE
                         """)
@@ -2422,7 +2500,7 @@ AFTER
     public boolean lockForCredentialChange(UUID accountId) {
         return jdbc.sql("""
                         SELECT id
-                        FROM identity_account
+                        FROM identity.identity_account
                         WHERE id = :id
                         FOR UPDATE
                         """)
@@ -2435,7 +2513,7 @@ AFTER
     @Override
     public void replacePasswordHash(UUID accountId, PasswordHash newPasswordHash) {
         int updated = jdbc.sql("""
-                        UPDATE identity_account
+                        UPDATE identity.identity_account
                         SET password_hash = :passwordHash
                         WHERE id = :id
                         """)
@@ -2467,9 +2545,9 @@ AFTER
 
 **Why `expires_at > :revokedAt`.** The SRS speaks of *active* Refresh Sessions. Sessions past their 30-day maximum are already unusable; leaving their history untouched avoids rewriting rows for no security benefit. Revoked-or-not, an expired session can never renew (`RefreshRotationPolicy`).
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcSessionRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcSessionRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 62. Unique anchor in the current file: `return updated == 1;`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 62. Unique anchor in the current file: `return updated == 1;`
 
 BEFORE
 
@@ -2494,7 +2572,7 @@ AFTER
     @Override
     public int revokeAllActiveForAccount(UUID accountId, RevocationReason reason, Instant revokedAt) {
         return jdbc.sql("""
-                        UPDATE identity_session
+                        UPDATE identity.identity_session
                         SET revoked_at = :revokedAt, revocation_reason = :reason
                         WHERE account_id = :accountId AND revoked_at IS NULL AND expires_at > :revokedAt
                         """)
@@ -2520,7 +2598,7 @@ AFTER
 
 **Requirement references:** DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018
 
-**Dependencies:** V6, `PasswordResetRepository`
+**Dependencies:** V7, `PasswordResetRepository`
 
 **Complete file:**
 
@@ -2549,7 +2627,7 @@ public final class JdbcPasswordResetRepository implements PasswordResetRepositor
     @Override
     public int replaceOpenTokens(UUID accountId, Instant replacedAt) {
         return jdbc.sql("""
-                        UPDATE identity_password_reset
+                        UPDATE identity.identity_password_reset
                         SET replaced_at = :replacedAt
                         WHERE account_id = :accountId AND consumed_at IS NULL AND replaced_at IS NULL
                         """)
@@ -2561,7 +2639,7 @@ public final class JdbcPasswordResetRepository implements PasswordResetRepositor
     @Override
     public void add(PasswordResetToken token, PasswordResetTokenHash hash) {
         jdbc.sql("""
-                        INSERT INTO identity_password_reset (id, account_id, token_hash, issued_at, expires_at)
+                        INSERT INTO identity.identity_password_reset (id, account_id, token_hash, issued_at, expires_at)
                         VALUES (:id, :accountId, :tokenHash, :issuedAt, :expiresAt)
                         """)
                 .param("id", token.id())
@@ -2576,7 +2654,7 @@ public final class JdbcPasswordResetRepository implements PasswordResetRepositor
     public Optional<PasswordResetToken> findByTokenHash(PasswordResetTokenHash hash) {
         return jdbc.sql("""
                         SELECT id, account_id, issued_at, expires_at, consumed_at, replaced_at
-                        FROM identity_password_reset
+                        FROM identity.identity_password_reset
                         WHERE token_hash = :tokenHash
                         """)
                 .param("tokenHash", hash.value())
@@ -2588,7 +2666,7 @@ public final class JdbcPasswordResetRepository implements PasswordResetRepositor
     public Optional<PasswordResetToken> lockByTokenHash(PasswordResetTokenHash hash) {
         return jdbc.sql("""
                         SELECT id, account_id, issued_at, expires_at, consumed_at, replaced_at
-                        FROM identity_password_reset
+                        FROM identity.identity_password_reset
                         WHERE token_hash = :tokenHash
                         FOR UPDATE
                         """)
@@ -2600,7 +2678,7 @@ public final class JdbcPasswordResetRepository implements PasswordResetRepositor
     @Override
     public void consume(UUID tokenId, Instant consumedAt) {
         int updated = jdbc.sql("""
-                        UPDATE identity_password_reset
+                        UPDATE identity.identity_password_reset
                         SET consumed_at = :consumedAt
                         WHERE id = :id AND consumed_at IS NULL AND replaced_at IS NULL
                         """)
@@ -2980,9 +3058,9 @@ public record PasswordResetRequestedResponse(String code, String detail) {
 
 **No new controller.** Recovery shares the `/api/v1/auth` base path and the authentication responsibility, so it joins `AuthController` (backend conventions §1, TD-27). Each handler calls only its own use case.
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/in/web/AuthController.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/in/web/AuthController.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 3** — repository baseline 1d0bc83, starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.adapter.in.web;`
+**Change 1 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.adapter.in.web;`
 
 BEFORE
 
@@ -3021,7 +3099,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 ```
 
-**Change 2 of 3** — repository baseline 1d0bc83, starting at line 27. Unique anchor in the current file: `private final RegisterAccountService registerAccountService;`
+**Change 2 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 27. Unique anchor in the current file: `private final RegisterAccountService registerAccountService;`
 
 BEFORE
 
@@ -3076,7 +3154,7 @@ AFTER
     @PostMapping("/registrations")
 ```
 
-**Change 3 of 3** — repository baseline 1d0bc83, starting at line 63. Unique anchor in the current file: `@PostMapping("/refresh")`
+**Change 3 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 63. Unique anchor in the current file: `@PostMapping("/refresh")`
 
 BEFORE
 
@@ -3132,9 +3210,9 @@ AFTER
 
 **Dependencies:** `PasswordResetRejectedException`
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/in/web/IdentityApiExceptionHandler.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/in/web/IdentityApiExceptionHandler.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — repository baseline 1d0bc83, starting at line 3. Unique anchor in the current file: `import com.capsuleai.identity.application.AuthenticationRequiredException;`
+**Change 1 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 3. Unique anchor in the current file: `import com.capsuleai.identity.application.AuthenticationRequiredException;`
 
 BEFORE
 
@@ -3163,7 +3241,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 ```
 
-**Change 2 of 2** — repository baseline 1d0bc83, starting at line 59. Unique anchor in the current file: `return respond(problem(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED",`
+**Change 2 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 59. Unique anchor in the current file: `return respond(problem(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED",`
 
 BEFORE
 
@@ -3363,9 +3441,9 @@ public class IdentityPasswordResetConfiguration {
 
 **Why one matcher.** The same `PUBLIC_ENDPOINTS` feeds `permitAll()` and `PublicEndpointAwareBearerTokenResolver`. A client that attaches an expired access token to every request can therefore still recover access (`PasswordResetApiIT.aStaleBearerHeaderDoesNotBlockRecovery`). Every other route keeps the default-deny rule.
 
-**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 41. Unique anchor in the current file: `* Operations anyone may call. Renewal is public because the refresh token in`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 41. Unique anchor in the current file: `* Operations anyone may call. Renewal is public because the refresh token in`
 
 BEFORE
 
@@ -3421,9 +3499,9 @@ AFTER
 
 **Dependencies:** Mail starter
 
-**Verified path at this stage:** `backend/src/main/resources/application.properties` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/resources/application.properties` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 11. Unique anchor in the current file: `# Browser origins that may call the API cross-origin (CORS): comma-separated`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 11. Unique anchor in the current file: `# Browser origins that may call the API cross-origin (CORS): comma-separated`
 
 BEFORE
 
@@ -3464,9 +3542,9 @@ spring.mail.properties.mail.smtp.writetimeout=5000
 
 **Dependencies:** `compose.yaml` Mailpit service
 
-**Verified path at this stage:** `backend/src/main/resources/application-local.properties` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/main/resources/application-local.properties` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 10. Unique anchor in the current file: `capsuleai.identity.access-token.signing-secret=${CAPSULE_JWT_SIGNING_SECRET}`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 10. Unique anchor in the current file: `capsuleai.identity.access-token.signing-secret=${CAPSULE_JWT_SIGNING_SECRET}`
 
 BEFORE
 
@@ -3512,9 +3590,9 @@ capsuleai.identity.password-reset.instruction-link=${CAPSULE_PASSWORD_RESET_LINK
 
 **Dependencies:** Docker
 
-**Verified path at this stage:** `compose.yaml` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `compose.yaml` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 20. Unique anchor in the current file: `interval: 5s`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 20. Unique anchor in the current file: `interval: 5s`
 
 BEFORE
 
@@ -3559,9 +3637,9 @@ volumes:
 
 **Dependencies:** `IdentityOpenApiContractIT` enforces it
 
-**Verified path at this stage:** `docs/05-api/openapi.yaml` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `docs/05-api/openapi.yaml` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 7** — repository baseline 1d0bc83, starting at line 1. Unique anchor in the current file: `openapi: 3.1.0`
+**Change 1 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 1. Unique anchor in the current file: `openapi: 3.1.0`
 
 BEFORE
 
@@ -3609,7 +3687,7 @@ info:
       - Access tokens last at most 15 minutes.
 ```
 
-**Change 2 of 7** — repository baseline 1d0bc83, starting at line 22. Unique anchor in the current file: `- Refresh tokens are opaque, rotated after successful use,`
+**Change 2 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 22. Unique anchor in the current file: `- Refresh tokens are opaque, rotated after successful use,`
 
 BEFORE
 
@@ -3646,7 +3724,7 @@ AFTER
     be reached: the credential was not found invalid and the
 ```
 
-**Change 3 of 7** — repository baseline 1d0bc83, starting at line 37. Unique anchor in the current file: `configured to allow (see "Browser access (CORS)" in the`
+**Change 3 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 37. Unique anchor in the current file: `configured to allow (see "Browser access (CORS)" in the`
 
 BEFORE
 
@@ -3676,7 +3754,7 @@ servers:
   - url: http://localhost:8080
 ```
 
-**Change 4 of 7** — repository baseline 1d0bc83, starting at line 360. Unique anchor in the current file: `components:`
+**Change 4 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 360. Unique anchor in the current file: `components:`
 
 BEFORE
 
@@ -3875,7 +3953,7 @@ components:
       type: http
 ```
 
-**Change 5 of 7** — repository baseline 1d0bc83, starting at line 600. Unique anchor in the current file: `At this instant the session becomes unusable.`
+**Change 5 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 600. Unique anchor in the current file: `At this instant the session becomes unusable.`
 
 BEFORE
 
@@ -3964,7 +4042,7 @@ AFTER
       required:
 ```
 
-**Change 6 of 7** — repository baseline 1d0bc83, starting at line 687. Unique anchor in the current file: `- "VALIDATION_FAILED"`
+**Change 6 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 687. Unique anchor in the current file: `- "VALIDATION_FAILED"`
 
 BEFORE
 
@@ -3993,7 +4071,7 @@ AFTER
           type: array
 ```
 
-**Change 7 of 7** — repository baseline 1d0bc83, starting at line 697. Unique anchor in the current file: `validation.`
+**Change 7 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 697. Unique anchor in the current file: `validation.`
 
 BEFORE
 
@@ -4043,9 +4121,9 @@ AFTER
 
 **Dependencies:** Test classes below
 
-**Verified path at this stage:** `.github/workflows/backend-ci.yml` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `.github/workflows/backend-ci.yml` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 59. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 11`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 66. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 11`
 
 BEFORE
 
@@ -4099,9 +4177,9 @@ AFTER
 
 **Dependencies:** None
 
-**Verified path at this stage:** `backend/README.md` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/README.md` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 6** — repository baseline 1d0bc83, starting at line 5. Unique anchor in the current file: `CapsuleAI helps users understand their wardrobe, choose outfits and evaluate wardrobe improvements. This backend is its Java/Spring Boot business core, organized as one **Modular Monolith**.`
+**Change 1 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 5. Unique anchor in the current file: `CapsuleAI helps users understand their wardrobe, choose outfits and evaluate wardrobe improvements. This backend is its Java/Spring Boot business core, organized as one **Modular Monolith**.`
 
 BEFORE
 
@@ -4131,7 +4209,7 @@ The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** th
 Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/maven-wrapper.properties), [Compose](../compose.yaml) and Boot's [4.1.1 dependency BOM](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom).
 ```
 
-**Change 2 of 6** — repository baseline 1d0bc83, starting at line 16. Unique anchor in the current file: `| Java | 21 | Compilation/runtime |`
+**Change 2 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 16. Unique anchor in the current file: `| Java | 21 | Compilation/runtime |`
 
 BEFORE
 
@@ -4161,7 +4239,7 @@ AFTER
 | JUnit Jupiter | 6.0.3 | Test execution |
 ```
 
-**Change 3 of 6** — repository baseline 1d0bc83, starting at line 217. Unique anchor in the current file: `A new secret on each start only invalidates earlier access tokens, which is fine for development. Never commit or share the value.`
+**Change 3 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 226. Unique anchor in the current file: `A new secret on each start only invalidates earlier access tokens, which is fine for development. Never commit or share the value.`
 
 BEFORE
 
@@ -4208,7 +4286,7 @@ Choose **one** startup method in that terminal.
 **Maven plugin:**
 ````
 
-**Change 4 of 6** — repository baseline 1d0bc83, starting at line 255. Unique anchor in the current file: `$env:CAPSULE_DB_USER = $null`
+**Change 4 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 264. Unique anchor in the current file: `$env:CAPSULE_DB_USER = $null`
 
 BEFORE
 
@@ -4236,7 +4314,51 @@ $mailPassword = $null
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
 ````
 
-**Change 5 of 6** — repository baseline 1d0bc83, starting at line 409. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 5 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 304. Unique anchor in the current file: `## 10. Database migrations`
+
+BEFORE
+
+````markdown
+## 10. Database migrations
+
+The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
+
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
+```
+
+Expect successful rows for versions `1` to `6`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+
+```powershell
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
+```
+````
+
+AFTER
+
+````markdown
+## 10. Database migrations
+
+The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
+
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset` and the `PASSWORD_RESET` session-revocation reason. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
+```
+
+Expect successful rows for versions `1` to `7`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+
+```powershell
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
+```
+````
+
+**Change 6 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 435. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
@@ -4247,7 +4369,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Password recovery, Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented.
 
-Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
+Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
 After normal foundation handoff, follow **Backlog Refinement → Sprint Planning → selected-story JIT design and automated implementation**. Add only needed APIs/data detail/interaction/state models. Do not predesign the whole MVP or duplicate baseline decisions into ADR files; ADA/Selected Decisions already record them.
 ```
@@ -4261,12 +4383,12 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider.
 
-Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
+Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
 After normal foundation handoff, follow **Backlog Refinement → Sprint Planning → selected-story JIT design and automated implementation**. Add only needed APIs/data detail/interaction/state models. Do not predesign the whole MVP or duplicate baseline decisions into ADR files; ADA/Selected Decisions already record them.
 ```
 
-**Change 6 of 6** — repository baseline 1d0bc83, starting at line 429. Unique anchor in the current file: `| Port 8080/5433 occupied | Identify its owner; stop your own earlier instance or consistently change database port/application URL. Do not kill unknown processes. |`
+**Change 7 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 455. Unique anchor in the current file: `| Port 8080/5433 occupied | Identify its owner; stop your own earlier instance or consistently change database port/application URL. Do not kill unknown processes. |`
 
 BEFORE
 
@@ -4449,9 +4571,9 @@ class PasswordResetTokenHashTest {
 
 **Dependencies:** Step P7
 
-**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/InMemoryAccountRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/InMemoryAccountRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — repository baseline 1d0bc83, starting at line 2. Unique anchor in the current file: `import com.capsuleai.identity.application.ports.AccountRepository;`
+**Change 1 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 2. Unique anchor in the current file: `import com.capsuleai.identity.application.ports.AccountRepository;`
 
 BEFORE
 
@@ -4487,7 +4609,7 @@ import java.util.UUID;
 final class InMemoryAccountRepository implements AccountRepository {
 ```
 
-**Change 2 of 2** — repository baseline 1d0bc83, starting at line 22. Unique anchor in the current file: `public synchronized Optional<Account> findByEmail(EmailAddress email) {`
+**Change 2 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 22. Unique anchor in the current file: `public synchronized Optional<Account> findByEmail(EmailAddress email) {`
 
 BEFORE
 
@@ -4548,9 +4670,9 @@ AFTER
 
 **Dependencies:** Step P8
 
-**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/InMemorySessionRepository.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/InMemorySessionRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 41. Unique anchor in the current file: `session.establishedAt(), session.expiresAt(), revokedAt, reason));`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 41. Unique anchor in the current file: `session.establishedAt(), session.expiresAt(), revokedAt, reason));`
 
 BEFORE
 
@@ -5228,9 +5350,9 @@ class CompletePasswordResetServiceTest {
 
 **Dependencies:** Step P20
 
-**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/LogInServiceTest.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/application/LogInServiceTest.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 2** — repository baseline 1d0bc83, starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.application;`
+**Change 1 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 1. Unique anchor in the current file: `package com.capsuleai.identity.application;`
 
 BEFORE
 
@@ -5262,7 +5384,7 @@ import com.capsuleai.identity.support.MutableClock;
 import java.text.Normalizer;
 ```
 
-**Change 2 of 2** — repository baseline 1d0bc83, starting at line 140. Unique anchor in the current file: `assertThat(service.logIn(new LogInCommand("minimal@example.com", PASSWORD)).accountId())`
+**Change 2 of 2** — Stage 0 (corrected Sprint 1 baseline), starting at line 140. Unique anchor in the current file: `assertThat(service.logIn(new LogInCommand("minimal@example.com", PASSWORD)).accountId())`
 
 BEFORE
 
@@ -5619,9 +5741,9 @@ class PasswordResetPropertiesTest {
 
 **Dependencies:** Step T7
 
-**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 27. Unique anchor in the current file: `MutableClock mutableClock() {`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 27. Unique anchor in the current file: `MutableClock mutableClock() {`
 
 BEFORE
 
@@ -5668,9 +5790,9 @@ AFTER
 
 **Dependencies:** Step T15
 
-**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/support/IdentityIntegrationTestSupport.java` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/support/IdentityIntegrationTestSupport.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 3** — repository baseline 1d0bc83, starting at line 34. Unique anchor in the current file: `public abstract class IdentityIntegrationTestSupport {`
+**Change 1 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 34. Unique anchor in the current file: `public abstract class IdentityIntegrationTestSupport {`
 
 BEFORE
 
@@ -5701,7 +5823,7 @@ public abstract class IdentityIntegrationTestSupport {
     private static final JsonMapper JSON = JsonMapper.builder().build();
 ```
 
-**Change 2 of 3** — repository baseline 1d0bc83, starting at line 52. Unique anchor in the current file: `protected MutableClock clock;`
+**Change 2 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 52. Unique anchor in the current file: `protected MutableClock clock;`
 
 BEFORE
 
@@ -5713,10 +5835,10 @@ BEFORE
     @BeforeEach
     protected void resetIdentityState() {
         clock.setInstant(MutableClock.DEFAULT_START);
+        // Every table Identity owns lives in its own schema (AR-01), so this also
+        // covers tables added by later Identity migrations.
         List<String> identityTables = jdbc.sql("""
-                        SELECT tablename
-                        FROM pg_tables
-                        WHERE schemaname = 'public' AND tablename LIKE 'identity%'
+                        SELECT format('%I.%I', schemaname, tablename)
 ```
 
 AFTER
@@ -5733,13 +5855,13 @@ AFTER
     protected void resetIdentityState() {
         clock.setInstant(MutableClock.DEFAULT_START);
         passwordResetInstructions.clear();
+        // Every table Identity owns lives in its own schema (AR-01), so this also
+        // covers tables added by later Identity migrations.
         List<String> identityTables = jdbc.sql("""
-                        SELECT tablename
-                        FROM pg_tables
-                        WHERE schemaname = 'public' AND tablename LIKE 'identity%'
+                        SELECT format('%I.%I', schemaname, tablename)
 ```
 
-**Change 3 of 3** — repository baseline 1d0bc83, starting at line 140. Unique anchor in the current file: `return UUID.fromString(JsonPath.read(body, "$.sessionId"));`
+**Change 3 of 3** — Stage 0 (corrected Sprint 1 baseline), starting at line 142. Unique anchor in the current file: `return UUID.fromString(JsonPath.read(body, "$.sessionId"));`
 
 BEFORE
 
@@ -5790,9 +5912,9 @@ AFTER
 
 **Dependencies:** Step P33
 
-**Verified path at this stage:** `backend/src/test/resources/application-test.properties` (repository baseline 1d0bc83). Apply every change below; everything outside the shown hunks stays exactly as it is.
+**Verified path at this stage:** `backend/src/test/resources/application-test.properties` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
-**Change 1 of 1** — repository baseline 1d0bc83, starting at line 1. Unique anchor in the current file: `# Disposable, test-only access-token signing key (Base64 of a fixed 43-byte phrase).`
+**Change 1 of 1** — Stage 0 (corrected Sprint 1 baseline), starting at line 1. Unique anchor in the current file: `# Disposable, test-only access-token signing key (Base64 of a fixed 43-byte phrase).`
 
 BEFORE
 
@@ -5824,7 +5946,7 @@ capsuleai.identity.password-reset.instruction-link=capsuleai://reset-password
 **Path:** `backend/src/test/java/com/capsuleai/identity/adapter/out/persistence/PasswordResetSchemaIT.java`  
 **Layer:** PostgreSQL integration test
 
-**Purpose:** V6 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V5 with existing data.
+**Purpose:** V7 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V6 with existing Sprint 1 data on a separate database.
 
 **Requirement references:** DATA-AUTH-005, FR-AUTH-018, DoD §5 schema
 
@@ -5835,17 +5957,19 @@ capsuleai.identity.password-reset.instruction-link=capsuleai://reset-password
 ```java
 package com.capsuleai.identity.adapter.out.persistence;
 
+import com.capsuleai.foundation.IsolatedMigrationDatabase;
 import com.capsuleai.identity.domain.PasswordResetTokenHash;
 import com.capsuleai.identity.support.IdentityIntegrationTestSupport;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
-import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -5853,19 +5977,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
 
     private static final Instant ISSUED = Instant.parse("2026-01-05T08:00:00Z");
-    private static final String TRANSITION_SCHEMA = "identity_transition_v6";
+    private static final String PASSWORD_RESET_VERSION = "7";
 
     @Autowired
     private Flyway flyway;
 
     @Autowired
-    private DataSource dataSource;
+    private PostgreSQLContainer server;
 
     @Test
     void passwordResetMigrationIsApplied() {
         assertThat(flyway.info().applied())
                 .extracting(migration -> migration.getVersion().getVersion())
-                .contains("6");
+                .contains(PASSWORD_RESET_VERSION);
         assertThat(flyway.info().pending()).isEmpty();
     }
 
@@ -5892,7 +6016,7 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
         UUID resetId = insertReset(insertAccount(), hash("one-outcome"), ISSUED, ISSUED.plus(Duration.ofMinutes(30)));
 
         assertThatThrownBy(() -> jdbc.sql("""
-                        UPDATE identity_password_reset SET consumed_at = :at, replaced_at = :at WHERE id = :id
+                        UPDATE identity.identity_password_reset SET consumed_at = :at, replaced_at = :at WHERE id = :id
                         """)
                 .param("at", ISSUED.plusSeconds(60).atOffset(ZoneOffset.UTC))
                 .param("id", resetId)
@@ -5908,7 +6032,7 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
         assertThatThrownBy(() -> insertReset(accountId, hash("second"), ISSUED, ISSUED.plus(Duration.ofMinutes(30))))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-        jdbc.sql("UPDATE identity_password_reset SET replaced_at = :at WHERE id = :id")
+        jdbc.sql("UPDATE identity.identity_password_reset SET replaced_at = :at WHERE id = :id")
                 .param("at", ISSUED.plusSeconds(1).atOffset(ZoneOffset.UTC))
                 .param("id", first)
                 .update();
@@ -5919,62 +6043,53 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
     void passwordResetIsAnAcceptedSessionRevocationReason() {
         UUID sessionId = insertSession(insertAccount());
 
-        jdbc.sql("UPDATE identity_session SET revoked_at = :at, revocation_reason = 'PASSWORD_RESET' WHERE id = :id")
+        jdbc.sql("UPDATE identity.identity_session SET revoked_at = :at, revocation_reason = 'PASSWORD_RESET' WHERE id = :id")
                 .param("at", ISSUED.plusSeconds(60).atOffset(ZoneOffset.UTC))
                 .param("id", sessionId)
                 .update();
 
-        assertThat(jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        assertThat(jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId).query(String.class).single()).isEqualTo("PASSWORD_RESET");
     }
 
+    /**
+     * A database in the state before this story (Sprint 1 data, already moved into the
+     * identity schema by V6) is upgraded by exactly the password-reset migration.
+     */
     @Test
-    void existingAccountsAndSessionsSurviveTheUpgradeFromV5() {
-        try {
-            migrateTransitionSchema("5");
+    void existingAccountsAndSessionsSurviveTheUpgradeFromV6() {
+        try (IsolatedMigrationDatabase database = IsolatedMigrationDatabase.create(server, jdbc)) {
+            database.migrateTo("6");
+            JdbcClient existing = database.jdbc();
             UUID accountId = UUID.randomUUID();
             UUID activeSessionId = UUID.randomUUID();
             UUID loggedOutSessionId = UUID.randomUUID();
-            jdbc.sql("INSERT INTO " + TRANSITION_SCHEMA + ".identity_account (id, email, password_hash, created_at) "
+            existing.sql("INSERT INTO identity.identity_account (id, email, password_hash, created_at) "
                             + "VALUES (:id, 'existing@example.com', '{test}hash', now())")
                     .param("id", accountId).update();
             for (UUID sessionId : new UUID[] {activeSessionId, loggedOutSessionId}) {
-                jdbc.sql("INSERT INTO " + TRANSITION_SCHEMA + ".identity_session "
-                                + "(id, account_id, established_at, expires_at) "
+                existing.sql("INSERT INTO identity.identity_session (id, account_id, established_at, expires_at) "
                                 + "VALUES (:id, :accountId, now(), now() + INTERVAL '1 day')")
                         .param("id", sessionId).param("accountId", accountId).update();
             }
-            jdbc.sql("UPDATE " + TRANSITION_SCHEMA + ".identity_session "
+            existing.sql("UPDATE identity.identity_session "
                             + "SET revoked_at = now(), revocation_reason = 'LOGOUT' WHERE id = :id")
                     .param("id", loggedOutSessionId).update();
 
-            migrateTransitionSchema(null);
+            assertThat(database.migrateTo(PASSWORD_RESET_VERSION).migrationsExecuted).isOne();
 
-            assertThat(jdbc.sql("SELECT password_hash FROM " + TRANSITION_SCHEMA + ".identity_account WHERE id = :id")
+            assertThat(existing.sql("SELECT password_hash FROM identity.identity_account WHERE id = :id")
                     .param("id", accountId).query(String.class).single()).isEqualTo("{test}hash");
-            assertThat(jdbc.sql("SELECT revocation_reason FROM " + TRANSITION_SCHEMA
-                            + ".identity_session WHERE id = :id")
+            assertThat(existing.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                     .param("id", loggedOutSessionId).query(String.class).single()).isEqualTo("LOGOUT");
-            jdbc.sql("UPDATE " + TRANSITION_SCHEMA + ".identity_session "
+            existing.sql("UPDATE identity.identity_session "
                             + "SET revoked_at = now(), revocation_reason = 'PASSWORD_RESET' WHERE id = :id")
                     .param("id", activeSessionId).update();
-            assertThat(jdbc.sql("SELECT count(*) FROM " + TRANSITION_SCHEMA + ".identity_password_reset")
+            assertThat(existing.sql("SELECT count(*) FROM identity.identity_password_reset")
                     .query(Long.class).single()).isZero();
-        } finally {
-            jdbc.sql("DROP SCHEMA IF EXISTS " + TRANSITION_SCHEMA + " CASCADE").update();
+            assertThat(existing.sql("SELECT to_regclass('public.identity_password_reset') IS NULL")
+                    .query(Boolean.class).single()).as("nothing created in Flyway's default schema").isTrue();
         }
-    }
-
-    /** Runs the real migration files into a scratch schema, up to {@code target} (null = latest). */
-    private void migrateTransitionSchema(String target) {
-        var configuration = Flyway.configure()
-                .dataSource(dataSource)
-                .schemas(TRANSITION_SCHEMA)
-                .locations("classpath:db/migration");
-        if (target != null) {
-            configuration.target(target);
-        }
-        configuration.load().migrate();
     }
 
     private static String hash(String rawSecret) {
@@ -5984,7 +6099,7 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertAccount() {
         UUID accountId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, created_at)
                         VALUES (:id, :email, '{test}hash', now())
                         """)
                 .param("id", accountId)
@@ -5996,7 +6111,7 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertSession(UUID accountId) {
         UUID sessionId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_session (id, account_id, established_at, expires_at)
+                        INSERT INTO identity.identity_session (id, account_id, established_at, expires_at)
                         VALUES (:id, :accountId, :establishedAt, :expiresAt)
                         """)
                 .param("id", sessionId)
@@ -6010,7 +6125,7 @@ class PasswordResetSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertReset(UUID accountId, String tokenHash, Instant issuedAt, Instant expiresAt) {
         UUID resetId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_password_reset (id, account_id, token_hash, issued_at, expires_at)
+                        INSERT INTO identity.identity_password_reset (id, account_id, token_hash, issued_at, expires_at)
                         VALUES (:id, :accountId, :tokenHash, :issuedAt, :expiresAt)
                         """)
                 .param("id", resetId)
@@ -6140,7 +6255,7 @@ class PasswordResetApiIT extends IdentityIntegrationTestSupport {
             getProtectedProbe(revoked.accessToken()).andExpect(status().isUnauthorized());
             postJson(REFRESH, Map.of("refreshToken", revoked.refreshToken())).andExpect(status().isUnauthorized());
         }
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_session WHERE revocation_reason = 'PASSWORD_RESET'")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revocation_reason = 'PASSWORD_RESET'")
                 .query(Long.class).single()).isEqualTo(2);
         assertThat(logIn("person@example.com", NEW_PASSWORD).accountId()).isEqualTo(accountId);
     }
@@ -6353,7 +6468,7 @@ class ConcurrentPasswordResetIT extends IdentityIntegrationTestSupport {
                         .andExpect(status().isUnauthorized());
             }
         }
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_password_reset WHERE consumed_at IS NOT NULL")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_password_reset WHERE consumed_at IS NOT NULL")
                 .query(Long.class).single()).isOne();
     }
 
@@ -6372,7 +6487,7 @@ class ConcurrentPasswordResetIT extends IdentityIntegrationTestSupport {
                 () -> refreshSessionService.renew(new RenewSessionCommand(login.refreshToken()))));
 
         assertThat(outcomes.get(0)).isEqualTo("reset completed");
-        assertThat(jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        assertThat(jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId).query(String.class).single()).isEqualTo("PASSWORD_RESET");
         if (outcomes.get(1) instanceof SessionTokens renewed) {
             // Renewal committed first; the reset then revoked the session the new tokens belong to.
@@ -6397,7 +6512,7 @@ class ConcurrentPasswordResetIT extends IdentityIntegrationTestSupport {
 
         assertThat(outcomes).containsOnly("requested");
         assertThat(jdbc.sql("""
-                        SELECT count(*) FROM identity_password_reset
+                        SELECT count(*) FROM identity.identity_password_reset
                         WHERE consumed_at IS NULL AND replaced_at IS NULL
                         """)
                 .query(Long.class).single()).isOne();
@@ -6637,7 +6752,7 @@ class PasswordResetFailureIT extends IdentityIntegrationTestSupport {
         getProtectedProbe(tokens.accessToken()).andExpect(status().isOk());
         logIn("rollback@example.com", PASSWORD);
         postJson(PASSWORD_RESET_CHECK, Map.of("token", resetToken)).andExpect(status().isNoContent());
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_password_reset WHERE consumed_at IS NOT NULL")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_password_reset WHERE consumed_at IS NOT NULL")
                 .query(Long.class).single()).isZero();
 
         completePasswordReset(resetToken, NEW_PASSWORD).andExpect(status().isNoContent());
@@ -6653,7 +6768,7 @@ class PasswordResetFailureIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"));
         assertThat(passwordResetInstructions.sent()).isEmpty();
-        assertThat(countRows("identity_password_reset")).isZero();
+        assertThat(countRows("identity.identity_password_reset")).isZero();
 
         String resetToken = requestPasswordResetToken("issuance-failure@example.com");
         postJson(PASSWORD_RESET_CHECK, Map.of("token", resetToken)).andExpect(status().isNoContent());
@@ -6801,7 +6916,7 @@ class PasswordResetLoginRaceIT extends IdentityIntegrationTestSupport {
         pausingPasswordHasher.release();
 
         assertThat(pausedLogin.get(30, TimeUnit.SECONDS)).isInstanceOf(InvalidCredentialsException.class);
-        assertThat(countRows("identity_session")).isZero();
+        assertThat(countRows("identity.identity_session")).isZero();
         postJson(LOGIN, Map.of("email", "race@example.com", "password", OLD_PASSWORD))
                 .andExpect(status().isUnauthorized());
         logIn("race@example.com", NEW_PASSWORD);
@@ -6984,7 +7099,7 @@ Set-Location 'D:\CapsuleAI\backend'
 
 Expected after this story (measured by the guide author in the scratch copy at Stage 1, plus the later full four-stage run): every Surefire and Failsafe suite passes with zero failures, errors and skips. Read your actual counts from `target\surefire-reports` and `target\failsafe-reports`. The CI guard requires each new report with at least the count listed in Step P40.
 
-**Regression to re-run after this stage:** all existing Identity suites (`RegistrationApiIT`, `LoginApiIT`, `LogoutApiIT`, `SessionRefreshApiIT`, `AccessTokenSecurityIT`, `SessionAuthorityOutageIT`, `CorsSecurityIT`, `IdentityOpenApiContractIT`, schema and concurrency ITs, `ArchitectureDependencyTest`). They are part of `clean verify`; `IdentityOpenApiContractIT` now also enforces the three new operations.
+**Regression to re-run after this stage:** all existing Identity suites (`RegistrationApiIT`, `LoginApiIT`, `LogoutApiIT`, `SessionRefreshApiIT`, `AccessTokenSecurityIT`, `SessionAuthorityOutageIT`, `CorsSecurityIT`, `IdentityOpenApiContractIT`, schema and concurrency ITs including `IdentitySchemaRelocationIT`, `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`). They are part of `clean verify`; `IdentityOpenApiContractIT` now also enforces the three new operations.
 
 
 ---
@@ -7050,8 +7165,8 @@ try { Invoke-RestMethod -Method Post -Uri "$base/password-reset/complete" -Conte
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
-docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT r.issued_at, r.expires_at, r.consumed_at, r.replaced_at FROM identity_password_reset r JOIN identity_account a ON a.id = r.account_id WHERE a.email = 'reset.demo@example.com' ORDER BY r.issued_at;"
-docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT s.established_at, s.revoked_at, s.revocation_reason FROM identity_session s JOIN identity_account a ON a.id = s.account_id WHERE a.email = 'reset.demo@example.com' ORDER BY s.established_at;"
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT r.issued_at, r.expires_at, r.consumed_at, r.replaced_at FROM identity.identity_password_reset r JOIN identity.identity_account a ON a.id = r.account_id WHERE a.email = 'reset.demo@example.com' ORDER BY r.issued_at;"
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT s.established_at, s.revoked_at, s.revocation_reason FROM identity.identity_session s JOIN identity.identity_account a ON a.id = s.account_id WHERE a.email = 'reset.demo@example.com' ORDER BY s.established_at;"
 ```
 
 Expected: one consumed interaction, older ones replaced; the two old sessions `PASSWORD_RESET`, the newest session not revoked. The `token_hash` column holds a 64-character hash, never the link's secret.
@@ -7094,7 +7209,7 @@ Expected: one consumed interaction, older ones replaced; the two old sessions `P
 | FR-AUTH-015, BRULE-AUTH-003 | AC-10, AC-11 | Length boundaries; exact Unicode value | `CompletePasswordResetServiceTest`, `PasswordResetApiIT` | `aPolicyBreakingPasswordIsRejectedAndLeavesTheInteractionUsable`, `passwordsAtTheLengthBoundariesAreAccepted`, `theExactUnicodePasswordWithSpacesAuthenticatesAndAlteredFormsDoNot` | Unit / HTTP IT |
 | ERR-DEP-001, ERR-AUTH-002 | AC-13, AC-14 | Delivery and persistence failures | `SmtpPasswordResetInstructionSenderIT`, `AsyncPasswordResetInstructionSenderTest`, `PasswordResetFailureIT` | `anUnreachableMailServerIsLoggedAndNeverThrown`, `aFailingDeliveryIsLoggedWithoutTheSecretAndNeverReachesTheCaller`, `aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`, `anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried` | SMTP IT / unit / failure IT |
 | NFR-SEC-003 | — | No secret in responses or logs | `PasswordResetApiIT` | `secretsNeverAppearInResponsesOrLogs` | HTTP IT |
-| DATA-AUTH-005, DoD §5 schema | — | V6 constraints; V5 → V6 upgrade with data | `PasswordResetSchemaIT` | all 7 methods | PostgreSQL IT |
+| DATA-AUTH-005, DoD §5 schema | — | V7 constraints; V6 → V7 upgrade with data on a separate database | `PasswordResetSchemaIT` | all 7 methods | PostgreSQL IT |
 | FR-AUTH-003 (public access) | AC-01 | Stale bearer header ignored | `PasswordResetApiIT` | `aStaleBearerHeaderDoesNotBlockRecovery` | Security IT |
 | DoD §5 API contract | — | OpenAPI matches handlers, schemas and required fields | `IdentityOpenApiContractIT` | all 5 methods | Contract IT |
 | ADA-015 | — | Framework-free domain/application, adapter independence | `ArchitectureDependencyTest` | all methods | Architecture |
@@ -7103,7 +7218,7 @@ Expected: one consumed interaction, older ones replaced; the two old sessions `P
 
 The project's common Definition of Done, verbatim:
 
-**Source:** [definition-of-done.md — 4. Common Definition of Done](../../../definition-of-done.md#4-common-definition-of-done) · lines 27–45 at `1d0bc83`
+**Source:** [definition-of-done.md — 4. Common Definition of Done](../../../definition-of-done.md#4-common-definition-of-done) · lines 27–45 at Stage 0
 
 > ## 4. Common Definition of Done
 >
@@ -7125,7 +7240,7 @@ The project's common Definition of Done, verbatim:
 >
 > Privacy, recovery, accessibility and other applicable constraints accompany each delivered capability. Later cross-MVP verification PBIs extend evidence; their backlog position does not postpone those obligations.
 
-Triggered conditional criteria: **HTTP API contract changes** (OpenAPI v0.5.0, contract IT), **database schema changes** (V6 + upgrade test), **authorization/sensitive-data** (secrets, revocation, minimal disclosure), **reliability/concurrency** (race and failure tests), **runnable software/configuration** (mail settings, Mailpit).
+Triggered conditional criteria: **HTTP API contract changes** (OpenAPI v0.5.0, contract IT), **database schema changes** (V7 + upgrade test), **authorization/sensitive-data** (secrets, revocation, minimal disclosure), **reliability/concurrency** (race and failure tests), **runnable software/configuration** (mail settings, Mailpit).
 
 | DoD area | Evidence for US-AUTH-005 | Who / where |
 | --- | --- | --- |
@@ -7147,6 +7262,8 @@ Triggered conditional criteria: **HTTP API contract changes** (OpenAPI v0.5.0, c
 
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
+| `relation "identity_password_reset" does not exist` | Unqualified SQL | Every Identity table lives in the `identity` schema: write `identity.identity_password_reset`. |
+| `PersistenceOwnershipSqlTest` fails | A statement names a table without its schema, or a migration touches a second schema | Follow the message: it names file, line and the qualified table. |
 | Startup fails: `password-reset.sender-address is not configured` | Profile without the reset properties | Use the `local` profile or set `CAPSULE_MAIL_FROM` / `CAPSULE_PASSWORD_RESET_LINK`; tests use `application-test.properties`. |
 | Startup fails: no `JavaMailSender` bean | `spring.mail.host` missing | Set `CAPSULE_MAIL_HOST` (local default is `localhost`). |
 | 202 but no email in Mailpit | Unregistered email (expected), Mailpit not running, or SMTP refused | Check `docker compose ps`, then the log line "Password-reset instructions could not be handed to the mail server". |
@@ -7155,7 +7272,7 @@ Triggered conditional criteria: **HTTP API contract changes** (OpenAPI v0.5.0, c
 | An old access token still works after a reset | It should not: every protected request re-reads its session | Check that `revokeAllActiveForAccount` ran (sessions show `PASSWORD_RESET`) and that the request is not hitting a public endpoint. |
 | `PasswordResetLoginRaceIT` hangs | The pausing hasher was not released | `@AfterEach` releases it; look for an assertion that failed before `release()`. |
 | `SmtpPasswordResetInstructionSenderIT` fails to start | Docker unavailable or the Mailpit image cannot be pulled | `docker info`; `docker pull axllent/mailpit:v1.27.11`. |
-| Flyway: `ck_identity_session_revocation_reason` already exists / checksum mismatch | V6 edited after it ran, or applied twice by hand | Never edit an applied migration; restore V6 exactly and use a new version for changes. |
+| Flyway: `ck_identity_session_revocation_reason` already exists / checksum mismatch | V7 edited after it ran, or applied twice by hand | Never edit an applied migration; restore V7 exactly and use a new version for changes. |
 | Deadlock detected in logs | A new code path took locks in a different order | Keep account → reset interaction → sessions everywhere (Section 10.6). |
 | CI guard: report missing | A test class was renamed or not discovered | Class names must end in `Test` or `IT`; update `$required` in the workflow together with the class. |
 
@@ -7166,7 +7283,7 @@ Nothing below is ticked: the guide author's scratch verification is not your imp
 ### 18.1 Implementation checklist
 
 - [ ] P1 `pom.xml` — mail starter
-- [ ] P2 `V6__create_identity_password_reset.sql`
+- [ ] P2 `V7__create_identity_password_reset.sql`
 - [ ] P3–P6 domain: `PasswordResetPolicy`, `PasswordResetToken`, `PasswordResetTokenHash`, `RevocationReason.PASSWORD_RESET`
 - [ ] P7–P12 ports: `AccountRepository`, `SessionRepository`, `PasswordResetRepository`, `PasswordResetTokenGenerator`, `PasswordResetInstructions`, `PasswordResetInstructionSender`
 - [ ] P13–P19 application: commands, `PasswordResetRejectedException`, request/check/complete services

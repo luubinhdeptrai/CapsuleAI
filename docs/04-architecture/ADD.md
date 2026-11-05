@@ -7,9 +7,9 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Design Document (ADD) |
-| Version | 0.1.5 |
+| Version | 0.1.6 |
 | Status | Baseline Draft |
-| Last Updated | 2026-11-05 |
+| Last Updated | 2026-11-06 |
 | Owner | Architect / Tech Lead, with Backend, AI, Mobile and QA input; Product/BA for requirement implications |
 | Architecture Decision Baseline | ADA-001–018 Selected; no override or deferral |
 | Selection Authority | [Selected Architecture Decisions](selected-architecture-decisions.md), v0.1; Project Owner / Backend Developer, 2026-10-10 |
@@ -27,6 +27,7 @@
 | 0.1.3 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.4 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.5 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+| 0.1.6 | 2026-11-06 | Added refinement notes to Sections 3.3, 8.4 and 9.4 for the Product Owner-approved AR-01–AR-08 (one PostgreSQL schema per persistence owner; no cross-context joins, persistence access or foreign keys; published contracts; automated enforcement). Selected directions and existing text are unchanged. |
 
 Input versions identify the baselines re-read for authoring. Subsequent navigation-only revisions do not change those obligations or selections. Baseline Draft records pending artifact review, not software conformance or benchmark success.
 
@@ -82,6 +83,8 @@ These are cohesive **responsibility concerns, not a duplicate module/context lis
 Architecture owns the authority, dependency, acceptance, failure and evidence boundaries required to make these responsibilities coherent. SRS scope exclusions remain: no native commerce, automatic purchase/wear verification, social/public wardrobes, additional garment categories, consumer web/desktop, AR/3D/video or guaranteed offline use. Lightweight personalization does not require an advanced learned model.
 
 Final context/module names, exact packages/classes/DTOs, endpoints, event payloads, database tables/indexes/schemas/FKs/ORM, locking/isolation, numeric dependency timeout/retry configuration, providers and deployment machines/containers are unresolved realization details. The four view artifacts, ADRs, detailed API/data/sequence/state design, Test Strategy, engineering baseline and Sprint artifacts are not created here.
+
+**2026-11-06 refinement:** The Product Owner approved [architecture refinement AR-01–AR-08](selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas), which now decides the physical ownership detail this document left downstream: one PostgreSQL schema per persistence owner inside the one database, no cross-context joins, persistence access or foreign keys, collaboration through published module APIs, and automated enforcement. The text above is kept as the baseline it was; where it says these rules remain downstream, read the refinement.
 
 ## 4. Design Constraints
 
@@ -399,6 +402,8 @@ Show major business/session/action/media/evaluation information, logical owners,
 
 Represent permitted cross-owner references/operations, effective exclusion versus physical deletion, necessary copies/versions and recoverable media association. One PostgreSQL remains compatible with logical ownership; schema names, tables, ORM, indexes, exact FK/joins/access exceptions and isolation are not finalized. Workflow Section 24 governs [Data View v0.1 — Baseline Draft](views/data-view.puml), now available for logical information/ownership/lifecycle review; no DDL or snapshot/projection store is selected here.
 
+**2026-11-06 refinement:** The Product Owner approved [architecture refinement AR-01–AR-08](selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas), which now decides the physical ownership detail this document left downstream: one PostgreSQL schema per persistence owner inside the one database, no cross-context joins, persistence access or foreign keys, collaboration through published module APIs, and automated enforcement. The text above is kept as the baseline it was; where it says these rules remain downstream, read the refinement.
+
 ### 8.5 Conditional Architecture Evolution
 
 The selected modularity preserves useful boundaries now. Future extraction needs real drivers, renewed analysis/selection and verification of existing guarantees; it is neither automatic nor a commitment to one service per module.
@@ -453,6 +458,8 @@ Core/AI/provider/evidence boundaries use only necessary authorized information. 
 **Basis:** ASR-REL-001/CON-001/INT-001/SEC-002; DATA-INT, DATA-ANL-004 and SI-001–004. **Selections:** ADA-001/006/009/012/015–018.
 
 One physical PostgreSQL contains logically owned persistence. Another context must not import an owner's private repository/entity or directly use its internal table/schema representation by default. Public owner contracts return permitted meaning, not mutable internal models or unrestricted persistence access. Any justified exception documents purpose, invariant/lifecycle impact, coupling and review evidence in its owning design/ADR; convenience is not an implicit exception. Exact schema/FK/joins/access rules remain downstream, rather than a universal cross-context FK ban.
+
+**2026-11-06 refinement:** The Product Owner approved [architecture refinement AR-01–AR-08](selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas), which now decides the physical ownership detail this document left downstream: one PostgreSQL schema per persistence owner inside the one database, no cross-context joins, persistence access or foreign keys, collaboration through published module APIs, and automated enforcement. The text above is kept as the baseline it was; where it says these rules remain downstream, read the refinement.
 
 [PostgreSQL schema guidance](https://www.postgresql.org/docs/18/ddl-schemas.html) distinguishes namespace organization from privilege-controlled access. Logical ownership also needs source dependency discipline and authorized public contracts; schema names or a broadly privileged application identity alone do not enforce it.
 

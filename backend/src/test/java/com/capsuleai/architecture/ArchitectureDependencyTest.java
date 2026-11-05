@@ -1,9 +1,14 @@
 package com.capsuleai.architecture;
 
 import com.capsuleai.architecturefixture.adapter.in.InvalidInboundAdapterFixture;
+import com.capsuleai.architecturefixture.adapter.in.JdbcInInboundAdapterFixture;
 import com.capsuleai.architecturefixture.adapter.out.InvalidOutboundAdapterFixture;
 import com.capsuleai.architecturefixture.application.InvalidApplicationFixture;
 import com.capsuleai.architecturefixture.domain.InvalidDomainFixture;
+import com.capsuleai.architecturefixture.ownera.api.OwnerALeakingContractFixture;
+import com.capsuleai.architecturefixture.ownera.api.OwnerAPublishedContractFixture;
+import com.capsuleai.architecturefixture.ownerb.application.OwnerBBypassingServiceFixture;
+import com.capsuleai.architecturefixture.ownerb.application.OwnerBPublishedApiConsumerFixture;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -12,10 +17,15 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.CompositeArchRule;
 import org.junit.jupiter.api.Test;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ArchitectureDependencyTest {
+
+    private static final String FIXTURE_ROOT = "com.capsuleai.architecturefixture";
 
     private static ArchRule domainRule() {
         return noClasses()
@@ -86,6 +96,46 @@ class ArchitectureDependencyTest {
                                 .allowEmptyShould(true));
     }
 
+    /**
+     * ADA-016/017/018 and AR-03: another module may use only a module's published
+     * {@code api}. Its domain, application, ports, adapters (including persistence) and
+     * configuration are private.
+     */
+    private static ArchRule onlyThePublishedApiIsUsedFromOtherModules(String rootPackage, String modulePackage) {
+        String base = rootPackage + "." + modulePackage;
+        return noClasses()
+                .that()
+                .resideOutsideOfPackage(base + "..")
+                .should()
+                .dependOnClassesThat(resideInAPackage(base + "..").and(not(resideInAPackage(base + ".api.."))))
+                .allowEmptyShould(true)
+                .because("module " + modulePackage + " publishes only its api package (ADA-016, ADA-018, AR-03)");
+    }
+
+    /** ADA-018: a published contract carries published language, never a private model. */
+    private static ArchRule publishedApiExposesNoPrivateModelRule() {
+        return noClasses()
+                .that()
+                .resideInAPackage("com.capsuleai..api..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("com.capsuleai..domain..", "com.capsuleai..application..")
+                .allowEmptyShould(true)
+                .because("published contracts must not expose private domain or application models (ADA-018)");
+    }
+
+    /** ADA-015 and AR-03: SQL access stays in persistence adapters; configuration only wires them. */
+    private static ArchRule springJdbcStaysInPersistenceAdaptersRule() {
+        return noClasses()
+                .that()
+                .resideOutsideOfPackages("com.capsuleai..adapter.out..", "com.capsuleai..configuration..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("org.springframework.jdbc..", "javax.sql..")
+                .allowEmptyShould(true)
+                .because("only a module's own persistence adapters access the database (ADA-015, AR-03)");
+    }
+
     private static JavaClasses productionClasses() {
         return new ClassFileImporter()
                 .withImportOption(
@@ -104,31 +154,52 @@ class ArchitectureDependencyTest {
                 .contains("com.capsuleai.CapsuleAiApplication");
 
         domainRule().check(production);
+    }
 
-        for (String owner : new String[] {
-                "identity",
-                "personalcontext",
-                "wardrobe",
-                "outfitadviceanduse",
-                "wardrobeintelligence",
-                "productmeasurement"
-        }) {
+    @Test
+    void modulesUseEachOtherOnlyThroughPublishedApis() {
 
-            String base = "com.capsuleai." + owner;
+        JavaClasses production = productionClasses();
 
-            noClasses()
-                    .that()
-                    .resideOutsideOfPackage(base + "..")
-                    .should()
-                    .dependOnClassesThat()
-                    .resideInAnyPackage(
-                            base + ".domain..",
-                            base + ".application..",
-                            base + ".adapter.."
-                    )
-                    .allowEmptyShould(true)
+        for (BusinessModule module : BusinessModule.values()) {
+            onlyThePublishedApiIsUsedFromOtherModules(BusinessModule.ROOT_PACKAGE, module.packageName())
                     .check(production);
         }
+    }
+
+    @Test
+    void everyBusinessModulePackageIsRegistered() {
+
+        assertThat(productionClasses())
+                .extracting(JavaClass::getPackageName)
+                .filteredOn(name -> name.startsWith(BusinessModule.ROOT_PACKAGE + "."))
+                .map(name -> name.substring(BusinessModule.ROOT_PACKAGE.length() + 1).split("\\.")[0])
+                .allSatisfy(module -> assertThat(BusinessModule.ofPackageName(module))
+                        .as("module package %s is listed in BusinessModule with its schema", module)
+                        .isPresent());
+    }
+
+    @Test
+    void modulesHaveNoDependencyCycles() {
+
+        slices()
+                .matching(BusinessModule.ROOT_PACKAGE + ".(*)..")
+                .should()
+                .beFreeOfCycles()
+                .allowEmptyShould(true)
+                .check(productionClasses());
+    }
+
+    @Test
+    void publishedApisExposeNoPrivateModel() {
+
+        publishedApiExposesNoPrivateModelRule().check(productionClasses());
+    }
+
+    @Test
+    void onlyPersistenceAdaptersAndConfigurationUseSpringJdbc() {
+
+        springJdbcStaysInPersistenceAdaptersRule().check(productionClasses());
     }
 
     @Test
@@ -179,5 +250,33 @@ class ArchitectureDependencyTest {
         assertThat(
                 frameworkFreeApplicationAndApiRule().evaluate(fixture).hasViolation()
         ).isTrue();
+    }
+
+    @Test
+    void moduleBoundaryRuleDetectsAPrivateRepositoryBypassAndAcceptsThePublishedApi() {
+
+        ArchRule ownerABoundary = onlyThePublishedApiIsUsedFromOtherModules(FIXTURE_ROOT, "ownera");
+
+        assertThat(ownerABoundary.evaluate(new ClassFileImporter()
+                .importClasses(OwnerBBypassingServiceFixture.class)).hasViolation()).isTrue();
+        assertThat(ownerABoundary.evaluate(new ClassFileImporter()
+                .importClasses(OwnerBPublishedApiConsumerFixture.class, OwnerAPublishedContractFixture.class))
+                .hasViolation()).isFalse();
+    }
+
+    @Test
+    void publishedApiRuleDetectsALeakedPrivateModel() {
+
+        assertThat(publishedApiExposesNoPrivateModelRule().evaluate(new ClassFileImporter()
+                .importClasses(OwnerALeakingContractFixture.class)).hasViolation()).isTrue();
+        assertThat(publishedApiExposesNoPrivateModelRule().evaluate(new ClassFileImporter()
+                .importClasses(OwnerAPublishedContractFixture.class)).hasViolation()).isFalse();
+    }
+
+    @Test
+    void jdbcRuleDetectsDatabaseAccessOutsideAPersistenceAdapter() {
+
+        assertThat(springJdbcStaysInPersistenceAdaptersRule().evaluate(new ClassFileImporter()
+                .importClasses(JdbcInInboundAdapterFixture.class)).hasViolation()).isTrue();
     }
 }

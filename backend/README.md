@@ -45,6 +45,15 @@ The [Implementation View](../docs/04-architecture/views/implementation-view.puml
 
 Cross-module business collaboration uses the supplier's published `api`, not private domain/application/repository/entity types. This local Java contract differs from an HTTP controller. Module configuration wires its own internals; root bootstrap delegates assembly. One PostgreSQL database does not grant unrestricted access to another owner's persistence.
 
+**One schema per owner (AR-01–AR-08):**
+
+- Inside the single database, each owner that persists state has its own PostgreSQL schema, named after its package (`identity`, `wardrobe`, `personal_context`, …).
+- Its tables are named `<schema>_<name>` and are always written schema-qualified, for example `identity.identity_session`.
+- No owner joins, reads, writes or references another owner's tables by foreign key; it calls that owner's published `api`.
+- Flyway's default schema (`public`) holds only `flyway_schema_history`.
+
+The application uses one database role, so these rules are enforced by tests at build time (Section 11), not by database privileges. The rules and the owner list are in [backend conventions §2](../docs/engineering/backend-conventions.md#2-each-persistence-owner-has-its-own-postgresql-schema).
+
 A separate private Python analysis runtime and authorized private object storage are selected architectural boundaries, with integration deferred to relevant stories. No internal HTTP, business microservices, dedicated cache, broker, gateway or Kubernetes is required initially. Future extraction still needs contract, authorization, consistency and data-migration design.
 
 See [Selected Decisions](../docs/04-architecture/selected-architecture-decisions.md), [ADD](../docs/04-architecture/ADD.md) and [Logical View](../docs/04-architecture/views/logical-view.puml) for authoritative detail.
@@ -53,14 +62,14 @@ See [Selected Decisions](../docs/04-architecture/selected-architecture-decisions
 
 These responsibilities are documented boundaries. So far only Identity's registration and login-session lifecycle are implemented.
 
-| Owner / package below `com.capsuleai` | Responsibility |
-| --- | --- |
-| Identity — `identity` | Account identity, authentication/session/reset authority and recovery lifecycle |
-| Personal Context — `personalcontext` | Declared preferences/needs, selected location and weather/context meaning |
-| Wardrobe — `wardrobe` | Confirmed garments, membership/readiness, confirmation/correction and analysis/media lifecycle |
-| Outfit Advice and Use — `outfitadviceanduse` | Advice, Shuffle, feedback, Wear/history and published outfit-evaluation semantics |
-| Wardrobe Intelligence — `wardrobeintelligence` | Coverage/Gaps, hypothetical utility, result states and shopping support |
-| Product Measurement — `productmeasurement` | Purpose-limited measurement/lifecycle, independent of core acceptance |
+| Owner / package below `com.capsuleai` | Responsibility | PostgreSQL schema |
+| --- | --- | --- |
+| Identity — `identity` | Account identity, authentication/session/reset authority and recovery lifecycle | `identity` (in use) |
+| Personal Context — `personalcontext` | Declared preferences/needs, selected location and weather/context meaning | `personal_context` (not yet created) |
+| Wardrobe — `wardrobe` | Confirmed garments, membership, unevaluated recommendation eligibility, confirmation/correction and analysis/media lifecycle | `wardrobe` (not yet created) |
+| Outfit Advice and Use — `outfitadviceanduse` | Advice, Shuffle, feedback, Wear/history and published outfit-evaluation semantics | `outfit_advice_and_use` (not yet created) |
+| Wardrobe Intelligence — `wardrobeintelligence` | Coverage/Gaps, hypothetical utility, result states and shopping support | `wardrobe_intelligence` (not yet created) |
+| Product Measurement — `productmeasurement` | Purpose-limited measurement/lifecycle, independent of core acceptance | `product_measurement` (not yet created) |
 
 `CapsuleAiApplication` remains at the parent package `com.capsuleai` for component scanning. Package documentation and Java `public` visibility do not enforce architectural boundaries by themselves.
 
@@ -296,25 +305,42 @@ curl.exe -i -X OPTIONS http://localhost:8080/api/v1/auth/login `
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token`. Flyway maintains `flyway_schema_history`. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
 ```
 
-Expect successful rows for versions `1` to `5`. Restart Boot using the same settings and confirm each remains applied once.
+Expect successful rows for versions `1` to `6`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
 
-Future files follow `V<version>__<description>.sql` with **two underscores**. Add a new migration for selected-story changes; do not edit an already applied shared migration. Business schemas/ORM/transactions remain story-specific design. Diagnose checksum mismatches rather than automatically cleaning, repairing or resetting data.
+```powershell
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
+```
+
+Query them schema-qualified, for example `SELECT count(*) FROM identity.identity_account;`. An unqualified `identity_account` no longer resolves.
+
+**Privileges V6 needs.** `ALTER TABLE … SET SCHEMA` may only be run by the owner of the table, and `CREATE SCHEMA` needs the `CREATE` privilege on the database. Both hold when the role that runs Flyway is the role that ran V1–V5, as in every current environment. If a deployment migrates with a different role, V6 fails before changing anything (it is one transaction). Grant the privileges, or run Flyway as the owning role, and start again.
+
+Future files follow `V<version>__<description>.sql` with **two underscores**:
+
+- Add a new migration for selected-story changes; do not edit an already applied shared migration.
+- Each migration after V6 changes exactly one owner schema and qualifies every table.
+- The first story that persists a module's state creates that module's schema (`CREATE SCHEMA IF NOT EXISTS wardrobe;`).
+- Do not change Flyway's `schemas`, `default-schema` or `table` settings: the schema history would move, and Flyway would try to re-apply V1–V5 on existing databases.
+- Diagnose checksum mismatches rather than automatically cleaning, repairing or resetting data.
 
 ## 11. Automated testing
 
 | Suite | Purpose | Infrastructure |
 | --- | --- | --- |
 | Fast foundation — `HarnessSmokeTest` | Test-only behavior with a fake, Mockito stub/call verification and AssertJ assertions | No Spring, database or Docker |
-| Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API, owner boundaries, independent inbound/outbound adapters, plus deliberate-violation detectors | Compiled classes; no Docker/database |
+| Architecture — `ArchitectureDependencyTest` | Framework-free domain/application/API; modules use each other only through `api`; no private model in an `api`; Spring JDBC only in persistence adapters/configuration; no module cycles; every module registered in `BusinessModule`; independent inbound/outbound adapters; deliberate-violation detectors for each rule | Compiled classes; no Docker/database |
+| SQL ownership — `PersistenceOwnershipSqlTest` | Production SQL uses only its own module's schema, always qualified; each migration after V6 changes one owner schema; detectors for cross-context joins, unqualified tables and cross-schema foreign keys | Source files; no Docker/database |
 | Identity unit — `identity/**/*Test` | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation (`CorsPropertiesTest`) | No database or Docker |
 | Integration — `DatabaseSmokeIT` | Boot wiring, real SQL and no pending migration | Docker; disposable PostgreSQL |
+| Schema ownership — `DatabaseSchemaOwnershipIT` | On the migrated database: only owner schemas besides `public`; `public` holds only Flyway's history; tables in their owner's schema; no cross-schema foreign key or view | Docker; PostgreSQL catalog |
+| Identity relocation — `IdentitySchemaRelocationIT` | V6 on a realistic V1–V5 database with accepted accounts, sessions and refresh tokens: rows, indexes and constraints survive, adapters work, history stays valid, a restart applies nothing; fresh databases migrate completely | Docker; a separate database per test (`IsolatedMigrationDatabase`) |
 | Identity integration — `identity/**/*IT` | Schema constraints; registration/login/logout/refresh APIs; security chain; cross-origin browser access (`CorsSecurityIT`); concurrency; session-authority outage (`SessionAuthorityOutageIT`); OpenAPI contract (`IdentityOpenApiContractIT`) | Docker; real application, filter chain and PostgreSQL |
 
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
@@ -358,7 +384,7 @@ Get-Content .\target\failsafe-reports\*.txt
 
 Surefire runs `*Test` classes during `test`. Failsafe runs `*IT` during `integration-test` and enforces results during `verify`. Thus `test`/`package` omit the database IT; do not stop verification at `integration-test`. Both plugins reject an entirely empty suite; CI additionally requires the named reports described in Section 13.
 
-The invalid architecture fixture belongs in **test sources**. Its detector passes when the expected violation is found. Initial rules tolerate empty feature roles and do not prove full API/cycle restrictions, Clean conformance, SQL ownership or runtime authorization. Extend useful checks with real code.
+The invalid architecture fixtures belong in **test sources**. Each detector passes when its expected violation is found. The rules tolerate empty feature roles. They check dependencies, SQL text and database structure, not runtime authorization, and the single database role can still reach every schema at runtime. Extend them with real code.
 
 Mockito can print a Java 21 self-attachment warning while tests still pass. Consult its version-specific agent guidance when maintaining the toolchain; do not skip tests to hide infrastructure failures.
 
@@ -412,7 +438,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Password recovery, Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented.
 
-Architecture tests provide initial static protection. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
+Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
 After normal foundation handoff, follow **Backlog Refinement → Sprint Planning → selected-story JIT design and automated implementation**. Add only needed APIs/data detail/interaction/state models. Do not predesign the whole MVP or duplicate baseline decisions into ADR files; ADA/Selected Decisions already record them.
 
@@ -435,6 +461,8 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | Browser: `Failed to fetch` and the backend logs nothing | Not CORS. Check that Boot runs on the server URL's port, that the browser runs on the same machine, and that the Local Network Access prompt was allowed (site settings). Use Chrome, Edge or Firefox if a browser blocks `http://localhost` from an HTTPS page as mixed content. |
 | Preflight succeeds but the request returns 401 | Expected without a usable access token: log in again or renew, then **Authorize** with the new `accessToken`. CORS never authenticates a request. |
 | Flyway checksum mismatch | Inspect the applied change and use a reviewed forward migration; do not reset/repair blindly. |
+| `relation "identity_account" does not exist` | Since V6 the Identity tables are in the `identity` schema. Write `identity.identity_account` (all SQL is schema-qualified). |
+| `PersistenceOwnershipSqlTest` fails | Read the message. It names the file and line, and either the qualified table name to use or the other module whose table was used. In the second case, use that module's published `api` instead of its table. |
 
 Share the nonsecret command, directory and minimal error. Do not publish environment dumps, resolved Compose configuration or sensitive logs.
 

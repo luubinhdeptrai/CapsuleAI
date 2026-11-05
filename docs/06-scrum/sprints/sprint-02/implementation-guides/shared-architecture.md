@@ -4,9 +4,9 @@
 | --- | --- |
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
 | Applies to | [US-AUTH-005](US-AUTH-005-guide.md), [US-GAR-001](US-GAR-001-guide.md), [US-WAR-001](US-WAR-001-guide.md), [US-WAR-002](US-WAR-002-guide.md) |
-| Repository baseline | `sprint_02` at `1d0bc83` |
+| Repository baseline | Stage 0: `sprint_02` at `dc4ddf3` plus the schema-ownership correction ([README §3](README.md#3-repository-baseline)) |
 | Read with | [README](README.md) |
-| Code status | Every structure described here exists in the guide author's scratch clone, where it was compiled and tested (final `clean verify`: 360 unit / 217 integration tests). It has **not** been applied to this repository or run in hosted CI. |
+| Code status | Every structure described here exists in the guide author's scratch clone, where it was compiled and tested (final `clean verify`: 382 unit / 228 integration tests). It has **not** been applied to this repository or run in hosted CI. |
 
 This document holds the cross-story decisions. Each story guide repeats what its developer needs, so a guide can be followed alone. When the two disagree, the story guide's code (taken from the tested stage commit) is authoritative, and this document should be corrected.
 
@@ -16,15 +16,15 @@ This document holds the cross-story decisions. Each story guide repeats what its
 
 | In scope | Out of scope |
 | --- | --- |
-| Identity recovery (V6, reset services, SMTP boundary); Wardrobe module (model, V7, creation, overview, detail); their integration through `identity.api`; API conventions; errors; transactions; idempotency; configuration; testing; shared-file ownership; decisions | Mobile client; images and AI (PBI-012/013); editing/removal (PBI-008/016); search/filter (PBI-015); Wear and analytics (PBI-021/025); deployment and the production email provider |
+| Identity recovery (V7, reset services, SMTP boundary); Wardrobe module (model, V8, creation, overview, detail); their integration through `identity.api`; schema-per-owner persistence (AR-01–AR-08); API conventions; errors; transactions; idempotency; configuration; testing; shared-file ownership; decisions | Mobile client; images and AI (PBI-012/013); editing/removal (PBI-008/016); search/filter (PBI-015); Wear and analytics (PBI-021/025); deployment and the production email provider |
 
 ## 2. Repository baseline and stages
 
 | Stage | State | Produced by | OpenAPI | Migrations |
 | --- | --- | --- | --- | --- |
-| 0 | `1d0bc83`: Sprint 1 Identity, CORS, empty Wardrobe module | — | 0.4.1 | V1–V5 |
-| 1 | + email password recovery | [US-AUTH-005](US-AUTH-005-guide.md) | 0.5.0 | + V6 |
-| 2 | + Wardrobe model and manual creation | [US-GAR-001](US-GAR-001-guide.md) | 0.6.0 | + V7 |
+| 0 | `dc4ddf3` + schema-ownership correction: Sprint 1 Identity in schema `identity`, CORS, empty Wardrobe module, architecture checks | (this revision) | 0.4.1 | V1–V5, V6 |
+| 1 | + email password recovery | [US-AUTH-005](US-AUTH-005-guide.md) | 0.5.0 | + V7 |
+| 2 | + Wardrobe model and manual creation | [US-GAR-001](US-GAR-001-guide.md) | 0.6.0 | + V8 |
 | 3 | + current-wardrobe overview | [US-WAR-001](US-WAR-001-guide.md) | 0.7.0 | — |
 | 4 | + garment detail, cross-story test | [US-WAR-002](US-WAR-002-guide.md) | 0.8.0 | — |
 
@@ -73,6 +73,7 @@ Repository conventions kept unchanged:
 - Services have descriptive names (`RequestPasswordResetService`, `AddGarmentService`).
 - Commands and value types are records; domain types are immutable.
 - There are no Lombok, JPA or field injection.
+- SQL is always schema-qualified (`identity.identity_session`, `wardrobe.wardrobe_garment`), with one statement per string literal or text block ([backend conventions §2](../../../../engineering/backend-conventions.md#2-each-persistence-owner-has-its-own-postgresql-schema)).
 
 ## 5. Module boundaries and package structure
 
@@ -102,21 +103,25 @@ flowchart TB
 
 | Rule | Enforced by |
 | --- | --- |
-| `domain` and `application` import no Spring, Jakarta or JDBC types | `ArchitectureDependencyTest` (existing) |
-| Nothing outside a module uses its `domain`, `application` or `adapter` packages | `ArchitectureDependencyTest` (Wardrobe was already listed as an owner) |
-| Wardrobe uses only `com.capsuleai.identity.api` | Same test; ADA-015, ADA-018 |
-| Wardrobe owns its tables; no foreign key into Identity | V7 design; ADA-016 |
+| `domain` and `application` import no Spring, Jakarta or JDBC types | `ArchitectureDependencyTest` |
+| Nothing outside a module uses anything of it except its `api` (domain, application, ports, adapters and configuration are private) | `ArchitectureDependencyTest`, for every module registered in `BusinessModule` |
+| Wardrobe uses only `com.capsuleai.identity.api` | Same test; ADA-015, ADA-018, AR-03 |
+| A published `api` exposes no private domain or application type | `ArchitectureDependencyTest` (ADA-018) |
+| Spring JDBC only in persistence adapters and configuration; no module cycles | `ArchitectureDependencyTest` |
+| Each module's SQL names only its own schema, always qualified; each migration after V6 changes one schema | `PersistenceOwnershipSqlTest` (AR-01–AR-04) |
+| Tables sit in their owner's schema; no foreign key or view crosses schemas; `public` holds only Flyway's history | `DatabaseSchemaOwnershipIT` |
+| Wardrobe owns its tables in schema `wardrobe`; no foreign key into Identity | V8 design; ADA-016, AR-01, AR-04 |
 
 ## 6. Identity–Wardrobe integration
 
 | Aspect | Design |
 | --- | --- |
 | Who is the owner | `AuthenticatedAccount.accountId()` resolved by Identity's JWT converter after it confirms the persistent session is usable. Wardrobe receives it through `@AuthenticationPrincipal`. |
-| Owner storage | `wardrobe_garment.owner_account_id UUID NOT NULL`. There is no FK: Wardrobe must not depend on Identity's schema ([ARCH] ADA-016, [TECH] TD-S2-09). |
+| Owner storage | `wardrobe.wardrobe_garment.owner_account_id UUID NOT NULL`. There is no FK, and no Wardrobe query names an `identity` table: Wardrobe must not depend on Identity's schema ([ARCH] ADA-016, AR-02–AR-04, [TECH] TD-S2-09). |
 | Lifecycle coupling | None at runtime. Identity does not call Wardrobe, and no event is published. The only published contract used is `identity.api.AuthenticatedAccount` (ADA-017: narrow published contracts; no internal HTTP or broker). |
-| Account deletion | Not in scope. Without an FK, a future account-deletion capability must purge Wardrobe data explicitly (noted for that PBI). |
+| Account deletion | Not in scope. Without an FK, a future account-deletion capability must make each owner remove or de-identify its own data through its own services; Identity must never delete `wardrobe.*` rows ([selected architecture decisions §8.4](../../../../04-architecture/selected-architecture-decisions.md#84-cross-owner-lifecycle-consistency)). |
 | Recovery effect on Wardrobe | Indirect but complete: revoking every active session makes every earlier token fail on every Wardrobe operation (`WardrobeAccessAfterPasswordResetIT`). |
-| Test-fixture coupling | `IdentityIntegrationTestSupport` truncates Identity tables; `WardrobeIntegrationTestSupport` additionally truncates `wardrobe_garment_material, wardrobe_garment`. Because there is no FK, Identity truncation cannot cascade into Wardrobe. |
+| Test-fixture coupling | `IdentityIntegrationTestSupport` truncates every table of the `identity` schema; `WardrobeIntegrationTestSupport` additionally truncates `wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment`. Because no foreign key crosses schemas, Identity truncation cannot cascade into Wardrobe. |
 
 ## 7. Authentication and authorization
 
@@ -237,12 +242,14 @@ classDiagram
 
 ## 10. Data model
 
+Physical placement ([ARCH] AR-01): `identity_account`, `identity_session`, `identity_refresh_token` and `identity_password_reset` are in schema **`identity`**; `wardrobe_garment` and `wardrobe_garment_material` are in schema **`wardrobe`**; `flyway_schema_history` stays in Flyway's default schema `public`. Solid lines are foreign keys, each inside one schema. The dotted line is a plain identifier with no foreign key and no join (AR-02, AR-04).
+
 ```mermaid
 erDiagram
     identity_account ||--o{ identity_session : "has"
-    identity_account ||--o{ identity_password_reset : "V6, FK"
-    identity_account ||..o{ wardrobe_garment : "owner_account_id (no FK, ADA-016)"
-    wardrobe_garment ||--o{ wardrobe_garment_material : "V7, FK ON DELETE CASCADE"
+    identity_account ||--o{ identity_password_reset : "V7, FK inside identity"
+    identity_account ||..o{ wardrobe_garment : "owner_account_id (plain id, no FK, AR-04)"
+    wardrobe_garment ||--o{ wardrobe_garment_material : "V8, FK inside wardrobe"
     identity_password_reset {
         UUID id PK
         UUID account_id FK
@@ -280,19 +287,51 @@ erDiagram
     }
 ```
 
-## 11. Schema (V6 and V7, complete)
+## 11. Schema (V6, V7 and V8, complete)
 
-### 11.1 V6 — `identity_password_reset` and the `PASSWORD_RESET` revocation reason (US-AUTH-005)
+### 11.0 V6 — move the Sprint 1 Identity tables into the `identity` schema (Stage 0)
+
+Already part of Stage 0; shown so the whole chain is visible. It moves the tables with `ALTER TABLE … SET SCHEMA`, which keeps every row, index, constraint and foreign key; `${flyway:defaultSchema}` names the schema V2–V5 created them in.
+
+```sql
+-- Architecture refinement AR-01 (2026-11-06): every persistence owner has its own
+-- PostgreSQL schema. Identity owns the schema "identity".
+--
+-- V2-V5 created the Identity tables without a schema name, so they live in Flyway's
+-- default schema (the connection's default schema; "public" under PostgreSQL's
+-- default search_path). ${flyway:defaultSchema} names exactly that schema, so this
+-- migration moves the tables from where they really are instead of assuming "public".
+--
+-- ALTER TABLE ... SET SCHEMA changes only the namespace of the existing tables: rows,
+-- column values, indexes, constraints, foreign keys and privileges move with them.
+-- Nothing is dropped, recreated or copied. Flyway runs this file in one transaction,
+-- so a failure leaves every table where it was.
+--
+-- The schema history table stays in Flyway's default schema; Flyway's configuration
+-- is unchanged, so V1-V5 are never applied again.
+
+CREATE SCHEMA IF NOT EXISTS identity;
+
+-- Children move after their parents only for readability; foreign keys follow the
+-- tables, not their names, so the order does not affect them.
+ALTER TABLE ${flyway:defaultSchema}.identity_account       SET SCHEMA identity;
+ALTER TABLE ${flyway:defaultSchema}.identity_session       SET SCHEMA identity;
+ALTER TABLE ${flyway:defaultSchema}.identity_refresh_token SET SCHEMA identity;
+```
+
+### 11.1 V7 — `identity.identity_password_reset` and the `PASSWORD_RESET` revocation reason (US-AUTH-005)
 
 ```sql
 -- US-AUTH-005: persistent password-reset authority (ADA-008, DATA-AUTH-005).
+-- Owner: Identity. Every object is in the identity schema (AR-01); the foreign key
+-- stays inside it (AR-04). V6 created the schema and moved the Sprint 1 tables there.
 -- One row per issued interaction. Only the SHA-256 hash of its secret is stored.
 -- An interaction ends at most one way: consumed by an accepted reset, or replaced
 -- by a newer issuance (FR-AUTH-017, FR-AUTH-018). Expiry is enforced by comparing
 -- expires_at with the application clock.
-CREATE TABLE identity_password_reset (
+CREATE TABLE identity.identity_password_reset (
     id          UUID        PRIMARY KEY,
-    account_id  UUID        NOT NULL REFERENCES identity_account (id),
+    account_id  UUID        NOT NULL REFERENCES identity.identity_account (id),
     token_hash  TEXT        NOT NULL,
     issued_at   TIMESTAMPTZ NOT NULL,
     expires_at  TIMESTAMPTZ NOT NULL,
@@ -313,21 +352,21 @@ CREATE TABLE identity_password_reset (
 -- An account has at most one open (neither consumed nor replaced) interaction.
 -- Issuance replaces the open one before inserting, under the account row lock.
 CREATE UNIQUE INDEX ux_identity_password_reset_open_per_account
-    ON identity_password_reset (account_id)
+    ON identity.identity_password_reset (account_id)
     WHERE consumed_at IS NULL AND replaced_at IS NULL;
 
-CREATE INDEX ix_identity_password_reset_account ON identity_password_reset (account_id);
+CREATE INDEX ix_identity_password_reset_account ON identity.identity_password_reset (account_id);
 
 -- An accepted reset revokes every active session of the account with its own reason.
-ALTER TABLE identity_session
+ALTER TABLE identity.identity_session
     DROP CONSTRAINT ck_identity_session_revocation_reason;
 
-ALTER TABLE identity_session
+ALTER TABLE identity.identity_session
     ADD CONSTRAINT ck_identity_session_revocation_reason
         CHECK (revocation_reason IN ('LOGOUT', 'REFRESH_TOKEN_REUSE', 'PASSWORD_RESET'));
 ```
 
-### 11.2 V7 — `wardrobe_garment` and `wardrobe_garment_material` (US-GAR-001)
+### 11.2 V8 — `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material` (US-GAR-001)
 
 ```sql
 -- US-GAR-001: Wardrobe-owned confirmed garments (ADA-016, DATA-GAR-001/002/005).
@@ -336,8 +375,13 @@ ALTER TABLE identity_session
 -- one approved label of the garment-property authority. owner_account_id is the
 -- authenticated Identity account id: Wardrobe receives it through the published
 -- AuthenticatedAccount contract and deliberately has no foreign key into Identity's
--- private tables (ADA-016). removed_at NULL means "in the owner's current wardrobe".
-CREATE TABLE wardrobe_garment (
+-- private tables (ADA-016, AR-04). removed_at NULL means "in the owner's current wardrobe".
+--
+-- Owner: Wardrobe. This first Wardrobe migration creates the module's own schema
+-- (AR-01); every object below is in it, and no object refers to another schema.
+CREATE SCHEMA IF NOT EXISTS wardrobe;
+
+CREATE TABLE wardrobe.wardrobe_garment (
     id                   UUID        PRIMARY KEY,
     owner_account_id     UUID        NOT NULL,
     creation_key         UUID        NOT NULL,
@@ -450,13 +494,13 @@ CREATE TABLE wardrobe_garment (
 
 -- The owner's current wardrobe, newest first (US-WAR-001).
 CREATE INDEX ix_wardrobe_garment_owner_current
-    ON wardrobe_garment (owner_account_id, created_at DESC, id)
+    ON wardrobe.wardrobe_garment (owner_account_id, created_at DESC, id)
     WHERE removed_at IS NULL;
 
 -- Zero, one or several distinct Materials per garment (FR-GAR-010). The primary
 -- key makes a repeated selection impossible; no percentage is stored.
-CREATE TABLE wardrobe_garment_material (
-    garment_id UUID NOT NULL REFERENCES wardrobe_garment (id) ON DELETE CASCADE,
+CREATE TABLE wardrobe.wardrobe_garment_material (
+    garment_id UUID NOT NULL REFERENCES wardrobe.wardrobe_garment (id) ON DELETE CASCADE,
     material   TEXT NOT NULL,
     CONSTRAINT pk_wardrobe_garment_material PRIMARY KEY (garment_id, material),
     CONSTRAINT ck_wardrobe_garment_material CHECK (material IN (
@@ -473,17 +517,25 @@ Design notes:
 - **Applicability in the database:** Tops-only and Pants-only columns are constrained by category, and Subtype must belong to its Category. The application validates first, so these constraints are a second line of defence.
 - **Price:** `NUMERIC` without declared scale stores the exact submitted value (`12.50` stays `12.50`). Amount and currency are both present or both absent.
 - **Current wardrobe:** `removed_at IS NULL`. The partial index `ix_wardrobe_garment_owner_current` serves the overview's filter and order.
+- **Ownership in the migrations:** V7 names only `identity.*`; V8 creates `wardrobe` (`CREATE SCHEMA IF NOT EXISTS`) and names only `wardrobe.*`. Neither migration contains a cross-schema reference, which `PersistenceOwnershipSqlTest` enforces for every migration after V6.
 
 ## 12. Flyway migration plan
 
 | Version | File | Story | Change | Reversible by |
 | --- | --- | --- | --- | --- |
-| V1–V5 | existing | Pre-sprint, Sprint 1 | — | **Never edit** (checksums are validated) |
-| V6 | `V6__create_identity_password_reset.sql` | US-AUTH-005 | New table, two indexes; replaces the `identity_session` revocation-reason CHECK to add `PASSWORD_RESET` | A later forward migration |
-| V7 | `V7__create_wardrobe_garment.sql` | US-GAR-001 | Two new tables, constraints, partial index | A later forward migration |
+| V1–V5 | existing | Pre-sprint, Sprint 1 | Created the Identity tables in Flyway's default schema | **Never edit** (checksums are validated) |
+| V6 | `V6__move_identity_tables_into_identity_schema.sql` | Stage 0 (AR-01) | Creates schema `identity`; moves the three Sprint 1 tables there with their data | **Never edit**; a later forward migration |
+| V7 | `V7__create_identity_password_reset.sql` | US-AUTH-005 | New table, two indexes; replaces the `identity.identity_session` revocation-reason CHECK to add `PASSWORD_RESET` | A later forward migration |
+| V8 | `V8__create_wardrobe_garment.sql` | US-GAR-001 | Creates schema `wardrobe`; two new tables, constraints, partial index | A later forward migration |
 | — | — | US-WAR-001, US-WAR-002 | No schema change | — |
 
-- **Upgrade path:** `PasswordResetSchemaIT` and `GarmentSchemaIT` run the real migration files into a scratch schema up to V5 (or V6), insert representative rows, and then migrate to the latest version. They assert that existing data survives and that the new constraints accept it.
+- **Upgrade path:** each upgrade test creates a separate database with `IsolatedMigrationDatabase` and migrates it up to the version before the one under test:
+  - `IdentitySchemaRelocationIT`: V5 → V6.
+  - `PasswordResetSchemaIT`: V6 → V7.
+  - `GarmentSchemaIT`: V7 → V8.
+
+  Each test then inserts representative rows, applies exactly the migration under test, and asserts that existing data survives and the new constraints accept it. A scratch *schema* (the Sprint 1 technique) cannot test V6 or later, because those migrations move or create tables in the shared owner schemas.
+- **Schema history:** Flyway's `schemas`, `default-schema` and `table` settings are not changed. `flyway_schema_history` stays in the default schema, so existing databases continue from V5 and never re-apply V1–V5.
 - **Production:** `spring.flyway.clean-disabled=true` stays set, and migrations run at application start.
 - **Two developers adding migrations in parallel:** whoever merges second renumbers before merging. Never reuse a version number.
 
@@ -501,6 +553,7 @@ Design notes:
 | Errors | RFC 9457 `application/problem+json` with a stable `code` property; `VALIDATION_FAILED` adds `fieldErrors: [{field, code}]` |
 | Contract | `docs/05-api/openapi.yaml` is updated in the same change as the handler; `IdentityOpenApiContractIT` enforces that every `/api/` handler is documented and that the documented security, request fields, success fields and `required` lists match |
 | Versioning | `info.version` is bumped per story (0.5.0 → 0.8.0); all Sprint 2 changes are additive |
+| SQL | Every table is written schema-qualified; a module's SQL names only its own schema; one statement per string literal or text block (AR-01–AR-03, `PersistenceOwnershipSqlTest`) |
 
 | Method and path | Story | Access | Success | Errors |
 | --- | --- | --- | --- | --- |
@@ -544,7 +597,7 @@ The Sprint 1 endpoints (`registrations`, `login`, `refresh`, `logout`) are uncha
 
 | Flow | Transaction content | Locks |
 | --- | --- | --- |
-| Request reset | Replace the open interaction, insert the new one | `identity_account` FOR UPDATE |
+| Request reset | Replace the open interaction, insert the new one | `identity.identity_account` FOR UPDATE |
 | Complete reset | Recheck the interaction; replace the hash; consume; revoke active sessions | account FOR UPDATE → reset row FOR UPDATE → session rows (UPDATE) |
 | Login (modified) | Recheck the stored hash equals the verified one; create the session | account FOR SHARE (conflicts with reset's FOR UPDATE) |
 | Refresh (Sprint 1) | Rotate the refresh token | token and session rows FOR UPDATE; a concurrent reset's revoke waits for them, then revokes |
@@ -623,6 +676,7 @@ sequenceDiagram
 | Transport and caching | HTTPS is a deployment concern (outside this package); Spring Security's default no-store cache headers are left enabled |
 | Abuse | No rate limiting yet ([OPEN] OPEN-S2-04); the delivery queue is bounded, so a flood cannot exhaust memory or threads |
 | Data minimization | No image, no inference, Brand/Price only as typed by the user (BRULE-GAR-010, BRULE-AUTH-007) |
+| Persistence isolation | One schema per owner; no cross-schema join, table access, view or foreign key (AR-01–AR-04). The application connects with one database role that can reach every schema, so this is enforced by build-time tests, **not** by runtime privileges (AR-08) |
 
 ## 19. Testing architecture
 
@@ -634,15 +688,17 @@ sequenceDiagram
 | Wardrobe-failure context | `WardrobeFailureIT` | Imports `FailingGarmentRepository` |
 | No Spring | Domain/application unit tests with in-memory fakes (`InMemoryAccountRepository`, `InMemorySessionRepository`, `InMemoryPasswordResetRepository`, `InMemoryGarmentRepository`, `SequencePasswordResetTokenGenerator`, `RecordingPasswordHasher`) | Fast and deterministic |
 | SMTP | `SmtpPasswordResetInstructionSenderIT` with a Mailpit `GenericContainer`, reading its HTTP API | Real SMTP evidence without an external provider |
+| Migration upgrades | `IsolatedMigrationDatabase` (test class in `com.capsuleai.foundation`): a separate empty database on the same container per test | Upgrade tests start from an exact earlier version without disturbing the shared database |
 
 - **Fakes, not mocks:** the ports are small, so hand-written fakes record exactly what happened and serve several tests. Mockito remains available through `spring-boot-starter-test`; Sprint 2 tests do not need it.
 - **Time:** the application has one `Clock` bean (`IdentityConfiguration.identityClock()`). Wardrobe reuses it ([TECH] TD-S2-23), and tests advance `MutableClock` instead of sleeping.
 - **Data isolation:** each IT starts from truncated tables (`resetIdentityState`, `resetWardrobeState`) and uses distinct synthetic emails.
-- **Reports guard:** CI requires every suite's report by name (50 after Stage 4).
+- **Reports guard:** CI requires every suite's report by name, with a minimum test count (57 after Stage 4).
+- **Ownership checks:** `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest` and `DatabaseSchemaOwnershipIT` run unchanged at every stage. Each story's new code and migrations pass them without editing them.
 
 | Suite (Stage 4) | Unit | Integration |
 | --- | --- | --- |
-| Sprint 1 and baseline | existing | existing |
+| Sprint 1 and Stage 0 | existing, plus `PersistenceOwnershipSqlTest` and the extended `ArchitectureDependencyTest` | existing, plus `IdentitySchemaRelocationIT` and `DatabaseSchemaOwnershipIT` |
 | US-AUTH-005 | `PasswordResetTokenTest`, `PasswordResetTokenHashTest`, `PasswordResetPropertiesTest`, `RequestPasswordResetServiceTest`, `CheckPasswordResetServiceTest`, `CompletePasswordResetServiceTest`, `LogInServiceTest` (modified), `SmtpPasswordResetInstructionSenderTest`, `AsyncPasswordResetInstructionSenderTest` | `PasswordResetSchemaIT`, `PasswordResetApiIT`, `ConcurrentPasswordResetIT`, `PasswordResetLoginRaceIT`, `PasswordResetFailureIT`, `SmtpPasswordResetInstructionSenderIT` |
 | US-GAR-001 | `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `BrandTest`, `PurchasePriceTest`, `GarmentEntryValidatorTest`, `AddGarmentServiceTest` | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT`, `AddGarmentApiIT`, `ConcurrentGarmentCreationIT`, `WardrobeFailureIT`, `CorsSecurityIT` (modified), `IdentityOpenApiContractIT` (modified) |
 | US-WAR-001 | `BrowseWardrobeServiceTest` | `BrowseWardrobeApiIT`, `WardrobeFailureIT` (modified) |
@@ -667,7 +723,7 @@ Each file below is modified by more than one stage, or is an existing file modif
 | File | S1 AUTH-005 | S2 GAR-001 | S3 WAR-001 | S4 WAR-002 | What each change does |
 | --- | --- | --- | --- | --- | --- |
 | `docs/05-api/openapi.yaml` | M | M | M | M | 0.5.0 recovery → 0.6.0 creation and Wardrobe schemas → 0.7.0 overview → 0.8.0 detail, `RecordedUse`, 404/410 |
-| `.github/workflows/backend-ci.yml` | M | M | M | M | Adds each story's report names to `$required` (50 after S4) |
+| `.github/workflows/backend-ci.yml` | M | M | M | M | Adds each story's report names to `$required` (57 after S4) |
 | `backend/README.md` | M | M | M | M | Overview, technology, configuration, testing and limitations per story |
 | `identity/configuration/IdentitySecurityConfiguration.java` | M | M | — | — | S1: recovery endpoints in `PUBLIC_ENDPOINTS`; S2: `Idempotency-Key` allowed by CORS |
 | `test/.../identity/adapter/in/web/IdentityOpenApiContractIT.java` | — | M | — | M | S2: protected operations with bodies are called with a token and an `Idempotency-Key`; S4: path parameters filled with random UUIDs |
@@ -701,7 +757,7 @@ Stage 1 alone also modifies `pom.xml`, `compose.yaml`, the three `application*.p
 | TD-S2-06 | Fixed lock order account → reset → sessions, READ COMMITTED | SERIALIZABLE with retries; advisory locks; version column | Matches the existing transaction style; deadlock-free by construction | AUTH-005 |
 | TD-S2-07 | Revoke the account's **active** sessions (`PASSWORD_RESET`) | Delete sessions; revoke expired ones too | Revocation is what the requirements describe; expired sessions are already unusable | AUTH-005 |
 | TD-S2-08 | Login rechecks the hash under `FOR SHARE` inside its transaction | Verify the password inside the lock; credential version | Keeps PBKDF2 outside the lock; no schema change | AUTH-005 |
-| TD-S2-09 | `owner_account_id` without FK into Identity | FK to `identity_account` | ADA-016 context data ownership | GAR-001 |
+| TD-S2-09 | `owner_account_id` without FK into Identity (now also required by [ARCH] AR-04) | FK to `identity.identity_account` | ADA-016 context data ownership | GAR-001 |
 | TD-S2-10 | Enum codes = constant names with exact labels; text columns with `CHECK` lists | Lookup tables; PostgreSQL ENUM types | No seed data to keep in sync; forward migration per approved change | GAR-001 |
 | TD-S2-11 | Price amount as a decimal string; `NUMERIC` without scale; ≥ 0, ≤ 12 integer digits, scale ≤ currency minor unit, `java.util.Currency` codes | JSON number; fixed scale; currency allow-list | Exactness without floating point; provisional bounds pending OPEN-S2-01 | GAR-001 |
 | TD-S2-12 | Brand: exact text, ≤ 100 code points, blank = not supplied, no normalization | Trimming or case folding; brand catalogue | BRULE-GAR-010 user authority; provisional pending OPEN-S2-01 | GAR-001 |
@@ -717,6 +773,7 @@ Stage 1 alone also modifies `pom.xml`, `compose.yaml`, the three `application*.p
 | TD-S2-22 | Generalize `IdentityOpenApiContractIT` (tokens, `Idempotency-Key`, path parameters) instead of a Wardrobe copy | A second contract test | One contract file, one test; every handler covered | GAR-001, WAR-002 |
 | TD-S2-23 | Wardrobe reuses the single application `Clock` bean | A Wardrobe `Clock` bean | Two beans would break injection and the shared `MutableClock` | GAR-001 |
 | TD-S2-24 | `WardrobeIntegrationTestSupport extends IdentityIntegrationTestSupport` | Independent Wardrobe context | Same context and container, so there is no extra startup and real authentication is used in every Wardrobe IT | GAR-001 |
+| TD-S2-25 | Schema-upgrade tests on a separate database (`IsolatedMigrationDatabase`) | Scratch schema via Flyway `schemas` (the Sprint 1 technique) | V6 and later move or create tables in the shared owner schemas, so a scratch schema would collide with the application's tables | AUTH-005, GAR-001 |
 
 ### 22.2 Open decisions
 
@@ -745,5 +802,6 @@ Stage 1 alone also modifies `pom.xml`, `compose.yaml`, the three `application*.p
 | X-4 | Removal states in AC (WAR-001 AC-08, WAR-002 AC-09) versus no removal story in Sprint 2 | TD-S2-18: `removed_at` plus fixtures |
 | X-5 | Recorded-use AC (WAR-002 AC-06/AC-07) versus no Wear capability | TD-S2-21: explicit `UNAVAILABLE` |
 | X-6 | Price/Brand rules and Style cardinality unresolved in the authority and PRD | Provisional TD-S2-11/12/13; PO decision OPEN-S2-01/08 before acceptance |
+| X-7 | ADD §9.4 left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban" versus the 2026-11-06 refinement AR-01–AR-08 | Resolved by the Product Owner: the refinement decides those details (one schema per owner; no cross-schema join, access or FK). It is recorded as a refinement in [selected architecture decisions §8](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas); the historical ADA text is unchanged. |
 
 Each story guide's §9.3 lists the story-local contradictions in full, next to the verbatim source text.

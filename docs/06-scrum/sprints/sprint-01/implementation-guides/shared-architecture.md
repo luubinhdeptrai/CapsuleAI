@@ -513,6 +513,9 @@ All instants are truncated to whole seconds before use, so JWT `exp` (seconds) a
 
 ### 5.1 Final schema (after Stage 4)
 
+> **Post-sprint correction (2026-11-06):** since migration V6 these three tables live in the PostgreSQL schema `identity` (`identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token`), with the same columns, indexes and constraints. Flyway's history stays in the default schema. See the note at the top of the [README](README.md).
+
+
 ```mermaid
 erDiagram
     identity_account ||--o{ identity_session : "has login sessions"

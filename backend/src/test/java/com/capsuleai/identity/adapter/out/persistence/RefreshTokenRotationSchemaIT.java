@@ -42,11 +42,11 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
         assertThatThrownBy(() -> insertRefreshToken(sessionId, RefreshTokenHash.of("second").value()))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-        jdbc.sql("UPDATE identity_refresh_token SET consumed_at = issued_at WHERE id = :id")
+        jdbc.sql("UPDATE identity.identity_refresh_token SET consumed_at = issued_at WHERE id = :id")
                 .param("id", first).update();
         insertRefreshToken(sessionId, RefreshTokenHash.of("second").value());
 
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_refresh_token WHERE session_id = :id")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_refresh_token WHERE session_id = :id")
                 .param("id", sessionId).query(Long.class).single()).isEqualTo(2);
     }
 
@@ -55,7 +55,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
         UUID token = insertRefreshToken(insertSession(), RefreshTokenHash.of("early").value());
 
         assertThatThrownBy(() -> jdbc.sql("""
-                        UPDATE identity_refresh_token
+                        UPDATE identity.identity_refresh_token
                         SET consumed_at = issued_at - INTERVAL '1 second'
                         WHERE id = :id
                         """)
@@ -71,7 +71,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
                 .isInstanceOf(DataIntegrityViolationException.class);
         revoke(sessionId, "REFRESH_TOKEN_REUSE");
 
-        assertThat(jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        assertThat(jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId).query(String.class).single()).isEqualTo("REFRESH_TOKEN_REUSE");
     }
 
@@ -92,7 +92,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
                     .param("id", UUID.randomUUID()).param("sessionId", sessionId)
                     .param("hash", RefreshTokenHash.of("existing").value()).update();
 
-            migrateTransitionSchema(null);
+            migrateTransitionSchema("5");
 
             assertThat(jdbc.sql("SELECT consumed_at IS NULL FROM " + TRANSITION_SCHEMA
                             + ".identity_refresh_token WHERE session_id = :id")
@@ -108,22 +108,24 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
         }
     }
 
-    /** Runs the real migration files into a scratch schema, up to {@code target} (null = latest). */
+    /**
+     * Runs the real migration files into a scratch schema, up to {@code target}.
+     * Stops at the migration under test: V6 and later move Identity tables into the
+     * shared {@code identity} schema, which a scratch schema must not touch.
+     */
     private void migrateTransitionSchema(String target) {
         var configuration = Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(TRANSITION_SCHEMA)
                 .locations("classpath:db/migration");
-        if (target != null) {
-            configuration.target(target);
-        }
+        configuration.target(target);
         configuration.load().migrate();
     }
 
     private UUID insertSession() {
         UUID accountId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, created_at)
                         VALUES (:id, :email, '{test}hash', now())
                         """)
                 .param("id", accountId)
@@ -131,7 +133,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
                 .update();
         UUID sessionId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_session (id, account_id, established_at, expires_at)
+                        INSERT INTO identity.identity_session (id, account_id, established_at, expires_at)
                         VALUES (:id, :accountId, :establishedAt, :expiresAt)
                         """)
                 .param("id", sessionId)
@@ -145,7 +147,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertRefreshToken(UUID sessionId, String tokenHash) {
         UUID id = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_refresh_token (id, session_id, token_hash, issued_at)
+                        INSERT INTO identity.identity_refresh_token (id, session_id, token_hash, issued_at)
                         VALUES (:id, :sessionId, :tokenHash, :issuedAt)
                         """)
                 .param("id", id)
@@ -157,7 +159,7 @@ class RefreshTokenRotationSchemaIT extends IdentityIntegrationTestSupport {
     }
 
     private void revoke(UUID sessionId, String reason) {
-        jdbc.sql("UPDATE identity_session SET revoked_at = :at, revocation_reason = :reason WHERE id = :id")
+        jdbc.sql("UPDATE identity.identity_session SET revoked_at = :at, revocation_reason = :reason WHERE id = :id")
                 .param("at", ESTABLISHED.plusSeconds(60).atOffset(ZoneOffset.UTC))
                 .param("reason", reason)
                 .param("id", sessionId)

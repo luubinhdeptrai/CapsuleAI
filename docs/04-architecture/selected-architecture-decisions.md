@@ -7,7 +7,7 @@
 | Artifact | Selected Architecture Decisions |
 | Version | 0.1.6 |
 | Status | Baseline Draft |
-| Decision State | ADA-001–018 Selected |
+| Decision State | ADA-001–018 Selected; architecture refinement AR-01–AR-08 approved 2026-11-06 (Section 8) |
 | Selection Date | 2026-10-10 |
 | Selected By | Project Owner / Backend Developer |
 | Source Analysis | [Architecture Decision Analysis](architecture-decision-analysis.md), v0.2 analyzed recommendations |
@@ -24,6 +24,7 @@
 | 0.1.4 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.5 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.6 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+| 0.1.7 | 2026-11-06 | Added Section 8, the Product Owner-approved refinement AR-01–AR-08 (one PostgreSQL schema per persistence owner, no cross-context joins, persistence access or foreign keys, published contracts, enforcement). It decides the schema/FK/access detail that ADA-016 left downstream. ADA-001–018 selections, bases and impacts, and every earlier revision, remain unchanged. |
 
 ## 2. Purpose and Selection Authority
 
@@ -278,6 +279,73 @@ Known non-blocking source issues remain recorded in ADA Section 3.4: the incompl
 
 ## 7. Status and Next Step
 
-**Version 0.1.6 — Baseline Draft; ADA-001–018 Selected.** No override, deferred decision or superseded decision is recorded. No business/product/requirement, ASR obligation, QA measure, backlog/story or Sprint commitment changes.
+**Version 0.1.7 — Baseline Draft; ADA-001–018 Selected; AR-01–AR-08 approved refinement (Section 8).** No override, deferred decision or superseded decision is recorded; Section 8 refines ADA-016–018 without replacing them. No business/product/requirement, ASR obligation, QA measure, backlog/story or Sprint commitment changes.
 
 **Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All 18 selections remain unchanged; Data View approval remains pending.
+
+## 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas
+
+### 8.1 Refinement Record
+
+| Field | Value |
+| --- | --- |
+| Refinement IDs | AR-01–AR-08 |
+| Refines | ADA-016 (primary), ADA-017 and ADA-018; consistent with ADA-001, ADA-003, ADA-009, ADA-012 and ADA-015 |
+| Approved By | Product Owner |
+| Approval Date | 2026-11-06 |
+| Status | Approved; realized for the implemented Identity module (Flyway V6) and enforced by automated tests (Section 8.5) |
+| Nature | A stricter, explicit realization of the selected options. ADA-016 selected logical, context-owned persistence inside one PostgreSQL database and left "final contexts, schemas and FK/access rules" downstream. ADD Section 9.4 likewise left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban". This refinement decides those details. It changes no selected option, selection basis, backend impact or historical revision above, and it was not in force when ADA-016 was selected. |
+
+### 8.2 Rules
+
+| ID | Rule | Consequence for code, SQL and migrations |
+| --- | --- | --- |
+| AR-01 | **One PostgreSQL schema per persistence owner.** Every business module that persists its own state owns exactly one dedicated schema inside the single CapsuleAI database (ADA-003 unchanged). | The schema name is the module name in snake_case (Section 8.3). Tables are named `<schema>_<name>` and are always referenced as `<schema>.<schema>_<name>`. A module's schema is created by the migration of the first story that persists its state; no empty or speculative schema or table is created in advance. Flyway's default schema holds only Flyway's own `flyway_schema_history`. |
+| AR-02 | **No cross-context SQL joins.** A query joins only tables of its own owner's schema, even though every schema is in the same database. | Information owned elsewhere is obtained through the owner's published API and combined in application code, or through a deliberately designed published read contract. |
+| AR-03 | **No direct cross-context persistence access.** A module does not query, modify or depend on another owner's tables, table layout, JDBC repositories, persistence models or private domain models. No database view, function, trigger or rule bypasses an owner. | Only a module's own persistence adapter (`adapter.out.persistence`) issues SQL against its schema. A repository never becomes a generic repository for another context's data. |
+| AR-04 | **No cross-context foreign keys.** Foreign keys stay inside one owner's schema. | A reference to another owner's entity (for example `wardrobe.wardrobe_garment.owner_account_id`) is a plain identifier. Its validity comes from the owner's published contract at the time of the operation, not from the database. Section 8.4 states the lifecycle consequences. |
+| AR-05 | **Published module APIs.** Inter-context collaboration uses the owner's `api` package. | Authenticated requests reuse Identity's `AuthenticatedAccount` principal, which the security chain verifies against the persistent session; no per-request account lookup is added. A contract such as an account-existence lookup is created only when a real use case needs it. |
+| AR-06 | **No internal HTTP.** Modules call each other's published Java APIs in-process (ADA-001, ADA-017). | HTTP remains for real external boundaries (mobile clients, providers). |
+| AR-07 | **Deliberate transactional consistency.** One database still allows local ACID transactions, but a module never joins another owner's transaction by touching its tables. | A transaction spanning owners is coordinated explicitly through the owners' published operations. Its invariant and participants are documented with their service-extraction coupling (ADA-009, ADD Section 9.2), and partial failure is never hidden. The business requirement decides whether owners communicate by synchronous call or by event (ADA-017); this rule does not. |
+| AR-08 | **Automated enforcement.** The rules are verified by build-time tests (Section 8.5), not only by naming. | The application uses one database role with access to every schema. **Database privileges therefore do not enforce context isolation at runtime**; code ownership, published contracts and the tests do. Dedicated per-owner roles and data sources are not selected; they would add configuration and transaction complexity without a current requirement. |
+
+### 8.3 Persistence Owners and Schemas
+
+The owners are the five logical contexts of the accepted [Logical View](views/logical-view.puml) and the Product Measurement supporting capability. The [Implementation View](views/implementation-view.puml) gives Product Measurement its own measurement persistence and lifecycle. No other context is introduced.
+
+| Owner (package) | Schema / table prefix | Owned state (Data View) | Published contracts | May depend on (published APIs only) | Status |
+| --- | --- | --- | --- | --- | --- |
+| Identity (`identity`) | `identity` / `identity_` | Account, credentials, persistent sessions, refresh tokens, password-reset interactions | `AuthenticatedAccount`, `SessionAuthority` (implemented) | None | **Implemented:** `identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token` (moved by V6) |
+| Personal Context (`personalcontext`) | `personal_context` / `personal_context_` | Profile, declared preferences and needs, selected location, translated environmental evidence | Declared, current and limited context | Identity | Not implemented; no schema yet |
+| Wardrobe (`wardrobe`) | `wardrobe` / `wardrobe_` | Confirmed garments and their properties, Materials, media associations, garment action outcomes, minimal removed-garment snapshots | Confirmed properties and current ownership | Identity | Not implemented; Sprint 2 (US-GAR-001) creates the schema |
+| Outfit Advice and Use (`outfitadviceanduse`) | `outfit_advice_and_use` / `outfit_advice_and_use_` | Feedback, Wear events, history, effective evidence, advice action outcomes | Advice, feedback, Wear and reported use; Outfit Evaluation Semantics | Identity, Wardrobe, Personal Context | Not implemented |
+| Wardrobe Intelligence (`wardrobeintelligence`) | `wardrobe_intelligence` / `wardrobe_intelligence_` | Only justified owned source/action/work state; no result store mandated | Coverage, Gaps, candidate utility, shopping | Identity, Wardrobe, Personal Context, Outfit Evaluation Semantics | Not implemented |
+| Product Measurement (`productmeasurement`, supporting) | `product_measurement` / `product_measurement_` | Purpose-limited, user-linked measurement evidence with its own retention | Measurement intake (local events) | Identity; receives facts from other owners | Not implemented |
+
+### 8.4 Cross-Owner Lifecycle Consistency
+
+Because AR-04 forbids cross-schema foreign keys, the database neither prevents nor cascades a reference to another owner's entity. Consistency is an application responsibility:
+
+- **Creation and use:** an owner stores another owner's identifier only as the result of that owner's published contract in the same operation, for example the authenticated account from `AuthenticatedAccount`. The identifier alone does not prove the referenced entity still exists.
+- **Removal or deletion:** no account-deletion capability is selected today. A future one must be an explicit, durable and resumable application process (ADA-012). Identity publishes the lifecycle fact or operation. Every owner removes or de-identifies its own data through its own application services and persistence, within the applicable retention rules (DATA-RET-001–003, ADD Section 9.3). Cross-schema `ON DELETE CASCADE` is not available, and one owner must not imitate it by deleting another owner's rows.
+- **Verification:** where a real use case needs to confirm another owner's entity, that owner publishes a narrow contract for it (AR-05).
+
+### 8.5 Enforcement and Its Limits
+
+| Check | Verifies |
+| --- | --- |
+| `ArchitectureDependencyTest` (ArchUnit) | Modules use each other only through `api`; published APIs expose no private domain or application model; Spring JDBC stays in persistence adapters and configuration; no dependency cycle between modules; domain and application code stay framework-free; every module package is registered with its schema. Deliberate-violation fixtures prove that each rule fails when broken. |
+| `PersistenceOwnershipSqlTest` | Production SQL (Java string literals and text blocks) names only its own module's schema and always schema-qualifies owner tables. Every migration after V6 changes exactly one owner schema, so it cannot create a cross-schema foreign key, view or join. It is a focused scanner, not a SQL parser; its conventions are listed in the test. |
+| `DatabaseSchemaOwnershipIT` | On the fully migrated database, through the PostgreSQL catalog: only registered owner schemas exist besides Flyway's default schema; that schema holds only `flyway_schema_history`; every table is in its owner's schema; no foreign key or view crosses schemas; owner schemas hold no routines. |
+| `IdentitySchemaRelocationIT` | V6 on a realistic Sprint 1 database: every row, index and constraint survives, the adapters work on the upgraded data, the history remains valid, and a restart applies nothing. |
+
+These checks run in `mvnw clean verify`, and the CI report guard requires them. They detect violations at build time; they do not restrict a running application, because the single database role can access every schema (AR-08).
+
+### 8.6 Realization for the Implemented Identity Module
+
+V1–V5 created the Identity tables unqualified in Flyway's default schema. They have been applied to persistent databases and are never edited. The forward migration `V6__move_identity_tables_into_identity_schema.sql` creates the `identity` schema and moves the three tables with `ALTER TABLE ${flyway:defaultSchema}.<table> SET SCHEMA identity`:
+
+- It keeps every row, index, constraint and foreign key, copies nothing, and runs in one transaction.
+- Flyway's configuration and history location are unchanged, so V1–V5 are not re-applied.
+- All Identity SQL is now schema-qualified.
+- V6 needs the migrating role to own the three tables (a requirement of `SET SCHEMA`) and to hold `CREATE` on the database. This is true wherever the same role ran V1–V5; otherwise V6 fails without changing anything.

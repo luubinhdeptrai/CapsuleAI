@@ -66,7 +66,7 @@ class SessionSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertAccount() {
         UUID id = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, created_at)
                         VALUES (:id, :email, '{test}hash', now())
                         """)
                 .param("id", id)
@@ -78,7 +78,7 @@ class SessionSchemaIT extends IdentityIntegrationTestSupport {
     private UUID insertSession(UUID accountId, Instant establishedAt, Instant expiresAt) {
         UUID id = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_session (id, account_id, established_at, expires_at)
+                        INSERT INTO identity.identity_session (id, account_id, established_at, expires_at)
                         VALUES (:id, :accountId, :establishedAt, :expiresAt)
                         """)
                 .param("id", id)
@@ -91,7 +91,7 @@ class SessionSchemaIT extends IdentityIntegrationTestSupport {
 
     private void insertRefreshToken(UUID sessionId, String tokenHash) {
         jdbc.sql("""
-                        INSERT INTO identity_refresh_token (id, session_id, token_hash, issued_at)
+                        INSERT INTO identity.identity_refresh_token (id, session_id, token_hash, issued_at)
                         VALUES (:id, :sessionId, :tokenHash, now())
                         """)
                 .param("id", UUID.randomUUID())

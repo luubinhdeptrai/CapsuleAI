@@ -4,10 +4,10 @@
 | --- | --- |
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
 | Stories | US-AUTH-005, US-GAR-001, US-WAR-001, US-WAR-002 |
-| Repository baseline | Branch `sprint_02`, commit `1d0bc83` ("remove redundant properties of garment") |
+| Repository baseline | **Stage 0**: branch `sprint_02` at `dc4ddf3` plus the schema-ownership correction made together with this revision (§3) |
 | Audience | Backend developers implementing the Sprint 2 stories by hand, plus reviewers and the Scrum Team |
 | Package | This README, [shared-architecture.md](shared-architecture.md) and four story guides |
-| Status | Proposed implementation documentation. No production code in this repository has been changed by this package. |
+| Status | Proposed implementation documentation for Stages 1–4. Stage 0, the corrected Sprint 1 baseline, is real code in this repository's working tree (not yet committed when this package was generated). |
 
 ---
 
@@ -28,9 +28,11 @@ They follow the guide standard in the Sprint plan ([sprint-plan.md §14.2](../sp
 | Statement | True? |
 | --- | --- |
 | The proposed code in the story guides was compiled and its automated tests executed | **Yes, by the guide author in an isolated scratch clone of this repository**, never in this working tree. Each guide's code is taken mechanically from that clone's stage commits; nothing was retyped. |
-| The full four-stage result passed `mvnw clean verify` | Yes, in the scratch clone: **360 unit tests and 217 integration tests**, with 0 failures, 0 errors and 0 skipped, on PostgreSQL 17.11 and Mailpit via Testcontainers. |
-| Each intermediate stage compiles and passes on its own | Yes, in the scratch clone: every stage commit passed `clean verify` from a clean checkout ([§13](#13-expected-outcome-of-each-stage)). |
-| The CI report guard passes | Yes, in the scratch clone: all 50 required report files are present. |
+| Stage 0 passes in this repository | Yes: `clean verify` in this working tree passed with **161 unit and 124 integration tests** (0 failures, errors or skips), and the CI guard found all 27 required reports. |
+| The full four-stage result passed `mvnw clean verify` | Yes, in the scratch clone: **382 unit tests and 228 integration tests**, with 0 failures, 0 errors and 0 skipped, on PostgreSQL 17.11 and Mailpit via Testcontainers. |
+| Each intermediate stage compiles and passes on its own | Yes, in the scratch clone: every stage commit passed `clean verify` and its own CI guard ([§13](#13-expected-outcome-of-each-stage)). |
+| The CI report guard passes | Yes, in the scratch clone: all 57 required reports after Stage 4 are present, with none failed or skipped. |
+| Applying each guide literally reproduces the tested code | Yes: each guide's [ADD] files and [MODIFY] BEFORE→AFTER changes, applied to its starting stage, give exactly the next stage commit. Every BEFORE block occurs exactly once. |
 | The code has been applied to this repository | **No.** |
 | Hosted GitHub Actions CI has run it | **No.** |
 | Any Sprint 2 story is Done | **No.** Done requires the Definition of Done evidence on the integrated revision, including client evidence (accessibility, client states) and Product Owner decisions still open (§17). |
@@ -40,7 +42,16 @@ Your own build is the only evidence for your revision. Run the commands in each 
 
 ## 3. Repository baseline
 
-What the guides assume at `1d0bc83`, re-inspected for this package. The Sprint plan's own baseline assessment ([§3](../sprint-plan.md#3-current-repository-and-sprint-1-baseline-assessment)) was written at commit `529ec99`, before the Sprint 1 fixes (`aa243a8`) and CORS (`ab9afb9`); its later revisions only synchronized the garment taxonomy. Where the two differ, this table reflects `1d0bc83`.
+**Stage 0** is the state every guide starts from. It is commit `dc4ddf3` on `sprint_02` plus the architecture-conformance change made for the Product Owner-approved refinement AR-01–AR-08 ([selected architecture decisions §8](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas)). That change:
+
+- Adds `V6__move_identity_tables_into_identity_schema.sql`, which moves the Sprint 1 tables, with all their data, into the `identity` schema.
+- Schema-qualifies all Identity SQL.
+- Adds the architecture checks `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`, `IdentitySchemaRelocationIT` and a stronger `ArchitectureDependencyTest`.
+- Adds the persistence rule to [backend conventions §2](../../../../engineering/backend-conventions.md#2-each-persistence-owner-has-its-own-postgresql-schema).
+
+Commit that change before starting US-AUTH-005; the commit then is Stage 0.
+
+The Sprint plan's own baseline assessment ([§3](../sprint-plan.md#3-current-repository-and-sprint-1-baseline-assessment)) was written at commit `529ec99`, before the Sprint 1 fixes (`aa243a8`), CORS (`ab9afb9`) and this correction. Where the two differ, this table reflects Stage 0.
 
 | Area | Baseline state |
 | --- | --- |
@@ -48,15 +59,16 @@ What the guides assume at `1d0bc83`, re-inspected for this package. The Sprint p
 | Identity | Sprint 1 complete in code: registration, login, JWT access token plus persistent session authority, refresh rotation with reuse detection, logout; CORS configuration (`CorsProperties`, `corsConfigurationSource`) |
 | Wardrobe | Only `package-info.java`: no garment code, table or API |
 | Other modules | `personalcontext`, `wardrobeintelligence`, `outfitadviceanduse`, `productmeasurement`: documentation boundaries only |
-| Migrations | V1–V5 (foundation and Identity). **Never edit them.** Sprint 2 adds V6 (Identity) and V7 (Wardrobe). |
+| Migrations | V1–V5 (foundation and Identity) and V6 (moves the Identity tables into the `identity` schema). **Never edit them.** Sprint 2 adds V7 (Identity, password reset) and V8 (Wardrobe, which creates the `wardrobe` schema). |
+| Database layout | One PostgreSQL database. Schema `identity` holds `identity_account`, `identity_session` and `identity_refresh_token`. Flyway's default schema `public` holds only `flyway_schema_history`. No other schema exists yet. |
 | API contract | `docs/05-api/openapi.yaml` v0.4.1, Identity only |
-| Tests | JUnit 6, AssertJ, Mockito, Testcontainers 2 (PostgreSQL), ArchUnit; `IdentityOpenApiContractIT` checks every `/api/` handler against OpenAPI |
+| Tests | JUnit 6, AssertJ, Mockito, Testcontainers 2 (PostgreSQL), ArchUnit. `IdentityOpenApiContractIT` checks every `/api/` handler against OpenAPI. `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest` and `DatabaseSchemaOwnershipIT` enforce module and schema ownership. `IsolatedMigrationDatabase` gives upgrade tests their own database. |
 | CI | `.github/workflows/backend-ci.yml`: `clean verify` plus a guard that requires named surefire/failsafe reports |
 | Garment authority | [Initial files/Image to Properties Extraction.md](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md), approved 2026-11-05 (13 properties, every vocabulary) |
 
 ## 4. Sprint Goal and selected stories
 
-**Source:** [sprint-plan.md — 2. Sprint Goal](../sprint-plan.md#2-sprint-goal) · lines 28–34 at `1d0bc83`
+**Source:** [sprint-plan.md — 2. Sprint Goal](../sprint-plan.md#2-sprint-goal) · lines 28–34 at Stage 0
 
 > ## 2. Sprint Goal
 >
@@ -66,7 +78,7 @@ What the guides assume at `1d0bc83`, re-inspected for this package. The Sprint p
 >
 > **[REQ]** Backend success means correct-account recovery and authorized creation/read outcomes, truthful failure/unevaluated-eligibility states, preserved accepted data and inspectable automated integration evidence. Full mobile journeys and whole-story Done require the additional evidence identified in Sections 6/11. All four selected stories contribute to this Goal; none is optional, deferred or a stretch item.
 
-**Source:** [sprint-plan.md — 5. Selected Sprint 2 Backlog](../sprint-plan.md#5-selected-sprint-2-backlog) · lines 96–107 at `1d0bc83`
+**Source:** [sprint-plan.md — 5. Selected Sprint 2 Backlog](../sprint-plan.md#5-selected-sprint-2-backlog) · lines 96–107 at Stage 0
 
 > ## 5. Selected Sprint 2 Backlog
 >
@@ -83,7 +95,7 @@ What the guides assume at `1d0bc83`, re-inspected for this package. The Sprint p
 
 ## 5. Implementation order and guide links
 
-**Source:** [sprint-plan.md — 8. Dependencies and Recommended Implementation Sequence](../sprint-plan.md#8-dependencies-and-recommended-implementation-sequence) · lines 252–267 at `1d0bc83`
+**Source:** [sprint-plan.md — 8. Dependencies and Recommended Implementation Sequence](../sprint-plan.md#8-dependencies-and-recommended-implementation-sequence) · lines 252–267 at Stage 0
 
 > ## 8. Dependencies and Recommended Implementation Sequence
 >
@@ -104,8 +116,8 @@ What the guides assume at `1d0bc83`, re-inspected for this package. The Sprint p
 
 | Order | Guide | Starts from | Leaves | New API | Migration | OpenAPI |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | [US-AUTH-005 — Recover account access through email](US-AUTH-005-guide.md) | Baseline `1d0bc83` | Stage 1 | `POST /api/v1/auth/password-reset/request` (202), `/check` (204), `/complete` (204) | V6 | 0.5.0 |
-| 2 | [US-GAR-001 — Add an owned garment manually](US-GAR-001-guide.md) | Stage 1 | Stage 2 | `POST /api/v1/wardrobe/garments` (201/200) | V7 | 0.6.0 |
+| 1 | [US-AUTH-005 — Recover account access through email](US-AUTH-005-guide.md) | Stage 0 | Stage 1 | `POST /api/v1/auth/password-reset/request` (202), `/check` (204), `/complete` (204) | V7 | 0.5.0 |
+| 2 | [US-GAR-001 — Add an owned garment manually](US-GAR-001-guide.md) | Stage 1 | Stage 2 | `POST /api/v1/wardrobe/garments` (201/200) | V8 | 0.6.0 |
 | 3 | [US-WAR-001 — Browse my current wardrobe](US-WAR-001-guide.md) | Stage 2 | Stage 3 | `GET /api/v1/wardrobe/garments` | — | 0.7.0 |
 | 4 | [US-WAR-002 — Inspect an owned garment](US-WAR-002-guide.md) | Stage 3 | Stage 4 | `GET /api/v1/wardrobe/garments/{garmentId}` | — | 0.8.0 |
 
@@ -115,8 +127,8 @@ A guide's [MODIFY] anchors and BEFORE blocks refer to the state its "Starts from
 
 ```mermaid
 flowchart LR
-    s1[Sprint 1<br/>US-AUTH-001..004<br/>accounts, login, sessions] --> a5[US-AUTH-005<br/>email recovery<br/>V6]
-    s1 --> g1[US-GAR-001<br/>manual garment<br/>V7]
+    s1[Sprint 1<br/>US-AUTH-001..004<br/>accounts, login, sessions] --> a5[US-AUTH-005<br/>email recovery<br/>V7, schema identity]
+    s1 --> g1[US-GAR-001<br/>manual garment<br/>V8, schema wardrobe]
     g1 --> w1[US-WAR-001<br/>browse current wardrobe]
     g1 --> w2[US-WAR-002<br/>inspect owned garment]
     w1 -. selection / return .-> w2
@@ -133,7 +145,7 @@ Solid arrows are technical dependencies (code or schema reused). Dotted arrows a
 | Section | Content |
 | --- | --- |
 | Header, 1–2 | Story overview; the baseline the guide starts from |
-| 3–8 | **Verbatim** BRD, PRD, SRS, Business Rules, the complete story with every AC, use cases/activity diagrams and architecture decisions, each with a source line (`Source: [file](link) — section … (lines … at 1d0bc83)`) |
+| 3–8 | **Verbatim** BRD, PRD, SRS, Business Rules, the complete story with every AC, use cases/activity diagrams and architecture decisions, each with a source line (`Source: [file](link) — section · lines … at Stage 0`) |
 | 9 | Engineering interpretation: responsibilities, what each AC means for the backend, contradictions and their treatment |
 | 10 | Just-in-time design: architecture, model, API, data, transactions, concurrency, security, sequences, decisions with alternatives |
 | 11 | File change matrix (every file, action, purpose, step) |
@@ -149,8 +161,13 @@ Labels: **[REQ]** requirement, **[ARCH]** selected architecture decision, **[TEC
 - **Identity** owns accounts, credentials, sessions and recovery. **Wardrobe** owns garments. Wardrobe sees Identity only through `identity.api.AuthenticatedAccount` (ADA-018) and stores the owner id without a foreign key into Identity tables (ADA-016).
 - **Security:** a default-deny Spring Security chain. A JWT is accepted only while its persistent session is usable; recovery endpoints are public; every `/api/v1/wardrobe/**` call is protected and owner-scoped.
 - **Persistence:** PostgreSQL through `JdbcClient` and Flyway; transactions are explicit through a port (`IdentityTransactions`, `WardrobeTransactions`).
+- **One schema per owner** ([ARCH] AR-01–AR-08):
+  - Identity's tables live in `identity.*` and Wardrobe's in `wardrobe.*`; every statement is schema-qualified.
+  - No module joins, reads, writes or references another owner's tables by foreign key.
+  - Each migration changes one owner schema.
+  - Build-time tests enforce this. The single database role does not, at runtime.
 - **Recovery:** a 256-bit secret, stored only as a SHA-256 hash, valid 30 minutes, used once, and replaced by a newer request. Completion changes the password and revokes every active session atomically. SMTP delivery is asynchronous after commit.
-- **Wardrobe:** the 13 approved properties as enums whose codes are constant names with exact labels, category applicability in both Java and V7 `CHECK` constraints, exact Brand and Price, idempotent creation by `Idempotency-Key`, a constant `NOT_EVALUATED` eligibility, and `removed_at` for current versus removed.
+- **Wardrobe:** the 13 approved properties as enums whose codes are constant names with exact labels, category applicability in both Java and V8 `CHECK` constraints, exact Brand and Price, idempotent creation by `Idempotency-Key`, a constant `NOT_EVALUATED` eligibility, and `removed_at` for current versus removed.
 
 Full detail: [shared-architecture.md](shared-architecture.md).
 
@@ -170,8 +187,10 @@ Full detail: [shared-architecture.md](shared-architecture.md).
 
 | Term | Meaning in these guides |
 | --- | --- |
-| Stage 1–4 | The repository state after applying guides 1…n in order. Stage 0 is the baseline `1d0bc83`. |
-| Recovery interaction | One password-reset issuance: a secret delivered by email, valid 30 minutes and used once (`identity_password_reset` row) |
+| Stage 0 | `dc4ddf3` plus the schema-ownership correction (§3); the starting point of US-AUTH-005 |
+| Stage 1–4 | The repository state after applying guides 1…n in order |
+| Owner schema | The PostgreSQL schema a module owns (`identity`, `wardrobe`, …); its tables are named `<schema>_<name>` |
+| Recovery interaction | One password-reset issuance: a secret delivered by email, valid 30 minutes and used once (`identity.identity_password_reset` row) |
 | Instruction link | `capsuleai.identity.password-reset.instruction-link` plus `#token=<secret>`; opened by the mobile app ([OPEN] OPEN-S2-02) |
 | Active session | A persistent session that is not revoked and not expired; revoked by a completed reset |
 | Current garment | `removed_at IS NULL`; a removed garment is "no longer current" |
@@ -208,6 +227,8 @@ For each story, in order (Sprint plan §8: Selected Story → JIT Design → Tes
 | Contract | `IdentityOpenApiContractIT` | Failsafe | OpenAPI YAML compared with handlers and records |
 | Cross-story | `WardrobeAccessAfterPasswordResetIT` | Failsafe | Recovery followed by every Wardrobe operation |
 | Architecture | `ArchitectureDependencyTest` | Surefire | ArchUnit |
+| SQL ownership | `PersistenceOwnershipSqlTest` | Surefire | Focused scanner over SQL strings and migrations |
+| Schema ownership and upgrades | `DatabaseSchemaOwnershipIT`, `IdentitySchemaRelocationIT`, `*SchemaIT` upgrade cases | Failsafe | PostgreSQL catalog queries; `IsolatedMigrationDatabase` (a separate database per upgrade test) |
 
 Time is controlled by the application's single `Clock` bean, replaced in tests by `MutableClock`, so expiry boundaries are exact and no test sleeps.
 
@@ -219,22 +240,23 @@ Set-Location 'D:\CapsuleAI\backend'
 
 ## 13. Expected outcome of each stage
 
-The author re-ran `mvnw --batch-mode --no-transfer-progress clean verify` on 2026-11-06 against each stage commit of the scratch clone, each in a clean checkout. These are the results:
+The author ran `mvnw --batch-mode --no-transfer-progress clean verify` and then that stage's own CI report guard on 2026-11-06. Stage 0 ran in this repository's working tree; Stages 1–4 ran on the scratch clone's stage commits, which are built on Stage 0. These are the results:
 
-| Stage | After | Unit tests (Surefire) | Integration tests (Failsafe) | Build | Required CI reports |
+| Stage | After | Unit tests (Surefire) | Integration tests (Failsafe) | Build | CI report guard (executed) |
 | --- | --- | --- | --- | --- | --- |
-| 1 | US-AUTH-005 | 187 passed | 146 passed | SUCCESS | 34 entries in the map |
-| 2 | US-GAR-001 | 351 passed | 188 passed | SUCCESS | 45 entries |
-| 3 | US-WAR-001 | 353 passed | 198 passed | SUCCESS | 47 entries |
-| 4 | US-WAR-002 | 360 passed | 217 passed | SUCCESS | 50 entries; **guard executed: all 50 present, none failed or skipped** |
+| 0 | Schema-ownership correction | 161 passed | 124 passed | SUCCESS | 27 of 27 reports present and clean |
+| 1 | US-AUTH-005 | 209 passed | 156 passed | SUCCESS | 41 of 41 |
+| 2 | US-GAR-001 | 373 passed | 199 passed | SUCCESS | 52 of 52 |
+| 3 | US-WAR-001 | 375 passed | 209 passed | SUCCESS | 54 of 54 |
+| 4 | US-WAR-002 | 382 passed | 228 passed | SUCCESS | 57 of 57 |
 
-Every row reports 0 failures, 0 errors and 0 skipped. The guard script was executed only against the Stage 4 reports; for Stages 1–3 the table gives the size of the map, not a guard run. The jump at Stage 2 comes mostly from parameterized cases. `GarmentEntryValidatorTest` alone runs 105 (for example, one per approved subtype), and `PurchasePriceTest` runs 27.
+Every row reports 0 failures, 0 errors and 0 skipped. The jump at Stage 2 comes mostly from parameterized cases. `GarmentEntryValidatorTest` alone runs 105 (for example, one per approved subtype), and `PurchasePriceTest` runs 27.
 
 Your counts should match these exactly if the guides were applied without deviation. A different count means a step was skipped or changed: compare against the guide's test step list.
 
 ## 14. Continuous integration
 
-Each guide adds its new test classes to the `$required` map in `.github/workflows/backend-ci.yml`, with each class's minimum number of test cases. The guard fails the job when a named report is missing, has fewer test cases than required, or reports any failure, error or skip. A renamed, emptied or skipped class therefore cannot disappear silently. The map grows from 20 entries (baseline) to 34 (Stage 1), 45 (Stage 2), 47 (Stage 3) and **50** (Stage 4). CI triggers stay as in the baseline: pushes to `main` and pull requests targeting `main`. A story PR into `sprint_02` therefore runs no hosted CI; run `clean verify` locally and rely on the `sprint_02` → `main` PR for hosted evidence, unless the team extends the triggers (outside this package).
+Each guide adds its new test classes to the `$required` map in `.github/workflows/backend-ci.yml`, with each class's minimum number of test cases. The guard fails the job when a named report is missing, has fewer test cases than required, or reports any failure, error or skip. A renamed, emptied or skipped class therefore cannot disappear silently. The map grows from 20 entries (`dc4ddf3`) to 27 (Stage 0), 41 (Stage 1), 52 (Stage 2), 54 (Stage 3) and **57** (Stage 4). CI triggers stay as in the baseline: pushes to `main` and pull requests targeting `main`. A story PR into `sprint_02` therefore runs no hosted CI; run `clean verify` locally and rely on the `sprint_02` → `main` PR for hosted evidence, unless the team extends the triggers (outside this package).
 
 The workflow needs no new secret. Integration tests use Testcontainers (PostgreSQL, Mailpit) and the existing test-only configuration (`application-test.properties`, whose fixed signing key is a published test value, not a credential).
 
@@ -258,6 +280,7 @@ This package itself is not committed, pushed or opened as a pull request.
 - Price/Brand validation bounds and single-valued Style are provisional (OPEN-S2-01, OPEN-S2-08).
 - No images, editing, removal, search/filter, pagination or recorded use; `removed_at` is set only by test fixtures.
 - Client-side evidence (Vietnamese UI, accessibility, loading/draft states) is outside these backend guides.
+- Schema ownership is enforced by build-time tests, not by database privileges: the application's single database role can still reach every schema at runtime (AR-08).
 
 ## 17. Unresolved decisions
 
@@ -307,9 +330,10 @@ Details and the proposed default for each: [shared-architecture.md §22](shared-
 
 ## 20. Final package checklist
 
+- [ ] Stage 0 (schema-ownership correction) committed first; `V1`–`V6` unchanged afterwards
 - [ ] All four guides applied in order; every [MODIFY] anchor matched
 - [ ] `clean verify` green locally after each stage; reports inspected
-- [ ] CI guard passes with 50 required reports after Stage 4
+- [ ] CI guard passes with 57 required reports after Stage 4
 - [ ] Hosted CI green on the `sprint_02` → `main` pull request
 - [ ] Manual verification of each guide done
 - [ ] Every OPEN-S2 item decided or explicitly accepted by the Product Owner

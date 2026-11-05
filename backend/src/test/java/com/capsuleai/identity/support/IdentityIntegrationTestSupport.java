@@ -56,10 +56,12 @@ public abstract class IdentityIntegrationTestSupport {
     @BeforeEach
     protected void resetIdentityState() {
         clock.setInstant(MutableClock.DEFAULT_START);
+        // Every table Identity owns lives in its own schema (AR-01), so this also
+        // covers tables added by later Identity migrations.
         List<String> identityTables = jdbc.sql("""
-                        SELECT tablename
+                        SELECT format('%I.%I', schemaname, tablename)
                         FROM pg_tables
-                        WHERE schemaname = 'public' AND tablename LIKE 'identity%'
+                        WHERE schemaname = 'identity'
                         """)
                 .query(String.class)
                 .list();
