@@ -1,14 +1,14 @@
 # US-AUTH-005 — Recover Account Access Through Email: Implementation Guide
 
-| Field | Value |
-| --- | --- |
-| Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
-| Story / parent PBI | US-AUTH-005 — Recover account access through email / [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
-| Implementation order | **1 of 4** (US-AUTH-005 → US-GAR-001 → US-WAR-001 → US-WAR-002) |
-| Starts from | "Stage 0": branch `sprint_02` at `dc4ddf3` plus the schema-ownership correction (V6 moves the Sprint 1 tables into the `identity` schema, Identity SQL is schema-qualified, architecture tests enforce AR-01–AR-08); see [README §3](README.md#3-repository-baseline) |
-| Leaves | "Stage 1": the state US-GAR-001 starts from |
-| Read with | [README](README.md) (workflow, commands) and [shared architecture](shared-architecture.md) (cross-story design, decision log) |
-| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 1 commit on top of Stage 0: `clean verify` passed with 209 unit and 156 integration tests; the full four-stage result passed with 382 and 228). It has **not** been applied to this repository and has **not** run in hosted CI. US-AUTH-005 is **not Done**. |
+| Field                | Value                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint               | Sprint 2 — Recover Access and Establish a Private Wardrobe                                                                                                                                                                                                                                                                                                                                                           |
+| Story / parent PBI   | US-AUTH-005 — Recover account access through email / [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset)                                                                                                                                                                                                                                                                     |
+| Implementation order | **1 of 4** (US-AUTH-005 → US-GAR-001 → US-WAR-001 → US-WAR-002)                                                                                                                                                                                                                                                                                                                                                      |
+| Starts from          | "Stage 0": branch `sprint_02` at `dc4ddf3` plus the schema-ownership correction (V6 moves the Sprint 1 tables into the `identity` schema, Identity SQL is schema-qualified, architecture tests enforce AR-01–AR-08); see [README §3](README.md#3-repository-baseline)                                                                                                                                                |
+| Leaves               | "Stage 1": the state US-GAR-001 starts from                                                                                                                                                                                                                                                                                                                                                                          |
+| Read with            | [README](README.md) (workflow, commands) and [shared architecture](shared-architecture.md) (cross-story design, decision log)                                                                                                                                                                                                                                                                                        |
+| Code status          | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 1 commit on top of Stage 0: `clean verify` passed with 209 unit and 156 integration tests; the full four-stage result passed with 382 and 228). It has **not** been applied to this repository and has **not** run in hosted CI. US-AUTH-005 is **not Done**. |
 
 **How to use this guide.** Sections 3–8 reproduce every applicable source requirement **verbatim**, with links and line numbers, so you do not need to reopen the BRD, PRD, SRS, Business Rules, Story or Use Case. Section 9 says what they mean for the backend; Section 10 is the design; Sections 11–13 give every file change in order, with complete code or exact BEFORE/AFTER hunks; Sections 14–18 tell you how to prove it works and when you are finished.
 
@@ -18,40 +18,39 @@ Labels used throughout: **[REQ]** established requirement, **[ARCH]** establishe
 
 ## 1. Story Overview
 
-| Item | Content |
-| --- | --- |
-| Story ID / name | US-AUTH-005 — Recover account access through email |
-| Parent PBI | PBI-005 (Authentication domain, Foundation & Access theme) |
-| User value | A registered user who forgot the password regains the **same** private account and wardrobe with a new password, through emailed single-use instructions. |
+| Item              | Content                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Story ID / name   | US-AUTH-005 — Recover account access through email                                                                                                                                                                                                                                                                                                                            |
+| Parent PBI        | PBI-005 (Authentication domain, Foundation & Access theme)                                                                                                                                                                                                                                                                                                                    |
+| User value        | A registered user who forgot the password regains the **same** private account and wardrobe with a new password, through emailed single-use instructions.                                                                                                                                                                                                                     |
 | Backend objective | Account-safe Forgot Password initiation; secure, replaceable, 30-minute, single-success reset interactions persisted in PostgreSQL; purpose-minimal SMTP delivery after commit; an atomic accepted reset that sets the exact new password, consumes the interaction and revokes **every** active session of the account; no regression of Sprint 1 login, renewal and logout. |
-| Hard dependencies | The Sprint 1 Identity implementation (account, PBKDF2 hashing, `PasswordPolicy`, persistent sessions, JWT + session authority). An SMTP server for delivery (Mailpit locally). |
-| Scope (backend) | Three public operations under `/api/v1/auth/password-reset/`: `request`, `check`, `complete`; table `identity.identity_password_reset` (Flyway V7); the `PASSWORD_RESET` revocation reason; an email boundary (port, SMTP adapter, asynchronous decorator); the reset/login race fix in `LogInService`; tests at every level; OpenAPI v0.5.0; CI report requirements; README. |
-| Out of scope | Mobile screens, deep-link handling and Vietnamese UI text in the app; SMS/OTP/security questions/social recovery; email verification; account deletion; rate limiting (see [OPEN] OPEN-S2-04); choosing or contracting a production email provider. |
-| Expected outcome | Backend behavior for AC-01–AC-15 is implemented and automatically verified; AC-16 (accessibility) and the client parts of AC-01/AC-06/AC-12/AC-13/AC-15 remain client evidence; real-provider delivery evidence remains outstanding. |
+| Hard dependencies | The Sprint 1 Identity implementation (account, PBKDF2 hashing, `PasswordPolicy`, persistent sessions, JWT + session authority). An SMTP server for delivery (Mailpit locally).                                                                                                                                                                                                |
+| Scope (backend)   | Three public operations under `/api/v1/auth/password-reset/`: `request`, `check`, `complete`; table `identity.identity_password_reset` (Flyway V7); the `PASSWORD_RESET` revocation reason; an email boundary (port, SMTP adapter, asynchronous decorator); the reset/login race fix in `LogInService`; tests at every level; OpenAPI v0.5.0; CI report requirements; README. |
+| Out of scope      | Mobile screens, deep-link handling and Vietnamese UI text in the app; SMS/OTP/security questions/social recovery; email verification; account deletion; rate limiting (see [OPEN] OPEN-S2-04); choosing or contracting a production email provider.                                                                                                                           |
+| Expected outcome  | Backend behavior for AC-01–AC-15 is implemented and automatically verified; AC-16 (accessibility) and the client parts of AC-01/AC-06/AC-12/AC-13/AC-15 remain client evidence; real-provider delivery evidence remains outstanding.                                                                                                                                          |
 
 ## 2. Repository Baseline
 
 Verified at Stage 0. Java 21, Spring Boot 4.1.1, Spring Security 7.1.1, Spring JDBC (`JdbcClient`), Flyway (V1–V6; V6 moved the Sprint 1 tables into the `identity` schema), PostgreSQL 17.11, JUnit 6, AssertJ, Mockito, Testcontainers 2.0.5, ArchUnit 1.5.1, Maven Wrapper 3.9.16. No email library is on the classpath.
 
-| Existing component (verified path under `backend/src/main/java/com/capsuleai/identity/`) | What it already provides | How recovery uses it |
-| --- | --- | --- |
-| `domain/EmailAddress.java` | Trim + lower-case normalization, no alias rules | Initiation looks the account up by the normalized email (AC-02). |
-| `domain/PasswordPolicy.java` | 12–128 Unicode code points, no trimming/normalization, rejects unpaired surrogates | Validates the new password (AC-10, AC-11). |
-| `adapter/out/security/Pbkdf2PasswordHasher.java` via `application/ports/PasswordHasher.java` | Salted PBKDF2-HMAC-SHA256 | Hashes the new password exactly as entered. |
-| `domain/LoginSession.java`, `adapter/out/persistence/JdbcSessionRepository.java` | Persistent sessions, current-session `revoke`, locked refresh rotation | Extended with account-wide revocation. |
-| `domain/RevocationReason.java` | `LOGOUT`, `REFRESH_TOKEN_REUSE` (V5 CHECK constraint) | Extended with `PASSWORD_RESET` (V7). |
-| `application/LogInService.java` | Verifies the password **before** its session-creation transaction | Changed to recheck the credential under a shared account lock (race fix). |
-| `application/SessionAuthorityService.java` + `adapter/in/security/SessionAwareJwtAuthenticationConverter.java` | Every protected request re-reads its session row | Makes reset revocation take effect immediately for unexpired access tokens (AC-05). |
-| `adapter/in/web/AuthController.java`, `IdentityApiExceptionHandler.java` | Cohesive `/api/v1/auth` controller; scoped RFC 9457 errors with stable `code` | Recovery adds three handlers and one error mapping. |
-| `configuration/IdentitySecurityConfiguration.java` | One default-deny chain; `PUBLIC_ENDPOINTS` shared by `permitAll` and the bearer resolver; CORS | Recovery operations join `PUBLIC_ENDPOINTS`. |
-| `application/ports/IdentityTransactions.java`, `adapter/out/persistence/SpringIdentityTransactions.java` | Framework-free transaction boundary (READ COMMITTED) | Issuance and completion run inside it. |
-| Tests: `support/IdentityIntegrationTestSupport.java`, `support/IdentityTestConfiguration.java`, `support/MutableClock.java` | Real app + filter chain + Testcontainers PostgreSQL + controllable clock; the fixture reset truncates every table of the `identity` schema | Reused by every new integration test; the new reset table is cleared automatically. |
-| `backend/src/main/resources/db/migration/V6__move_identity_tables_into_identity_schema.sql` | The `identity` schema holding `identity_account`, `identity_session` and `identity_refresh_token`; all Identity SQL is written `identity.<table>` | The reset table joins the same schema; **V7** is the next free version (AR-01). |
-| `foundation/IsolatedMigrationDatabase.java` (test) | A separate empty database on the test server, migrated to any version | `PasswordResetSchemaIT` upgrades Sprint 1 data from V6 to V7 on it. |
+| Existing component (verified path under `backend/src/main/java/com/capsuleai/identity/`)                                             | What it already provides                                                                                                                                                                                                                                                                                                                 | How recovery uses it                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `domain/EmailAddress.java`                                                                                                           | Trim + lower-case normalization, no alias rules                                                                                                                                                                                                                                                                                          | Initiation looks the account up by the normalized email (AC-02).                    |
+| `domain/PasswordPolicy.java`                                                                                                         | 12–128 Unicode code points, no trimming/normalization, rejects unpaired surrogates                                                                                                                                                                                                                                                       | Validates the new password (AC-10, AC-11).                                          |
+| `adapter/out/security/Pbkdf2PasswordHasher.java` via `application/ports/PasswordHasher.java`                                         | Salted PBKDF2-HMAC-SHA256                                                                                                                                                                                                                                                                                                                | Hashes the new password exactly as entered.                                         |
+| `domain/LoginSession.java`, `adapter/out/persistence/JdbcSessionRepository.java`                                                     | Persistent sessions, current-session `revoke`, locked refresh rotation                                                                                                                                                                                                                                                                   | Extended with account-wide revocation.                                              |
+| `domain/RevocationReason.java`                                                                                                       | `LOGOUT`, `REFRESH_TOKEN_REUSE` (V5 CHECK constraint)                                                                                                                                                                                                                                                                                    | Extended with `PASSWORD_RESET` (V7).                                                |
+| `application/LogInService.java`                                                                                                      | Verifies the password **before** its session-creation transaction                                                                                                                                                                                                                                                                        | Changed to recheck the credential under a shared account lock (race fix).           |
+| `application/SessionAuthorityService.java` + `adapter/in/security/SessionAwareJwtAuthenticationConverter.java`                       | Every protected request re-reads its session row                                                                                                                                                                                                                                                                                         | Makes reset revocation take effect immediately for unexpired access tokens (AC-05). |
+| `adapter/in/web/AuthController.java`, `IdentityApiExceptionHandler.java`                                                             | Cohesive `/api/v1/auth` controller; scoped RFC 9457 errors with stable `code`                                                                                                                                                                                                                                                            | Recovery adds three handlers and one error mapping.                                 |
+| `configuration/IdentitySecurityConfiguration.java`                                                                                   | One default-deny chain; `PUBLIC_ENDPOINTS` shared by `permitAll` and the bearer resolver; CORS                                                                                                                                                                                                                                           | Recovery operations join `PUBLIC_ENDPOINTS`.                                        |
+| `application/ports/IdentityTransactions.java`, `adapter/out/persistence/SpringIdentityTransactions.java`                             | Framework-free transaction boundary (READ COMMITTED)                                                                                                                                                                                                                                                                                     | Issuance and completion run inside it.                                              |
+| Tests: `support/IdentityIntegrationTestSupport.java`, `support/IdentityTestConfiguration.java`, `support/MutableClock.java`          | Real app + filter chain + Testcontainers PostgreSQL + controllable clock; the fixture reset truncates every table of the `identity` schema                                                                                                                                                                                               | Reused by every new integration test; the new reset table is cleared automatically. |
+| `backend/src/main/resources/db/migration/V6__move_identity_tables_into_identity_schema.sql`                                          | The `identity` schema holding `identity_account`, `identity_session` and `identity_refresh_token`; all Identity SQL is written `identity.<table>`                                                                                                                                                                                        | The reset table joins the same schema; **V7** is the next free version (AR-01).     |
+| `foundation/IsolatedMigrationDatabase.java` (test)                                                                                   | A separate empty database on the test server, migrated to any version                                                                                                                                                                                                                                                                    | `PasswordResetSchemaIT` upgrades Sprint 1 data from V6 to V7 on it.                 |
 | `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` (test package `com.capsuleai.architecture`) | Enforce AR-01–AR-08: other modules use only a module's `api`; production SQL names only its own schema, always qualified; each migration after V6 changes one owner schema; on the migrated database every table is in its owner's schema and no foreign key crosses schemas. This story's code and migrations must pass them unchanged. |
 
 **State that matters for this story.** The Identity tables are in the `identity` schema; Flyway's history stays in the default schema (`public`), which holds no business table. There is no reset table, no reset code and no email infrastructure. `AccountRepository` cannot change a password. `SessionRepository` revokes one session at a time. The [OpenAPI contract](../../../../05-api/openapi.yaml) (v0.4.1) explicitly lists password reset as not introduced. `.github/workflows/backend-ci.yml` runs only for pushes to `main` and pull requests targeting `main`.
-
 
 ---
 
@@ -63,17 +62,17 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 
 **Source:** [BRD.md — 15.4 Privacy, Trust, and Evolution](../../../../01-business/BRD.md#154-privacy-trust-and-evolution) · lines 496–498 at Stage 0
 
-> | ID | Requirement | Business Rationale | Priority | Related Goals |
-> |---|---|---|---|---|
-> | BR-021 | Personal images, wardrobes, profile information, and behavior must remain private to authorized access, with understandable user control over their information. | Trust is necessary for participation across the value loop. | Must | BG-01, BG-02, BG-03, BG-04 |
-> | BR-023 | The initial product must serve Android and iOS users in Vietnam while preserving compatibility with future regions, garment categories, and personalization approaches. | Deliver a viable initial experience with room for continued development. | Must | BG-01, BG-02, BG-03, BG-04 |
+> | ID     | Requirement                                                                                                                                                             | Business Rationale                                                       | Priority | Related Goals              |
+> | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------- | -------------------------- |
+> | BR-021 | Personal images, wardrobes, profile information, and behavior must remain private to authorized access, with understandable user control over their information.        | Trust is necessary for participation across the value loop.              | Must     | BG-01, BG-02, BG-03, BG-04 |
+> | BR-023 | The initial product must serve Android and iOS users in Vietnam while preserving compatibility with future regions, garment categories, and personalization approaches. | Deliver a viable initial experience with room for continued development. | Must     | BG-01, BG-02, BG-03, BG-04 |
 
 ### 3.2 Business capability CAP-01
 
 **Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 286–286 at Stage 0
 
-> | ID | Capability | Business Purpose |
-> |---|---|---|
+> | ID     | Capability                | Business Purpose                                                                                   |
+> | ------ | ------------------------- | -------------------------------------------------------------------------------------------------- |
 > | CAP-01 | Account & Personalization | Maintain a private personal wardrobe context, style preferences, and optional profile information. |
 
 ## 4. Original Product Requirements — Verbatim
@@ -148,12 +147,12 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 >
 > JRN-01 governs progressive access. Registration/login/recovery are available before authentication; personal operations require authorized access.
 >
-> | Stimulus | Expected System Response |
-> |---|---|
-> | Register with Email, Password, Confirm Password | Validate required input and confirmation; create access only on success. Display Name is optional. |
-> | Login or return with usable access | Open the correct personal experience; explain renewal when required. |
-> | Forgot Password / complete email reset | Distinguish requested, completed, and failed recovery; enable login with the new password after success. |
-> | Logout | End personal access; require successful authentication before protected use resumes. |
+> | Stimulus                                        | Expected System Response                                                                                 |
+> | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+> | Register with Email, Password, Confirm Password | Validate required input and confirmation; create access only on success. Display Name is optional.       |
+> | Login or return with usable access              | Open the correct personal experience; explain renewal when required.                                     |
+> | Forgot Password / complete email reset          | Distinguish requested, completed, and failed recovery; enable login with the new password after success. |
+> | Logout                                          | End personal access; require successful authentication before protected use resumes.                     |
 
 ### 5.2 Authentication and Recovery Rules (SRS §3.1.1)
 
@@ -161,65 +160,65 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 
 > #### 3.1.1 Authentication and Recovery Rules
 >
-> The following rules define authentication, session renewal, password handling, and account recovery behavior for the MVP. FR-AUTH-* and DATA-AUTH-* specify the required outcomes; signing, key management, token/session storage, and revocation mechanisms remain downstream design.
+> The following rules define authentication, session renewal, password handling, and account recovery behavior for the MVP. FR-AUTH-_ and DATA-AUTH-_ specify the required outcomes; signing, key management, token/session storage, and revocation mechanisms remain downstream design.
 >
-> | Rule | Requirement |
-> |---|---|
-> | JWT Access Token | 15-minute lifetime. |
-> | Refresh Session | Maximum 30-day login-session/Refresh Token lifetime; rotating a token does not extend the session maximum. |
-> | Successful refresh | Consume the current Refresh Token; issue a new Access Token and Refresh Token. A consumed token is invalid for ordinary reuse. |
-> | Rotated-token reuse | Revoke the affected login session and require renewed authentication for it. |
-> | Separate devices | Separate login sessions are permitted. Logout revokes only the current session and ends that device/session's authenticated use; another separate session is not automatically revoked. |
-> | Successful password reset | Consume the reset interaction, revoke all active Refresh Sessions for the account and require renewed authentication with the new password. |
-> | Password | 12–128 characters; letters, numbers, symbols, spaces and Unicode are allowed. No mandatory character-class mixture or silent trimming/transformation/normalization. |
-> | Common-password protection | A small approved denylist may be used; an external breached-password service is not an MVP dependency. |
-> | Email identity | Trim surrounding whitespace and compare case-insensitively; at most one account per normalized email. Do not apply provider-specific alias transformations. |
-> | Registration conflict | No duplicate account; provide sign-in/recovery guidance. |
-> | Forgot Password privacy | Equivalent initial responses do not reveal account existence; Vietnamese wording conveys the conditional meaning “If an account exists for this email, password-reset instructions have been sent.” An initiation response does not confirm reset completion. |
-> | Reset validity | 30-minute lifetime and single successful use; expired/consumed interactions cannot reset credentials. |
-> | Reset replacement | Successfully issuing a new password-reset interaction invalidates all earlier unused password-reset interactions for the account (FR-AUTH-018). |
+> | Rule                       | Requirement                                                                                                                                                                                                                                                   |
+> | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | JWT Access Token           | 15-minute lifetime.                                                                                                                                                                                                                                           |
+> | Refresh Session            | Maximum 30-day login-session/Refresh Token lifetime; rotating a token does not extend the session maximum.                                                                                                                                                    |
+> | Successful refresh         | Consume the current Refresh Token; issue a new Access Token and Refresh Token. A consumed token is invalid for ordinary reuse.                                                                                                                                |
+> | Rotated-token reuse        | Revoke the affected login session and require renewed authentication for it.                                                                                                                                                                                  |
+> | Separate devices           | Separate login sessions are permitted. Logout revokes only the current session and ends that device/session's authenticated use; another separate session is not automatically revoked.                                                                       |
+> | Successful password reset  | Consume the reset interaction, revoke all active Refresh Sessions for the account and require renewed authentication with the new password.                                                                                                                   |
+> | Password                   | 12–128 characters; letters, numbers, symbols, spaces and Unicode are allowed. No mandatory character-class mixture or silent trimming/transformation/normalization.                                                                                           |
+> | Common-password protection | A small approved denylist may be used; an external breached-password service is not an MVP dependency.                                                                                                                                                        |
+> | Email identity             | Trim surrounding whitespace and compare case-insensitively; at most one account per normalized email. Do not apply provider-specific alias transformations.                                                                                                   |
+> | Registration conflict      | No duplicate account; provide sign-in/recovery guidance.                                                                                                                                                                                                      |
+> | Forgot Password privacy    | Equivalent initial responses do not reveal account existence; Vietnamese wording conveys the conditional meaning “If an account exists for this email, password-reset instructions have been sent.” An initiation response does not confirm reset completion. |
+> | Reset validity             | 30-minute lifetime and single successful use; expired/consumed interactions cannot reset credentials.                                                                                                                                                         |
+> | Reset replacement          | Successfully issuing a new password-reset interaction invalidates all earlier unused password-reset interactions for the account (FR-AUTH-018).                                                                                                               |
 
 ### 5.3 Functional requirements
 
 **Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 182–198 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | FR-AUTH-002 | The system shall authenticate Email/Password login using case-insensitive, surrounding-whitespace-trimmed email identity while comparing the user's untransformed password value. | MVP | FEAT-AUTH-001; BR-021 | T: email case/space variants; exact Unicode/space-containing passwords. |
-> | FR-AUTH-003 | The system shall provide email-based Forgot Password initiation with equivalent user-facing responses for registered and unregistered email addresses. | MVP | FEAT-AUTH-001; BR-021 | T: paired known/unknown email responses and recovery handoff. |
-> | FR-AUTH-004 | The system shall allow a valid single-use email recovery interaction to set a policy-valid new password, consume that interaction, revoke all account Refresh Sessions, and require subsequent authentication using the new password. | MVP | FEAT-AUTH-001; BR-021 | T: successful reset; old password/refresh sessions denied; new-password login. |
-> | FR-AUTH-008 | The system shall restrict protected personal operations to an authenticated user authorized for the affected information. | MVP | FEAT-AUTH-001; BR-021 | T: signed-out/cross-user denial. |
-> | FR-AUTH-009 | The system shall authenticate protected operations with a valid, unexpired JWT Access Token and the authorized session/account context. | MVP | FEAT-AUTH-001; BR-021 | T/I: absent, invalid, expired and valid JWT access; session authorization. |
-> | FR-AUTH-015 | The system shall accept policy-valid passwords of 12–128 characters including letters, numbers, symbols, spaces, and Unicode without mandatory character-class mixtures or silent trimming, normalization, or transformation. | MVP | FEAT-AUTH-001; BR-021 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
-> | FR-AUTH-016 | The system shall map each normalized email to at most one account, trimming surrounding whitespace and comparing case-insensitively; duplicate registration shall offer sign-in/recovery guidance without creating another account or applying provider-specific alias rules. | MVP | FEAT-AUTH-001; BR-021 | T: duplicate case/space variants and distinct provider-alias strings. |
-> | FR-AUTH-017 | The system shall limit each password-reset interaction to 30 minutes and one successful use, rejecting expired or already-used interactions without changing credentials. | MVP | FEAT-AUTH-001; BR-021 | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
-> | FR-AUTH-018 | The system shall invalidate any earlier unused password-reset interaction for the account when a new password-reset interaction is successfully issued. | MVP | FEAT-AUTH-001; BR-021 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
+> | ID          | Requirement                                                                                                                                                                                                                                                                   | Scope | Source                | Verification                                                                                                                                                        |
+> | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | FR-AUTH-002 | The system shall authenticate Email/Password login using case-insensitive, surrounding-whitespace-trimmed email identity while comparing the user's untransformed password value.                                                                                             | MVP   | FEAT-AUTH-001; BR-021 | T: email case/space variants; exact Unicode/space-containing passwords.                                                                                             |
+> | FR-AUTH-003 | The system shall provide email-based Forgot Password initiation with equivalent user-facing responses for registered and unregistered email addresses.                                                                                                                        | MVP   | FEAT-AUTH-001; BR-021 | T: paired known/unknown email responses and recovery handoff.                                                                                                       |
+> | FR-AUTH-004 | The system shall allow a valid single-use email recovery interaction to set a policy-valid new password, consume that interaction, revoke all account Refresh Sessions, and require subsequent authentication using the new password.                                         | MVP   | FEAT-AUTH-001; BR-021 | T: successful reset; old password/refresh sessions denied; new-password login.                                                                                      |
+> | FR-AUTH-008 | The system shall restrict protected personal operations to an authenticated user authorized for the affected information.                                                                                                                                                     | MVP   | FEAT-AUTH-001; BR-021 | T: signed-out/cross-user denial.                                                                                                                                    |
+> | FR-AUTH-009 | The system shall authenticate protected operations with a valid, unexpired JWT Access Token and the authorized session/account context.                                                                                                                                       | MVP   | FEAT-AUTH-001; BR-021 | T/I: absent, invalid, expired and valid JWT access; session authorization.                                                                                          |
+> | FR-AUTH-015 | The system shall accept policy-valid passwords of 12–128 characters including letters, numbers, symbols, spaces, and Unicode without mandatory character-class mixtures or silent trimming, normalization, or transformation.                                                 | MVP   | FEAT-AUTH-001; BR-021 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture.                                                                                       |
+> | FR-AUTH-016 | The system shall map each normalized email to at most one account, trimming surrounding whitespace and comparing case-insensitively; duplicate registration shall offer sign-in/recovery guidance without creating another account or applying provider-specific alias rules. | MVP   | FEAT-AUTH-001; BR-021 | T: duplicate case/space variants and distinct provider-alias strings.                                                                                               |
+> | FR-AUTH-017 | The system shall limit each password-reset interaction to 30 minutes and one successful use, rejecting expired or already-used interactions without changing credentials.                                                                                                     | MVP   | FEAT-AUTH-001; BR-021 | T: valid, expiry-boundary, used-interaction and repeated-reset cases.                                                                                               |
+> | FR-AUTH-018 | The system shall invalidate any earlier unused password-reset interaction for the account when a new password-reset interaction is successfully issued.                                                                                                                       | MVP   | FEAT-AUTH-001; BR-021 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
 
 ### 5.4 Data requirements
 
 **Source:** [SRS.md — 4.2 Account & Profile Data](../../../../03-requirements/SRS.md#42-account--profile-data) · lines 647–651 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | DATA-AUTH-001 | The system shall associate credentials/recovery/session information with the correct account, protect those secrets, and preserve the password value and policy-governed validity outcomes in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | T/I: account ownership; exact password meaning; protected recovery/session state. |
-> | DATA-AUTH-002 | The system shall represent Email through the normalized account identity defined in Section 3.1.1 and Display Name as optional, preserving one account per identity without provider-specific alias transformations. | MVP | FEAT-AUTH-001; BR-021 | T: uniqueness across email case/whitespace variants; optional Display Name. |
-> | DATA-AUTH-005 | The system shall represent separate login sessions with account association, maximum lifetime, current/consumed refresh validity and revocation state, and reset interactions with account association, expiry and single-use validity, sufficient to enforce Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | T/I: independent sessions, rotated-token reuse, current/all-session revocation, reset expiry/use. |
+> | ID            | Requirement                                                                                                                                                                                                                                                                  | Scope | Source                | Verification                                                                                      |
+> | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------- | ------------------------------------------------------------------------------------------------- |
+> | DATA-AUTH-001 | The system shall associate credentials/recovery/session information with the correct account, protect those secrets, and preserve the password value and policy-governed validity outcomes in Section 3.1.1.                                                                 | MVP   | FEAT-AUTH-001; BR-021 | T/I: account ownership; exact password meaning; protected recovery/session state.                 |
+> | DATA-AUTH-002 | The system shall represent Email through the normalized account identity defined in Section 3.1.1 and Display Name as optional, preserving one account per identity without provider-specific alias transformations.                                                         | MVP   | FEAT-AUTH-001; BR-021 | T: uniqueness across email case/whitespace variants; optional Display Name.                       |
+> | DATA-AUTH-005 | The system shall represent separate login sessions with account association, maximum lifetime, current/consumed refresh validity and revocation state, and reset interactions with account association, expiry and single-use validity, sufficient to enforce Section 3.1.1. | MVP   | FEAT-AUTH-001; BR-021 | T/I: independent sessions, rotated-token reuse, current/all-session revocation, reset expiry/use. |
 
 ### 5.5 External and communication interfaces
 
 **Source:** [SRS.md — 5.2 Software Interfaces](../../../../03-requirements/SRS.md#52-software-interfaces) · lines 773–773 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | SI-003 | The system shall send Email Delivery Service only email and necessary recovery-delivery information, preserve account-existence-safe initiation responses, and distinguish requested/delivered recovery from a valid completed reset. | MVP | FEAT-AUTH-001; BR-021 | I/T: minimal delivery information, known/unknown initiation equivalence and requested/failed/expired/consumed/completed reset. |
+> | ID     | Requirement                                                                                                                                                                                                                           | Scope | Source                | Verification                                                                                                                   |
+> | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+> | SI-003 | The system shall send Email Delivery Service only email and necessary recovery-delivery information, preserve account-existence-safe initiation responses, and distinguish requested/delivered recovery from a valid completed reset. | MVP   | FEAT-AUTH-001; BR-021 | I/T: minimal delivery information, known/unknown initiation equivalence and requested/failed/expired/consumed/completed reset. |
 
 **Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–790 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | COM-001 | The system shall protect private access/wardrobe/profile/history exchanges against unauthorized disclosure or alteration, preserving password values and the session/account authority defined in Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | A/T: protected exchange; Unicode/spaces preserved; session ownership. |
-> | COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions. | MVP | FEAT-AI-002, FEAT-PERS-002, FEAT-AUTH-001; BR-005, BR-011, BR-021 | T: interrupted save/reset/refresh/Wear actions and outcome review. |
-> | COM-003 | The system shall limit external shopping interaction to explicitly chosen navigation without granting destinations unrestricted private wardrobe/profile/history access; external dependencies receive only the minimum information needed for their purpose. | MVP | FEAT-SHOP-002, FEAT-AUTH-001; BR-018, BR-021 | I/T: explicit handoff, provider-specific minimal exchanges and no unrelated personal-data disclosure. |
+> | ID      | Requirement                                                                                                                                                                                                                                                   | Scope | Source                                                            | Verification                                                                                          |
+> | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+> | COM-001 | The system shall protect private access/wardrobe/profile/history exchanges against unauthorized disclosure or alteration, preserving password values and the session/account authority defined in Section 3.1.1.                                              | MVP   | FEAT-AUTH-001; BR-021                                             | A/T: protected exchange; Unicode/spaces preserved; session ownership.                                 |
+> | COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions.                                                       | MVP   | FEAT-AI-002, FEAT-PERS-002, FEAT-AUTH-001; BR-005, BR-011, BR-021 | T: interrupted save/reset/refresh/Wear actions and outcome review.                                    |
+> | COM-003 | The system shall limit external shopping interaction to explicitly chosen navigation without granting destinations unrestricted private wardrobe/profile/history access; external dependencies receive only the minimum information needed for their purpose. | MVP   | FEAT-SHOP-002, FEAT-AUTH-001; BR-018, BR-021                      | I/T: explicit handoff, provider-specific minimal exchanges and no unrelated personal-data disclosure. |
 
 ### 5.6 Error and failure requirements
 
@@ -231,55 +230,55 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 
 **Source:** [SRS.md — 9.1 Access and Recovery](../../../../03-requirements/SRS.md#91-access-and-recovery) · lines 991–992 at Stage 0
 
-> | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
-> |---|---|---|---|---|---|
-> | ERR-AUTH-002 | Reset cannot complete, is expired, or has already been used. | The system shall reject failed, expired, or already-used recovery interactions without claiming reset completion, offering renewed recovery with account-existence-safe initiation wording. | Credentials and session state change only on an actually completed reset; successful reset revokes all Refresh Sessions and requires login. | FEAT-AUTH-001; BR-021 | T: 30-minute expiry, consumed interaction, delivery failure, known/unknown email. |
-> | ERR-AUTH-003 | Renewal is unusable, the session is revoked/expired, or rotated Refresh Token reuse is detected. | The system shall require renewed authentication for expired/revoked Refresh Sessions or detected rotated-token reuse, retaining the inaccessible-versus-empty distinction. | Protected session use pauses; reauthenticate. Reuse revokes the affected session, and logout does not automatically revoke other sessions. | FEAT-AUTH-001; BR-021 | T: maximum 30-day expiry and consumed refresh-token replay. |
+> | ID           | Failure Condition                                                                                | Required System Behavior                                                                                                                                                                    | Continuation / State Protection                                                                                                             | Source                | Verification                                                                      |
+> | ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
+> | ERR-AUTH-002 | Reset cannot complete, is expired, or has already been used.                                     | The system shall reject failed, expired, or already-used recovery interactions without claiming reset completion, offering renewed recovery with account-existence-safe initiation wording. | Credentials and session state change only on an actually completed reset; successful reset revokes all Refresh Sessions and requires login. | FEAT-AUTH-001; BR-021 | T: 30-minute expiry, consumed interaction, delivery failure, known/unknown email. |
+> | ERR-AUTH-003 | Renewal is unusable, the session is revoked/expired, or rotated Refresh Token reuse is detected. | The system shall require renewed authentication for expired/revoked Refresh Sessions or detected rotated-token reuse, retaining the inaccessible-versus-empty distinction.                  | Protected session use pauses; reauthenticate. Reuse revokes the affected session, and logout does not automatically revoke other sessions.  | FEAT-AUTH-001; BR-021 | T: maximum 30-day expiry and consumed refresh-token replay.                       |
 
 **Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1049 at Stage 0
 
-> | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
-> |---|---|---|---|---|---|
-> | ERR-NET-001 | Network/communication fails during an action. | The system shall distinguish interrupted communication and uncertain mutation outcomes from confirmed success or empty data, providing applicable outcome review/retry without accidental duplicate actions. | Previously confirmed information is preserved; an already accepted action is not repeated as a new one. No general offline guarantee. | FEAT-AI-002, FEAT-PERS-002, FEAT-WAR-001; BR-005, BR-011, BR-022 | T: interruption before/after action acceptance. |
-> | ERR-DEP-001 | External capability unavailable. | The system shall identify the affected unavailable dependency and preserve independent authorized core paths instead of presenting a dependency failure as loss of the user's wardrobe. | Use manual/retry/recovery paths appropriate to Sections 9.1–9.8; mandatory access remains protected. | FEAT-AI-001, FEAT-PROF-002, FEAT-AUTH-001, FEAT-SHOP-002; BR-001, BR-013, BR-018, BR-021, BR-022 | T: isolated analysis/weather/email/navigation failures. |
+> | ID          | Failure Condition                             | Required System Behavior                                                                                                                                                                                     | Continuation / State Protection                                                                                                       | Source                                                                                           | Verification                                            |
+> | ----------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+> | ERR-NET-001 | Network/communication fails during an action. | The system shall distinguish interrupted communication and uncertain mutation outcomes from confirmed success or empty data, providing applicable outcome review/retry without accidental duplicate actions. | Previously confirmed information is preserved; an already accepted action is not repeated as a new one. No general offline guarantee. | FEAT-AI-002, FEAT-PERS-002, FEAT-WAR-001; BR-005, BR-011, BR-022                                 | T: interruption before/after action acceptance.         |
+> | ERR-DEP-001 | External capability unavailable.              | The system shall identify the affected unavailable dependency and preserve independent authorized core paths instead of presenting a dependency failure as loss of the user's wardrobe.                      | Use manual/retry/recovery paths appropriate to Sections 9.1–9.8; mandatory access remains protected.                                  | FEAT-AI-001, FEAT-PROF-002, FEAT-AUTH-001, FEAT-SHOP-002; BR-001, BR-013, BR-018, BR-021, BR-022 | T: isolated analysis/weather/email/navigation failures. |
 
 ### 5.7 Security, privacy, usability and accessibility requirements
 
 **Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 810–811 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
-> | NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review and known/unknown email response comparison. |
+> | ID          | Requirement                                                                                                                                                                                                            | Scope | Source                              | Verification                                                           |
+> | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------- | ---------------------------------------------------------------------- |
+> | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP   | FEAT-AUTH-001; BR-021               | T: two sessions/accounts; current logout versus account-wide reset.    |
+> | NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses.                                              | MVP   | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review and known/unknown email response comparison. |
 
 **Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–818 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
-> | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
+> | ID           | Requirement                                                                                                                                                                                                                                                                                                                                                                                                                        | Scope | Source                                                                                            | Verification                                                                                                              |
+> | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+> | NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP   | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale.                                    |
+> | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent.                                                                                                                             | MVP   | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021                   | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
 **Source:** [SRS.md — 6.6 Usability](../../../../03-requirements/SRS.md#66-usability) · lines 840–840 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | NFR-USE-001 | The system shall make Vietnamese setup/confirmation / unevaluated eligibility/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
+> | ID          | Requirement                                                                                                                                                                                                                                                                                                                                                                              | Scope | Source                                                                                 | Verification                                                                                           |
+> | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+> | NFR-USE-001 | The system shall make Vietnamese setup/confirmation / unevaluated eligibility/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP   | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
 
 **Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | NFR-ACC-001 | The system shall communicate meaningful confidence, unevaluated eligibility, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
-> | NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
+> | ID          | Requirement                                                                                                                                                                                                                                                                                                     | Scope | Source                                                                                                | Verification                                                                                                                               |
+> | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+> | NFR-ACC-001 | The system shall communicate meaningful confidence, unevaluated eligibility, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image.                                                                                          | MVP   | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues.                                                                                    |
+> | NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP   | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023               | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
 
 ### 5.8 Localization requirements
 
 **Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at Stage 0
 
-> | ID | Requirement | Scope | Source | Verification |
-> |---|---|---|---|---|
-> | LOC-001 | The system shall provide the initial user interface, explanations, and applicable recovery guidance in Vietnamese on Android and iOS. | MVP | FEAT-AUTH-001, FEAT-OUT-001, FEAT-AI-002; BR-002, BR-022, BR-023 | I/D: initial Vietnamese journeys. |
-> | LOC-002 | The system shall keep canonical category/subtype, style/occasion, confidence, and provenance semantics independent of translated display labels. | MVP | FEAT-PROF-001, FEAT-GAR-001, FEAT-AUTH-001; BR-003, BR-010, BR-023 | I/T: vocabulary-to-label mapping. |
+> | ID      | Requirement                                                                                                                                      | Scope | Source                                                             | Verification                      |
+> | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------------------------------------------------------------------ | --------------------------------- |
+> | LOC-001 | The system shall provide the initial user interface, explanations, and applicable recovery guidance in Vietnamese on Android and iOS.            | MVP   | FEAT-AUTH-001, FEAT-OUT-001, FEAT-AI-002; BR-002, BR-022, BR-023   | I/D: initial Vietnamese journeys. |
+> | LOC-002 | The system shall keep canonical category/subtype, style/occasion, confidence, and provenance semantics independent of translated display labels. | MVP   | FEAT-PROF-001, FEAT-GAR-001, FEAT-AUTH-001; BR-003, BR-010, BR-023 | I/T: vocabulary-to-label mapping. |
 
 ## 6. Original Business Rules — Verbatim
 
@@ -303,7 +302,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 >
 > **Source:** FR-AUTH-002, FR-AUTH-016, DATA-AUTH-002.
 >
-> **Boundary:** ` Person@Example.com ` and `person@example.com` identify the same account; provider alias strings are not automatically merged.
+> **Boundary:** `Person@Example.com` and `person@example.com` identify the same account; provider alias strings are not automatically merged.
 
 **Source:** [business-rules.md — BRULE-AUTH-003 — Password Value Preservation](../../../../03-requirements/business-rules.md#brule-auth-003--password-value-preservation) · lines 98–104 at Stage 0
 
@@ -367,18 +366,18 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > ## Document Control
 >
-> | Field | Value |
-> | --- | --- |
-> | Artifact | User Story |
-> | Story ID | US-AUTH-005 |
-> | Version | 0.3 |
-> | Status | Baseline Draft |
-> | Product | CapsuleAI |
-> | Revision note | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
-> | Parent PBI | [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
-> | Domain | Authentication |
-> | Theme | Foundation & Access |
-> | Product Goal Contribution | [Enabling / Protecting Product Value](../../../product-goal.md#4-desired-product-outcomes) |
+> | Field                     | Value                                                                                                                                                                                                                                                                            |
+> | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | Artifact                  | User Story                                                                                                                                                                                                                                                                       |
+> | Story ID                  | US-AUTH-005                                                                                                                                                                                                                                                                      |
+> | Version                   | 0.3                                                                                                                                                                                                                                                                              |
+> | Status                    | Baseline Draft                                                                                                                                                                                                                                                                   |
+> | Product                   | CapsuleAI                                                                                                                                                                                                                                                                        |
+> | Revision note             | 2026-10-21: first focused refinement; clarified source-backed acceptance/evidence and traceability; identity, scope and Baseline Draft status preserved. 2026-10-22: linked related full-backlog drafts and explicit identity/domain metadata; existing outcome and AC retained. |
+> | Parent PBI                | [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset)                                                                                                                                                                                      |
+> | Domain                    | Authentication                                                                                                                                                                                                                                                                   |
+> | Theme                     | Foundation & Access                                                                                                                                                                                                                                                              |
+> | Product Goal Contribution | [Enabling / Protecting Product Value](../../../product-goal.md#4-desired-product-outcomes)                                                                                                                                                                                       |
 >
 > ## 1. Story
 >
@@ -539,7 +538,6 @@ The complete story file, including its metadata, every Acceptance Criterion with
 > - [US-AUTH-002](../../../stories/auth/US-AUTH-002-log-in.md) supplies the return-to-authentication outcome; [US-AUTH-003](../../../stories/auth/US-AUTH-003-resume-session.md) must honor account-wide Refresh Session revocation.
 > - Email Delivery Service is the established external delivery dependency. Delivery is not assumed to succeed, and this story does not select a provider.
 > - An existing account can satisfy recovery; repeating registration is not a prerequisite.
->
 > - Related first-private-operation evidence is [US-PRIV-001](../../../stories/privacy/US-PRIV-001-protect-first-private-operations.md) and common mobile entry is [US-MOB-001](../../../stories/mobile/US-MOB-001-use-vietnamese-mobile-journey-foundation.md). These drafts clarify the existing PBI-002 / useful PBI-003 support; documented stories do not prove those capabilities implemented.
 >
 > ## 8. Out of Scope
@@ -548,17 +546,17 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > ## 9. Traceability
 >
-> | Source | References |
-> | --- | --- |
-> | Parent PBI | [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset) |
-> | Business | [BRD](../../../../01-business/BRD.md): BR-021, BR-023; CAP-01 |
-> | Product | [PRD](../../../../02-product/PRD.md): JRN-01; FEAT-AUTH-001 (email recovery) |
-> | SRS | [SRS](../../../../03-requirements/SRS.md): FR-AUTH-003, FR-AUTH-004, FR-AUTH-008, FR-AUTH-009, FR-AUTH-015, FR-AUTH-017, FR-AUTH-018; DATA-AUTH-001, DATA-AUTH-005; SI-003, COM-001, COM-002, COM-003; ERR-AUTH-002, ERR-AUTH-003; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-001, NFR-ACC-002; LOC-001 |
-> | Business Rules | [Business Rules](../../../../03-requirements/business-rules.md): BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-004, BRULE-AUTH-005, BRULE-AUTH-007 |
-> | Use Cases | [UC-004 — Reset Password](../../../../03-requirements/use-cases/UC-004-reset-password.md); [UC-002 — Log In](../../../../03-requirements/use-cases/UC-002-log-in.md), return handoff only |
-> | Activity Diagrams | [AD-004 — Reset Password](../../../../03-requirements/activity-diagrams/AD-004-reset-password.puml) |
-> | Architecture constraint | [Selected Architecture Decisions](../../../../04-architecture/selected-architecture-decisions.md), ADA-008: usable persistent account/session authority is required in addition to token validity. |
-> | Completion / Verification | [Definition of Done](../../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
+> | Source                    | References                                                                                                                                                                                                                                                                                                                 |
+> | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | Parent PBI                | [PBI-005](../../../product-backlog.md#pbi-005--recover-access-through-email-password-reset)                                                                                                                                                                                                                                |
+> | Business                  | [BRD](../../../../01-business/BRD.md): BR-021, BR-023; CAP-01                                                                                                                                                                                                                                                              |
+> | Product                   | [PRD](../../../../02-product/PRD.md): JRN-01; FEAT-AUTH-001 (email recovery)                                                                                                                                                                                                                                               |
+> | SRS                       | [SRS](../../../../03-requirements/SRS.md): FR-AUTH-003, FR-AUTH-004, FR-AUTH-008, FR-AUTH-009, FR-AUTH-015, FR-AUTH-017, FR-AUTH-018; DATA-AUTH-001, DATA-AUTH-005; SI-003, COM-001, COM-002, COM-003; ERR-AUTH-002, ERR-AUTH-003; NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002, NFR-ACC-001, NFR-ACC-002; LOC-001 |
+> | Business Rules            | [Business Rules](../../../../03-requirements/business-rules.md): BRULE-AUTH-002, BRULE-AUTH-003, BRULE-AUTH-004, BRULE-AUTH-005, BRULE-AUTH-007                                                                                                                                                                            |
+> | Use Cases                 | [UC-004 — Reset Password](../../../../03-requirements/use-cases/UC-004-reset-password.md); [UC-002 — Log In](../../../../03-requirements/use-cases/UC-002-log-in.md), return handoff only                                                                                                                                  |
+> | Activity Diagrams         | [AD-004 — Reset Password](../../../../03-requirements/activity-diagrams/AD-004-reset-password.puml)                                                                                                                                                                                                                        |
+> | Architecture constraint   | [Selected Architecture Decisions](../../../../04-architecture/selected-architecture-decisions.md), ADA-008: usable persistent account/session authority is required in addition to token validity.                                                                                                                         |
+> | Completion / Verification | [Definition of Done](../../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone.                                                                                                    |
 >
 > ## 10. Open Refinement Notes
 >
@@ -580,16 +578,16 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > ## 1. Use Case Summary
 >
-> | Field | Value |
-> | --- | --- |
-> | Use Case ID | UC-004 |
-> | Use Case Name | Reset Password |
-> | Scope | CapsuleAI |
-> | Level | User Goal |
-> | Primary Actor | User |
+> | Field             | Value                  |
+> | ----------------- | ---------------------- |
+> | Use Case ID       | UC-004                 |
+> | Use Case Name     | Reset Password         |
+> | Scope             | CapsuleAI              |
+> | Level             | User Goal              |
+> | Primary Actor     | User                   |
 > | Supporting Actors | Email Delivery Service |
-> | Version | 0.2 |
-> | Status | Baseline Draft |
+> | Version           | 0.2                    |
+> | Status            | Baseline Draft         |
 >
 > Source authority: [BRD](../../../../01-business/BRD.md) defines business intent; [PRD](../../../../02-product/PRD.md) defines product behavior; [SRS](../../../../03-requirements/SRS.md) and [Business Rules](../../../../03-requirements/business-rules.md) constrain interaction; the [master Use Case Diagram](../../../../03-requirements/use-cases/use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 >
@@ -599,9 +597,9 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > ## 3. Stakeholders and Interests
 >
-> | Stakeholder | Interest |
-> | --- | --- |
-> | User | Recover access while distinguishing requested instructions from completed password change. |
+> | Stakeholder | Interest                                                                                   |
+> | ----------- | ------------------------------------------------------------------------------------------ |
+> | User        | Recover access while distinguishing requested instructions from completed password change. |
 >
 > ## 4. Preconditions
 >
@@ -698,35 +696,34 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > The following references constrain this interaction; detailed policy remains in the [Business Rules](../../../../03-requirements/business-rules.md).
 >
-> | Rule ID | Relevance |
-> | --- | --- |
+> | Rule ID          | Relevance                                                                                                                                    |
+> | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 > | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
-> | `BRULE-AUTH-002` | Recovery uses the account's normalized email identity. |
-> | `BRULE-AUTH-003` | The new password preserves its value and satisfies the approved policy. |
-> | `BRULE-AUTH-004` | Interactions last 30 minutes, permit one successful use and are superseded by new issuance. |
-> | `BRULE-AUTH-005` | Completed reset consumes the interaction, revokes account-wide renewal sessions and preserves initiation privacy. |
+> | `BRULE-AUTH-002` | Recovery uses the account's normalized email identity.                                                                                       |
+> | `BRULE-AUTH-003` | The new password preserves its value and satisfies the approved policy.                                                                      |
+> | `BRULE-AUTH-004` | Interactions last 30 minutes, permit one successful use and are superseded by new issuance.                                                  |
+> | `BRULE-AUTH-005` | Completed reset consumes the interaction, revokes account-wide renewal sessions and preserves initiation privacy.                            |
 >
 > ## 12. Requirements Traceability
 >
-> | Source Type | IDs |
-> | --- | --- |
-> | [Journeys](../../../../02-product/PRD.md) | `JRN-01` |
-> | [Product Features](../../../../02-product/PRD.md) | `FEAT-AUTH-001` |
-> | [Software Requirements — Functional](../../../../03-requirements/SRS.md) | `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-015`, `FR-AUTH-017`, `FR-AUTH-018` |
-> | [Software Requirements — Data](../../../../03-requirements/SRS.md) | `DATA-AUTH-001`, `DATA-AUTH-005` |
-> | [Software Requirements — Failure / Recovery](../../../../03-requirements/SRS.md) | `ERR-AUTH-002`, `ERR-NET-001`, `ERR-DEP-001` |
-> | [Software Requirements — Interfaces](../../../../03-requirements/SRS.md) | `SI-003`, `COM-001`, `COM-002` |
+> | Source Type                                                                          | IDs                                                                                                              |
+> | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+> | [Journeys](../../../../02-product/PRD.md)                                            | `JRN-01`                                                                                                         |
+> | [Product Features](../../../../02-product/PRD.md)                                    | `FEAT-AUTH-001`                                                                                                  |
+> | [Software Requirements — Functional](../../../../03-requirements/SRS.md)             | `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-015`, `FR-AUTH-017`, `FR-AUTH-018`                                        |
+> | [Software Requirements — Data](../../../../03-requirements/SRS.md)                   | `DATA-AUTH-001`, `DATA-AUTH-005`                                                                                 |
+> | [Software Requirements — Failure / Recovery](../../../../03-requirements/SRS.md)     | `ERR-AUTH-002`, `ERR-NET-001`, `ERR-DEP-001`                                                                     |
+> | [Software Requirements — Interfaces](../../../../03-requirements/SRS.md)             | `SI-003`, `COM-001`, `COM-002`                                                                                   |
 > | [Software Requirements — Quality / Localization](../../../../03-requirements/SRS.md) | `NFR-SEC-003`, `NFR-SEC-002`, `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
-> | [Business Rules](../../../../03-requirements/business-rules.md) | `BRULE-AUTH-002`, `BRULE-AUTH-003`, `BRULE-AUTH-004`, `BRULE-AUTH-005`, `BRULE-AUTH-007` |
-> | [Business Requirements](../../../../01-business/BRD.md) | `BR-021` |
-> | [Capabilities](../../../../01-business/BRD.md) | `CAP-01` |
+> | [Business Rules](../../../../03-requirements/business-rules.md)                      | `BRULE-AUTH-002`, `BRULE-AUTH-003`, `BRULE-AUTH-004`, `BRULE-AUTH-005`, `BRULE-AUTH-007`                         |
+> | [Business Requirements](../../../../01-business/BRD.md)                              | `BR-021`                                                                                                         |
+> | [Capabilities](../../../../01-business/BRD.md)                                       | `CAP-01`                                                                                                         |
 >
 > ## 13. Special Requirements / Constraints
 >
 > - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 > - The initial Vietnamese response conveys a conditional account-safe meaning; response wording must not confirm whether an account exists.
 > - No session/token storage or revocation mechanism is selected here. Revocation refers to the SRS's account-wide login/renewal-session boundary.
->
 > - Email Delivery Service receives only email and information necessary for recovery delivery, without unrelated wardrobe/profile/history contents.
 >
 > ## 14. Related Use Cases
@@ -940,40 +937,40 @@ stop
 >
 > ### 8.1 Refinement Record
 >
-> | Field | Value |
-> | --- | --- |
-> | Refinement IDs | AR-01–AR-08 |
-> | Refines | ADA-016 (primary), ADA-017 and ADA-018; consistent with ADA-001, ADA-003, ADA-009, ADA-012 and ADA-015 |
-> | Approved By | Product Owner |
-> | Approval Date | 2026-11-06 |
-> | Status | Approved; realized for the implemented Identity module (Flyway V6) and enforced by automated tests (Section 8.5) |
-> | Nature | A stricter, explicit realization of the selected options. ADA-016 selected logical, context-owned persistence inside one PostgreSQL database and left "final contexts, schemas and FK/access rules" downstream. ADD Section 9.4 likewise left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban". This refinement decides those details. It changes no selected option, selection basis, backend impact or historical revision above, and it was not in force when ADA-016 was selected. |
+> | Field          | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+> | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+> | Refinement IDs | AR-01–AR-08                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+> | Refines        | ADA-016 (primary), ADA-017 and ADA-018; consistent with ADA-001, ADA-003, ADA-009, ADA-012 and ADA-015                                                                                                                                                                                                                                                                                                                                                                                                                               |
+> | Approved By    | Product Owner                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+> | Approval Date  | 2026-11-06                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+> | Status         | Approved; realized for the implemented Identity module (Flyway V6) and enforced by automated tests (Section 8.5)                                                                                                                                                                                                                                                                                                                                                                                                                     |
+> | Nature         | A stricter, explicit realization of the selected options. ADA-016 selected logical, context-owned persistence inside one PostgreSQL database and left "final contexts, schemas and FK/access rules" downstream. ADD Section 9.4 likewise left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban". This refinement decides those details. It changes no selected option, selection basis, backend impact or historical revision above, and it was not in force when ADA-016 was selected. |
 >
 > ### 8.2 Rules
 >
-> | ID | Rule | Consequence for code, SQL and migrations |
-> | --- | --- | --- |
-> | AR-01 | **One PostgreSQL schema per persistence owner.** Every business module that persists its own state owns exactly one dedicated schema inside the single CapsuleAI database (ADA-003 unchanged). | The schema name is the module name in snake_case (Section 8.3). Tables are named `<schema>_<name>` and are always referenced as `<schema>.<schema>_<name>`. A module's schema is created by the migration of the first story that persists its state; no empty or speculative schema or table is created in advance. Flyway's default schema holds only Flyway's own `flyway_schema_history`. |
-> | AR-02 | **No cross-context SQL joins.** A query joins only tables of its own owner's schema, even though every schema is in the same database. | Information owned elsewhere is obtained through the owner's published API and combined in application code, or through a deliberately designed published read contract. |
-> | AR-03 | **No direct cross-context persistence access.** A module does not query, modify or depend on another owner's tables, table layout, JDBC repositories, persistence models or private domain models. No database view, function, trigger or rule bypasses an owner. | Only a module's own persistence adapter (`adapter.out.persistence`) issues SQL against its schema. A repository never becomes a generic repository for another context's data. |
-> | AR-04 | **No cross-context foreign keys.** Foreign keys stay inside one owner's schema. | A reference to another owner's entity (for example `wardrobe.wardrobe_garment.owner_account_id`) is a plain identifier. Its validity comes from the owner's published contract at the time of the operation, not from the database. Section 8.4 states the lifecycle consequences. |
-> | AR-05 | **Published module APIs.** Inter-context collaboration uses the owner's `api` package. | Authenticated requests reuse Identity's `AuthenticatedAccount` principal, which the security chain verifies against the persistent session; no per-request account lookup is added. A contract such as an account-existence lookup is created only when a real use case needs it. |
-> | AR-06 | **No internal HTTP.** Modules call each other's published Java APIs in-process (ADA-001, ADA-017). | HTTP remains for real external boundaries (mobile clients, providers). |
-> | AR-07 | **Deliberate transactional consistency.** One database still allows local ACID transactions, but a module never joins another owner's transaction by touching its tables. | A transaction spanning owners is coordinated explicitly through the owners' published operations. Its invariant and participants are documented with their service-extraction coupling (ADA-009, ADD Section 9.2), and partial failure is never hidden. The business requirement decides whether owners communicate by synchronous call or by event (ADA-017); this rule does not. |
-> | AR-08 | **Automated enforcement.** The rules are verified by build-time tests (Section 8.5), not only by naming. | The application uses one database role with access to every schema. **Database privileges therefore do not enforce context isolation at runtime**; code ownership, published contracts and the tests do. Dedicated per-owner roles and data sources are not selected; they would add configuration and transaction complexity without a current requirement. |
+> | ID    | Rule                                                                                                                                                                                                                                                              | Consequence for code, SQL and migrations                                                                                                                                                                                                                                                                                                                                                     |
+> | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | AR-01 | **One PostgreSQL schema per persistence owner.** Every business module that persists its own state owns exactly one dedicated schema inside the single CapsuleAI database (ADA-003 unchanged).                                                                    | The schema name is the module name in snake*case (Section 8.3). Tables are named `<schema>*<name>`and are always referenced as`<schema>.<schema>\_<name>`. A module's schema is created by the migration of the first story that persists its state; no empty or speculative schema or table is created in advance. Flyway's default schema holds only Flyway's own `flyway_schema_history`. |
+> | AR-02 | **No cross-context SQL joins.** A query joins only tables of its own owner's schema, even though every schema is in the same database.                                                                                                                            | Information owned elsewhere is obtained through the owner's published API and combined in application code, or through a deliberately designed published read contract.                                                                                                                                                                                                                      |
+> | AR-03 | **No direct cross-context persistence access.** A module does not query, modify or depend on another owner's tables, table layout, JDBC repositories, persistence models or private domain models. No database view, function, trigger or rule bypasses an owner. | Only a module's own persistence adapter (`adapter.out.persistence`) issues SQL against its schema. A repository never becomes a generic repository for another context's data.                                                                                                                                                                                                               |
+> | AR-04 | **No cross-context foreign keys.** Foreign keys stay inside one owner's schema.                                                                                                                                                                                   | A reference to another owner's entity (for example `wardrobe.wardrobe_garment.owner_account_id`) is a plain identifier. Its validity comes from the owner's published contract at the time of the operation, not from the database. Section 8.4 states the lifecycle consequences.                                                                                                           |
+> | AR-05 | **Published module APIs.** Inter-context collaboration uses the owner's `api` package.                                                                                                                                                                            | Authenticated requests reuse Identity's `AuthenticatedAccount` principal, which the security chain verifies against the persistent session; no per-request account lookup is added. A contract such as an account-existence lookup is created only when a real use case needs it.                                                                                                            |
+> | AR-06 | **No internal HTTP.** Modules call each other's published Java APIs in-process (ADA-001, ADA-017).                                                                                                                                                                | HTTP remains for real external boundaries (mobile clients, providers).                                                                                                                                                                                                                                                                                                                       |
+> | AR-07 | **Deliberate transactional consistency.** One database still allows local ACID transactions, but a module never joins another owner's transaction by touching its tables.                                                                                         | A transaction spanning owners is coordinated explicitly through the owners' published operations. Its invariant and participants are documented with their service-extraction coupling (ADA-009, ADD Section 9.2), and partial failure is never hidden. The business requirement decides whether owners communicate by synchronous call or by event (ADA-017); this rule does not.           |
+> | AR-08 | **Automated enforcement.** The rules are verified by build-time tests (Section 8.5), not only by naming.                                                                                                                                                          | The application uses one database role with access to every schema. **Database privileges therefore do not enforce context isolation at runtime**; code ownership, published contracts and the tests do. Dedicated per-owner roles and data sources are not selected; they would add configuration and transaction complexity without a current requirement.                                 |
 >
 > ### 8.3 Persistence Owners and Schemas
 >
 > The owners are the five logical contexts of the accepted [Logical View](../../../../04-architecture/views/logical-view.puml) and the Product Measurement supporting capability. The [Implementation View](../../../../04-architecture/views/implementation-view.puml) gives Product Measurement its own measurement persistence and lifecycle. No other context is introduced.
 >
-> | Owner (package) | Schema / table prefix | Owned state (Data View) | Published contracts | May depend on (published APIs only) | Status |
-> | --- | --- | --- | --- | --- | --- |
-> | Identity (`identity`) | `identity` / `identity_` | Account, credentials, persistent sessions, refresh tokens, password-reset interactions | `AuthenticatedAccount`, `SessionAuthority` (implemented) | None | **Implemented:** `identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token` (moved by V6) |
-> | Personal Context (`personalcontext`) | `personal_context` / `personal_context_` | Profile, declared preferences and needs, selected location, translated environmental evidence | Declared, current and limited context | Identity | Not implemented; no schema yet |
-> | Wardrobe (`wardrobe`) | `wardrobe` / `wardrobe_` | Confirmed garments and their properties, Materials, media associations, garment action outcomes, minimal removed-garment snapshots | Confirmed properties and current ownership | Identity | Not implemented; Sprint 2 (US-GAR-001) creates the schema |
-> | Outfit Advice and Use (`outfitadviceanduse`) | `outfit_advice_and_use` / `outfit_advice_and_use_` | Feedback, Wear events, history, effective evidence, advice action outcomes | Advice, feedback, Wear and reported use; Outfit Evaluation Semantics | Identity, Wardrobe, Personal Context | Not implemented |
-> | Wardrobe Intelligence (`wardrobeintelligence`) | `wardrobe_intelligence` / `wardrobe_intelligence_` | Only justified owned source/action/work state; no result store mandated | Coverage, Gaps, candidate utility, shopping | Identity, Wardrobe, Personal Context, Outfit Evaluation Semantics | Not implemented |
-> | Product Measurement (`productmeasurement`, supporting) | `product_measurement` / `product_measurement_` | Purpose-limited, user-linked measurement evidence with its own retention | Measurement intake (local events) | Identity; receives facts from other owners | Not implemented |
+> | Owner (package)                                        | Schema / table prefix                              | Owned state (Data View)                                                                                                            | Published contracts                                                  | May depend on (published APIs only)                               | Status                                                                                                                     |
+> | ------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+> | Identity (`identity`)                                  | `identity` / `identity_`                           | Account, credentials, persistent sessions, refresh tokens, password-reset interactions                                             | `AuthenticatedAccount`, `SessionAuthority` (implemented)             | None                                                              | **Implemented:** `identity.identity_account`, `identity.identity_session`, `identity.identity_refresh_token` (moved by V6) |
+> | Personal Context (`personalcontext`)                   | `personal_context` / `personal_context_`           | Profile, declared preferences and needs, selected location, translated environmental evidence                                      | Declared, current and limited context                                | Identity                                                          | Not implemented; no schema yet                                                                                             |
+> | Wardrobe (`wardrobe`)                                  | `wardrobe` / `wardrobe_`                           | Confirmed garments and their properties, Materials, media associations, garment action outcomes, minimal removed-garment snapshots | Confirmed properties and current ownership                           | Identity                                                          | Not implemented; Sprint 2 (US-GAR-001) creates the schema                                                                  |
+> | Outfit Advice and Use (`outfitadviceanduse`)           | `outfit_advice_and_use` / `outfit_advice_and_use_` | Feedback, Wear events, history, effective evidence, advice action outcomes                                                         | Advice, feedback, Wear and reported use; Outfit Evaluation Semantics | Identity, Wardrobe, Personal Context                              | Not implemented                                                                                                            |
+> | Wardrobe Intelligence (`wardrobeintelligence`)         | `wardrobe_intelligence` / `wardrobe_intelligence_` | Only justified owned source/action/work state; no result store mandated                                                            | Coverage, Gaps, candidate utility, shopping                          | Identity, Wardrobe, Personal Context, Outfit Evaluation Semantics | Not implemented                                                                                                            |
+> | Product Measurement (`productmeasurement`, supporting) | `product_measurement` / `product_measurement_`     | Purpose-limited, user-linked measurement evidence with its own retention                                                           | Measurement intake (local events)                                    | Identity; receives facts from other owners                        | Not implemented                                                                                                            |
 >
 > ### 8.4 Cross-Owner Lifecycle Consistency
 >
@@ -985,12 +982,12 @@ stop
 >
 > ### 8.5 Enforcement and Its Limits
 >
-> | Check | Verifies |
-> | --- | --- |
+> | Check                                   | Verifies                                                                                                                                                                                                                                                                                                                                                                              |
+> | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 > | `ArchitectureDependencyTest` (ArchUnit) | Modules use each other only through `api`; published APIs expose no private domain or application model; Spring JDBC stays in persistence adapters and configuration; no dependency cycle between modules; domain and application code stay framework-free; every module package is registered with its schema. Deliberate-violation fixtures prove that each rule fails when broken. |
-> | `PersistenceOwnershipSqlTest` | Production SQL (Java string literals and text blocks) names only its own module's schema and always schema-qualifies owner tables. Every migration after V6 changes exactly one owner schema, so it cannot create a cross-schema foreign key, view or join. It is a focused scanner, not a SQL parser; its conventions are listed in the test. |
-> | `DatabaseSchemaOwnershipIT` | On the fully migrated database, through the PostgreSQL catalog: only registered owner schemas exist besides Flyway's default schema; that schema holds only `flyway_schema_history`; every table is in its owner's schema; no foreign key or view crosses schemas; owner schemas hold no routines. |
-> | `IdentitySchemaRelocationIT` | V6 on a realistic Sprint 1 database: every row, index and constraint survives, the adapters work on the upgraded data, the history remains valid, and a restart applies nothing. |
+> | `PersistenceOwnershipSqlTest`           | Production SQL (Java string literals and text blocks) names only its own module's schema and always schema-qualifies owner tables. Every migration after V6 changes exactly one owner schema, so it cannot create a cross-schema foreign key, view or join. It is a focused scanner, not a SQL parser; its conventions are listed in the test.                                        |
+> | `DatabaseSchemaOwnershipIT`             | On the fully migrated database, through the PostgreSQL catalog: only registered owner schemas exist besides Flyway's default schema; that schema holds only `flyway_schema_history`; every table is in its owner's schema; no foreign key or view crosses schemas; owner schemas hold no routines.                                                                                    |
+> | `IdentitySchemaRelocationIT`            | V6 on a realistic Sprint 1 database: every row, index and constraint survives, the adapters work on the upgraded data, the history remains valid, and a restart applies nothing.                                                                                                                                                                                                      |
 >
 > These checks run in `mvnw clean verify`, and the CI report guard requires them. They detect violations at build time; they do not restrict a running application, because the single database role can access every schema (AR-08).
 >
@@ -1007,21 +1004,20 @@ stop
 
 This table is engineering interpretation, not source text.
 
-| UC-004 step / flow | Backend (this guide) | Mobile client | External | Other story |
-| --- | --- | --- | --- | --- |
-| Main 1–2: request, equivalent response | `POST /password-reset/request` → identical 202 for any well-formed email | Forgot Password screen; Vietnamese conditional message; screen-reader/200% (AC-16) | — | — |
-| Main 3: issue, replace earlier, arrange delivery | `RequestPasswordResetService`, V7, account lock, `AsyncPasswordResetInstructionSender` | — | — | — |
-| Main 4: deliver, user opens | `SmtpPasswordResetInstructionSender` hands the email to SMTP | Opens `capsuleai://reset-password#token=…` and reads the fragment | Email Delivery Service (SMTP provider) delivers to the inbox | — |
-| Main 5 / A1: present new-password interaction while valid | `POST /password-reset/check` (204 / 400 `PASSWORD_RESET_INVALID`) | Shows the form only after 204 | — | — |
-| Main 6–7: submit, accept, change, consume, revoke all | `POST /password-reset/complete` → one transaction | Sends `token` + `newPassword` exactly as typed | — | US-AUTH-003 renewal and every protected request honor the revocation |
-| Main 8: confirm and direct to login | 204 means completed; no tokens are returned | Shows completion and routes to login | — | US-AUTH-002 login with the new password |
-| A2: replacement | Issuance replaces every open interaction under the account lock | — | — | — |
-| A3: cancel | Nothing to do: opening and leaving change nothing | Cancel/leave controls | — | — |
-| E1/E2: not received / delivery failed | Same 202; failure logged without secrets; user may request again | Email-check / retry guidance | Provider failure | — |
-| E3: expired, consumed, replaced | 400 `PASSWORD_RESET_INVALID`, nothing changed | Offers a fresh request | — | — |
-| E4: invalid new password | 400 `VALIDATION_FAILED` on `newPassword`; interaction stays usable | Correction guidance | — | — |
-| E5: failed or uncertain completion | 503 `TEMPORARILY_UNAVAILABLE` (nothing changed); replay after a lost success → `PASSWORD_RESET_INVALID` with "log in with it" guidance | Outcome review: try logging in with the new password, or restart | — | — |
-
+| UC-004 step / flow                                        | Backend (this guide)                                                                                                                   | Mobile client                                                                      | External                                                     | Other story                                                          |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Main 1–2: request, equivalent response                    | `POST /password-reset/request` → identical 202 for any well-formed email                                                               | Forgot Password screen; Vietnamese conditional message; screen-reader/200% (AC-16) | —                                                            | —                                                                    |
+| Main 3: issue, replace earlier, arrange delivery          | `RequestPasswordResetService`, V7, account lock, `AsyncPasswordResetInstructionSender`                                                 | —                                                                                  | —                                                            | —                                                                    |
+| Main 4: deliver, user opens                               | `SmtpPasswordResetInstructionSender` hands the email to SMTP                                                                           | Opens `capsuleai://reset-password#token=…` and reads the fragment                  | Email Delivery Service (SMTP provider) delivers to the inbox | —                                                                    |
+| Main 5 / A1: present new-password interaction while valid | `POST /password-reset/check` (204 / 400 `PASSWORD_RESET_INVALID`)                                                                      | Shows the form only after 204                                                      | —                                                            | —                                                                    |
+| Main 6–7: submit, accept, change, consume, revoke all     | `POST /password-reset/complete` → one transaction                                                                                      | Sends `token` + `newPassword` exactly as typed                                     | —                                                            | US-AUTH-003 renewal and every protected request honor the revocation |
+| Main 8: confirm and direct to login                       | 204 means completed; no tokens are returned                                                                                            | Shows completion and routes to login                                               | —                                                            | US-AUTH-002 login with the new password                              |
+| A2: replacement                                           | Issuance replaces every open interaction under the account lock                                                                        | —                                                                                  | —                                                            | —                                                                    |
+| A3: cancel                                                | Nothing to do: opening and leaving change nothing                                                                                      | Cancel/leave controls                                                              | —                                                            | —                                                                    |
+| E1/E2: not received / delivery failed                     | Same 202; failure logged without secrets; user may request again                                                                       | Email-check / retry guidance                                                       | Provider failure                                             | —                                                                    |
+| E3: expired, consumed, replaced                           | 400 `PASSWORD_RESET_INVALID`, nothing changed                                                                                          | Offers a fresh request                                                             | —                                                            | —                                                                    |
+| E4: invalid new password                                  | 400 `VALIDATION_FAILED` on `newPassword`; interaction stays usable                                                                     | Correction guidance                                                                | —                                                            | —                                                                    |
+| E5: failed or uncertain completion                        | 503 `TEMPORARILY_UNAVAILABLE` (nothing changed); replay after a lost success → `PASSWORD_RESET_INVALID` with "log in with it" guidance | Outcome review: try logging in with the new password, or restart                   | —                                                            | —                                                                    |
 
 ---
 
@@ -1029,43 +1025,43 @@ This table is engineering interpretation, not source text.
 
 ### 9.1 Responsibilities
 
-| Responsibility | Owner | Notes |
-| --- | --- | --- |
-| Account-safe initiation, issuance/replacement, validity, atomic completion, revocation, safe errors, secret protection, logs | **Backend (this guide)** | All AC except AC-16 have a backend-verifiable part. |
-| Vietnamese screens, conditional wording, link opening, form, cancel, outcome review, screen reader and 200% text | **Mobile client** | Not implemented here; listed as outstanding evidence (Section 15). |
-| Inbox delivery | **Email Delivery Service** (an SMTP provider) | CapsuleAI can prove that SMTP accepted the message, not that it reached the inbox. Locally and in tests, Mailpit stands in. |
-| Return to login; renewal honoring revocation | US-AUTH-002 / US-AUTH-003 (already implemented) | Reused unchanged except for the login race fix. |
+| Responsibility                                                                                                               | Owner                                           | Notes                                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Account-safe initiation, issuance/replacement, validity, atomic completion, revocation, safe errors, secret protection, logs | **Backend (this guide)**                        | All AC except AC-16 have a backend-verifiable part.                                                                         |
+| Vietnamese screens, conditional wording, link opening, form, cancel, outcome review, screen reader and 200% text             | **Mobile client**                               | Not implemented here; listed as outstanding evidence (Section 15).                                                          |
+| Inbox delivery                                                                                                               | **Email Delivery Service** (an SMTP provider)   | CapsuleAI can prove that SMTP accepted the message, not that it reached the inbox. Locally and in tests, Mailpit stands in. |
+| Return to login; renewal honoring revocation                                                                                 | US-AUTH-002 / US-AUTH-003 (already implemented) | Reused unchanged except for the login race fix.                                                                             |
 
 ### 9.2 What each Acceptance Criterion means for the backend
 
-| AC | [REQ] meaning | Backend realization | Residual outside the backend |
-| --- | --- | --- | --- |
-| AC-01 | Equivalent initial responses for registered/unregistered email; no claim of change | One constant 202 body for every well-formed email; delivery runs after the response | Vietnamese conditional wording |
-| AC-02 | Correct normalized identity, 30 min, single success; issuance changes nothing | `EmailAddress.normalize`; `PasswordResetToken.issue`; no password/session write during issuance | Real inbox receipt |
-| AC-03 | Only email and recovery information leaves | `PasswordResetInstructions` has exactly recipient, secret, expiry; plain-text body without profile/wardrobe | — |
-| AC-04 | Accepted completion sets the password, consumes, confirms; old fails, new works | One transaction; 204; existing login | Client routes to login |
-| AC-05 | All account sessions revoked, unexpired access tokens denied, other data and accounts untouched | `revokeAllActiveForAccount`; session authority is read on every request | — |
-| AC-06 | A delivered interaction can be opened directly | `POST /password-reset/check` | Deep-link opening |
-| AC-07 | New issuance invalidates all earlier unused ones | `replaceOpenTokens` under the account lock + partial unique index | — |
-| AC-08 | Invalid, expired (at 30:00), used, replaced → rejected, nothing changed, fresh request offered | `isUsableAt`, single `PASSWORD_RESET_INVALID` with guidance | Fresh-request UI |
-| AC-09 | Validity rechecked at submission | Completion re-reads the interaction under lock at submission time | — |
-| AC-10 | 11/129 rejected, 12/128 accepted, no class rules; rejection does not consume | Existing `PasswordPolicy`, validated before any lock | Correction UI |
-| AC-11 | Exact value authenticates; transformed value does not | Existing PBKDF2 hasher on the raw value | — |
-| AC-12 | Leaving before submission changes nothing | `check` is read-only; nothing else runs | Cancel controls |
-| AC-13 | Missing/failed delivery keeps safe semantics; no credential change from requesting | Same 202; delivery failure only logged; request has no credential/session effect | Email-check/retry UI |
-| AC-14 | Known failed completion changes nothing, no false success | Transaction rollback → 503 `TEMPORARILY_UNAVAILABLE` | Failure explanation UI |
-| AC-15 | Lost response is unconfirmed; a consumed interaction cannot change twice | Replay → `PASSWORD_RESET_INVALID` ("If you just set a new password, log in with it") | Outcome-review UI |
-| AC-16 | Accessible, distinct state meanings | Distinct, stable status/code per meaning: 202 requested, 204 completed, 400 invalid, 503 unconfirmed | **Entirely client/device evidence** |
+| AC    | [REQ] meaning                                                                                   | Backend realization                                                                                         | Residual outside the backend        |
+| ----- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| AC-01 | Equivalent initial responses for registered/unregistered email; no claim of change              | One constant 202 body for every well-formed email; delivery runs after the response                         | Vietnamese conditional wording      |
+| AC-02 | Correct normalized identity, 30 min, single success; issuance changes nothing                   | `EmailAddress.normalize`; `PasswordResetToken.issue`; no password/session write during issuance             | Real inbox receipt                  |
+| AC-03 | Only email and recovery information leaves                                                      | `PasswordResetInstructions` has exactly recipient, secret, expiry; plain-text body without profile/wardrobe | —                                   |
+| AC-04 | Accepted completion sets the password, consumes, confirms; old fails, new works                 | One transaction; 204; existing login                                                                        | Client routes to login              |
+| AC-05 | All account sessions revoked, unexpired access tokens denied, other data and accounts untouched | `revokeAllActiveForAccount`; session authority is read on every request                                     | —                                   |
+| AC-06 | A delivered interaction can be opened directly                                                  | `POST /password-reset/check`                                                                                | Deep-link opening                   |
+| AC-07 | New issuance invalidates all earlier unused ones                                                | `replaceOpenTokens` under the account lock + partial unique index                                           | —                                   |
+| AC-08 | Invalid, expired (at 30:00), used, replaced → rejected, nothing changed, fresh request offered  | `isUsableAt`, single `PASSWORD_RESET_INVALID` with guidance                                                 | Fresh-request UI                    |
+| AC-09 | Validity rechecked at submission                                                                | Completion re-reads the interaction under lock at submission time                                           | —                                   |
+| AC-10 | 11/129 rejected, 12/128 accepted, no class rules; rejection does not consume                    | Existing `PasswordPolicy`, validated before any lock                                                        | Correction UI                       |
+| AC-11 | Exact value authenticates; transformed value does not                                           | Existing PBKDF2 hasher on the raw value                                                                     | —                                   |
+| AC-12 | Leaving before submission changes nothing                                                       | `check` is read-only; nothing else runs                                                                     | Cancel controls                     |
+| AC-13 | Missing/failed delivery keeps safe semantics; no credential change from requesting              | Same 202; delivery failure only logged; request has no credential/session effect                            | Email-check/retry UI                |
+| AC-14 | Known failed completion changes nothing, no false success                                       | Transaction rollback → 503 `TEMPORARILY_UNAVAILABLE`                                                        | Failure explanation UI              |
+| AC-15 | Lost response is unconfirmed; a consumed interaction cannot change twice                        | Replay → `PASSWORD_RESET_INVALID` ("If you just set a new password, log in with it")                        | Outcome-review UI                   |
+| AC-16 | Accessible, distinct state meanings                                                             | Distinct, stable status/code per meaning: 202 requested, 204 completed, 400 invalid, 503 unconfirmed        | **Entirely client/device evidence** |
 
 ### 9.3 Contradictions, ambiguities and how they are treated
 
-| # | Statements (source) | Impact | Treatment |
-| --- | --- | --- | --- |
-| C-1 | SRS §3.1.1 "revoke all **active** Refresh Sessions" versus AC-05 and FR-AUTH-004 "all account Refresh Sessions" | Whether already-expired sessions get a reset revocation row | [TECH] TD-S2-07: revoke every session that is not revoked **and not expired**. An expired session can never renew or authorize anything, so the security outcome is identical and history is not rewritten. |
-| C-2 | Story §6 and SRS §3.1.1: "A small approved denylist **may** apply" | Whether to reject common passwords | No denylist is approved anywhere, so none is applied (the Sprint plan says not to assume one). [OPEN] OPEN-S2-06 if the PO approves one; it would plug into `PasswordPolicy` for registration and reset alike. |
-| C-3 | UC-004 §16 links `diagrams/UC-004-reset-password.puml`, which does not exist in the repository | Broken documentation link only | Reported here; no implementation impact. |
-| C-4 | AC-01/NFR-SEC-003 (equivalent responses) versus ERR-DEP-001 (identify the unavailable dependency) when the database fails *after* the account lookup succeeded | A rare partial failure answers 503 for a registered email while an unregistered one gets 202 | [OPEN] OPEN-S2-05. A complete outage fails both equally (503). Masking a partial failure as 202 would claim instructions were sent when they were not. The guide keeps the truthful 503; PO/security may decide otherwise. |
-| C-5 | Sprint plan §6.1 "[OPEN] delivery provider/access and instruction-opening contract" | Link format the app must handle | [TECH] TD-S2-05 + [OPEN] OPEN-S2-02: configurable `instruction-link` (default `capsuleai://reset-password`), secret in the fragment `#token=`. Confirm with the mobile contributor. |
+| #   | Statements (source)                                                                                                                                            | Impact                                                                                       | Treatment                                                                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-1 | SRS §3.1.1 "revoke all **active** Refresh Sessions" versus AC-05 and FR-AUTH-004 "all account Refresh Sessions"                                                | Whether already-expired sessions get a reset revocation row                                  | [TECH] TD-S2-07: revoke every session that is not revoked **and not expired**. An expired session can never renew or authorize anything, so the security outcome is identical and history is not rewritten.                |
+| C-2 | Story §6 and SRS §3.1.1: "A small approved denylist **may** apply"                                                                                             | Whether to reject common passwords                                                           | No denylist is approved anywhere, so none is applied (the Sprint plan says not to assume one). [OPEN] OPEN-S2-06 if the PO approves one; it would plug into `PasswordPolicy` for registration and reset alike.             |
+| C-3 | UC-004 §16 links `diagrams/UC-004-reset-password.puml`, which does not exist in the repository                                                                 | Broken documentation link only                                                               | Reported here; no implementation impact.                                                                                                                                                                                   |
+| C-4 | AC-01/NFR-SEC-003 (equivalent responses) versus ERR-DEP-001 (identify the unavailable dependency) when the database fails _after_ the account lookup succeeded | A rare partial failure answers 503 for a registered email while an unregistered one gets 202 | [OPEN] OPEN-S2-05. A complete outage fails both equally (503). Masking a partial failure as 202 would claim instructions were sent when they were not. The guide keeps the truthful 503; PO/security may decide otherwise. |
+| C-5 | Sprint plan §6.1 "[OPEN] delivery provider/access and instruction-opening contract"                                                                            | Link format the app must handle                                                              | [TECH] TD-S2-05 + [OPEN] OPEN-S2-02: configurable `instruction-link` (default `capsuleai://reset-password`), secret in the fragment `#token=`. Confirm with the mobile contributor.                                        |
 
 ---
 
@@ -1113,41 +1109,41 @@ stateDiagram-v2
 
 ### 10.3 API contract
 
-| Operation | Request body | Success | Errors |
-| --- | --- | --- | --- |
-| `POST /api/v1/auth/password-reset/request` | `{"email": "..."}` | **202** `{"code":"PASSWORD_RESET_REQUESTED","detail":"If an account exists for this email, password-reset instructions have been sent."}` for every well-formed email | 400 `VALIDATION_FAILED` (`email`: `REQUIRED`, `INVALID_FORMAT`, `TOO_LONG`), 400 `MALFORMED_REQUEST`, 503 `TEMPORARILY_UNAVAILABLE` |
-| `POST /api/v1/auth/password-reset/check` | `{"token": "..."}` | **204** usable now | 400 `VALIDATION_FAILED` (`token`: `REQUIRED`), 400 `PASSWORD_RESET_INVALID`, 503 |
-| `POST /api/v1/auth/password-reset/complete` | `{"token": "...", "newPassword": "..."}` | **204** completed: log in with the new password; no tokens returned | 400 `VALIDATION_FAILED` (`token`; `newPassword`: `REQUIRED`, `TOO_SHORT`, `TOO_LONG`, `INVALID_CHARACTERS`), 400 `PASSWORD_RESET_INVALID`, 503 |
+| Operation                                   | Request body                             | Success                                                                                                                                                               | Errors                                                                                                                                         |
+| ------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/auth/password-reset/request`  | `{"email": "..."}`                       | **202** `{"code":"PASSWORD_RESET_REQUESTED","detail":"If an account exists for this email, password-reset instructions have been sent."}` for every well-formed email | 400 `VALIDATION_FAILED` (`email`: `REQUIRED`, `INVALID_FORMAT`, `TOO_LONG`), 400 `MALFORMED_REQUEST`, 503 `TEMPORARILY_UNAVAILABLE`            |
+| `POST /api/v1/auth/password-reset/check`    | `{"token": "..."}`                       | **204** usable now                                                                                                                                                    | 400 `VALIDATION_FAILED` (`token`: `REQUIRED`), 400 `PASSWORD_RESET_INVALID`, 503                                                               |
+| `POST /api/v1/auth/password-reset/complete` | `{"token": "...", "newPassword": "..."}` | **204** completed: log in with the new password; no tokens returned                                                                                                   | 400 `VALIDATION_FAILED` (`token`; `newPassword`: `REQUIRED`, `TOO_SHORT`, `TOO_LONG`, `INVALID_CHARACTERS`), 400 `PASSWORD_RESET_INVALID`, 503 |
 
 All three are public (no bearer token; a stale `Authorization` header is ignored). Errors use the existing RFC 9457 body with a stable `code`; no body echoes the email, the secret or the password.
 
-**[TECH] TD-S2-02: why three operations.** `request` and `complete` are required by the flow. `check` exists because AC-06/AC-08 require that *opening* an invalid link already reports rejection, before the user types a password. Using `POST` keeps the secret out of URLs, logs and proxies. **Why one invalid code:** unknown, expired, used and replaced all mean "this link can no longer change the password; request a new one". Distinguishing them would tell an attacker holding a leaked link whether the account recently reset its password, and the user's next step is the same.
+**[TECH] TD-S2-02: why three operations.** `request` and `complete` are required by the flow. `check` exists because AC-06/AC-08 require that _opening_ an invalid link already reports rejection, before the user types a password. Using `POST` keeps the secret out of URLs, logs and proxies. **Why one invalid code:** unknown, expired, used and replaced all mean "this link can no longer change the password; request a new one". Distinguishing them would tell an attacker holding a leaked link whether the account recently reset its password, and the user's next step is the same.
 
 ### 10.4 Data model (V7)
 
 Table `identity.identity_password_reset`, created in Identity's own schema `identity` (AR-01). Its only foreign key, to `identity.identity_account`, stays inside that schema (AR-04). V7 names no other schema, which `PersistenceOwnershipSqlTest` checks.
 
-| Column | Type | Meaning |
-| --- | --- | --- |
-| `id` | UUID PK | Interaction id |
-| `account_id` | UUID FK → `identity.identity_account` | Owner (Identity-internal FK) |
-| `token_hash` | TEXT UNIQUE, `^[0-9a-f]{64}$` | SHA-256 of the 256-bit secret; the secret itself is never stored |
-| `issued_at`, `expires_at` | TIMESTAMPTZ; `expires_at > issued_at` and `≤ issued_at + 30 min` | Validity window |
-| `consumed_at` | TIMESTAMPTZ NULL | Set by an accepted reset |
-| `replaced_at` | TIMESTAMPTZ NULL | Set by a newer issuance |
-| — | CHECK `consumed_at IS NULL OR replaced_at IS NULL` | One outcome only |
-| — | UNIQUE INDEX on `account_id` WHERE both NULL | At most one open interaction per account |
+| Column                    | Type                                                             | Meaning                                                          |
+| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `id`                      | UUID PK                                                          | Interaction id                                                   |
+| `account_id`              | UUID FK → `identity.identity_account`                            | Owner (Identity-internal FK)                                     |
+| `token_hash`              | TEXT UNIQUE, `^[0-9a-f]{64}$`                                    | SHA-256 of the 256-bit secret; the secret itself is never stored |
+| `issued_at`, `expires_at` | TIMESTAMPTZ; `expires_at > issued_at` and `≤ issued_at + 30 min` | Validity window                                                  |
+| `consumed_at`             | TIMESTAMPTZ NULL                                                 | Set by an accepted reset                                         |
+| `replaced_at`             | TIMESTAMPTZ NULL                                                 | Set by a newer issuance                                          |
+| —                         | CHECK `consumed_at IS NULL OR replaced_at IS NULL`               | One outcome only                                                 |
+| —                         | UNIQUE INDEX on `account_id` WHERE both NULL                     | At most one open interaction per account                         |
 
 `identity.identity_session.revocation_reason` now also accepts `PASSWORD_RESET`. No retention/deletion job is added for old rows ([OPEN] OPEN-S2-07; the plan forbids inventing a retention period).
 
 ### 10.5 Transactions
 
-| Use case | Inside one transaction | After commit |
-| --- | --- | --- |
-| Request (registered email) | lock account `FOR UPDATE` → mark open interactions replaced → insert the new one | hand instructions to the asynchronous sender |
-| Check | — (single read) | — |
-| Complete | lock account `FOR UPDATE` → lock interaction `FOR UPDATE` → re-check usable now → update password hash → consume → revoke all active sessions | nothing (no tokens are issued) |
-| Login (changed) | lock account `FOR SHARE` → compare current hash with the verified one → insert session + refresh token | return tokens |
+| Use case                   | Inside one transaction                                                                                                                        | After commit                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Request (registered email) | lock account `FOR UPDATE` → mark open interactions replaced → insert the new one                                                              | hand instructions to the asynchronous sender |
+| Check                      | — (single read)                                                                                                                               | —                                            |
+| Complete                   | lock account `FOR UPDATE` → lock interaction `FOR UPDATE` → re-check usable now → update password hash → consume → revoke all active sessions | nothing (no tokens are issued)               |
+| Login (changed)            | lock account `FOR SHARE` → compare current hash with the verified one → insert session + refresh token                                        | return tokens                                |
 
 PBKDF2 hashing (≈ hundreds of ms) always happens **before** the transaction, so no row lock is held while hashing.
 
@@ -1155,19 +1151,19 @@ PBKDF2 hashing (≈ hundreds of ms) always happens **before** the transaction, s
 
 **Lock order (deadlock freedom).** Every path that takes more than one lock takes them in the same order: **account → reset interaction → sessions**. Refresh rotation locks only its token and session rows and never waits for the account, so it cannot form a cycle with reset either. PostgreSQL's deadlock detector remains a backstop, not the design.
 
-| Race / failure | Expected outcome | Mechanism | Evidence |
-| --- | --- | --- | --- |
-| Two Forgot Password requests at once | Exactly one usable link; both get 202 | Account `FOR UPDATE` serializes issuance; partial unique index | `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink` |
-| Two completions of one link | Exactly one changes the password; the other gets `PASSWORD_RESET_INVALID` | Interaction `FOR UPDATE` + re-check; conditional `consume` | `competingCompletionsOfOneLinkChangeThePasswordExactlyOnce` |
-| Completion versus a newer issuance | Whichever commits first wins; a replaced link never changes the password | Both lock the account first | `aNewIssuanceInvalidatesTheEarlierLinkAndTheNewOneWorks`, `aReplacedInteractionIsRejectedAndTheReplacementStillWorks` |
-| Completion versus login that verified the old password | No session survives with the old credential | Login rechecks the hash under `FOR SHARE`; reset waits for an in-flight login and then revokes its session | `PasswordResetLoginRaceIT` (deterministic), `LogInServiceTest.credentialReplacedBetweenVerificationAndSessionCreationGrantsNoSession` |
-| Completion versus refresh rotation | The session ends revoked; any renewed tokens are useless | Row locks on the session; revocation re-evaluates after the rotation commits | `resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst` |
-| Completion versus session creation | Same as login (sessions are only created by login) | As above | As above |
-| Replayed link after success | `PASSWORD_RESET_INVALID`; password unchanged by the replay | Consumed rows are never usable | `aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain` |
-| Lost 204 (response never arrives) | Outcome unconfirmed for the client; a resubmission explains how to check | Same as replay; login with the new password confirms | AC-15 rows above |
-| Database fails after the password change, before commit | Nothing of the reset persists; 503 | Single transaction rollback | `PasswordResetFailureIT.aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely` |
-| Database fails while storing an issuance | No email is sent; 503; retry works | Send happens only after a successful commit | `PasswordResetFailureIT.anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried`, `RequestPasswordResetServiceTest.instructionsAreNotSentWhenTheIssuanceCannotBeCommitted` |
-| Mail server down, slow or rejecting | Same 202; warning logged without secret/recipient; link stays valid | SMTP timeouts 5 s; failure caught in the adapter; bounded async queue | `SmtpPasswordResetInstructionSenderIT.anUnreachableMailServerIsLoggedAndNeverThrown`, `AsyncPasswordResetInstructionSenderTest` |
+| Race / failure                                          | Expected outcome                                                          | Mechanism                                                                                                  | Evidence                                                                                                                                                                   |
+| ------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two Forgot Password requests at once                    | Exactly one usable link; both get 202                                     | Account `FOR UPDATE` serializes issuance; partial unique index                                             | `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`                                                                                                     |
+| Two completions of one link                             | Exactly one changes the password; the other gets `PASSWORD_RESET_INVALID` | Interaction `FOR UPDATE` + re-check; conditional `consume`                                                 | `competingCompletionsOfOneLinkChangeThePasswordExactlyOnce`                                                                                                                |
+| Completion versus a newer issuance                      | Whichever commits first wins; a replaced link never changes the password  | Both lock the account first                                                                                | `aNewIssuanceInvalidatesTheEarlierLinkAndTheNewOneWorks`, `aReplacedInteractionIsRejectedAndTheReplacementStillWorks`                                                      |
+| Completion versus login that verified the old password  | No session survives with the old credential                               | Login rechecks the hash under `FOR SHARE`; reset waits for an in-flight login and then revokes its session | `PasswordResetLoginRaceIT` (deterministic), `LogInServiceTest.credentialReplacedBetweenVerificationAndSessionCreationGrantsNoSession`                                      |
+| Completion versus refresh rotation                      | The session ends revoked; any renewed tokens are useless                  | Row locks on the session; revocation re-evaluates after the rotation commits                               | `resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst`                                                                                                            |
+| Completion versus session creation                      | Same as login (sessions are only created by login)                        | As above                                                                                                   | As above                                                                                                                                                                   |
+| Replayed link after success                             | `PASSWORD_RESET_INVALID`; password unchanged by the replay                | Consumed rows are never usable                                                                             | `aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain`                                                                                                              |
+| Lost 204 (response never arrives)                       | Outcome unconfirmed for the client; a resubmission explains how to check  | Same as replay; login with the new password confirms                                                       | AC-15 rows above                                                                                                                                                           |
+| Database fails after the password change, before commit | Nothing of the reset persists; 503                                        | Single transaction rollback                                                                                | `PasswordResetFailureIT.aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`                                                                                       |
+| Database fails while storing an issuance                | No email is sent; 503; retry works                                        | Send happens only after a successful commit                                                                | `PasswordResetFailureIT.anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried`, `RequestPasswordResetServiceTest.instructionsAreNotSentWhenTheIssuanceCannotBeCommitted` |
+| Mail server down, slow or rejecting                     | Same 202; warning logged without secret/recipient; link stays valid       | SMTP timeouts 5 s; failure caught in the adapter; bounded async queue                                      | `SmtpPasswordResetInstructionSenderIT.anUnreachableMailServerIsLoggedAndNeverThrown`, `AsyncPasswordResetInstructionSenderTest`                                            |
 
 ### 10.7 Security and privacy
 
@@ -1181,73 +1177,159 @@ PBKDF2 hashing (≈ hundreds of ms) always happens **before** the transaction, s
 
 ### 10.8 Email delivery boundary
 
-| Concern | Decision |
-| --- | --- |
-| Protocol | SMTP through Spring's `JavaMailSender` ([TECH] TD-S2-04): provider-neutral, no SDK, no account chosen here |
-| Commit boundary | Send only after the issuance committed; never for a rolled-back interaction |
-| Timing | Asynchronous: one daemon thread, bounded queue of 100; `close()` drains for up to 10 s on shutdown |
-| Timeouts | `mail.smtp.connectiontimeout`, `timeout`, `writetimeout` = 5000 ms (JavaMail defaults are infinite) |
-| Failure | Logged as `WARN` with the exception class only; never rethrown; the user may request again (replacement keeps exactly one valid link) |
-| Delivery uncertainty | SMTP acceptance is not inbox delivery. The system never claims "delivered" (AC-13, AC-16) |
-| Content | Plain text, UTF-8, Vietnamese; From = `sender-address`; To = account email only; link `instruction-link#token=…`; states 30 minutes and single use; no name, profile or wardrobe data |
-| Configuration | `spring.mail.*` (host, port, username, password, auth, STARTTLS) and `capsuleai.identity.password-reset.sender-address` / `.instruction-link`, validated at startup; secrets only from environment variables |
-| Local / test | Mailpit (`axllent/mailpit:v1.27.11`) in Compose; a recording substitute in Identity ITs; real SMTP to a Mailpit Testcontainer in `SmtpPasswordResetInstructionSenderIT` |
+| Concern              | Decision                                                                                                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Protocol             | SMTP through Spring's `JavaMailSender` ([TECH] TD-S2-04): provider-neutral, no SDK, no account chosen here                                                                                                   |
+| Commit boundary      | Send only after the issuance committed; never for a rolled-back interaction                                                                                                                                  |
+| Timing               | Asynchronous: one daemon thread, bounded queue of 100; `close()` drains for up to 10 s on shutdown                                                                                                           |
+| Timeouts             | `mail.smtp.connectiontimeout`, `timeout`, `writetimeout` = 5000 ms (JavaMail defaults are infinite)                                                                                                          |
+| Failure              | Logged as `WARN` with the exception class only; never rethrown; the user may request again (replacement keeps exactly one valid link)                                                                        |
+| Delivery uncertainty | SMTP acceptance is not inbox delivery. The system never claims "delivered" (AC-13, AC-16)                                                                                                                    |
+| Content              | Plain text, UTF-8, Vietnamese; From = `sender-address`; To = account email only; link `instruction-link#token=…`; states 30 minutes and single use; no name, profile or wardrobe data                        |
+| Configuration        | `spring.mail.*` (host, port, username, password, auth, STARTTLS) and `capsuleai.identity.password-reset.sender-address` / `.instruction-link`, validated at startup; secrets only from environment variables |
+| Local / test         | Mailpit (`axllent/mailpit:v1.27.11`) in Compose; a recording substitute in Identity ITs; real SMTP to a Mailpit Testcontainer in `SmtpPasswordResetInstructionSenderIT`                                      |
 
 ### 10.9 Sequence diagrams
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant App as Mobile client
+    actor App as Mobile Client
     participant API as AuthController
     participant Req as RequestPasswordResetService
     participant DB as PostgreSQL
-    participant Q as Async sender
+    participant Q as AsyncPasswordResetInstructionSender
     participant SMTP as Email Delivery Service
+
     App->>API: POST /password-reset/request {email}
     API->>Req: request(email)
-    Req->>DB: find account by normalized email
-    alt registered
-        Req->>DB: BEGIN; SELECT account FOR UPDATE; replace open; insert new; COMMIT
-        Req->>Q: sendInstructions(recipient, secret, expiry)
-        Q-->>SMTP: (background) SMTP send
-    else unregistered
-        Note over Req: nothing issued, nothing sent
+
+    Req->>Req: Normalize and validate email
+    Req->>DB: Find account by normalized email
+    DB-->>Req: Account or null
+
+    alt Registered email
+        Req->>Req: Generate secure random reset token
+        Req->>Req: Hash token and calculate expiration
+
+        Req->>DB: BEGIN TRANSACTION
+        Req->>DB: SELECT account FOR UPDATE
+        DB-->>Req: Locked account
+
+        Req->>DB: Mark previous open reset requests as replaced
+        Req->>DB: INSERT new reset request (token hash only)
+        Req->>DB: COMMIT
+        DB-->>Req: Transaction committed
+
+        Req->>Q: enqueue(recipient, rawToken, expiresAt)
+        Q-->>Req: Accepted or rejected
+
+        Note over Req,Q: Queue failure is logged and handled without exposing account existence
+
+    else Unregistered email
+        Note over Req,DB: No token issued and no email queued
     end
-    API-->>App: 202 PASSWORD_RESET_REQUESTED (identical either way)
+
+    Req-->>API: Request accepted
+    API-->>App: 202 PASSWORD_RESET_REQUESTED
+
+    opt Email successfully queued
+        Q-)SMTP: Send password reset instructions asynchronously
+        SMTP-->>Q: Accepted or failed
+
+        Note over Q,SMTP: SMTP acceptance does not guarantee inbox delivery
+    end
 ```
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant App as Mobile client
+    actor App as Mobile Client
     participant API as AuthController
     participant Cmp as CompletePasswordResetService
     participant DB as PostgreSQL
+
     App->>API: POST /password-reset/complete {token, newPassword}
-    API->>Cmp: complete
-    Cmp->>Cmp: PasswordPolicy (400 VALIDATION_FAILED, link stays usable)
-    Cmp->>DB: find interaction by hash (no lock)
-    Cmp->>Cmp: PBKDF2 hash of the exact new password (no lock held)
-    Cmp->>DB: BEGIN
-    Cmp->>DB: SELECT account FOR UPDATE
-    Cmp->>DB: SELECT interaction FOR UPDATE, re-check usable now
-    Cmp->>DB: UPDATE password_hash; consume; revoke all active sessions
-    Cmp->>DB: COMMIT
-    API-->>App: 204 (log in with the new password)
+    API->>Cmp: complete(token, newPassword)
+
+    %% STEP 1: INPUT VALIDATION
+    Cmp->>Cmp: Validate token format and PasswordPolicy
+
+    alt Invalid input or password violates policy
+        Cmp-->>API: ValidationException
+        API-->>App: 400 VALIDATION_FAILED
+        Note over App,DB: Existing reset token remains usable
+
+    else Input valid
+        %% STEP 2: LOOKUP WITHOUT LOCK
+        Cmp->>Cmp: tokenHash = SHA-256(token)
+        Cmp->>DB: Find reset interaction by tokenHash
+        DB-->>Cmp: Interaction or null
+
+        alt Interaction not found
+            Cmp-->>API: InvalidResetTokenException
+            API-->>App: 400 PASSWORD_RESET_INVALID
+
+        else Interaction found
+            %% STEP 3: HASH PASSWORD BEFORE TRANSACTION
+            Cmp->>Cmp: PBKDF2 hash of exact newPassword
+            Note over Cmp,DB: No database locks held during PBKDF2
+
+            %% STEP 4: TRANSACTION
+            Cmp->>DB: BEGIN TRANSACTION
+
+            Cmp->>DB: SELECT account FOR UPDATE
+            DB-->>Cmp: Locked account
+
+            Cmp->>DB: SELECT reset interaction FOR UPDATE
+            DB-->>Cmp: Locked interaction or null
+
+            Cmp->>Cmp: Recheck token usability using current time
+
+            alt Interaction missing, expired, consumed, or replaced
+                Cmp->>DB: ROLLBACK
+                DB-->>Cmp: Transaction ended
+
+                Cmp-->>API: InvalidResetTokenException
+                API-->>App: 400 PASSWORD_RESET_INVALID
+
+            else Token still usable
+                %% STEP 5: ATOMIC DATABASE UPDATES
+                Cmp->>DB: UPDATE account password_hash
+                DB-->>Cmp: Password hash updated
+
+                Cmp->>DB: Mark reset interaction as consumed
+                DB-->>Cmp: Interaction consumed
+
+                Cmp->>DB: Invalidate other open reset interactions
+                DB-->>Cmp: Other interactions invalidated
+
+                Cmp->>DB: Revoke all active sessions
+                DB-->>Cmp: Active sessions revoked
+
+                %% STEP 6: COMMIT
+                Cmp->>DB: COMMIT
+                DB-->>Cmp: Transaction committed
+
+                Cmp-->>API: Password reset completed
+                API-->>App: 204 No Content
+
+                Note over App,API: User must log in with new password
+            end
+        end
+    end
 ```
 
 ### 10.10 Important design decisions and alternatives
 
-| Decision | Chosen | Alternatives considered | Why this fits now |
-| --- | --- | --- | --- |
-| Reset secret storage (TD-S2-03) | Random 256-bit opaque secret, SHA-256 stored | Signed JWT reset token; encrypted token; PBKDF2 of the secret | Must be single-use and replaceable, which needs a server row anyway (ADA-008). The secret has full entropy, so a fast hash suffices and allows lookup; it reuses the refresh-token pattern. |
-| Concurrency control (TD-S2-06) | Row locks in a fixed order (account → interaction → sessions) under READ COMMITTED | SERIALIZABLE isolation with retries; advisory locks; optimistic version column | Uses the existing transaction style and the account row as the natural serialization point; deterministic outcomes, no retry loop. |
-| Login race fix (TD-S2-08) | Recheck the hash under `FOR SHARE` inside login's transaction | Verify the password inside the transaction; credential version column | Keeps slow PBKDF2 outside the lock; no schema change; a changed hash already means "credential changed". |
-| Delivery timing (TD-S2-04) | Asynchronous after commit, bounded, best-effort, user-retryable | Synchronous send; durable outbox table + poller | Synchronous leaks existence through timing and ties the request to SMTP latency. An outbox adds a table, a scheduler and retention for an idempotent email the user can simply request again (ADA-012, plan §10.2). |
-| Revocation scope (TD-S2-07) | Active sessions of the account, one UPDATE | Delete sessions; revoke expired too | Revocation (not deletion) is what the plan requires; expired rows are already unusable. |
-| Instruction link (TD-S2-05) | Configurable base link + `#token=` fragment | Query parameter; numeric code typed by the user | Fragments never reach servers; the app reads them like a query. A typed code would be a new recovery method the story excludes. |
-
+| Decision                        | Chosen                                                                             | Alternatives considered                                                        | Why this fits now                                                                                                                                                                                                   |
+| ------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reset secret storage (TD-S2-03) | Random 256-bit opaque secret, SHA-256 stored                                       | Signed JWT reset token; encrypted token; PBKDF2 of the secret                  | Must be single-use and replaceable, which needs a server row anyway (ADA-008). The secret has full entropy, so a fast hash suffices and allows lookup; it reuses the refresh-token pattern.                         |
+| Concurrency control (TD-S2-06)  | Row locks in a fixed order (account → interaction → sessions) under READ COMMITTED | SERIALIZABLE isolation with retries; advisory locks; optimistic version column | Uses the existing transaction style and the account row as the natural serialization point; deterministic outcomes, no retry loop.                                                                                  |
+| Login race fix (TD-S2-08)       | Recheck the hash under `FOR SHARE` inside login's transaction                      | Verify the password inside the transaction; credential version column          | Keeps slow PBKDF2 outside the lock; no schema change; a changed hash already means "credential changed".                                                                                                            |
+| Delivery timing (TD-S2-04)      | Asynchronous after commit, bounded, best-effort, user-retryable                    | Synchronous send; durable outbox table + poller                                | Synchronous leaks existence through timing and ties the request to SMTP latency. An outbox adds a table, a scheduler and retention for an idempotent email the user can simply request again (ADA-012, plan §10.2). |
+| Revocation scope (TD-S2-07)     | Active sessions of the account, one UPDATE                                         | Delete sessions; revoke expired too                                            | Revocation (not deletion) is what the plan requires; expired rows are already unusable.                                                                                                                             |
+| Instruction link (TD-S2-05)     | Configurable base link + `#token=` fragment                                        | Query parameter; numeric code typed by the user                                | Fragments never reach servers; the app reads them like a query. A typed code would be a new recovery method the story excludes.                                                                                     |
 
 ---
 
@@ -1255,72 +1337,72 @@ sequenceDiagram
 
 Every file this story adds or modifies, in implementation order. `P` = production/configuration/documentation step, `T` = test step. Nothing is removed. The **Action** column is taken from the actual difference between Stage 0 and the Stage 1 code, so it cannot drift from Sections 12–13.
 
-| # | Action | File | Layer | Purpose | Related requirements |
-|---|---|---|---|---|---|
-| P1 | [MODIFY] | `backend/pom.xml` | Build | Adds `spring-boot-starter-mail` (Jakarta Mail through Spring's `JavaMailSender`), the only new runtime dependency. | SI-003, ADA-006 |
-| P2 | [ADD] | `backend/src/main/resources/db/migration/V7__create_identity_password_reset.sql` | Persistence (Flyway) | Creates `identity.identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason. | DATA-AUTH-001, DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, BRULE-AUTH-004, ADA-008 |
-| P3 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetPolicy.java` | Domain | Single home of the 30-minute interaction lifetime. | FR-AUTH-017, BRULE-AUTH-004, SRS §3.1.1 |
-| P4 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetToken.java` | Domain | One issued interaction and the rule "usable = not consumed, not replaced, strictly before expiry". | FR-AUTH-017, FR-AUTH-018, DATA-AUTH-005, AC-07, AC-08, AC-09 |
-| P5 | [ADD] | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetTokenHash.java` | Domain | SHA-256 hex digest of a reset secret; `toString()` never prints it. | DATA-AUTH-001, NFR-SEC-003 |
-| P6 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/domain/RevocationReason.java` | Domain | Adds `PASSWORD_RESET` so an account-wide reset revocation is recorded distinctly from logout and reuse. | FR-AUTH-004, NFR-SEC-002, BRULE-AUTH-006 |
-| P7 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/ports/AccountRepository.java` | Application port | Adds the three account operations recovery needs: a shared credential lock for login, an exclusive lock for credential change, and the password-hash update. | FR-AUTH-004, AC-04, AC-05, Sprint plan §10.2 (login race) |
-| P8 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/ports/SessionRepository.java` | Application port | Adds `revokeAllActiveForAccount`, the account-wide revocation that logout's current-session `revoke` cannot provide. | FR-AUTH-004, AC-05, NFR-SEC-002 |
-| P9 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetRepository.java` | Application port | Identity-owned persistence of reset interactions: replace open ones, add, find, lock, consume. | DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, ADA-008 |
-| P10 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetTokenGenerator.java` | Application port | Creates unguessable reset secrets; lets tests use predictable ones. | DATA-AUTH-001, NFR-SEC-003 |
-| P11 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetInstructions.java` | Application port (value) | Everything the email boundary may receive: recipient, secret, expiry. Nothing else. | SI-003, AC-03, BRULE-AUTH-007, COM-003 |
-| P12 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetInstructionSender.java` | Application port | The Email Delivery Service boundary. Called only after the issuing transaction committed; must not throw for delivery problems. | SI-003, ERR-DEP-001, AC-01, AC-13, ADA-006 |
-| P13 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/RequestPasswordResetCommand.java` | Application | Input of Forgot Password. | FR-AUTH-003 |
-| P14 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/CheckPasswordResetCommand.java` | Application | Input of opening an interaction; masks the secret. | AC-06, NFR-SEC-003 |
-| P15 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/CompletePasswordResetCommand.java` | Application | Input of a reset submission; masks secret and password. | FR-AUTH-004, NFR-SEC-003 |
-| P16 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/PasswordResetRejectedException.java` | Application | One outcome for unknown, expired, used and replaced interactions; nothing was changed. | ERR-AUTH-002, AC-08, AC-09, AC-15 |
-| P17 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/RequestPasswordResetService.java` | Application (use case) | Forgot Password: issues and replaces under the account lock, commits, then hands instructions to the email boundary. Unknown emails do nothing. | FR-AUTH-003, FR-AUTH-018, SI-003, BRULE-AUTH-005, AC-01, AC-02, AC-07, AC-13 |
-| P18 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/CheckPasswordResetService.java` | Application (use case) | Opening a link: is the interaction usable now? Read-only. | AC-06, AC-08, AC-12 |
-| P19 | [ADD] | `backend/src/main/java/com/capsuleai/identity/application/CompletePasswordResetService.java` | Application (use case) | Accepted reset: in one transaction change the password, consume the interaction and revoke every active session. | FR-AUTH-004, FR-AUTH-015, FR-AUTH-017, BRULE-AUTH-003, BRULE-AUTH-005, AC-04, AC-05, AC-08–AC-11, AC-14, AC-15 |
-| P20 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/LogInService.java` | Application (use case) — existing | Closes the reset/login race: re-reads the credential under a shared account lock inside the session-creation transaction. | FR-AUTH-004, AC-04, AC-05, Sprint plan §10.2 "Concurrent authority" |
-| P21 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcAccountRepository.java` | Outbound adapter — existing | Implements the three new account operations with `FOR SHARE`, `FOR UPDATE` and a checked `UPDATE`. | FR-AUTH-004 |
-| P22 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcSessionRepository.java` | Outbound adapter — existing | Implements account-wide revocation of every session that is not revoked and not expired, in one statement. | FR-AUTH-004, AC-05, SRS §3.1.1 "revoke all active Refresh Sessions" |
-| P23 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcPasswordResetRepository.java` | Outbound adapter | PostgreSQL implementation of `PasswordResetRepository`, reusing Identity's `JdbcTime` conversions. | DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018 |
-| P24 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/out/security/SecureRandomPasswordResetTokenGenerator.java` | Outbound adapter | 256-bit random secrets, Base64url without padding (43 characters), the same construction as refresh tokens. | DATA-AUTH-001, NFR-SEC-003 |
-| P25 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSender.java` | Outbound adapter (email) | Builds the plain-text Vietnamese message and hands it to SMTP. Logs failures without the secret or the recipient. | SI-003, AC-02, AC-03, AC-13, ERR-DEP-001, NFR-SEC-003, LOC-001 |
-| P26 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/out/email/AsyncPasswordResetInstructionSender.java` | Outbound adapter (email) | Runs delivery on one background thread with a bounded queue, so the Forgot Password response never waits for the mail server. | FR-AUTH-003, NFR-SEC-003, AC-01, AC-13 |
-| P27 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetRequest.java` | Inbound adapter (web) | JSON body `{email}`. | FR-AUTH-003 |
-| P28 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetCheckRequest.java` | Inbound adapter (web) | JSON body `{token}`; masks the secret. | AC-06 |
-| P29 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetCompletionRequest.java` | Inbound adapter (web) | JSON body `{token, newPassword}`; masks both. | FR-AUTH-004 |
-| P30 | [ADD] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetRequestedResponse.java` | Inbound adapter (web) | The single 202 body for every accepted request: never says whether an account exists or that a password changed. | FR-AUTH-003, SRS §3.1.1 Forgot Password privacy, AC-01, AC-16 |
-| P31 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/AuthController.java` | Inbound adapter (web) — existing | Adds three thin handlers under `/api/v1/auth/password-reset/` to the existing cohesive auth controller. | FR-AUTH-003, FR-AUTH-004, AC-01, AC-04, AC-06, Backend conventions §1 |
-| P32 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/IdentityApiExceptionHandler.java` | Inbound adapter (web) — existing | Maps `PasswordResetRejectedException` to 400 `PASSWORD_RESET_INVALID` with safe next-step guidance. | ERR-AUTH-002, AC-08, AC-15, AC-16 |
-| P33 | [ADD] | `backend/src/main/java/com/capsuleai/identity/configuration/PasswordResetProperties.java` | Configuration | `capsuleai.identity.password-reset.sender-address` and `.instruction-link`, validated at startup. | SI-003, NFR-SEC-003 |
-| P34 | [ADD] | `backend/src/main/java/com/capsuleai/identity/configuration/IdentityPasswordResetConfiguration.java` | Configuration | Wires the reset repository, secret generator, SMTP + asynchronous delivery and the three use cases. | ADA-006, ADA-015 |
-| P35 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java` | Configuration — existing | Adds the three recovery operations to `PUBLIC_ENDPOINTS`, which both authorization and the bearer-token resolver use. | FR-AUTH-003, UC-004 Preconditions, Sprint plan §10.3 |
-| P36 | [MODIFY] | `backend/src/main/resources/application.properties` | Configuration — existing | Finite SMTP timeouts and UTF-8 for every profile. | ERR-DEP-001 |
-| P37 | [MODIFY] | `backend/src/main/resources/application-local.properties` | Configuration — existing | Local mail settings that default to the Mailpit service and can be replaced by `CAPSULE_MAIL_*` variables. | SI-003 |
-| P38 | [MODIFY] | `compose.yaml` | Local infrastructure — existing | Adds the Mailpit SMTP sink bound to 127.0.0.1 so local recovery can be exercised end to end. | SI-003 (local verification only) |
-| P39 | [MODIFY] | `docs/05-api/openapi.yaml` | API contract — existing | Documents the three recovery operations, their schemas and `PASSWORD_RESET_INVALID`; version 0.5.0. | DoD §5 "HTTP API or service contract changes" |
-| P40 | [MODIFY] | `.github/workflows/backend-ci.yml` | CI — existing | Requires every new US-AUTH-005 test report with its exact test count. | DoD §4 Build and CI |
-| P41 | [MODIFY] | `backend/README.md` | Documentation — existing | Describes recovery, the mail settings, Mailpit and new troubleshooting rows. | DoD §4 Documentation and traceability |
-| T1 | [ADD] | `backend/src/test/java/com/capsuleai/identity/domain/PasswordResetTokenTest.java` | Domain unit test | 30-minute boundary (29:59 usable, 30:00 rejected), consumed/replaced never usable, invariants. | FR-AUTH-017, AC-08, AC-09 |
-| T2 | [ADD] | `backend/src/test/java/com/capsuleai/identity/domain/PasswordResetTokenHashTest.java` | Domain unit test | Deterministic SHA-256 (published test vector), masked `toString()`. | DATA-AUTH-001, NFR-SEC-003 |
-| T3 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/InMemoryAccountRepository.java` | Test double — existing | Implements the three new `AccountRepository` methods. | — |
-| T4 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/InMemorySessionRepository.java` | Test double — existing | Implements `revokeAllActiveForAccount`. | — |
-| T5 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/InMemoryPasswordResetRepository.java` | Test double | In-memory `PasswordResetRepository` (no locking). | — |
-| T6 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/SequencePasswordResetTokenGenerator.java` | Test double | Predictable secrets `reset-token-1`, `reset-token-2`, … | — |
-| T7 | [ADD] | `backend/src/test/java/com/capsuleai/identity/support/RecordingPasswordResetInstructionSender.java` | Test double (shared) | Records handed-over instructions so tests can follow the emailed link. Labelled as a controlled substitute. | SI-003 |
-| T8 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/RequestPasswordResetServiceTest.java` | Application unit test | Known/unknown/alias/normalization, replacement, no password/session change, validation, no send without commit. | FR-AUTH-003, FR-AUTH-018, AC-01, AC-02, AC-07, AC-13 |
-| T9 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/CheckPasswordResetServiceTest.java` | Application unit test | Repeatable read-only opening, 30-minute boundary, replaced/unknown rejection. | AC-06, AC-08, AC-12 |
-| T10 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/CompletePasswordResetServiceTest.java` | Application unit test | Accepted reset effects, other account untouched, exact Unicode password, single use, boundaries 11/12/128/129, replacement. | FR-AUTH-004, FR-AUTH-015, FR-AUTH-017, AC-04, AC-05, AC-08–AC-11 |
-| T11 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/LogInServiceTest.java` | Application unit test — existing | New case: a credential replaced between verification and session creation grants no session. | AC-04, AC-05 |
-| T12 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/AsyncPasswordResetInstructionSenderTest.java` | Adapter unit test | Caller returns before delivery, failures logged without secrets, full queue drops with a warning, shutdown. | AC-01, AC-13, NFR-SEC-003 |
-| T13 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSenderTest.java` | Adapter unit test | Message contains only recipient and fragment link; mail-server failure is logged safely and not rethrown. | AC-03, SI-003, NFR-SEC-003 |
-| T14 | [ADD] | `backend/src/test/java/com/capsuleai/identity/configuration/PasswordResetPropertiesTest.java` | Configuration unit test | Valid binding; missing or invalid settings stop startup. | Configuration validation |
-| T15 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java` | Test infrastructure — existing | Registers the recording sender as the `@Primary` instruction sender for Identity integration tests. | — |
-| T16 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityIntegrationTestSupport.java` | Test infrastructure — existing | Clears recorded instructions before each test; adds reset request/complete helpers. | — |
-| T17 | [MODIFY] | `backend/src/test/resources/application-test.properties` | Test configuration — existing | Mail and reset settings for the test profile; the recording sender means SMTP is never contacted. | — |
-| T18 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/persistence/PasswordResetSchemaIT.java` | PostgreSQL integration test | V7 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V6 with existing Sprint 1 data on a separate database. | DATA-AUTH-005, FR-AUTH-018, DoD §5 schema |
-| T19 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/PasswordResetApiIT.java` | HTTP/security integration test | Every AC path through the real filter chain and PostgreSQL, including secret-free logs and responses. | AC-01, AC-02, AC-04–AC-11, AC-13, AC-15, NFR-SEC-003 |
-| T20 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/ConcurrentPasswordResetIT.java` | Concurrency integration test | Competing completions, reset racing renewal, competing issuance — committed outcomes on real row locks. | AC-05, AC-07, AC-15, Sprint plan §11.1 concurrency |
-| T21 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/PasswordResetFailureIT.java` | Failure-injection integration test | A connection lost after the password change rolls the whole reset back; a failed issuance sends no email; both answer 503 and can be retried. | AC-13, AC-14, ERR-AUTH-002, ERR-DEP-001 |
-| T22 | [ADD] | `backend/src/test/java/com/capsuleai/identity/application/PasswordResetLoginRaceIT.java` | Concurrency integration test | Deterministic reset-versus-login interleaving with a pausing hasher (own Spring context). | AC-04, AC-05, Sprint plan §10.2 |
-| T23 | [ADD] | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSenderIT.java` | SMTP integration test (Docker) | Real SMTP delivery to a disposable Mailpit container through the production adapter and asynchronous composition. | AC-02, AC-03, SI-003, ERR-DEP-001 |
+| #   | Action   | File                                                                                                             | Layer                              | Purpose                                                                                                                                                      | Related requirements                                                                                           |
+| --- | -------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| P1  | [MODIFY] | `backend/pom.xml`                                                                                                | Build                              | Adds `spring-boot-starter-mail` (Jakarta Mail through Spring's `JavaMailSender`), the only new runtime dependency.                                           | SI-003, ADA-006                                                                                                |
+| P2  | [ADD]    | `backend/src/main/resources/db/migration/V7__create_identity_password_reset.sql`                                 | Persistence (Flyway)               | Creates `identity.identity_password_reset` and allows the `PASSWORD_RESET` session revocation reason.                                                        | DATA-AUTH-001, DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, BRULE-AUTH-004, ADA-008                                |
+| P3  | [ADD]    | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetPolicy.java`                                   | Domain                             | Single home of the 30-minute interaction lifetime.                                                                                                           | FR-AUTH-017, BRULE-AUTH-004, SRS §3.1.1                                                                        |
+| P4  | [ADD]    | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetToken.java`                                    | Domain                             | One issued interaction and the rule "usable = not consumed, not replaced, strictly before expiry".                                                           | FR-AUTH-017, FR-AUTH-018, DATA-AUTH-005, AC-07, AC-08, AC-09                                                   |
+| P5  | [ADD]    | `backend/src/main/java/com/capsuleai/identity/domain/PasswordResetTokenHash.java`                                | Domain                             | SHA-256 hex digest of a reset secret; `toString()` never prints it.                                                                                          | DATA-AUTH-001, NFR-SEC-003                                                                                     |
+| P6  | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/domain/RevocationReason.java`                                      | Domain                             | Adds `PASSWORD_RESET` so an account-wide reset revocation is recorded distinctly from logout and reuse.                                                      | FR-AUTH-004, NFR-SEC-002, BRULE-AUTH-006                                                                       |
+| P7  | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/ports/AccountRepository.java`                          | Application port                   | Adds the three account operations recovery needs: a shared credential lock for login, an exclusive lock for credential change, and the password-hash update. | FR-AUTH-004, AC-04, AC-05, Sprint plan §10.2 (login race)                                                      |
+| P8  | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/ports/SessionRepository.java`                          | Application port                   | Adds `revokeAllActiveForAccount`, the account-wide revocation that logout's current-session `revoke` cannot provide.                                         | FR-AUTH-004, AC-05, NFR-SEC-002                                                                                |
+| P9  | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetRepository.java`                    | Application port                   | Identity-owned persistence of reset interactions: replace open ones, add, find, lock, consume.                                                               | DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018, ADA-008                                                               |
+| P10 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetTokenGenerator.java`                | Application port                   | Creates unguessable reset secrets; lets tests use predictable ones.                                                                                          | DATA-AUTH-001, NFR-SEC-003                                                                                     |
+| P11 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetInstructions.java`                  | Application port (value)           | Everything the email boundary may receive: recipient, secret, expiry. Nothing else.                                                                          | SI-003, AC-03, BRULE-AUTH-007, COM-003                                                                         |
+| P12 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/ports/PasswordResetInstructionSender.java`             | Application port                   | The Email Delivery Service boundary. Called only after the issuing transaction committed; must not throw for delivery problems.                              | SI-003, ERR-DEP-001, AC-01, AC-13, ADA-006                                                                     |
+| P13 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/RequestPasswordResetCommand.java`                      | Application                        | Input of Forgot Password.                                                                                                                                    | FR-AUTH-003                                                                                                    |
+| P14 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/CheckPasswordResetCommand.java`                        | Application                        | Input of opening an interaction; masks the secret.                                                                                                           | AC-06, NFR-SEC-003                                                                                             |
+| P15 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/CompletePasswordResetCommand.java`                     | Application                        | Input of a reset submission; masks secret and password.                                                                                                      | FR-AUTH-004, NFR-SEC-003                                                                                       |
+| P16 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/PasswordResetRejectedException.java`                   | Application                        | One outcome for unknown, expired, used and replaced interactions; nothing was changed.                                                                       | ERR-AUTH-002, AC-08, AC-09, AC-15                                                                              |
+| P17 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/RequestPasswordResetService.java`                      | Application (use case)             | Forgot Password: issues and replaces under the account lock, commits, then hands instructions to the email boundary. Unknown emails do nothing.              | FR-AUTH-003, FR-AUTH-018, SI-003, BRULE-AUTH-005, AC-01, AC-02, AC-07, AC-13                                   |
+| P18 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/CheckPasswordResetService.java`                        | Application (use case)             | Opening a link: is the interaction usable now? Read-only.                                                                                                    | AC-06, AC-08, AC-12                                                                                            |
+| P19 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/application/CompletePasswordResetService.java`                     | Application (use case)             | Accepted reset: in one transaction change the password, consume the interaction and revoke every active session.                                             | FR-AUTH-004, FR-AUTH-015, FR-AUTH-017, BRULE-AUTH-003, BRULE-AUTH-005, AC-04, AC-05, AC-08–AC-11, AC-14, AC-15 |
+| P20 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/application/LogInService.java`                                     | Application (use case) — existing  | Closes the reset/login race: re-reads the credential under a shared account lock inside the session-creation transaction.                                    | FR-AUTH-004, AC-04, AC-05, Sprint plan §10.2 "Concurrent authority"                                            |
+| P21 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcAccountRepository.java`                | Outbound adapter — existing        | Implements the three new account operations with `FOR SHARE`, `FOR UPDATE` and a checked `UPDATE`.                                                           | FR-AUTH-004                                                                                                    |
+| P22 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcSessionRepository.java`                | Outbound adapter — existing        | Implements account-wide revocation of every session that is not revoked and not expired, in one statement.                                                   | FR-AUTH-004, AC-05, SRS §3.1.1 "revoke all active Refresh Sessions"                                            |
+| P23 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcPasswordResetRepository.java`          | Outbound adapter                   | PostgreSQL implementation of `PasswordResetRepository`, reusing Identity's `JdbcTime` conversions.                                                           | DATA-AUTH-005, FR-AUTH-017, FR-AUTH-018                                                                        |
+| P24 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/out/security/SecureRandomPasswordResetTokenGenerator.java` | Outbound adapter                   | 256-bit random secrets, Base64url without padding (43 characters), the same construction as refresh tokens.                                                  | DATA-AUTH-001, NFR-SEC-003                                                                                     |
+| P25 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSender.java`         | Outbound adapter (email)           | Builds the plain-text Vietnamese message and hands it to SMTP. Logs failures without the secret or the recipient.                                            | SI-003, AC-02, AC-03, AC-13, ERR-DEP-001, NFR-SEC-003, LOC-001                                                 |
+| P26 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/out/email/AsyncPasswordResetInstructionSender.java`        | Outbound adapter (email)           | Runs delivery on one background thread with a bounded queue, so the Forgot Password response never waits for the mail server.                                | FR-AUTH-003, NFR-SEC-003, AC-01, AC-13                                                                         |
+| P27 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetRequest.java`                          | Inbound adapter (web)              | JSON body `{email}`.                                                                                                                                         | FR-AUTH-003                                                                                                    |
+| P28 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetCheckRequest.java`                     | Inbound adapter (web)              | JSON body `{token}`; masks the secret.                                                                                                                       | AC-06                                                                                                          |
+| P29 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetCompletionRequest.java`                | Inbound adapter (web)              | JSON body `{token, newPassword}`; masks both.                                                                                                                | FR-AUTH-004                                                                                                    |
+| P30 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/PasswordResetRequestedResponse.java`                | Inbound adapter (web)              | The single 202 body for every accepted request: never says whether an account exists or that a password changed.                                             | FR-AUTH-003, SRS §3.1.1 Forgot Password privacy, AC-01, AC-16                                                  |
+| P31 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/AuthController.java`                                | Inbound adapter (web) — existing   | Adds three thin handlers under `/api/v1/auth/password-reset/` to the existing cohesive auth controller.                                                      | FR-AUTH-003, FR-AUTH-004, AC-01, AC-04, AC-06, Backend conventions §1                                          |
+| P32 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/adapter/in/web/IdentityApiExceptionHandler.java`                   | Inbound adapter (web) — existing   | Maps `PasswordResetRejectedException` to 400 `PASSWORD_RESET_INVALID` with safe next-step guidance.                                                          | ERR-AUTH-002, AC-08, AC-15, AC-16                                                                              |
+| P33 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/configuration/PasswordResetProperties.java`                        | Configuration                      | `capsuleai.identity.password-reset.sender-address` and `.instruction-link`, validated at startup.                                                            | SI-003, NFR-SEC-003                                                                                            |
+| P34 | [ADD]    | `backend/src/main/java/com/capsuleai/identity/configuration/IdentityPasswordResetConfiguration.java`             | Configuration                      | Wires the reset repository, secret generator, SMTP + asynchronous delivery and the three use cases.                                                          | ADA-006, ADA-015                                                                                               |
+| P35 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java`                  | Configuration — existing           | Adds the three recovery operations to `PUBLIC_ENDPOINTS`, which both authorization and the bearer-token resolver use.                                        | FR-AUTH-003, UC-004 Preconditions, Sprint plan §10.3                                                           |
+| P36 | [MODIFY] | `backend/src/main/resources/application.properties`                                                              | Configuration — existing           | Finite SMTP timeouts and UTF-8 for every profile.                                                                                                            | ERR-DEP-001                                                                                                    |
+| P37 | [MODIFY] | `backend/src/main/resources/application-local.properties`                                                        | Configuration — existing           | Local mail settings that default to the Mailpit service and can be replaced by `CAPSULE_MAIL_*` variables.                                                   | SI-003                                                                                                         |
+| P38 | [MODIFY] | `compose.yaml`                                                                                                   | Local infrastructure — existing    | Adds the Mailpit SMTP sink bound to 127.0.0.1 so local recovery can be exercised end to end.                                                                 | SI-003 (local verification only)                                                                               |
+| P39 | [MODIFY] | `docs/05-api/openapi.yaml`                                                                                       | API contract — existing            | Documents the three recovery operations, their schemas and `PASSWORD_RESET_INVALID`; version 0.5.0.                                                          | DoD §5 "HTTP API or service contract changes"                                                                  |
+| P40 | [MODIFY] | `.github/workflows/backend-ci.yml`                                                                               | CI — existing                      | Requires every new US-AUTH-005 test report with its exact test count.                                                                                        | DoD §4 Build and CI                                                                                            |
+| P41 | [MODIFY] | `backend/README.md`                                                                                              | Documentation — existing           | Describes recovery, the mail settings, Mailpit and new troubleshooting rows.                                                                                 | DoD §4 Documentation and traceability                                                                          |
+| T1  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/domain/PasswordResetTokenTest.java`                                | Domain unit test                   | 30-minute boundary (29:59 usable, 30:00 rejected), consumed/replaced never usable, invariants.                                                               | FR-AUTH-017, AC-08, AC-09                                                                                      |
+| T2  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/domain/PasswordResetTokenHashTest.java`                            | Domain unit test                   | Deterministic SHA-256 (published test vector), masked `toString()`.                                                                                          | DATA-AUTH-001, NFR-SEC-003                                                                                     |
+| T3  | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/InMemoryAccountRepository.java`                        | Test double — existing             | Implements the three new `AccountRepository` methods.                                                                                                        | —                                                                                                              |
+| T4  | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/InMemorySessionRepository.java`                        | Test double — existing             | Implements `revokeAllActiveForAccount`.                                                                                                                      | —                                                                                                              |
+| T5  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/InMemoryPasswordResetRepository.java`                  | Test double                        | In-memory `PasswordResetRepository` (no locking).                                                                                                            | —                                                                                                              |
+| T6  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/SequencePasswordResetTokenGenerator.java`              | Test double                        | Predictable secrets `reset-token-1`, `reset-token-2`, …                                                                                                      | —                                                                                                              |
+| T7  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/support/RecordingPasswordResetInstructionSender.java`              | Test double (shared)               | Records handed-over instructions so tests can follow the emailed link. Labelled as a controlled substitute.                                                  | SI-003                                                                                                         |
+| T8  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/RequestPasswordResetServiceTest.java`                  | Application unit test              | Known/unknown/alias/normalization, replacement, no password/session change, validation, no send without commit.                                              | FR-AUTH-003, FR-AUTH-018, AC-01, AC-02, AC-07, AC-13                                                           |
+| T9  | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/CheckPasswordResetServiceTest.java`                    | Application unit test              | Repeatable read-only opening, 30-minute boundary, replaced/unknown rejection.                                                                                | AC-06, AC-08, AC-12                                                                                            |
+| T10 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/CompletePasswordResetServiceTest.java`                 | Application unit test              | Accepted reset effects, other account untouched, exact Unicode password, single use, boundaries 11/12/128/129, replacement.                                  | FR-AUTH-004, FR-AUTH-015, FR-AUTH-017, AC-04, AC-05, AC-08–AC-11                                               |
+| T11 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/application/LogInServiceTest.java`                                 | Application unit test — existing   | New case: a credential replaced between verification and session creation grants no session.                                                                 | AC-04, AC-05                                                                                                   |
+| T12 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/AsyncPasswordResetInstructionSenderTest.java`    | Adapter unit test                  | Caller returns before delivery, failures logged without secrets, full queue drops with a warning, shutdown.                                                  | AC-01, AC-13, NFR-SEC-003                                                                                      |
+| T13 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSenderTest.java`     | Adapter unit test                  | Message contains only recipient and fragment link; mail-server failure is logged safely and not rethrown.                                                    | AC-03, SI-003, NFR-SEC-003                                                                                     |
+| T14 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/configuration/PasswordResetPropertiesTest.java`                    | Configuration unit test            | Valid binding; missing or invalid settings stop startup.                                                                                                     | Configuration validation                                                                                       |
+| T15 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java`                            | Test infrastructure — existing     | Registers the recording sender as the `@Primary` instruction sender for Identity integration tests.                                                          | —                                                                                                              |
+| T16 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/support/IdentityIntegrationTestSupport.java`                       | Test infrastructure — existing     | Clears recorded instructions before each test; adds reset request/complete helpers.                                                                          | —                                                                                                              |
+| T17 | [MODIFY] | `backend/src/test/resources/application-test.properties`                                                         | Test configuration — existing      | Mail and reset settings for the test profile; the recording sender means SMTP is never contacted.                                                            | —                                                                                                              |
+| T18 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/adapter/out/persistence/PasswordResetSchemaIT.java`                | PostgreSQL integration test        | V7 constraints, one open interaction per account, PASSWORD_RESET reason, upgrade from V6 with existing Sprint 1 data on a separate database.                 | DATA-AUTH-005, FR-AUTH-018, DoD §5 schema                                                                      |
+| T19 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/PasswordResetApiIT.java`                            | HTTP/security integration test     | Every AC path through the real filter chain and PostgreSQL, including secret-free logs and responses.                                                        | AC-01, AC-02, AC-04–AC-11, AC-13, AC-15, NFR-SEC-003                                                           |
+| T20 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/ConcurrentPasswordResetIT.java`                        | Concurrency integration test       | Competing completions, reset racing renewal, competing issuance — committed outcomes on real row locks.                                                      | AC-05, AC-07, AC-15, Sprint plan §11.1 concurrency                                                             |
+| T21 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/PasswordResetFailureIT.java`                           | Failure-injection integration test | A connection lost after the password change rolls the whole reset back; a failed issuance sends no email; both answer 503 and can be retried.                | AC-13, AC-14, ERR-AUTH-002, ERR-DEP-001                                                                        |
+| T22 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/application/PasswordResetLoginRaceIT.java`                         | Concurrency integration test       | Deterministic reset-versus-login interleaving with a pausing hasher (own Spring context).                                                                    | AC-04, AC-05, Sprint plan §10.2                                                                                |
+| T23 | [ADD]    | `backend/src/test/java/com/capsuleai/identity/adapter/out/email/SmtpPasswordResetInstructionSenderIT.java`       | SMTP integration test (Docker)     | Real SMTP delivery to a disposable Mailpit container through the production adapter and asynchronous composition.                                            | AC-02, AC-03, SI-003, ERR-DEP-001                                                                              |
 
 ## 12. Complete Production Implementation
 
@@ -1328,14 +1410,14 @@ Implement the steps in order; each one compiles on top of the previous ones. For
 
 **Configuration you will touch (Steps P1, P36–P38):**
 
-| Property | Where | Value / environment variable | Required |
-| --- | --- | --- | --- |
-| `spring.mail.host`, `spring.mail.port` | `application-local.properties` | `CAPSULE_MAIL_HOST` (default `localhost`), `CAPSULE_MAIL_PORT` (default `1025`) | Yes, in every profile that starts the app |
-| `spring.mail.username`, `spring.mail.password` | `application-local.properties` | `CAPSULE_MAIL_USERNAME`, `CAPSULE_MAIL_PASSWORD` (defaults empty) | Provider-dependent; **never commit a value** |
-| `spring.mail.properties.mail.smtp.auth`, `.starttls.enable` | `application-local.properties` | `CAPSULE_MAIL_SMTP_AUTH`, `CAPSULE_MAIL_STARTTLS` (default `false` for Mailpit) | Set `true` for real providers |
-| `spring.mail.properties.mail.smtp.connectiontimeout`, `timeout`, `writetimeout` | `application.properties` | 5000 ms | Fixed |
-| `capsuleai.identity.password-reset.sender-address` | `application-local.properties` | `CAPSULE_MAIL_FROM` (default `no-reply@capsuleai.local`) | Yes; startup fails if missing or not an email |
-| `capsuleai.identity.password-reset.instruction-link` | `application-local.properties` | `CAPSULE_PASSWORD_RESET_LINK` (default `capsuleai://reset-password`) | Yes; absolute, no fragment, no user info |
+| Property                                                                        | Where                          | Value / environment variable                                                    | Required                                      |
+| ------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------- |
+| `spring.mail.host`, `spring.mail.port`                                          | `application-local.properties` | `CAPSULE_MAIL_HOST` (default `localhost`), `CAPSULE_MAIL_PORT` (default `1025`) | Yes, in every profile that starts the app     |
+| `spring.mail.username`, `spring.mail.password`                                  | `application-local.properties` | `CAPSULE_MAIL_USERNAME`, `CAPSULE_MAIL_PASSWORD` (defaults empty)               | Provider-dependent; **never commit a value**  |
+| `spring.mail.properties.mail.smtp.auth`, `.starttls.enable`                     | `application-local.properties` | `CAPSULE_MAIL_SMTP_AUTH`, `CAPSULE_MAIL_STARTTLS` (default `false` for Mailpit) | Set `true` for real providers                 |
+| `spring.mail.properties.mail.smtp.connectiontimeout`, `timeout`, `writetimeout` | `application.properties`       | 5000 ms                                                                         | Fixed                                         |
+| `capsuleai.identity.password-reset.sender-address`                              | `application-local.properties` | `CAPSULE_MAIL_FROM` (default `no-reply@capsuleai.local`)                        | Yes; startup fails if missing or not an email |
+| `capsuleai.identity.password-reset.instruction-link`                            | `application-local.properties` | `CAPSULE_PASSWORD_RESET_LINK` (default `capsuleai://reset-password`)            | Yes; absolute, no fragment, no user info      |
 
 ### Step P1 — [MODIFY] `pom.xml`
 
@@ -1499,7 +1581,7 @@ public final class PasswordResetPolicy {
 
 **Dependencies:** `PasswordResetPolicy`
 
-**Boundary.** `isUsableAt(now)` uses `now.isBefore(expiresAt)`, so the interaction is rejected *at* exactly 30 minutes (AC-08 "has reached 30 minutes after issuance"). Tests check 29:59 (usable) and 30:00 (rejected).
+**Boundary.** `isUsableAt(now)` uses `now.isBefore(expiresAt)`, so the interaction is rejected _at_ exactly 30 minutes (AC-08 "has reached 30 minutes after issuance"). Tests check 29:59 (usable) and 30:00 (rejected).
 
 **Complete file:**
 
@@ -1658,7 +1740,7 @@ AFTER
 
 **Dependencies:** `PasswordHash`
 
-**Why locks belong in the port.** The application decides *when* the account must be held stable; the adapter decides *how* (`FOR SHARE` / `FOR UPDATE`). Keeping the method names business-meaningful (`lockCredentialAgainstChange`, `lockForCredentialChange`) keeps SQL out of the use cases (ADA-015).
+**Why locks belong in the port.** The application decides _when_ the account must be held stable; the adapter decides _how_ (`FOR SHARE` / `FOR UPDATE`). Keeping the method names business-meaningful (`lockCredentialAgainstChange`, `lockForCredentialChange`) keeps SQL out of the use cases (ADA-015).
 
 **Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/application/ports/AccountRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
@@ -1881,7 +1963,7 @@ public interface PasswordResetTokenGenerator {
 
 **Dependencies:** `EmailAddress`
 
-**Purpose-minimal by construction.** Because the port's only input type has three fields, no wardrobe, profile, history or other account data *can* reach the email adapter (AC-03). `toString()` masks the secret so a stray log line cannot leak it.
+**Purpose-minimal by construction.** Because the port's only input type has three fields, no wardrobe, profile, history or other account data _can_ reach the email adapter (AC-03). `toString()` masks the secret so a stray log line cannot leak it.
 
 **Complete file:**
 
@@ -2063,10 +2145,10 @@ public final class PasswordResetRejectedException extends RuntimeException {
 
 **What can go wrong and how it is handled.**
 
-- *Account existence leak.* Both paths return normally and the controller answers both with the same body. Validation errors depend only on the typed value (missing/malformed), never on whether an account exists.
-- *Sending for an uncommitted interaction.* `sendInstructions` runs only when the transaction returned `true`, i.e. after commit. If the commit fails, nothing is sent (`instructionsAreNotSentWhenTheIssuanceCannotBeCommitted`).
-- *Two requests at the same time.* Both take `lockForCredentialChange`; the second waits, then replaces the first's open interaction. The partial unique index is the database backstop (`ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`).
-- *Delivery failure.* Handled inside the adapter; the response is unchanged and the user can request again (AC-13).
+- _Account existence leak._ Both paths return normally and the controller answers both with the same body. Validation errors depend only on the typed value (missing/malformed), never on whether an account exists.
+- _Sending for an uncommitted interaction._ `sendInstructions` runs only when the transaction returned `true`, i.e. after commit. If the commit fails, nothing is sent (`instructionsAreNotSentWhenTheIssuanceCannotBeCommitted`).
+- _Two requests at the same time._ Both take `lockForCredentialChange`; the second waits, then replaces the first's open interaction. The partial unique index is the database backstop (`ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`).
+- _Delivery failure._ Handled inside the adapter; the response is unchanged and the user can request again (AC-13).
 
 **Complete file:**
 
@@ -2237,9 +2319,9 @@ public final class CheckPasswordResetService {
 **Order of work and why.**
 
 1. Validate token presence and the new password with the existing `PasswordPolicy` (12–128 code points, exact value). A policy failure throws before anything is read or locked, so the interaction stays usable for correction (AC-10).
-2. Look the interaction up *without* a lock to learn its account. Unknown → rejected immediately (no PBKDF2 work for guessed secrets).
+2. Look the interaction up _without_ a lock to learn its account. Unknown → rejected immediately (no PBKDF2 work for guessed secrets).
 3. Hash the new password with the existing `PasswordHasher` **before** the transaction, so no lock is held during the deliberately slow PBKDF2.
-4. Read the clock, then in one transaction: lock the **account** (`FOR UPDATE`), lock the **interaction** (`FOR UPDATE`) and re-check it is still usable *at this moment* (AC-09), replace the hash, consume, revoke all active sessions.
+4. Read the clock, then in one transaction: lock the **account** (`FOR UPDATE`), lock the **interaction** (`FOR UPDATE`) and re-check it is still usable _at this moment_ (AC-09), replace the hash, consume, revoke all active sessions.
 
 **Lock order.** Account → reset interaction → sessions. Reset issuance takes the account lock first too, and login takes a shared account lock before inserting a session, so these paths wait for each other instead of deadlocking (see shared architecture §14).
 
@@ -2374,7 +2456,7 @@ public final class CompletePasswordResetService {
 
 **Dependencies:** `AccountRepository.lockCredentialAgainstChange`
 
-**The race this fixes.** `LogInService` verifies the password *before* its transaction (PBKDF2 is slow). Without this change: login verifies the old password → a reset commits and revokes all sessions → login inserts a brand-new session that the reset never saw. That session would keep working with the old password's authority. Now the transaction takes `FOR SHARE` on the account and compares the stored hash with the one it verified. If a reset changed it meanwhile, login throws `InvalidCredentialsException` and creates nothing. If login's lock comes first, the reset's `FOR UPDATE` waits until the session is committed and then revokes it too. `PasswordResetLoginRaceIT` forces the first interleaving deterministically.
+**The race this fixes.** `LogInService` verifies the password _before_ its transaction (PBKDF2 is slow). Without this change: login verifies the old password → a reset commits and revokes all sessions → login inserts a brand-new session that the reset never saw. That session would keep working with the old password's authority. Now the transaction takes `FOR SHARE` on the account and compares the stored hash with the one it verified. If a reset changed it meanwhile, login throws `InvalidCredentialsException` and creates nothing. If login's lock comes first, the reset's `FOR UPDATE` waits until the session is committed and then revokes it too. `PasswordResetLoginRaceIT` forces the first interleaving deterministically.
 
 **Sprint 1 behavior is unchanged** for every non-racing login: all `LoginApiIT`, `LogInServiceTest` and security tests still pass.
 
@@ -2543,7 +2625,7 @@ AFTER
 
 **Dependencies:** `SessionRepository` change
 
-**Why `expires_at > :revokedAt`.** The SRS speaks of *active* Refresh Sessions. Sessions past their 30-day maximum are already unusable; leaving their history untouched avoids rewriting rows for no security benefit. Revoked-or-not, an expired session can never renew (`RefreshRotationPolicy`).
+**Why `expires_at > :revokedAt`.** The SRS speaks of _active_ Refresh Sessions. Sessions past their 30-day maximum are already unusable; leaving their history untouched avoids rewriting rows for no security benefit. Revoked-or-not, an expired session can never renew (`RefreshRotationPolicy`).
 
 **Verified path at this stage:** `backend/src/main/java/com/capsuleai/identity/adapter/out/persistence/JdbcSessionRepository.java` (Stage 0 (corrected Sprint 1 baseline)). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
@@ -4251,11 +4333,13 @@ A new secret on each start only invalidates earlier access tokens, which is fine
 Choose **one** startup method in that terminal.
 
 **Maven plugin:**
+```
 ````
 
 AFTER
 
-````markdown
+```markdown
+
 ```
 
 A new secret on each start only invalidates earlier access tokens, which is fine for development. Never commit or share the value.
@@ -4284,7 +4368,8 @@ $env:CAPSULE_PASSWORD_RESET_LINK = 'capsuleai://reset-password'
 Choose **one** startup method in that terminal.
 
 **Maven plugin:**
-````
+
+`````
 
 **Change 4 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 264. Unique anchor in the current file: `$env:CAPSULE_DB_USER = $null`
 
@@ -4295,10 +4380,12 @@ $env:CAPSULE_DB_USER = $null
 $env:CAPSULE_JWT_SIGNING_SECRET = $null
 $secretBytes = $null
 $env:CAPSULE_CORS_ALLOWED_ORIGINS = $null
+
 ```
 
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
-````
+```
+`````
 
 AFTER
 
@@ -4309,9 +4396,11 @@ $secretBytes = $null
 $env:CAPSULE_CORS_ALLOWED_ORIGINS = $null
 $env:CAPSULE_MAIL_PASSWORD = $null
 $mailPassword = $null
+
 ```
 
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
+```
 ````
 
 **Change 5 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 304. Unique anchor in the current file: `## 10. Database migrations`
@@ -7101,7 +7190,6 @@ Expected after this story (measured by the guide author in the scratch copy at S
 
 **Regression to re-run after this stage:** all existing Identity suites (`RegistrationApiIT`, `LoginApiIT`, `LogoutApiIT`, `SessionRefreshApiIT`, `AccessTokenSecurityIT`, `SessionAuthorityOutageIT`, `CorsSecurityIT`, `IdentityOpenApiContractIT`, schema and concurrency ITs including `IdentitySchemaRelocationIT`, `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`). They are part of `clean verify`; `IdentityOpenApiContractIT` now also enforces the three new operations.
 
-
 ---
 
 ## 14. Manual Verification
@@ -7175,44 +7263,44 @@ Expected: one consumed interaction, older ones replaced; the two old sessions `P
 
 ### 15.1 Acceptance Criteria
 
-| AC | Backend verification (automated) | Status after implementation | Outstanding non-backend evidence |
-| --- | --- | --- | --- |
-| AC-01 | `PasswordResetApiIT.registeredAndUnregisteredEmailsReceiveIdenticalResponses`; `RequestPasswordResetServiceTest.anUnregisteredEmailReturnsNormallyAndIssuesNothing`; `AsyncPasswordResetInstructionSenderTest.theCallerReturnsBeforeDeliveryAndDeliveryStillHappens` | Backend-verifiable | Vietnamese conditional wording (client) |
-| AC-02 | `RequestPasswordResetServiceTest.aRegisteredEmailReceivesOneThirtyMinuteInteraction`, `caseAndSurroundingWhitespaceVariantsReachTheSameAccount`, `providerAliasesAreNotMergedIntoAnotherAccount`, `requestingChangesNeitherThePasswordNorTheSessions`; `PasswordResetApiIT.emailCaseAndSurroundingSpacesReachTheRegisteredAccount`, `requestingAndOpeningChangeNeitherThePasswordNorTheSessions`; `SmtpPasswordResetInstructionSenderIT.instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly` | Backend-verifiable (Mailpit) | Receipt through the chosen real provider |
-| AC-03 | `SmtpPasswordResetInstructionSenderTest.theMessageCarriesOnlyTheRecipientAndAFragmentLinkWithTheSecret`; `SmtpPasswordResetInstructionSenderIT.instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly` | Backend-verifiable | Provider data-processing review |
-| AC-04 | `CompletePasswordResetServiceTest.anAcceptedResetChangesThePasswordConsumesTheInteractionAndRevokesEverySession`; `PasswordResetApiIT.anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount` | Backend-verifiable | Client completion message and return to login |
-| AC-05 | `PasswordResetApiIT.anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount`, `anotherAccountKeepsItsSessionsAndPassword`; `CompletePasswordResetServiceTest.anotherAccountKeepsItsPasswordAndSessions`; `ConcurrentPasswordResetIT.resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst`; `PasswordResetLoginRaceIT`; wardrobe preservation: `WardrobeAccessAfterPasswordResetIT` (added by US-WAR-002) | Backend-verifiable | — |
-| AC-06 | `PasswordResetApiIT.requestingAndOpeningChangeNeitherThePasswordNorTheSessions`; `CheckPasswordResetServiceTest.anIssuedInteractionCanBeOpenedRepeatedlyWithoutBeingChanged` | Backend-verifiable | Deep-link opening in the app |
-| AC-07 | `RequestPasswordResetServiceTest.aNewIssuanceReplacesEveryEarlierOpenInteraction`; `PasswordResetApiIT.aNewIssuanceInvalidatesTheEarlierLinkAndTheNewOneWorks`; `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`; `PasswordResetSchemaIT.anAccountHasAtMostOneOpenInteraction` | Backend-verifiable | — |
-| AC-08 | `PasswordResetTokenTest.itIsNotUsableAtOrAfterTheThirtyMinuteBoundary`, `aConsumedInteractionIsNeverUsableAgain`, `aReplacedInteractionIsNotUsableEvenBeforeItsExpiry`; `PasswordResetApiIT.theInteractionIsRejectedFromExactlyThirtyMinutesAfterIssue`, `anUnknownLinkChangesNothing` | Backend-verifiable | Fresh-request guidance UI |
-| AC-09 | `CompletePasswordResetServiceTest.anInteractionIsUsableOneSecondBeforeExpiryButNotAtThirtyMinutes`, `aReplacedInteractionIsRejectedAndTheReplacementStillWorks`; `PasswordResetApiIT.theInteractionIsRejectedFromExactlyThirtyMinutesAfterIssue` (open at 29:59, rejected at 30:00) | Backend-verifiable | — |
-| AC-10 | `CompletePasswordResetServiceTest.aPolicyBreakingPasswordIsRejectedAndLeavesTheInteractionUsable` (11, 129), `passwordsAtTheLengthBoundariesAreAccepted` (12, 128); `PasswordResetApiIT.aPolicyBreakingPasswordIsCorrectedWithoutConsumingTheLink` | Backend-verifiable | Correction guidance UI |
-| AC-11 | `CompletePasswordResetServiceTest.theExactNewPasswordIsHashedWithoutTrimmingOrNormalization`; `PasswordResetApiIT.theExactUnicodePasswordWithSpacesAuthenticatesAndAlteredFormsDoNot` | Backend-verifiable | — |
-| AC-12 | `CheckPasswordResetServiceTest.anIssuedInteractionCanBeOpenedRepeatedlyWithoutBeingChanged`; `PasswordResetApiIT.requestingAndOpeningChangeNeitherThePasswordNorTheSessions` | Backend-verifiable | Cancel/leave controls |
-| AC-13 | `SmtpPasswordResetInstructionSenderIT.anUnreachableMailServerIsLoggedAndNeverThrown`; `AsyncPasswordResetInstructionSenderTest.aFailingDeliveryIsLoggedWithoutTheSecretAndNeverReachesTheCaller`, `aFullQueueDropsTheDeliveryWithAWarningInsteadOfBlockingTheRequest`; `PasswordResetFailureIT.anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried`; `RequestPasswordResetServiceTest.anUnregisteredEmailReturnsNormallyAndIssuesNothing` | Backend-verifiable | Email-check/retry/restart guidance |
-| AC-14 | `PasswordResetFailureIT.aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`; `PasswordResetApiIT.anUnknownLinkChangesNothing` | Backend-verifiable | Failure explanation UI |
-| AC-15 | `PasswordResetApiIT.aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain`; `CompletePasswordResetServiceTest.aConsumedInteractionCannotChangeThePasswordASecondTime`; `ConcurrentPasswordResetIT.competingCompletionsOfOneLinkChangeThePasswordExactlyOnce` | Backend-verifiable | Outcome-review UI |
-| AC-16 | Distinct stable outcomes exist (202 / 204 / 400 codes / 503), checked by the AC-01, AC-04, AC-08, AC-14 tests | **Not backend-verifiable** | Vietnamese screen reader and 200% text evidence on Android 10+/iOS 15+ |
+| AC    | Backend verification (automated)                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Status after implementation  | Outstanding non-backend evidence                                       |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| AC-01 | `PasswordResetApiIT.registeredAndUnregisteredEmailsReceiveIdenticalResponses`; `RequestPasswordResetServiceTest.anUnregisteredEmailReturnsNormallyAndIssuesNothing`; `AsyncPasswordResetInstructionSenderTest.theCallerReturnsBeforeDeliveryAndDeliveryStillHappens`                                                                                                                                                                                                                                  | Backend-verifiable           | Vietnamese conditional wording (client)                                |
+| AC-02 | `RequestPasswordResetServiceTest.aRegisteredEmailReceivesOneThirtyMinuteInteraction`, `caseAndSurroundingWhitespaceVariantsReachTheSameAccount`, `providerAliasesAreNotMergedIntoAnotherAccount`, `requestingChangesNeitherThePasswordNorTheSessions`; `PasswordResetApiIT.emailCaseAndSurroundingSpacesReachTheRegisteredAccount`, `requestingAndOpeningChangeNeitherThePasswordNorTheSessions`; `SmtpPasswordResetInstructionSenderIT.instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly` | Backend-verifiable (Mailpit) | Receipt through the chosen real provider                               |
+| AC-03 | `SmtpPasswordResetInstructionSenderTest.theMessageCarriesOnlyTheRecipientAndAFragmentLinkWithTheSecret`; `SmtpPasswordResetInstructionSenderIT.instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly`                                                                                                                                                                                                                                                                                          | Backend-verifiable           | Provider data-processing review                                        |
+| AC-04 | `CompletePasswordResetServiceTest.anAcceptedResetChangesThePasswordConsumesTheInteractionAndRevokesEverySession`; `PasswordResetApiIT.anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount`                                                                                                                                                                                                                                                                                        | Backend-verifiable           | Client completion message and return to login                          |
+| AC-05 | `PasswordResetApiIT.anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount`, `anotherAccountKeepsItsSessionsAndPassword`; `CompletePasswordResetServiceTest.anotherAccountKeepsItsPasswordAndSessions`; `ConcurrentPasswordResetIT.resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst`; `PasswordResetLoginRaceIT`; wardrobe preservation: `WardrobeAccessAfterPasswordResetIT` (added by US-WAR-002)                                                                     | Backend-verifiable           | —                                                                      |
+| AC-06 | `PasswordResetApiIT.requestingAndOpeningChangeNeitherThePasswordNorTheSessions`; `CheckPasswordResetServiceTest.anIssuedInteractionCanBeOpenedRepeatedlyWithoutBeingChanged`                                                                                                                                                                                                                                                                                                                          | Backend-verifiable           | Deep-link opening in the app                                           |
+| AC-07 | `RequestPasswordResetServiceTest.aNewIssuanceReplacesEveryEarlierOpenInteraction`; `PasswordResetApiIT.aNewIssuanceInvalidatesTheEarlierLinkAndTheNewOneWorks`; `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`; `PasswordResetSchemaIT.anAccountHasAtMostOneOpenInteraction`                                                                                                                                                                                                  | Backend-verifiable           | —                                                                      |
+| AC-08 | `PasswordResetTokenTest.itIsNotUsableAtOrAfterTheThirtyMinuteBoundary`, `aConsumedInteractionIsNeverUsableAgain`, `aReplacedInteractionIsNotUsableEvenBeforeItsExpiry`; `PasswordResetApiIT.theInteractionIsRejectedFromExactlyThirtyMinutesAfterIssue`, `anUnknownLinkChangesNothing`                                                                                                                                                                                                                | Backend-verifiable           | Fresh-request guidance UI                                              |
+| AC-09 | `CompletePasswordResetServiceTest.anInteractionIsUsableOneSecondBeforeExpiryButNotAtThirtyMinutes`, `aReplacedInteractionIsRejectedAndTheReplacementStillWorks`; `PasswordResetApiIT.theInteractionIsRejectedFromExactlyThirtyMinutesAfterIssue` (open at 29:59, rejected at 30:00)                                                                                                                                                                                                                   | Backend-verifiable           | —                                                                      |
+| AC-10 | `CompletePasswordResetServiceTest.aPolicyBreakingPasswordIsRejectedAndLeavesTheInteractionUsable` (11, 129), `passwordsAtTheLengthBoundariesAreAccepted` (12, 128); `PasswordResetApiIT.aPolicyBreakingPasswordIsCorrectedWithoutConsumingTheLink`                                                                                                                                                                                                                                                    | Backend-verifiable           | Correction guidance UI                                                 |
+| AC-11 | `CompletePasswordResetServiceTest.theExactNewPasswordIsHashedWithoutTrimmingOrNormalization`; `PasswordResetApiIT.theExactUnicodePasswordWithSpacesAuthenticatesAndAlteredFormsDoNot`                                                                                                                                                                                                                                                                                                                 | Backend-verifiable           | —                                                                      |
+| AC-12 | `CheckPasswordResetServiceTest.anIssuedInteractionCanBeOpenedRepeatedlyWithoutBeingChanged`; `PasswordResetApiIT.requestingAndOpeningChangeNeitherThePasswordNorTheSessions`                                                                                                                                                                                                                                                                                                                          | Backend-verifiable           | Cancel/leave controls                                                  |
+| AC-13 | `SmtpPasswordResetInstructionSenderIT.anUnreachableMailServerIsLoggedAndNeverThrown`; `AsyncPasswordResetInstructionSenderTest.aFailingDeliveryIsLoggedWithoutTheSecretAndNeverReachesTheCaller`, `aFullQueueDropsTheDeliveryWithAWarningInsteadOfBlockingTheRequest`; `PasswordResetFailureIT.anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried`; `RequestPasswordResetServiceTest.anUnregisteredEmailReturnsNormallyAndIssuesNothing`                                                         | Backend-verifiable           | Email-check/retry/restart guidance                                     |
+| AC-14 | `PasswordResetFailureIT.aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`; `PasswordResetApiIT.anUnknownLinkChangesNothing`                                                                                                                                                                                                                                                                                                                                                                | Backend-verifiable           | Failure explanation UI                                                 |
+| AC-15 | `PasswordResetApiIT.aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain`; `CompletePasswordResetServiceTest.aConsumedInteractionCannotChangeThePasswordASecondTime`; `ConcurrentPasswordResetIT.competingCompletionsOfOneLinkChangeThePasswordExactlyOnce`                                                                                                                                                                                                                                    | Backend-verifiable           | Outcome-review UI                                                      |
+| AC-16 | Distinct stable outcomes exist (202 / 204 / 400 codes / 503), checked by the AC-01, AC-04, AC-08, AC-14 tests                                                                                                                                                                                                                                                                                                                                                                                         | **Not backend-verifiable**   | Vietnamese screen reader and 200% text evidence on Android 10+/iOS 15+ |
 
 ### 15.2 Requirement-to-test traceability
 
-| Requirement ID | AC | Test scenario | Test class | Test method | Level |
-| --- | --- | --- | --- | --- | --- |
-| FR-AUTH-003, NFR-SEC-003 | AC-01 | Identical responses for registered/unregistered emails | `PasswordResetApiIT` | `registeredAndUnregisteredEmailsReceiveIdenticalResponses` | HTTP/security IT |
-| FR-AUTH-003, BRULE-AUTH-002 | AC-02 | Case/whitespace variants, no alias merge | `RequestPasswordResetServiceTest` | `caseAndSurroundingWhitespaceVariantsReachTheSameAccount`, `providerAliasesAreNotMergedIntoAnotherAccount` | Application unit |
-| FR-AUTH-017 | AC-02, AC-08 | 30-minute lifetime, boundary 29:59/30:00 | `PasswordResetTokenTest` | `anIssuedInteractionExpiresExactlyThirtyMinutesLater`, `itIsUsableUntilTheLastSecondBeforeExpiry`, `itIsNotUsableAtOrAfterTheThirtyMinuteBoundary` | Domain unit |
-| FR-AUTH-018, BRULE-AUTH-004 | AC-07 | Replacement and concurrent issuance | `RequestPasswordResetServiceTest`, `ConcurrentPasswordResetIT`, `PasswordResetSchemaIT` | `aNewIssuanceReplacesEveryEarlierOpenInteraction`, `competingRequestsLeaveExactlyOneUsableLink`, `anAccountHasAtMostOneOpenInteraction` | Unit / concurrency IT / PostgreSQL IT |
-| SI-003, BRULE-AUTH-007, COM-003 | AC-03 | Purpose-minimal email over real SMTP | `SmtpPasswordResetInstructionSenderIT`, `SmtpPasswordResetInstructionSenderTest` | `instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly`, `theMessageCarriesOnlyTheRecipientAndAFragmentLinkWithTheSecret` | SMTP IT / adapter unit |
-| FR-AUTH-004, BRULE-AUTH-005, NFR-SEC-002 | AC-04, AC-05 | Atomic completion revoking every session | `PasswordResetApiIT`, `CompletePasswordResetServiceTest` | `anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount`, `anAcceptedResetChangesThePasswordConsumesTheInteractionAndRevokesEverySession` | HTTP IT / unit |
-| FR-AUTH-004, ADA-008 | AC-05 | Reset versus login and renewal races | `PasswordResetLoginRaceIT`, `ConcurrentPasswordResetIT` | `aLoginThatVerifiedTheOldPasswordBeforeAResetCommitsGetsNoSession`, `resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst` | Concurrency IT |
-| FR-AUTH-017, ERR-AUTH-002 | AC-08, AC-15 | Single successful use, replay | `CompletePasswordResetServiceTest`, `PasswordResetApiIT`, `ConcurrentPasswordResetIT` | `aConsumedInteractionCannotChangeThePasswordASecondTime`, `aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain`, `competingCompletionsOfOneLinkChangeThePasswordExactlyOnce` | Unit / HTTP IT / concurrency IT |
-| FR-AUTH-015, BRULE-AUTH-003 | AC-10, AC-11 | Length boundaries; exact Unicode value | `CompletePasswordResetServiceTest`, `PasswordResetApiIT` | `aPolicyBreakingPasswordIsRejectedAndLeavesTheInteractionUsable`, `passwordsAtTheLengthBoundariesAreAccepted`, `theExactUnicodePasswordWithSpacesAuthenticatesAndAlteredFormsDoNot` | Unit / HTTP IT |
-| ERR-DEP-001, ERR-AUTH-002 | AC-13, AC-14 | Delivery and persistence failures | `SmtpPasswordResetInstructionSenderIT`, `AsyncPasswordResetInstructionSenderTest`, `PasswordResetFailureIT` | `anUnreachableMailServerIsLoggedAndNeverThrown`, `aFailingDeliveryIsLoggedWithoutTheSecretAndNeverReachesTheCaller`, `aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`, `anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried` | SMTP IT / unit / failure IT |
-| NFR-SEC-003 | — | No secret in responses or logs | `PasswordResetApiIT` | `secretsNeverAppearInResponsesOrLogs` | HTTP IT |
-| DATA-AUTH-005, DoD §5 schema | — | V7 constraints; V6 → V7 upgrade with data on a separate database | `PasswordResetSchemaIT` | all 7 methods | PostgreSQL IT |
-| FR-AUTH-003 (public access) | AC-01 | Stale bearer header ignored | `PasswordResetApiIT` | `aStaleBearerHeaderDoesNotBlockRecovery` | Security IT |
-| DoD §5 API contract | — | OpenAPI matches handlers, schemas and required fields | `IdentityOpenApiContractIT` | all 5 methods | Contract IT |
-| ADA-015 | — | Framework-free domain/application, adapter independence | `ArchitectureDependencyTest` | all methods | Architecture |
+| Requirement ID                           | AC           | Test scenario                                                    | Test class                                                                                                  | Test method                                                                                                                                                                                                                                   | Level                                 |
+| ---------------------------------------- | ------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| FR-AUTH-003, NFR-SEC-003                 | AC-01        | Identical responses for registered/unregistered emails           | `PasswordResetApiIT`                                                                                        | `registeredAndUnregisteredEmailsReceiveIdenticalResponses`                                                                                                                                                                                    | HTTP/security IT                      |
+| FR-AUTH-003, BRULE-AUTH-002              | AC-02        | Case/whitespace variants, no alias merge                         | `RequestPasswordResetServiceTest`                                                                           | `caseAndSurroundingWhitespaceVariantsReachTheSameAccount`, `providerAliasesAreNotMergedIntoAnotherAccount`                                                                                                                                    | Application unit                      |
+| FR-AUTH-017                              | AC-02, AC-08 | 30-minute lifetime, boundary 29:59/30:00                         | `PasswordResetTokenTest`                                                                                    | `anIssuedInteractionExpiresExactlyThirtyMinutesLater`, `itIsUsableUntilTheLastSecondBeforeExpiry`, `itIsNotUsableAtOrAfterTheThirtyMinuteBoundary`                                                                                            | Domain unit                           |
+| FR-AUTH-018, BRULE-AUTH-004              | AC-07        | Replacement and concurrent issuance                              | `RequestPasswordResetServiceTest`, `ConcurrentPasswordResetIT`, `PasswordResetSchemaIT`                     | `aNewIssuanceReplacesEveryEarlierOpenInteraction`, `competingRequestsLeaveExactlyOneUsableLink`, `anAccountHasAtMostOneOpenInteraction`                                                                                                       | Unit / concurrency IT / PostgreSQL IT |
+| SI-003, BRULE-AUTH-007, COM-003          | AC-03        | Purpose-minimal email over real SMTP                             | `SmtpPasswordResetInstructionSenderIT`, `SmtpPasswordResetInstructionSenderTest`                            | `instructionsArriveAsOnePlainTextMessageToTheAccountEmailOnly`, `theMessageCarriesOnlyTheRecipientAndAFragmentLinkWithTheSecret`                                                                                                              | SMTP IT / adapter unit                |
+| FR-AUTH-004, BRULE-AUTH-005, NFR-SEC-002 | AC-04, AC-05 | Atomic completion revoking every session                         | `PasswordResetApiIT`, `CompletePasswordResetServiceTest`                                                    | `anAcceptedResetRequiresTheNewPasswordAndRevokesEverySessionOfTheAccount`, `anAcceptedResetChangesThePasswordConsumesTheInteractionAndRevokesEverySession`                                                                                    | HTTP IT / unit                        |
+| FR-AUTH-004, ADA-008                     | AC-05        | Reset versus login and renewal races                             | `PasswordResetLoginRaceIT`, `ConcurrentPasswordResetIT`                                                     | `aLoginThatVerifiedTheOldPasswordBeforeAResetCommitsGetsNoSession`, `resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst`                                                                                                           | Concurrency IT                        |
+| FR-AUTH-017, ERR-AUTH-002                | AC-08, AC-15 | Single successful use, replay                                    | `CompletePasswordResetServiceTest`, `PasswordResetApiIT`, `ConcurrentPasswordResetIT`                       | `aConsumedInteractionCannotChangeThePasswordASecondTime`, `aReplayedSubmissionAfterSuccessCannotChangeThePasswordAgain`, `competingCompletionsOfOneLinkChangeThePasswordExactlyOnce`                                                          | Unit / HTTP IT / concurrency IT       |
+| FR-AUTH-015, BRULE-AUTH-003              | AC-10, AC-11 | Length boundaries; exact Unicode value                           | `CompletePasswordResetServiceTest`, `PasswordResetApiIT`                                                    | `aPolicyBreakingPasswordIsRejectedAndLeavesTheInteractionUsable`, `passwordsAtTheLengthBoundariesAreAccepted`, `theExactUnicodePasswordWithSpacesAuthenticatesAndAlteredFormsDoNot`                                                           | Unit / HTTP IT                        |
+| ERR-DEP-001, ERR-AUTH-002                | AC-13, AC-14 | Delivery and persistence failures                                | `SmtpPasswordResetInstructionSenderIT`, `AsyncPasswordResetInstructionSenderTest`, `PasswordResetFailureIT` | `anUnreachableMailServerIsLoggedAndNeverThrown`, `aFailingDeliveryIsLoggedWithoutTheSecretAndNeverReachesTheCaller`, `aResetThatFailsAfterChangingThePasswordIsRolledBackEntirely`, `anIssuanceThatCannotBeStoredSendsNoEmailAndCanBeRetried` | SMTP IT / unit / failure IT           |
+| NFR-SEC-003                              | —            | No secret in responses or logs                                   | `PasswordResetApiIT`                                                                                        | `secretsNeverAppearInResponsesOrLogs`                                                                                                                                                                                                         | HTTP IT                               |
+| DATA-AUTH-005, DoD §5 schema             | —            | V7 constraints; V6 → V7 upgrade with data on a separate database | `PasswordResetSchemaIT`                                                                                     | all 7 methods                                                                                                                                                                                                                                 | PostgreSQL IT                         |
+| FR-AUTH-003 (public access)              | AC-01        | Stale bearer header ignored                                      | `PasswordResetApiIT`                                                                                        | `aStaleBearerHeaderDoesNotBlockRecovery`                                                                                                                                                                                                      | Security IT                           |
+| DoD §5 API contract                      | —            | OpenAPI matches handlers, schemas and required fields            | `IdentityOpenApiContractIT`                                                                                 | all 5 methods                                                                                                                                                                                                                                 | Contract IT                           |
+| ADA-015                                  | —            | Framework-free domain/application, adapter independence          | `ArchitectureDependencyTest`                                                                                | all methods                                                                                                                                                                                                                                   | Architecture                          |
 
 ## 16. Definition of Done
 
@@ -7224,57 +7312,57 @@ The project's common Definition of Done, verbatim:
 >
 > These conditions apply to every item contributing to the Increment, interpreted for its scope.
 >
-> | Area | Done Condition |
-> | --- | --- |
-> | Acceptance and scope | All applicable Acceptance Criteria pass, and the defined outcome complies with its authoritative requirements and business rules. No unapproved scope or weakened requirement is introduced. |
-> | Implementation completeness | The scoped behavior is implemented, including required state transitions and failure paths. No placeholder, bypass or unfinished contributor task prevents that outcome from working. |
-> | Automated tests | Required automated unit, integration and regression tests pass. Tests cover the changed behavior, relevant boundaries and negative cases, and protect affected existing behavior. Tests do not merely repeat implementation details. |
-> | Integration behavior | Relevant interactions between delivered contributors and dependencies are verified, including required fallback behavior. Mocks alone do not establish that an actual required integration works. |
-> | Security and authorization | Affected access boundaries and secret handling satisfy the SRS. Relevant unauthorized and cross-account attempts are checked; no protected content or secrets are exposed to unauthorized parties. |
-> | Privacy and isolation | Affected collection, processing, storage, external exchange and evidence remain purpose-limited and private. User isolation and applicable lifecycle obligations are preserved; MVP personal data is excluded from AI training/improvement and unrestricted sharing. |
-> | Errors and recovery | Applicable cancellation, rejection, dependency failure and interrupted/uncertain outcomes are verified. Accepted state is protected, outcome review/retry is safe, and unavailable data is not misrepresented as success, emptiness or evaluated zero. |
-> | Build and CI | Changed software builds reproducibly, and all required configured CI checks pass for the version integrated into the Increment. Failing required checks are resolved; a local success alone does not establish CI success. |
-> | Review and defects | Code/change review is completed by the appropriate contributor, blocking findings are resolved, and no unresolved Critical defect affects the Increment. Any defect that violates required behavior or another DoD condition blocks Done regardless of its label. |
-> | Documentation and traceability | Change impact is reviewed. Affected authoritative requirements, rules, interaction models, story references and design documentation accurately reflect the delivered truth, preserving stable IDs. Unaffected documents need no edits. |
-> | Increment integration | Completed work is integrated into the shared product baseline and verified with existing completed capabilities. The scoped outcome is usable and demonstrable; an isolated backend, mobile or AI task does not establish completion of the whole story. |
+> | Area                           | Done Condition                                                                                                                                                                                                                                                       |
+> | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | Acceptance and scope           | All applicable Acceptance Criteria pass, and the defined outcome complies with its authoritative requirements and business rules. No unapproved scope or weakened requirement is introduced.                                                                         |
+> | Implementation completeness    | The scoped behavior is implemented, including required state transitions and failure paths. No placeholder, bypass or unfinished contributor task prevents that outcome from working.                                                                                |
+> | Automated tests                | Required automated unit, integration and regression tests pass. Tests cover the changed behavior, relevant boundaries and negative cases, and protect affected existing behavior. Tests do not merely repeat implementation details.                                 |
+> | Integration behavior           | Relevant interactions between delivered contributors and dependencies are verified, including required fallback behavior. Mocks alone do not establish that an actual required integration works.                                                                    |
+> | Security and authorization     | Affected access boundaries and secret handling satisfy the SRS. Relevant unauthorized and cross-account attempts are checked; no protected content or secrets are exposed to unauthorized parties.                                                                   |
+> | Privacy and isolation          | Affected collection, processing, storage, external exchange and evidence remain purpose-limited and private. User isolation and applicable lifecycle obligations are preserved; MVP personal data is excluded from AI training/improvement and unrestricted sharing. |
+> | Errors and recovery            | Applicable cancellation, rejection, dependency failure and interrupted/uncertain outcomes are verified. Accepted state is protected, outcome review/retry is safe, and unavailable data is not misrepresented as success, emptiness or evaluated zero.               |
+> | Build and CI                   | Changed software builds reproducibly, and all required configured CI checks pass for the version integrated into the Increment. Failing required checks are resolved; a local success alone does not establish CI success.                                           |
+> | Review and defects             | Code/change review is completed by the appropriate contributor, blocking findings are resolved, and no unresolved Critical defect affects the Increment. Any defect that violates required behavior or another DoD condition blocks Done regardless of its label.    |
+> | Documentation and traceability | Change impact is reviewed. Affected authoritative requirements, rules, interaction models, story references and design documentation accurately reflect the delivered truth, preserving stable IDs. Unaffected documents need no edits.                              |
+> | Increment integration          | Completed work is integrated into the shared product baseline and verified with existing completed capabilities. The scoped outcome is usable and demonstrable; an isolated backend, mobile or AI task does not establish completion of the whole story.             |
 >
 > Privacy, recovery, accessibility and other applicable constraints accompany each delivered capability. Later cross-MVP verification PBIs extend evidence; their backlog position does not postpone those obligations.
 
 Triggered conditional criteria: **HTTP API contract changes** (OpenAPI v0.5.0, contract IT), **database schema changes** (V7 + upgrade test), **authorization/sensitive-data** (secrets, revocation, minimal disclosure), **reliability/concurrency** (race and failure tests), **runnable software/configuration** (mail settings, Mailpit).
 
-| DoD area | Evidence for US-AUTH-005 | Who / where |
-| --- | --- | --- |
-| Acceptance and scope | Section 15 matrix: AC-01–AC-15 backend parts automated; AC-16 and client parts outstanding | Developer; client contributor |
-| Implementation completeness | Sections 11–12 | Developer |
-| Automated tests | Section 13, `clean verify` green | Developer |
-| Integration behavior | Real PostgreSQL, real filter chain, real SMTP to Mailpit; **real provider delivery outstanding** | Developer + project owner for provider access |
-| Security and authorization | Revocation, races, no secrets in logs/responses, public endpoints | Reviewer |
-| Privacy and isolation | Purpose-minimal email; other accounts unaffected | Reviewer |
-| Errors and recovery | Delivery and persistence failure tests, lost response, replay | Developer |
-| Build and CI | Hosted CI on the PR to `main` must pass with the updated report guard | CI |
-| Review and defects | Code review; no unresolved Critical defect | Reviewer |
-| Documentation and traceability | OpenAPI 0.5.0, README, this guide | Developer |
-| Increment integration | Mobile recovery journey and real provider evidence | PO / client contributor |
+| DoD area                       | Evidence for US-AUTH-005                                                                         | Who / where                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Acceptance and scope           | Section 15 matrix: AC-01–AC-15 backend parts automated; AC-16 and client parts outstanding       | Developer; client contributor                 |
+| Implementation completeness    | Sections 11–12                                                                                   | Developer                                     |
+| Automated tests                | Section 13, `clean verify` green                                                                 | Developer                                     |
+| Integration behavior           | Real PostgreSQL, real filter chain, real SMTP to Mailpit; **real provider delivery outstanding** | Developer + project owner for provider access |
+| Security and authorization     | Revocation, races, no secrets in logs/responses, public endpoints                                | Reviewer                                      |
+| Privacy and isolation          | Purpose-minimal email; other accounts unaffected                                                 | Reviewer                                      |
+| Errors and recovery            | Delivery and persistence failure tests, lost response, replay                                    | Developer                                     |
+| Build and CI                   | Hosted CI on the PR to `main` must pass with the updated report guard                            | CI                                            |
+| Review and defects             | Code review; no unresolved Critical defect                                                       | Reviewer                                      |
+| Documentation and traceability | OpenAPI 0.5.0, README, this guide                                                                | Developer                                     |
+| Increment integration          | Mobile recovery journey and real provider evidence                                               | PO / client contributor                       |
 
 **This guide does not make US-AUTH-005 Done.** Backend completion is reached when every checklist item in Section 18 is ticked on the integrated revision; the story is Done only with the client and provider evidence above.
 
 ## 17. Troubleshooting
 
-| Symptom | Likely cause | What to do |
-| --- | --- | --- |
-| `relation "identity_password_reset" does not exist` | Unqualified SQL | Every Identity table lives in the `identity` schema: write `identity.identity_password_reset`. |
-| `PersistenceOwnershipSqlTest` fails | A statement names a table without its schema, or a migration touches a second schema | Follow the message: it names file, line and the qualified table. |
-| Startup fails: `password-reset.sender-address is not configured` | Profile without the reset properties | Use the `local` profile or set `CAPSULE_MAIL_FROM` / `CAPSULE_PASSWORD_RESET_LINK`; tests use `application-test.properties`. |
-| Startup fails: no `JavaMailSender` bean | `spring.mail.host` missing | Set `CAPSULE_MAIL_HOST` (local default is `localhost`). |
-| 202 but no email in Mailpit | Unregistered email (expected), Mailpit not running, or SMTP refused | Check `docker compose ps`, then the log line "Password-reset instructions could not be handed to the mail server". |
-| Email arrives but `complete` says `PASSWORD_RESET_INVALID` | Link older than 30 minutes, a newer request replaced it, or it was already used | Request again and use the newest email only. |
-| `complete` returns `VALIDATION_FAILED` on `newPassword` | Fewer than 12 or more than 128 characters | Correct it; the same link stays valid. |
-| An old access token still works after a reset | It should not: every protected request re-reads its session | Check that `revokeAllActiveForAccount` ran (sessions show `PASSWORD_RESET`) and that the request is not hitting a public endpoint. |
-| `PasswordResetLoginRaceIT` hangs | The pausing hasher was not released | `@AfterEach` releases it; look for an assertion that failed before `release()`. |
-| `SmtpPasswordResetInstructionSenderIT` fails to start | Docker unavailable or the Mailpit image cannot be pulled | `docker info`; `docker pull axllent/mailpit:v1.27.11`. |
-| Flyway: `ck_identity_session_revocation_reason` already exists / checksum mismatch | V7 edited after it ran, or applied twice by hand | Never edit an applied migration; restore V7 exactly and use a new version for changes. |
-| Deadlock detected in logs | A new code path took locks in a different order | Keep account → reset interaction → sessions everywhere (Section 10.6). |
-| CI guard: report missing | A test class was renamed or not discovered | Class names must end in `Test` or `IT`; update `$required` in the workflow together with the class. |
+| Symptom                                                                            | Likely cause                                                                         | What to do                                                                                                                         |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `relation "identity_password_reset" does not exist`                                | Unqualified SQL                                                                      | Every Identity table lives in the `identity` schema: write `identity.identity_password_reset`.                                     |
+| `PersistenceOwnershipSqlTest` fails                                                | A statement names a table without its schema, or a migration touches a second schema | Follow the message: it names file, line and the qualified table.                                                                   |
+| Startup fails: `password-reset.sender-address is not configured`                   | Profile without the reset properties                                                 | Use the `local` profile or set `CAPSULE_MAIL_FROM` / `CAPSULE_PASSWORD_RESET_LINK`; tests use `application-test.properties`.       |
+| Startup fails: no `JavaMailSender` bean                                            | `spring.mail.host` missing                                                           | Set `CAPSULE_MAIL_HOST` (local default is `localhost`).                                                                            |
+| 202 but no email in Mailpit                                                        | Unregistered email (expected), Mailpit not running, or SMTP refused                  | Check `docker compose ps`, then the log line "Password-reset instructions could not be handed to the mail server".                 |
+| Email arrives but `complete` says `PASSWORD_RESET_INVALID`                         | Link older than 30 minutes, a newer request replaced it, or it was already used      | Request again and use the newest email only.                                                                                       |
+| `complete` returns `VALIDATION_FAILED` on `newPassword`                            | Fewer than 12 or more than 128 characters                                            | Correct it; the same link stays valid.                                                                                             |
+| An old access token still works after a reset                                      | It should not: every protected request re-reads its session                          | Check that `revokeAllActiveForAccount` ran (sessions show `PASSWORD_RESET`) and that the request is not hitting a public endpoint. |
+| `PasswordResetLoginRaceIT` hangs                                                   | The pausing hasher was not released                                                  | `@AfterEach` releases it; look for an assertion that failed before `release()`.                                                    |
+| `SmtpPasswordResetInstructionSenderIT` fails to start                              | Docker unavailable or the Mailpit image cannot be pulled                             | `docker info`; `docker pull axllent/mailpit:v1.27.11`.                                                                             |
+| Flyway: `ck_identity_session_revocation_reason` already exists / checksum mismatch | V7 edited after it ran, or applied twice by hand                                     | Never edit an applied migration; restore V7 exactly and use a new version for changes.                                             |
+| Deadlock detected in logs                                                          | A new code path took locks in a different order                                      | Keep account → reset interaction → sessions everywhere (Section 10.6).                                                             |
+| CI guard: report missing                                                           | A test class was renamed or not discovered                                           | Class names must end in `Test` or `IT`; update `$required` in the workflow together with the class.                                |
 
 ## 18. Final Implementation Checklist
 

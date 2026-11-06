@@ -1,12 +1,12 @@
 # Sprint 2 Shared Architecture
 
-| Field | Value |
-| --- | --- |
-| Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
-| Applies to | [US-AUTH-005](US-AUTH-005-guide.md), [US-GAR-001](US-GAR-001-guide.md), [US-WAR-001](US-WAR-001-guide.md), [US-WAR-002](US-WAR-002-guide.md) |
-| Repository baseline | Stage 0: `sprint_02` at `dc4ddf3` plus the schema-ownership correction ([README §3](README.md#3-repository-baseline)) |
-| Read with | [README](README.md) |
-| Code status | Every structure described here exists in the guide author's scratch clone, where it was compiled and tested (final `clean verify`: 382 unit / 228 integration tests). It has **not** been applied to this repository or run in hosted CI. |
+| Field               | Value                                                                                                                                                                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint              | Sprint 2 — Recover Access and Establish a Private Wardrobe                                                                                                                                                                                |
+| Applies to          | [US-AUTH-005](US-AUTH-005-guide.md), [US-GAR-001](US-GAR-001-guide.md), [US-WAR-001](US-WAR-001-guide.md), [US-WAR-002](US-WAR-002-guide.md)                                                                                              |
+| Repository baseline | Stage 0: `sprint_02` at `dc4ddf3` plus the schema-ownership correction ([README §3](README.md#3-repository-baseline))                                                                                                                     |
+| Read with           | [README](README.md)                                                                                                                                                                                                                       |
+| Code status         | Every structure described here exists in the guide author's scratch clone, where it was compiled and tested (final `clean verify`: 382 unit / 228 integration tests). It has **not** been applied to this repository or run in hosted CI. |
 
 This document holds the cross-story decisions. Each story guide repeats what its developer needs, so a guide can be followed alone. When the two disagree, the story guide's code (taken from the tested stage commit) is authoritative, and this document should be corrected.
 
@@ -14,19 +14,19 @@ This document holds the cross-story decisions. Each story guide repeats what its
 
 ## 1. Purpose and scope
 
-| In scope | Out of scope |
-| --- | --- |
+| In scope                                                                                                                                                                                                                                                                                                           | Out of scope                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Identity recovery (V7, reset services, SMTP boundary); Wardrobe module (model, V8, creation, overview, detail); their integration through `identity.api`; schema-per-owner persistence (AR-01–AR-08); API conventions; errors; transactions; idempotency; configuration; testing; shared-file ownership; decisions | Mobile client; images and AI (PBI-012/013); editing/removal (PBI-008/016); search/filter (PBI-015); Wear and analytics (PBI-021/025); deployment and the production email provider |
 
 ## 2. Repository baseline and stages
 
-| Stage | State | Produced by | OpenAPI | Migrations |
-| --- | --- | --- | --- | --- |
-| 0 | `dc4ddf3` + schema-ownership correction: Sprint 1 Identity in schema `identity`, CORS, empty Wardrobe module, architecture checks | (this revision) | 0.4.1 | V1–V5, V6 |
-| 1 | + email password recovery | [US-AUTH-005](US-AUTH-005-guide.md) | 0.5.0 | + V7 |
-| 2 | + Wardrobe model and manual creation | [US-GAR-001](US-GAR-001-guide.md) | 0.6.0 | + V8 |
-| 3 | + current-wardrobe overview | [US-WAR-001](US-WAR-001-guide.md) | 0.7.0 | — |
-| 4 | + garment detail, cross-story test | [US-WAR-002](US-WAR-002-guide.md) | 0.8.0 | — |
+| Stage | State                                                                                                                             | Produced by                         | OpenAPI | Migrations |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ------- | ---------- |
+| 0     | `dc4ddf3` + schema-ownership correction: Sprint 1 Identity in schema `identity`, CORS, empty Wardrobe module, architecture checks | (this revision)                     | 0.4.1   | V1–V5, V6  |
+| 1     | + email password recovery                                                                                                         | [US-AUTH-005](US-AUTH-005-guide.md) | 0.5.0   | + V7       |
+| 2     | + Wardrobe model and manual creation                                                                                              | [US-GAR-001](US-GAR-001-guide.md)   | 0.6.0   | + V8       |
+| 3     | + current-wardrobe overview                                                                                                       | [US-WAR-001](US-WAR-001-guide.md)   | 0.7.0   | —          |
+| 4     | + garment detail, cross-story test                                                                                                | [US-WAR-002](US-WAR-002-guide.md)   | 0.8.0   | —          |
 
 Across the four stages, 133 files change: 109 are added and 24 modified, and none is removed. Every stage compiles and passes `clean verify` on its own ([README §13](README.md#13-expected-outcome-of-each-stage)). Apply the stages in order, because each guide's BEFORE blocks are exact for its starting stage.
 
@@ -53,19 +53,19 @@ Precedence when sources disagree:
 1. An explicit, newer Product Owner decision that names what it supersedes. Examples: the garment-property authority, PRD §34.1, and the "Current property-model revision — 2026-11-05" notes at the top of each story.
 2. The story's own Acceptance Criteria, for behaviour within that story.
 3. SRS requirement rows, then Business Rules, then the PRD feature text, then the BRD.
-4. Architecture decisions (ADA) constrain *how*, never *what*.
+4. Architecture decisions (ADA) constrain _how_, never _what_.
 
 When none of these resolves a conflict, the guides label it **[OPEN]** and implement the smallest reversible behaviour as **[TECH]** (§22).
 
 ## 4. Labels and conventions
 
-| Label | Meaning |
-| --- | --- |
-| **[REQ]** | Stated by a requirement source (quoted verbatim in the story guides, sections 3–8) |
-| **[ARCH]** | A selected architecture decision (ADA-nnn) or an established repository convention |
-| **[TECH]** | A technical decision proposed by these guides (`TD-S2-nn`, §22); changeable without a product decision |
-| **[OPEN]** | Needs a product/team decision (`OPEN-S2-nn`, §22); the guides implement a provisional default |
-| **[ADD] / [MODIFY] / [REMOVE]** | File actions in the story guides |
+| Label                           | Meaning                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **[REQ]**                       | Stated by a requirement source (quoted verbatim in the story guides, sections 3–8)                     |
+| **[ARCH]**                      | A selected architecture decision (ADA-nnn) or an established repository convention                     |
+| **[TECH]**                      | A technical decision proposed by these guides (`TD-S2-nn`, §22); changeable without a product decision |
+| **[OPEN]**                      | Needs a product/team decision (`OPEN-S2-nn`, §22); the guides implement a provisional default          |
+| **[ADD] / [MODIFY] / [REMOVE]** | File actions in the story guides                                                                       |
 
 Repository conventions kept unchanged:
 
@@ -101,77 +101,168 @@ flowchart TB
     win -->|"@AuthenticationPrincipal"| iapi
 ```
 
-| Rule | Enforced by |
-| --- | --- |
-| `domain` and `application` import no Spring, Jakarta or JDBC types | `ArchitectureDependencyTest` |
+| Rule                                                                                                                               | Enforced by                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `domain` and `application` import no Spring, Jakarta or JDBC types                                                                 | `ArchitectureDependencyTest`                                                  |
 | Nothing outside a module uses anything of it except its `api` (domain, application, ports, adapters and configuration are private) | `ArchitectureDependencyTest`, for every module registered in `BusinessModule` |
-| Wardrobe uses only `com.capsuleai.identity.api` | Same test; ADA-015, ADA-018, AR-03 |
-| A published `api` exposes no private domain or application type | `ArchitectureDependencyTest` (ADA-018) |
-| Spring JDBC only in persistence adapters and configuration; no module cycles | `ArchitectureDependencyTest` |
-| Each module's SQL names only its own schema, always qualified; each migration after V6 changes one schema | `PersistenceOwnershipSqlTest` (AR-01–AR-04) |
-| Tables sit in their owner's schema; no foreign key or view crosses schemas; `public` holds only Flyway's history | `DatabaseSchemaOwnershipIT` |
-| Wardrobe owns its tables in schema `wardrobe`; no foreign key into Identity | V8 design; ADA-016, AR-01, AR-04 |
+| Wardrobe uses only `com.capsuleai.identity.api`                                                                                    | Same test; ADA-015, ADA-018, AR-03                                            |
+| A published `api` exposes no private domain or application type                                                                    | `ArchitectureDependencyTest` (ADA-018)                                        |
+| Spring JDBC only in persistence adapters and configuration; no module cycles                                                       | `ArchitectureDependencyTest`                                                  |
+| Each module's SQL names only its own schema, always qualified; each migration after V6 changes one schema                          | `PersistenceOwnershipSqlTest` (AR-01–AR-04)                                   |
+| Tables sit in their owner's schema; no foreign key or view crosses schemas; `public` holds only Flyway's history                   | `DatabaseSchemaOwnershipIT`                                                   |
+| Wardrobe owns its tables in schema `wardrobe`; no foreign key into Identity                                                        | V8 design; ADA-016, AR-01, AR-04                                              |
 
 ## 6. Identity–Wardrobe integration
 
-| Aspect | Design |
-| --- | --- |
-| Who is the owner | `AuthenticatedAccount.accountId()` resolved by Identity's JWT converter after it confirms the persistent session is usable. Wardrobe receives it through `@AuthenticationPrincipal`. |
-| Owner storage | `wardrobe.wardrobe_garment.owner_account_id UUID NOT NULL`. There is no FK, and no Wardrobe query names an `identity` table: Wardrobe must not depend on Identity's schema ([ARCH] ADA-016, AR-02–AR-04, [TECH] TD-S2-09). |
-| Lifecycle coupling | None at runtime. Identity does not call Wardrobe, and no event is published. The only published contract used is `identity.api.AuthenticatedAccount` (ADA-017: narrow published contracts; no internal HTTP or broker). |
-| Account deletion | Not in scope. Without an FK, a future account-deletion capability must make each owner remove or de-identify its own data through its own services; Identity must never delete `wardrobe.*` rows ([selected architecture decisions §8.4](../../../../04-architecture/selected-architecture-decisions.md#84-cross-owner-lifecycle-consistency)). |
-| Recovery effect on Wardrobe | Indirect but complete: revoking every active session makes every earlier token fail on every Wardrobe operation (`WardrobeAccessAfterPasswordResetIT`). |
-| Test-fixture coupling | `IdentityIntegrationTestSupport` truncates every table of the `identity` schema; `WardrobeIntegrationTestSupport` additionally truncates `wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment`. Because no foreign key crosses schemas, Identity truncation cannot cascade into Wardrobe. |
+| Aspect                      | Design                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who is the owner            | `AuthenticatedAccount.accountId()` resolved by Identity's JWT converter after it confirms the persistent session is usable. Wardrobe receives it through `@AuthenticationPrincipal`.                                                                                                                                                            |
+| Owner storage               | `wardrobe.wardrobe_garment.owner_account_id UUID NOT NULL`. There is no FK, and no Wardrobe query names an `identity` table: Wardrobe must not depend on Identity's schema ([ARCH] ADA-016, AR-02–AR-04, [TECH] TD-S2-09).                                                                                                                      |
+| Lifecycle coupling          | None at runtime. Identity does not call Wardrobe, and no event is published. The only published contract used is `identity.api.AuthenticatedAccount` (ADA-017: narrow published contracts; no internal HTTP or broker).                                                                                                                         |
+| Account deletion            | Not in scope. Without an FK, a future account-deletion capability must make each owner remove or de-identify its own data through its own services; Identity must never delete `wardrobe.*` rows ([selected architecture decisions §8.4](../../../../04-architecture/selected-architecture-decisions.md#84-cross-owner-lifecycle-consistency)). |
+| Recovery effect on Wardrobe | Indirect but complete: revoking every active session makes every earlier token fail on every Wardrobe operation (`WardrobeAccessAfterPasswordResetIT`).                                                                                                                                                                                         |
+| Test-fixture coupling       | `IdentityIntegrationTestSupport` truncates every table of the `identity` schema; `WardrobeIntegrationTestSupport` additionally truncates `wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment`. Because no foreign key crosses schemas, Identity truncation cannot cascade into Wardrobe.                                             |
 
 ## 7. Authentication and authorization
 
-| Endpoint group | Access | Mechanism |
-| --- | --- | --- |
-| `POST /api/v1/auth/registrations`, `/login`, `/refresh` (Sprint 1) | Public | `PUBLIC_ENDPOINTS` in `IdentitySecurityConfiguration` |
-| `POST /api/v1/auth/password-reset/request`, `/check`, `/complete` (US-AUTH-005) | **Public**; the reset secret is the credential. A stale `Authorization` header is ignored. | Added to `PUBLIC_ENDPOINTS` |
-| `POST /api/v1/auth/logout` and everything else | Protected | Default-deny; JWT (HS256) plus `SessionAuthority`, so the session must be neither revoked nor expired |
-| `/api/v1/wardrobe/garments/**` | Protected, owner-scoped | No configuration change: default-deny covers it. Every query includes `owner_account_id = :owner`. |
+| Endpoint group                                                                  | Access                                                                                     | Mechanism                                                                                             |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/auth/registrations`, `/login`, `/refresh` (Sprint 1)              | Public                                                                                     | `PUBLIC_ENDPOINTS` in `IdentitySecurityConfiguration`                                                 |
+| `POST /api/v1/auth/password-reset/request`, `/check`, `/complete` (US-AUTH-005) | **Public**; the reset secret is the credential. A stale `Authorization` header is ignored. | Added to `PUBLIC_ENDPOINTS`                                                                           |
+| `POST /api/v1/auth/logout` and everything else                                  | Protected                                                                                  | Default-deny; JWT (HS256) plus `SessionAuthority`, so the session must be neither revoked nor expired |
+| `/api/v1/wardrobe/garments/**`                                                  | Protected, owner-scoped                                                                    | No configuration change: default-deny covers it. Every query includes `owner_account_id = :owner`.    |
 
 - **Unusable access:** 401 `AUTHENTICATION_REQUIRED` with `WWW-Authenticate: Bearer`. This covers a missing, invalid or expired token, logout, refresh-reuse revocation and password-reset revocation. The response body never contains resource data.
 - **Cross-account access:** another account's resource is indistinguishable from a non-existent one (404, §13). There is no 403 anywhere in the Wardrobe API.
 - **CORS:** Stage 2 adds `Idempotency-Key` to the allowed request headers. Origins stay configuration-driven (`CAPSULE_CORS_ALLOWED_ORIGINS`).
-
 
 ## 8. Password-recovery architecture
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant C as Client
+    actor C as Client
     participant A as AuthController
     participant R as RequestPasswordResetService
+    participant V as CheckPasswordResetService
+    participant S as CompletePasswordResetService
     participant DB as PostgreSQL
     participant Q as AsyncPasswordResetInstructionSender
-    participant M as SMTP server
+    participant M as SMTP Server
+
+    %% 1. REQUEST PASSWORD RESET
     C->>A: POST /password-reset/request {email}
     A->>R: request(email)
-    R->>DB: find account; then tx: lock account FOR UPDATE,<br/>mark open interaction replaced, insert new (hash only)
-    R-->>Q: after commit: hand over instructions (raw secret in memory only)
-    A-->>C: 202 PASSWORD_RESET_REQUESTED (same for unknown email)
-    Q->>M: plain-text email with link#token=secret (bounded queue, 5 s timeouts)
+
+    R->>R: Normalize email
+    R->>DB: Find account by normalized email
+    DB-->>R: Account or null
+
+    alt Unknown email
+        R-->>A: Request accepted
+    else Account found
+        R->>R: Generate cryptographically secure random token
+        R->>R: Hash token and calculate expiration
+
+        R->>DB: BEGIN TRANSACTION
+        R->>DB: SELECT account FOR UPDATE
+        DB-->>R: Locked account
+
+        R->>DB: Mark previous open reset requests as replaced
+        R->>DB: INSERT new reset request with token hash only
+        R->>DB: COMMIT
+
+        R->>Q: Enqueue reset instructions after commit
+        Note over R,Q: Raw token remains in memory only
+        Q-->>R: Enqueue accepted or rejected
+
+        R-->>A: Request accepted
+    end
+
+    A-->>C: 202 PASSWORD_RESET_REQUESTED
+
+    opt Instructions successfully queued
+        Q->>M: Send plain-text email with reset link
+        Note over Q,M: Bounded queue and 5-second SMTP timeouts
+        M-->>Q: Delivery accepted or failed
+    end
+
+    %% 2. CHECK PASSWORD RESET TOKEN
     C->>A: POST /password-reset/check {token}
-    A-->>C: 204 or 400 PASSWORD_RESET_INVALID
+    A->>V: check(token)
+
+    V->>V: Validate token format and compute SHA-256 hash
+    V->>DB: Find reset request by token hash
+    DB-->>V: Reset request or null
+
+    V->>V: Check active status and expiration
+
+    alt Token missing, expired, consumed, or replaced
+        V-->>A: Invalid reset token
+        A-->>C: 400 PASSWORD_RESET_INVALID
+    else Token currently valid
+        V-->>A: Token valid
+        A-->>C: 204 No Content
+    end
+
+    %% 3. COMPLETE PASSWORD RESET
     C->>A: POST /password-reset/complete {token, newPassword}
-    A->>DB: tx: lock account FOR UPDATE, lock reset row FOR UPDATE, recheck usable,<br/>replace hash, consume, revoke all active sessions
-    A-->>C: 204 (or 400 VALIDATION_FAILED / PASSWORD_RESET_INVALID)
+    A->>S: complete(token, newPassword)
+
+    S->>S: Validate input and password policy
+
+    alt Invalid input or weak password
+        S-->>A: ValidationException
+        A-->>C: 400 VALIDATION_FAILED
+    else Valid input
+        S->>S: Compute token hash
+        S->>DB: Find reset request and account ID by token hash
+        DB-->>S: Reset request or null
+
+        alt Token not found
+            S-->>A: Invalid reset token
+            A-->>C: 400 PASSWORD_RESET_INVALID
+        else Token found
+            S->>S: Hash new password securely
+
+            S->>DB: BEGIN TRANSACTION
+            S->>DB: SELECT account FOR UPDATE
+            DB-->>S: Locked account
+
+            S->>DB: SELECT reset request FOR UPDATE
+            DB-->>S: Locked reset request
+
+            S->>S: Recheck token status and expiration
+
+            alt Token no longer usable
+                S->>DB: ROLLBACK
+                S-->>A: Invalid reset token
+                A-->>C: 400 PASSWORD_RESET_INVALID
+            else Token still valid
+                S->>DB: UPDATE account password hash
+                S->>DB: Mark reset token as consumed
+                S->>DB: Invalidate other open reset requests
+                S->>DB: Revoke all active sessions
+                S->>DB: COMMIT
+
+                S-->>A: Password reset completed
+                A-->>C: 204 No Content
+            end
+        end
+    end
 ```
 
-| Property | Design | Decision |
-| --- | --- | --- |
-| Secret | 256 random bits (`SecureRandom`), Base64url; only its SHA-256 hex is stored (`token_hash`) | TD-S2-03 |
-| Validity | 30 minutes (`PasswordResetPolicy.INTERACTION_LIFETIME`); usable while `now < expires_at`, not consumed and not replaced | [REQ] FR-AUTH-017 |
-| Replacement | A new request marks the open one `replaced_at`; a partial unique index allows at most one open interaction per account | [REQ] FR-AUTH-018 |
-| Equivalent initiation | Same 202 body for registered and unregistered addresses; the email is sent only for an account. A missing or malformed address is 400 `VALIDATION_FAILED`, which depends only on the typed value, never on account existence | [REQ] FR-AUTH-003 |
-| Invalid outcomes | Unknown, expired, consumed and replaced secrets all produce one code, `PASSWORD_RESET_INVALID` | TD-S2-02 |
-| Completion effects | One transaction: new PBKDF2 hash, `consumed_at`, every active session revoked with `PASSWORD_RESET` | [REQ] FR-AUTH-004, TD-S2-07 |
-| Login race | `LogInService` re-reads the hash `FOR SHARE` inside the session-creating transaction; a login that verified the old password before a reset commits gets no session | TD-S2-08 |
-| Delivery | `SmtpPasswordResetInstructionSender` (Vietnamese plain text) behind `AsyncPasswordResetInstructionSender` (bounded queue of 100, drained for up to 10 s on shutdown). Failures are logged without secret or address. | TD-S2-04 |
-| Link | `instruction-link` + `#token=<secret>`; the fragment is not sent to web servers or logged by proxies | TD-S2-05, OPEN-S2-02 |
+| Property              | Design                                                                                                                                                                                                                       | Decision                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Secret                | 256 random bits (`SecureRandom`), Base64url; only its SHA-256 hex is stored (`token_hash`)                                                                                                                                   | TD-S2-03                    |
+| Validity              | 30 minutes (`PasswordResetPolicy.INTERACTION_LIFETIME`); usable while `now < expires_at`, not consumed and not replaced                                                                                                      | [REQ] FR-AUTH-017           |
+| Replacement           | A new request marks the open one `replaced_at`; a partial unique index allows at most one open interaction per account                                                                                                       | [REQ] FR-AUTH-018           |
+| Equivalent initiation | Same 202 body for registered and unregistered addresses; the email is sent only for an account. A missing or malformed address is 400 `VALIDATION_FAILED`, which depends only on the typed value, never on account existence | [REQ] FR-AUTH-003           |
+| Invalid outcomes      | Unknown, expired, consumed and replaced secrets all produce one code, `PASSWORD_RESET_INVALID`                                                                                                                               | TD-S2-02                    |
+| Completion effects    | One transaction: new PBKDF2 hash, `consumed_at`, every active session revoked with `PASSWORD_RESET`                                                                                                                          | [REQ] FR-AUTH-004, TD-S2-07 |
+| Login race            | `LogInService` re-reads the hash `FOR SHARE` inside the session-creating transaction; a login that verified the old password before a reset commits gets no session                                                          | TD-S2-08                    |
+| Delivery              | `SmtpPasswordResetInstructionSender` (Vietnamese plain text) behind `AsyncPasswordResetInstructionSender` (bounded queue of 100, drained for up to 10 s on shutdown). Failures are logged without secret or address.         | TD-S2-04                    |
+| Link                  | `instruction-link` + `#token=<secret>`; the fragment is not sent to web servers or logged by proxies                                                                                                                         | TD-S2-05, OPEN-S2-02        |
 
 ## 9. Wardrobe domain model
 
@@ -220,21 +311,21 @@ classDiagram
 
 `Garment` is a record. `removedAt` is `null` while the garment is current, and `isCurrent()` tests exactly that.
 
-| Property (authority) | Type / cardinality | Applies to | Values |
-| --- | --- | --- | --- |
-| Category | `GarmentCategory`, required | all | 8 |
-| Subtype | `GarmentSubtype`, optional, must belong to the Category | all | 84 |
-| Color (dominant) | `GarmentColor`, required, single | all | 34 (incl. Colorful) |
-| Material | `Set<GarmentMaterial>`, 0..n distinct, no percentages | all | 28 |
-| Pattern | `GarmentPattern`, optional | all | 24 |
-| Style | `GarmentStyle`, optional, **single** ([TECH] TD-S2-13 / [OPEN] OPEN-S2-08) | all | 17 |
-| Fit | `GarmentFit`, optional | Tops | 4 |
-| Neckline | `GarmentNeckline`, optional | Tops | 23 |
-| Sleeve Length | `GarmentSleeveLength`, optional | Tops | 5 |
-| Length | `GarmentLength`, optional, from the category's list | Tops (4), Pants (2) | 6 |
-| Silhouette | `GarmentSilhouette`, optional | Pants | 7 |
-| Brand | `Brand`, optional exact text, at most 100 code points, blank = not supplied | all | — |
-| Purchase Price | `PurchasePrice`, optional pair: decimal ≥ 0, scale ≤ the currency's minor unit, at most 12 integer digits, ISO 4217 code | all | — |
+| Property (authority) | Type / cardinality                                                                                                       | Applies to          | Values              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------- | ------------------- |
+| Category             | `GarmentCategory`, required                                                                                              | all                 | 8                   |
+| Subtype              | `GarmentSubtype`, optional, must belong to the Category                                                                  | all                 | 84                  |
+| Color (dominant)     | `GarmentColor`, required, single                                                                                         | all                 | 34 (incl. Colorful) |
+| Material             | `Set<GarmentMaterial>`, 0..n distinct, no percentages                                                                    | all                 | 28                  |
+| Pattern              | `GarmentPattern`, optional                                                                                               | all                 | 24                  |
+| Style                | `GarmentStyle`, optional, **single** ([TECH] TD-S2-13 / [OPEN] OPEN-S2-08)                                               | all                 | 17                  |
+| Fit                  | `GarmentFit`, optional                                                                                                   | Tops                | 4                   |
+| Neckline             | `GarmentNeckline`, optional                                                                                              | Tops                | 23                  |
+| Sleeve Length        | `GarmentSleeveLength`, optional                                                                                          | Tops                | 5                   |
+| Length               | `GarmentLength`, optional, from the category's list                                                                      | Tops (4), Pants (2) | 6                   |
+| Silhouette           | `GarmentSilhouette`, optional                                                                                            | Pants               | 7                   |
+| Brand                | `Brand`, optional exact text, at most 100 code points, blank = not supplied                                              | all                 | —                   |
+| Purchase Price       | `PurchasePrice`, optional pair: decimal ≥ 0, scale ≤ the currency's minor unit, at most 12 integer digits, ISO 4217 code | all                 | —                   |
 
 - **Codes:** each enum constant's name is its stable API and database code. `label()` returns the exact approved text (`TANKS_AND_CAMILS` → "Tanks & Camils"). The ten Dresses/Jumpsuits identifiers are the approved ones ([TECH] TD-S2-10).
 - **No readiness:** there is no readiness predicate, column or gate; every response says `recommendationEligibility: NOT_EVALUATED` ([REQ] FR-GAR-004/005, BRULE-GAR-003).
@@ -521,60 +612,60 @@ Design notes:
 
 ## 12. Flyway migration plan
 
-| Version | File | Story | Change | Reversible by |
-| --- | --- | --- | --- | --- |
-| V1–V5 | existing | Pre-sprint, Sprint 1 | Created the Identity tables in Flyway's default schema | **Never edit** (checksums are validated) |
-| V6 | `V6__move_identity_tables_into_identity_schema.sql` | Stage 0 (AR-01) | Creates schema `identity`; moves the three Sprint 1 tables there with their data | **Never edit**; a later forward migration |
-| V7 | `V7__create_identity_password_reset.sql` | US-AUTH-005 | New table, two indexes; replaces the `identity.identity_session` revocation-reason CHECK to add `PASSWORD_RESET` | A later forward migration |
-| V8 | `V8__create_wardrobe_garment.sql` | US-GAR-001 | Creates schema `wardrobe`; two new tables, constraints, partial index | A later forward migration |
-| — | — | US-WAR-001, US-WAR-002 | No schema change | — |
+| Version | File                                                | Story                  | Change                                                                                                           | Reversible by                             |
+| ------- | --------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| V1–V5   | existing                                            | Pre-sprint, Sprint 1   | Created the Identity tables in Flyway's default schema                                                           | **Never edit** (checksums are validated)  |
+| V6      | `V6__move_identity_tables_into_identity_schema.sql` | Stage 0 (AR-01)        | Creates schema `identity`; moves the three Sprint 1 tables there with their data                                 | **Never edit**; a later forward migration |
+| V7      | `V7__create_identity_password_reset.sql`            | US-AUTH-005            | New table, two indexes; replaces the `identity.identity_session` revocation-reason CHECK to add `PASSWORD_RESET` | A later forward migration                 |
+| V8      | `V8__create_wardrobe_garment.sql`                   | US-GAR-001             | Creates schema `wardrobe`; two new tables, constraints, partial index                                            | A later forward migration                 |
+| —       | —                                                   | US-WAR-001, US-WAR-002 | No schema change                                                                                                 | —                                         |
 
 - **Upgrade path:** each upgrade test creates a separate database with `IsolatedMigrationDatabase` and migrates it up to the version before the one under test:
   - `IdentitySchemaRelocationIT`: V5 → V6.
   - `PasswordResetSchemaIT`: V6 → V7.
   - `GarmentSchemaIT`: V7 → V8.
 
-  Each test then inserts representative rows, applies exactly the migration under test, and asserts that existing data survives and the new constraints accept it. A scratch *schema* (the Sprint 1 technique) cannot test V6 or later, because those migrations move or create tables in the shared owner schemas.
+  Each test then inserts representative rows, applies exactly the migration under test, and asserts that existing data survives and the new constraints accept it. A scratch _schema_ (the Sprint 1 technique) cannot test V6 or later, because those migrations move or create tables in the shared owner schemas.
+
 - **Schema history:** Flyway's `schemas`, `default-schema` and `table` settings are not changed. `flyway_schema_history` stays in the default schema, so existing databases continue from V5 and never re-apply V1–V5.
 - **Production:** `spring.flyway.clean-disabled=true` stays set, and migrations run at application start.
 - **Two developers adding migrations in parallel:** whoever merges second renumbers before merging. Never reuse a version number.
 
-
 ## 13. API conventions and endpoint catalogue
 
-| Convention | Rule |
-| --- | --- |
-| Base path | `/api/v1/<module>/...`: `/api/v1/auth` (Identity), `/api/v1/wardrobe/garments` (Wardrobe) |
-| Bodies | JSON read into request records; a body that cannot be parsed is 400 `MALFORMED_REQUEST` |
-| Codes | Vocabulary values are upper-case constant names (`TANKS_AND_CAMILS`); clients map them to Vietnamese labels |
-| Absent values | Responses list every field and use `null` when absent (`materials` is `[]`); nothing is omitted or invented ([TECH] TD-S2-15) |
-| Money | `price.amount` is a JSON **string** holding the exact decimal; `price.currency` is an ISO 4217 code |
-| Time | ISO-8601 UTC instants (`createdAt`) |
-| Errors | RFC 9457 `application/problem+json` with a stable `code` property; `VALIDATION_FAILED` adds `fieldErrors: [{field, code}]` |
-| Contract | `docs/05-api/openapi.yaml` is updated in the same change as the handler; `IdentityOpenApiContractIT` enforces that every `/api/` handler is documented and that the documented security, request fields, success fields and `required` lists match |
-| Versioning | `info.version` is bumped per story (0.5.0 → 0.8.0); all Sprint 2 changes are additive |
-| SQL | Every table is written schema-qualified; a module's SQL names only its own schema; one statement per string literal or text block (AR-01–AR-03, `PersistenceOwnershipSqlTest`) |
+| Convention    | Rule                                                                                                                                                                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base path     | `/api/v1/<module>/...`: `/api/v1/auth` (Identity), `/api/v1/wardrobe/garments` (Wardrobe)                                                                                                                                                          |
+| Bodies        | JSON read into request records; a body that cannot be parsed is 400 `MALFORMED_REQUEST`                                                                                                                                                            |
+| Codes         | Vocabulary values are upper-case constant names (`TANKS_AND_CAMILS`); clients map them to Vietnamese labels                                                                                                                                        |
+| Absent values | Responses list every field and use `null` when absent (`materials` is `[]`); nothing is omitted or invented ([TECH] TD-S2-15)                                                                                                                      |
+| Money         | `price.amount` is a JSON **string** holding the exact decimal; `price.currency` is an ISO 4217 code                                                                                                                                                |
+| Time          | ISO-8601 UTC instants (`createdAt`)                                                                                                                                                                                                                |
+| Errors        | RFC 9457 `application/problem+json` with a stable `code` property; `VALIDATION_FAILED` adds `fieldErrors: [{field, code}]`                                                                                                                         |
+| Contract      | `docs/05-api/openapi.yaml` is updated in the same change as the handler; `IdentityOpenApiContractIT` enforces that every `/api/` handler is documented and that the documented security, request fields, success fields and `required` lists match |
+| Versioning    | `info.version` is bumped per story (0.5.0 → 0.8.0); all Sprint 2 changes are additive                                                                                                                                                              |
+| SQL           | Every table is written schema-qualified; a module's SQL names only its own schema; one statement per string literal or text block (AR-01–AR-03, `PersistenceOwnershipSqlTest`)                                                                     |
 
-| Method and path | Story | Access | Success | Errors |
-| --- | --- | --- | --- | --- |
-| `POST /api/v1/auth/password-reset/request` | US-AUTH-005 | Public | 202 `PASSWORD_RESET_REQUESTED` | 400 `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503 `TEMPORARILY_UNAVAILABLE` |
-| `POST /api/v1/auth/password-reset/check` | US-AUTH-005 | Public | 204 | 400 `PASSWORD_RESET_INVALID`, `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503 |
-| `POST /api/v1/auth/password-reset/complete` | US-AUTH-005 | Public | 204 | 400 `PASSWORD_RESET_INVALID`, `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503 |
-| `POST /api/v1/wardrobe/garments` (+ `Idempotency-Key`) | US-GAR-001 | Protected | 201 new / 200 replay, `Garment` | 400 `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 401; 422 `IDEMPOTENCY_KEY_REUSED`; 503 |
-| `GET /api/v1/wardrobe/garments` | US-WAR-001 | Protected | 200 `WardrobeOverview` | 401; 503 |
-| `GET /api/v1/wardrobe/garments/{garmentId}` | US-WAR-002 | Protected | 200 `Garment` | 401; 404 `GARMENT_NOT_FOUND`; 410 `GARMENT_NO_LONGER_CURRENT`; 503 |
+| Method and path                                        | Story       | Access    | Success                         | Errors                                                                               |
+| ------------------------------------------------------ | ----------- | --------- | ------------------------------- | ------------------------------------------------------------------------------------ |
+| `POST /api/v1/auth/password-reset/request`             | US-AUTH-005 | Public    | 202 `PASSWORD_RESET_REQUESTED`  | 400 `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503 `TEMPORARILY_UNAVAILABLE`          |
+| `POST /api/v1/auth/password-reset/check`               | US-AUTH-005 | Public    | 204                             | 400 `PASSWORD_RESET_INVALID`, `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503          |
+| `POST /api/v1/auth/password-reset/complete`            | US-AUTH-005 | Public    | 204                             | 400 `PASSWORD_RESET_INVALID`, `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 503          |
+| `POST /api/v1/wardrobe/garments` (+ `Idempotency-Key`) | US-GAR-001  | Protected | 201 new / 200 replay, `Garment` | 400 `VALIDATION_FAILED`, `MALFORMED_REQUEST`; 401; 422 `IDEMPOTENCY_KEY_REUSED`; 503 |
+| `GET /api/v1/wardrobe/garments`                        | US-WAR-001  | Protected | 200 `WardrobeOverview`          | 401; 503                                                                             |
+| `GET /api/v1/wardrobe/garments/{garmentId}`            | US-WAR-002  | Protected | 200 `Garment`                   | 401; 404 `GARMENT_NOT_FOUND`; 410 `GARMENT_NO_LONGER_CURRENT`; 503                   |
 
 The Sprint 1 endpoints (`registrations`, `login`, `refresh`, `logout`) are unchanged, except that a login racing a completed reset gets no session (§15).
 
 ## 14. Exception handling and error representation
 
-| Layer | Responsibility |
-| --- | --- |
-| Domain | Throws typed problems: `InvalidValueException` (Identity), `InvalidGarmentValueException` with a `GarmentValueProblem` (Wardrobe) |
-| Application | Collects field problems into `RequestValidationException` or `GarmentValidationException` (every problem at once). Throws outcome exceptions such as `PasswordResetRejectedException`, `IdempotencyKeyReusedException`, `GarmentNotFoundException` and `GarmentNoLongerCurrentException` |
-| Web adapter | One `@RestControllerAdvice` per module, scoped with `basePackageClasses`, maps outcomes to status plus `code`. Each `detail` text is constant and never echoes submitted values, secrets or other accounts' data |
-| Security chain | 401 `AUTHENTICATION_REQUIRED` from the existing authentication entry point, before any controller |
-| Infrastructure failures | `DataAccessResourceFailureException`, `TransientDataAccessResourceException` and `CannotCreateTransactionException` → 503 `TEMPORARILY_UNAVAILABLE`: the outcome is not confirmed, and a retry is safe |
+| Layer                   | Responsibility                                                                                                                                                                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain                  | Throws typed problems: `InvalidValueException` (Identity), `InvalidGarmentValueException` with a `GarmentValueProblem` (Wardrobe)                                                                                                                                                        |
+| Application             | Collects field problems into `RequestValidationException` or `GarmentValidationException` (every problem at once). Throws outcome exceptions such as `PasswordResetRejectedException`, `IdempotencyKeyReusedException`, `GarmentNotFoundException` and `GarmentNoLongerCurrentException` |
+| Web adapter             | One `@RestControllerAdvice` per module, scoped with `basePackageClasses`, maps outcomes to status plus `code`. Each `detail` text is constant and never echoes submitted values, secrets or other accounts' data                                                                         |
+| Security chain          | 401 `AUTHENTICATION_REQUIRED` from the existing authentication entry point, before any controller                                                                                                                                                                                        |
+| Infrastructure failures | `DataAccessResourceFailureException`, `TransientDataAccessResourceException` and `CannotCreateTransactionException` → 503 `TEMPORARILY_UNAVAILABLE`: the outcome is not confirmed, and a retry is safe                                                                                   |
 
 ```json
 {
@@ -585,8 +676,8 @@ The Sprint 1 endpoints (`registrations`, `login`, `refresh`, `logout`) are uncha
   "instance": "/api/v1/wardrobe/garments",
   "code": "VALIDATION_FAILED",
   "fieldErrors": [
-    {"field": "fit", "code": "NOT_APPLICABLE"},
-    {"field": "price", "code": "INCOMPLETE_PRICE"}
+    { "field": "fit", "code": "NOT_APPLICABLE" },
+    { "field": "price", "code": "INCOMPLETE_PRICE" }
   ]
 }
 ```
@@ -595,22 +686,22 @@ The Sprint 1 endpoints (`registrations`, `login`, `refresh`, `logout`) are uncha
 
 **Global lock order (Identity): account row → reset row → session rows.** Every transaction that takes more than one of these locks takes them in this order, so the reset flows cannot deadlock with each other or with login.
 
-| Flow | Transaction content | Locks |
-| --- | --- | --- |
-| Request reset | Replace the open interaction, insert the new one | `identity.identity_account` FOR UPDATE |
-| Complete reset | Recheck the interaction; replace the hash; consume; revoke active sessions | account FOR UPDATE → reset row FOR UPDATE → session rows (UPDATE) |
-| Login (modified) | Recheck the stored hash equals the verified one; create the session | account FOR SHARE (conflicts with reset's FOR UPDATE) |
-| Refresh (Sprint 1) | Rotate the refresh token | token and session rows FOR UPDATE; a concurrent reset's revoke waits for them, then revokes |
-| Add garment | Insert with `ON CONFLICT (owner_account_id, creation_key) DO NOTHING`; on conflict, read the recorded creation | Unique-index wait on a concurrent insert of the same key |
-| Browse / detail | Single SELECT, auto-commit | None |
+| Flow               | Transaction content                                                                                            | Locks                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Request reset      | Replace the open interaction, insert the new one                                                               | `identity.identity_account` FOR UPDATE                                                      |
+| Complete reset     | Recheck the interaction; replace the hash; consume; revoke active sessions                                     | account FOR UPDATE → reset row FOR UPDATE → session rows (UPDATE)                           |
+| Login (modified)   | Recheck the stored hash equals the verified one; create the session                                            | account FOR SHARE (conflicts with reset's FOR UPDATE)                                       |
+| Refresh (Sprint 1) | Rotate the refresh token                                                                                       | token and session rows FOR UPDATE; a concurrent reset's revoke waits for them, then revokes |
+| Add garment        | Insert with `ON CONFLICT (owner_account_id, creation_key) DO NOTHING`; on conflict, read the recorded creation | Unique-index wait on a concurrent insert of the same key                                    |
+| Browse / detail    | Single SELECT, auto-commit                                                                                     | None                                                                                        |
 
-| Race | Guarantee | Evidence |
-| --- | --- | --- |
-| Two completions of one link | Exactly one changes the password | `ConcurrentPasswordResetIT.competingCompletionsOfOneLinkChangeThePasswordExactlyOnce` |
-| Two requests | Exactly one usable link remains | `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink` |
-| Reset vs refresh | No usable session remains, whichever commits first | `ConcurrentPasswordResetIT.resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst` |
-| Reset vs login with the old password | That login gets no session | `PasswordResetLoginRaceIT.aLoginThatVerifiedTheOldPasswordBeforeAResetCommitsGetsNoSession` |
-| Duplicate deliveries of one addition | Exactly one garment | `ConcurrentGarmentCreationIT.concurrentDeliveriesOfOneAdditionCreateExactlyOneGarment` |
+| Race                                 | Guarantee                                          | Evidence                                                                                    |
+| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Two completions of one link          | Exactly one changes the password                   | `ConcurrentPasswordResetIT.competingCompletionsOfOneLinkChangeThePasswordExactlyOnce`       |
+| Two requests                         | Exactly one usable link remains                    | `ConcurrentPasswordResetIT.competingRequestsLeaveExactlyOneUsableLink`                      |
+| Reset vs refresh                     | No usable session remains, whichever commits first | `ConcurrentPasswordResetIT.resetRacingARenewalLeavesNoUsableSessionWhicheverCommitsFirst`   |
+| Reset vs login with the old password | That login gets no session                         | `PasswordResetLoginRaceIT.aLoginThatVerifiedTheOldPasswordBeforeAResetCommitsGetsNoSession` |
+| Duplicate deliveries of one addition | Exactly one garment                                | `ConcurrentGarmentCreationIT.concurrentDeliveriesOfOneAdditionCreateExactlyOneGarment`      |
 
 Concurrency tests coordinate threads with latches or barriers and gated test doubles. No test uses `Thread.sleep`, and time comes from `MutableClock`.
 
@@ -637,28 +728,28 @@ sequenceDiagram
     end
 ```
 
-| Rule | Value |
-| --- | --- |
-| Header | `Idempotency-Key`, required on `POST /garments`; must be a UUID (`REQUIRED` / `INVALID_FORMAT` in `fieldErrors`) |
-| Scope | Per owner: `UNIQUE (owner_account_id, creation_key)`. The same key from two accounts creates two garments. |
-| Lifetime | Permanent for the garment's life; there is no expiry window ([TECH] TD-S2-14) |
-| Separate additions | Two different keys with identical values create two garments (two real possessions) |
-| Failure | A 503 is not a confirmed outcome; a retry with the same key creates the garment once or returns it |
-| Origin | [ARCH] ADA-009; [REQ] DATA-INT-004, FR-AI-010 |
+| Rule               | Value                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Header             | `Idempotency-Key`, required on `POST /garments`; must be a UUID (`REQUIRED` / `INVALID_FORMAT` in `fieldErrors`) |
+| Scope              | Per owner: `UNIQUE (owner_account_id, creation_key)`. The same key from two accounts creates two garments.       |
+| Lifetime           | Permanent for the garment's life; there is no expiry window ([TECH] TD-S2-14)                                    |
+| Separate additions | Two different keys with identical values create two garments (two real possessions)                              |
+| Failure            | A 503 is not a confirmed outcome; a retry with the same key creates the garment once or returns it               |
+| Origin             | [ARCH] ADA-009; [REQ] DATA-INT-004, FR-AI-010                                                                    |
 
 ## 17. Configuration and environment variables
 
-| Property | Default / profile | Env var (`local` profile) | Purpose |
-| --- | --- | --- | --- |
-| `spring.datasource.*` | `local` profile | `CAPSULE_DB_URL`, `CAPSULE_DB_USER`, `CAPSULE_DB_PASSWORD` | PostgreSQL (Sprint 1) |
-| `capsuleai.identity.access-token.signing-secret` | none (required) | `CAPSULE_JWT_SIGNING_SECRET` | HS256 key (Sprint 1) |
-| `capsuleai.cors.allowed-origins` | empty; `local`: `https://editor.swagger.io` | `CAPSULE_CORS_ALLOWED_ORIGINS` | CORS |
-| `spring.mail.host` / `.port` | `local`: `localhost` / `1025` (Mailpit) | `CAPSULE_MAIL_HOST`, `CAPSULE_MAIL_PORT` | SMTP server (US-AUTH-005) |
-| `spring.mail.username` / `.password` | `local`: empty | `CAPSULE_MAIL_USERNAME`, `CAPSULE_MAIL_PASSWORD` | SMTP credentials; **never committed** |
-| `spring.mail.properties.mail.smtp.auth` / `.starttls.enable` | `local`: `false` | `CAPSULE_MAIL_SMTP_AUTH`, `CAPSULE_MAIL_STARTTLS` | Provider requirements |
-| `spring.mail.properties.mail.smtp.*timeout` | 5000 ms (all profiles) | — | No unbounded blocking |
-| `capsuleai.identity.password-reset.sender-address` | `local`: `no-reply@capsuleai.local` | `CAPSULE_MAIL_FROM` | From address; validated as an email at startup |
-| `capsuleai.identity.password-reset.instruction-link` | `local`: `capsuleai://reset-password` | `CAPSULE_PASSWORD_RESET_LINK` | Absolute link without fragment or user info; the secret is appended as `#token=` |
+| Property                                                     | Default / profile                           | Env var (`local` profile)                                  | Purpose                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `spring.datasource.*`                                        | `local` profile                             | `CAPSULE_DB_URL`, `CAPSULE_DB_USER`, `CAPSULE_DB_PASSWORD` | PostgreSQL (Sprint 1)                                                            |
+| `capsuleai.identity.access-token.signing-secret`             | none (required)                             | `CAPSULE_JWT_SIGNING_SECRET`                               | HS256 key (Sprint 1)                                                             |
+| `capsuleai.cors.allowed-origins`                             | empty; `local`: `https://editor.swagger.io` | `CAPSULE_CORS_ALLOWED_ORIGINS`                             | CORS                                                                             |
+| `spring.mail.host` / `.port`                                 | `local`: `localhost` / `1025` (Mailpit)     | `CAPSULE_MAIL_HOST`, `CAPSULE_MAIL_PORT`                   | SMTP server (US-AUTH-005)                                                        |
+| `spring.mail.username` / `.password`                         | `local`: empty                              | `CAPSULE_MAIL_USERNAME`, `CAPSULE_MAIL_PASSWORD`           | SMTP credentials; **never committed**                                            |
+| `spring.mail.properties.mail.smtp.auth` / `.starttls.enable` | `local`: `false`                            | `CAPSULE_MAIL_SMTP_AUTH`, `CAPSULE_MAIL_STARTTLS`          | Provider requirements                                                            |
+| `spring.mail.properties.mail.smtp.*timeout`                  | 5000 ms (all profiles)                      | —                                                          | No unbounded blocking                                                            |
+| `capsuleai.identity.password-reset.sender-address`           | `local`: `no-reply@capsuleai.local`         | `CAPSULE_MAIL_FROM`                                        | From address; validated as an email at startup                                   |
+| `capsuleai.identity.password-reset.instruction-link`         | `local`: `capsuleai://reset-password`       | `CAPSULE_PASSWORD_RESET_LINK`                              | Absolute link without fragment or user info; the secret is appended as `#token=` |
 
 - **Fail fast:** the default profile defines no SMTP host and no reset properties. Without `spring.mail.host`, Boot creates no `JavaMailSender`, so `IdentityPasswordResetConfiguration` cannot be built. `PasswordResetProperties` also rejects a missing or invalid sender address or link. In both cases the application does not start, and the problem is never discovered at the first reset request. (This follows from the code; no test starts the application without these settings.) A deployment supplies the values through its own profile or through Spring's relaxed binding (for example `SPRING_MAIL_HOST`, `CAPSULEAI_IDENTITY_PASSWORDRESET_SENDERADDRESS`).
 - **Tests:** `application-test.properties` points SMTP at an unused local port (`127.0.0.1:2525`). The real sender is replaced there by `RecordingPasswordResetInstructionSender`, and `SmtpPasswordResetInstructionSenderIT` builds its own sender against a Mailpit container.
@@ -666,29 +757,29 @@ sequenceDiagram
 
 ## 18. Security and privacy
 
-| Concern | Measure |
-| --- | --- |
-| Account enumeration | Identical 202 for registered and unregistered emails; one `PASSWORD_RESET_INVALID` for every unusable secret; identical 404 for unknown and others' garments |
-| Secret exposure | Reset secret stored only as a SHA-256 hash; never logged or returned; delivered in a URL fragment; email logs omit recipient and link (`secretsNeverAppearInResponsesOrLogs`) |
-| Credential change | Atomic hash replacement plus revocation of every active session; the old password and refresh tokens are denied afterwards |
-| Owner isolation | Owner from the verified token only; every Wardrobe query is owner-scoped; tests for every operation with two accounts |
-| Private data in logs | No garment values, emails or tokens in log messages; PostgreSQL error detail suppressed (`logServerErrorDetail=false`, Sprint 1) |
-| Transport and caching | HTTPS is a deployment concern (outside this package); Spring Security's default no-store cache headers are left enabled |
-| Abuse | No rate limiting yet ([OPEN] OPEN-S2-04); the delivery queue is bounded, so a flood cannot exhaust memory or threads |
-| Data minimization | No image, no inference, Brand/Price only as typed by the user (BRULE-GAR-010, BRULE-AUTH-007) |
+| Concern               | Measure                                                                                                                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account enumeration   | Identical 202 for registered and unregistered emails; one `PASSWORD_RESET_INVALID` for every unusable secret; identical 404 for unknown and others' garments                                                                                             |
+| Secret exposure       | Reset secret stored only as a SHA-256 hash; never logged or returned; delivered in a URL fragment; email logs omit recipient and link (`secretsNeverAppearInResponsesOrLogs`)                                                                            |
+| Credential change     | Atomic hash replacement plus revocation of every active session; the old password and refresh tokens are denied afterwards                                                                                                                               |
+| Owner isolation       | Owner from the verified token only; every Wardrobe query is owner-scoped; tests for every operation with two accounts                                                                                                                                    |
+| Private data in logs  | No garment values, emails or tokens in log messages; PostgreSQL error detail suppressed (`logServerErrorDetail=false`, Sprint 1)                                                                                                                         |
+| Transport and caching | HTTPS is a deployment concern (outside this package); Spring Security's default no-store cache headers are left enabled                                                                                                                                  |
+| Abuse                 | No rate limiting yet ([OPEN] OPEN-S2-04); the delivery queue is bounded, so a flood cannot exhaust memory or threads                                                                                                                                     |
+| Data minimization     | No image, no inference, Brand/Price only as typed by the user (BRULE-GAR-010, BRULE-AUTH-007)                                                                                                                                                            |
 | Persistence isolation | One schema per owner; no cross-schema join, table access, view or foreign key (AR-01–AR-04). The application connects with one database role that can reach every schema, so this is enforced by build-time tests, **not** by runtime privileges (AR-08) |
 
 ## 19. Testing architecture
 
-| Context | Classes | Why separate |
-| --- | --- | --- |
-| Shared application context | `IdentityIntegrationTestSupport` (PostgreSQL Testcontainer, MockMvc, `MutableClock`, `RecordingPasswordResetInstructionSender` as `@Primary`); `WardrobeIntegrationTestSupport extends` it | One Spring context and one container are reused by most ITs |
-| Login-race context | `PasswordResetLoginRaceIT` | Replaces `PasswordHasher` with a gated one |
-| Recovery-failure context | `PasswordResetFailureIT` | Wraps a repository so it fails on demand |
-| Wardrobe-failure context | `WardrobeFailureIT` | Imports `FailingGarmentRepository` |
-| No Spring | Domain/application unit tests with in-memory fakes (`InMemoryAccountRepository`, `InMemorySessionRepository`, `InMemoryPasswordResetRepository`, `InMemoryGarmentRepository`, `SequencePasswordResetTokenGenerator`, `RecordingPasswordHasher`) | Fast and deterministic |
-| SMTP | `SmtpPasswordResetInstructionSenderIT` with a Mailpit `GenericContainer`, reading its HTTP API | Real SMTP evidence without an external provider |
-| Migration upgrades | `IsolatedMigrationDatabase` (test class in `com.capsuleai.foundation`): a separate empty database on the same container per test | Upgrade tests start from an exact earlier version without disturbing the shared database |
+| Context                    | Classes                                                                                                                                                                                                                                         | Why separate                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Shared application context | `IdentityIntegrationTestSupport` (PostgreSQL Testcontainer, MockMvc, `MutableClock`, `RecordingPasswordResetInstructionSender` as `@Primary`); `WardrobeIntegrationTestSupport extends` it                                                      | One Spring context and one container are reused by most ITs                              |
+| Login-race context         | `PasswordResetLoginRaceIT`                                                                                                                                                                                                                      | Replaces `PasswordHasher` with a gated one                                               |
+| Recovery-failure context   | `PasswordResetFailureIT`                                                                                                                                                                                                                        | Wraps a repository so it fails on demand                                                 |
+| Wardrobe-failure context   | `WardrobeFailureIT`                                                                                                                                                                                                                             | Imports `FailingGarmentRepository`                                                       |
+| No Spring                  | Domain/application unit tests with in-memory fakes (`InMemoryAccountRepository`, `InMemorySessionRepository`, `InMemoryPasswordResetRepository`, `InMemoryGarmentRepository`, `SequencePasswordResetTokenGenerator`, `RecordingPasswordHasher`) | Fast and deterministic                                                                   |
+| SMTP                       | `SmtpPasswordResetInstructionSenderIT` with a Mailpit `GenericContainer`, reading its HTTP API                                                                                                                                                  | Real SMTP evidence without an external provider                                          |
+| Migration upgrades         | `IsolatedMigrationDatabase` (test class in `com.capsuleai.foundation`): a separate empty database on the same container per test                                                                                                                | Upgrade tests start from an exact earlier version without disturbing the shared database |
 
 - **Fakes, not mocks:** the ports are small, so hand-written fakes record exactly what happened and serve several tests. Mockito remains available through `spring-boot-starter-test`; Sprint 2 tests do not need it.
 - **Time:** the application has one `Clock` bean (`IdentityConfiguration.identityClock()`). Wardrobe reuses it ([TECH] TD-S2-23), and tests advance `MutableClock` instead of sleeping.
@@ -696,48 +787,47 @@ sequenceDiagram
 - **Reports guard:** CI requires every suite's report by name, with a minimum test count (57 after Stage 4).
 - **Ownership checks:** `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest` and `DatabaseSchemaOwnershipIT` run unchanged at every stage. Each story's new code and migrations pass them without editing them.
 
-| Suite (Stage 4) | Unit | Integration |
-| --- | --- | --- |
-| Sprint 1 and Stage 0 | existing, plus `PersistenceOwnershipSqlTest` and the extended `ArchitectureDependencyTest` | existing, plus `IdentitySchemaRelocationIT` and `DatabaseSchemaOwnershipIT` |
-| US-AUTH-005 | `PasswordResetTokenTest`, `PasswordResetTokenHashTest`, `PasswordResetPropertiesTest`, `RequestPasswordResetServiceTest`, `CheckPasswordResetServiceTest`, `CompletePasswordResetServiceTest`, `LogInServiceTest` (modified), `SmtpPasswordResetInstructionSenderTest`, `AsyncPasswordResetInstructionSenderTest` | `PasswordResetSchemaIT`, `PasswordResetApiIT`, `ConcurrentPasswordResetIT`, `PasswordResetLoginRaceIT`, `PasswordResetFailureIT`, `SmtpPasswordResetInstructionSenderIT` |
-| US-GAR-001 | `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `BrandTest`, `PurchasePriceTest`, `GarmentEntryValidatorTest`, `AddGarmentServiceTest` | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT`, `AddGarmentApiIT`, `ConcurrentGarmentCreationIT`, `WardrobeFailureIT`, `CorsSecurityIT` (modified), `IdentityOpenApiContractIT` (modified) |
-| US-WAR-001 | `BrowseWardrobeServiceTest` | `BrowseWardrobeApiIT`, `WardrobeFailureIT` (modified) |
-| US-WAR-002 | `InspectGarmentServiceTest` | `GarmentDetailApiIT`, `WardrobeFailureIT` and `IdentityOpenApiContractIT` (modified), `WardrobeAccessAfterPasswordResetIT` |
+| Suite (Stage 4)      | Unit                                                                                                                                                                                                                                                                                                              | Integration                                                                                                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint 1 and Stage 0 | existing, plus `PersistenceOwnershipSqlTest` and the extended `ArchitectureDependencyTest`                                                                                                                                                                                                                        | existing, plus `IdentitySchemaRelocationIT` and `DatabaseSchemaOwnershipIT`                                                                                                              |
+| US-AUTH-005          | `PasswordResetTokenTest`, `PasswordResetTokenHashTest`, `PasswordResetPropertiesTest`, `RequestPasswordResetServiceTest`, `CheckPasswordResetServiceTest`, `CompletePasswordResetServiceTest`, `LogInServiceTest` (modified), `SmtpPasswordResetInstructionSenderTest`, `AsyncPasswordResetInstructionSenderTest` | `PasswordResetSchemaIT`, `PasswordResetApiIT`, `ConcurrentPasswordResetIT`, `PasswordResetLoginRaceIT`, `PasswordResetFailureIT`, `SmtpPasswordResetInstructionSenderIT`                 |
+| US-GAR-001           | `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `BrandTest`, `PurchasePriceTest`, `GarmentEntryValidatorTest`, `AddGarmentServiceTest`                                                                                                                                                                     | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT`, `AddGarmentApiIT`, `ConcurrentGarmentCreationIT`, `WardrobeFailureIT`, `CorsSecurityIT` (modified), `IdentityOpenApiContractIT` (modified) |
+| US-WAR-001           | `BrowseWardrobeServiceTest`                                                                                                                                                                                                                                                                                       | `BrowseWardrobeApiIT`, `WardrobeFailureIT` (modified)                                                                                                                                    |
+| US-WAR-002           | `InspectGarmentServiceTest`                                                                                                                                                                                                                                                                                       | `GarmentDetailApiIT`, `WardrobeFailureIT` and `IdentityOpenApiContractIT` (modified), `WardrobeAccessAfterPasswordResetIT`                                                               |
 
 ## 20. Cross-story integration
 
-| Scenario | Stories | Evidence |
-| --- | --- | --- |
-| Create → browse → inspect the same garment | GAR-001, WAR-001, WAR-002 | `GarmentDetailApiIT.theDetailOfAGarmentChosenFromTheOverviewIsThatGarment` |
+| Scenario                                                                                                                                                            | Stories                             | Evidence                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Create → browse → inspect the same garment                                                                                                                          | GAR-001, WAR-001, WAR-002           | `GarmentDetailApiIT.theDetailOfAGarmentChosenFromTheOverviewIsThatGarment`                      |
 | Reset → every earlier access and refresh token denied on add, browse and detail → new-password login → same wardrobe, identical detail → another account unaffected | AUTH-005, GAR-001, WAR-001, WAR-002 | `WardrobeAccessAfterPasswordResetIT.aResetRevokesEveryEarlierCredentialAndPreservesTheWardrobe` |
-| Reset-revoked token on browse | AUTH-005, WAR-001 | `BrowseWardrobeApiIT.unusableAccessIsNeverReportedAsAnEmptyWardrobe` |
-| Reset-revoked token on add | AUTH-005, GAR-001 | `AddGarmentApiIT.unusableAccessIsDeniedAndSavesNothing` |
-| Browser client sends `Idempotency-Key` | GAR-001, CORS (Sprint 1 fix) | `CorsSecurityIT` (modified) |
-| OpenAPI matches every handler | all | `IdentityOpenApiContractIT` |
-
+| Reset-revoked token on browse                                                                                                                                       | AUTH-005, WAR-001                   | `BrowseWardrobeApiIT.unusableAccessIsNeverReportedAsAnEmptyWardrobe`                            |
+| Reset-revoked token on add                                                                                                                                          | AUTH-005, GAR-001                   | `AddGarmentApiIT.unusableAccessIsDeniedAndSavesNothing`                                         |
+| Browser client sends `Idempotency-Key`                                                                                                                              | GAR-001, CORS (Sprint 1 fix)        | `CorsSecurityIT` (modified)                                                                     |
+| OpenAPI matches every handler                                                                                                                                       | all                                 | `IdentityOpenApiContractIT`                                                                     |
 
 ## 21. Shared-file ownership matrix
 
 Each file below is modified by more than one stage, or is an existing file modified by one stage that other stories depend on. **M** = modified, **A** = added, **—** = untouched. When one of these files does not match a guide's BEFORE text, an earlier stage is missing or was applied differently.
 
-| File | S1 AUTH-005 | S2 GAR-001 | S3 WAR-001 | S4 WAR-002 | What each change does |
-| --- | --- | --- | --- | --- | --- |
-| `docs/05-api/openapi.yaml` | M | M | M | M | 0.5.0 recovery → 0.6.0 creation and Wardrobe schemas → 0.7.0 overview → 0.8.0 detail, `RecordedUse`, 404/410 |
-| `.github/workflows/backend-ci.yml` | M | M | M | M | Adds each story's report names to `$required` (57 after S4) |
-| `backend/README.md` | M | M | M | M | Overview, technology, configuration, testing and limitations per story |
-| `identity/configuration/IdentitySecurityConfiguration.java` | M | M | — | — | S1: recovery endpoints in `PUBLIC_ENDPOINTS`; S2: `Idempotency-Key` allowed by CORS |
-| `test/.../identity/adapter/in/web/IdentityOpenApiContractIT.java` | — | M | — | M | S2: protected operations with bodies are called with a token and an `Idempotency-Key`; S4: path parameters filled with random UUIDs |
-| `test/.../identity/adapter/in/security/CorsSecurityIT.java` | — | M | — | — | Preflight allows `Idempotency-Key` |
-| `test/.../identity/support/IdentityIntegrationTestSupport.java` | M | — | — | — | Recovery helpers (`requestPasswordResetToken`, `completePasswordReset`) reused by Wardrobe ITs |
-| `test/.../identity/support/IdentityTestConfiguration.java` | M | — | — | — | `@Primary` recording reset sender for every IT context |
-| `wardrobe/application/ports/GarmentRepository.java` | — | A | M | M | S3: `findCurrentByOwner`; S4: `findOwned` |
-| `wardrobe/adapter/out/persistence/JdbcGarmentRepository.java` | — | A | M | M | The two queries above, on the shared `SELECT_GARMENT` |
-| `wardrobe/adapter/in/web/WardrobeGarmentController.java` | — | A | M | M | S3: `GET`; S4: `GET /{garmentId}` |
-| `wardrobe/configuration/WardrobeConfiguration.java` | — | A | M | M | Wires each new service |
-| `wardrobe/adapter/in/web/GarmentResponse.java` | — | A | — | M | S4: `recordedUse` (also in `POST` responses) |
-| `wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java` | — | A | — | M | S4: 404 and 410 |
-| `test/.../wardrobe/application/InMemoryGarmentRepository.java` | — | A | M | M | Fake follows the port |
-| `test/.../wardrobe/adapter/in/web/WardrobeFailureIT.java` | — | A | M | M | S3: failing overview; S4: failing detail |
+| File                                                              | S1 AUTH-005 | S2 GAR-001 | S3 WAR-001 | S4 WAR-002 | What each change does                                                                                                               |
+| ----------------------------------------------------------------- | ----------- | ---------- | ---------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/05-api/openapi.yaml`                                        | M           | M          | M          | M          | 0.5.0 recovery → 0.6.0 creation and Wardrobe schemas → 0.7.0 overview → 0.8.0 detail, `RecordedUse`, 404/410                        |
+| `.github/workflows/backend-ci.yml`                                | M           | M          | M          | M          | Adds each story's report names to `$required` (57 after S4)                                                                         |
+| `backend/README.md`                                               | M           | M          | M          | M          | Overview, technology, configuration, testing and limitations per story                                                              |
+| `identity/configuration/IdentitySecurityConfiguration.java`       | M           | M          | —          | —          | S1: recovery endpoints in `PUBLIC_ENDPOINTS`; S2: `Idempotency-Key` allowed by CORS                                                 |
+| `test/.../identity/adapter/in/web/IdentityOpenApiContractIT.java` | —           | M          | —          | M          | S2: protected operations with bodies are called with a token and an `Idempotency-Key`; S4: path parameters filled with random UUIDs |
+| `test/.../identity/adapter/in/security/CorsSecurityIT.java`       | —           | M          | —          | —          | Preflight allows `Idempotency-Key`                                                                                                  |
+| `test/.../identity/support/IdentityIntegrationTestSupport.java`   | M           | —          | —          | —          | Recovery helpers (`requestPasswordResetToken`, `completePasswordReset`) reused by Wardrobe ITs                                      |
+| `test/.../identity/support/IdentityTestConfiguration.java`        | M           | —          | —          | —          | `@Primary` recording reset sender for every IT context                                                                              |
+| `wardrobe/application/ports/GarmentRepository.java`               | —           | A          | M          | M          | S3: `findCurrentByOwner`; S4: `findOwned`                                                                                           |
+| `wardrobe/adapter/out/persistence/JdbcGarmentRepository.java`     | —           | A          | M          | M          | The two queries above, on the shared `SELECT_GARMENT`                                                                               |
+| `wardrobe/adapter/in/web/WardrobeGarmentController.java`          | —           | A          | M          | M          | S3: `GET`; S4: `GET /{garmentId}`                                                                                                   |
+| `wardrobe/configuration/WardrobeConfiguration.java`               | —           | A          | M          | M          | Wires each new service                                                                                                              |
+| `wardrobe/adapter/in/web/GarmentResponse.java`                    | —           | A          | —          | M          | S4: `recordedUse` (also in `POST` responses)                                                                                        |
+| `wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java`        | —           | A          | —          | M          | S4: 404 and 410                                                                                                                     |
+| `test/.../wardrobe/application/InMemoryGarmentRepository.java`    | —           | A          | M          | M          | Fake follows the port                                                                                                               |
+| `test/.../wardrobe/adapter/in/web/WardrobeFailureIT.java`         | —           | A          | M          | M          | S3: failing overview; S4: failing detail                                                                                            |
 
 Stage 1 alone also modifies `pom.xml`, `compose.yaml`, the three `application*.properties` files and several Identity classes (`AuthController`, `IdentityApiExceptionHandler`, `LogInService`, `AccountRepository`, `SessionRepository`, their JDBC adapters, `RevocationReason`) together with their fakes and tests. The [US-AUTH-005 guide](US-AUTH-005-guide.md) §11 lists them.
 
@@ -747,61 +837,61 @@ Stage 1 alone also modifies `pom.xml`, `compose.yaml`, the three `application*.p
 
 ### 22.1 Technical decision log
 
-| ID | Decision | Alternatives rejected | Reason | Guide |
-| --- | --- | --- | --- | --- |
-| TD-S2-01 | Recovery lives in Identity; garments in Wardrobe, starting from its existing package | A separate recovery module; garments in `wardrobeintelligence` | ADA-015/016 ownership; Wardrobe was already a documented owner | AUTH-005, GAR-001 |
-| TD-S2-02 | Three public POST operations (`request`, `check`, `complete`) and one invalid code | Two operations; distinct codes for expired/used/replaced | AC requires that opening an invalid link reports rejection; one code avoids leaking interaction state | AUTH-005 |
-| TD-S2-03 | 256-bit random secret, SHA-256 stored | Signed JWT; encryption; slow hash | Single use and replacement need a row anyway; a full-entropy secret needs no slow hash | AUTH-005 |
-| TD-S2-04 | SMTP via `JavaMailSender`, asynchronous after commit, bounded queue | Provider SDK; synchronous send; outbox table | Provider-neutral; no timing leak; no new infrastructure. Loss on crash is accepted because the user can request again | AUTH-005 |
-| TD-S2-05 | Configurable instruction link with `#token=` fragment | Query parameter; typed code | Fragments are not sent to servers; a typed code would be a new recovery method | AUTH-005 |
-| TD-S2-06 | Fixed lock order account → reset → sessions, READ COMMITTED | SERIALIZABLE with retries; advisory locks; version column | Matches the existing transaction style; deadlock-free by construction | AUTH-005 |
-| TD-S2-07 | Revoke the account's **active** sessions (`PASSWORD_RESET`) | Delete sessions; revoke expired ones too | Revocation is what the requirements describe; expired sessions are already unusable | AUTH-005 |
-| TD-S2-08 | Login rechecks the hash under `FOR SHARE` inside its transaction | Verify the password inside the lock; credential version | Keeps PBKDF2 outside the lock; no schema change | AUTH-005 |
-| TD-S2-09 | `owner_account_id` without FK into Identity (now also required by [ARCH] AR-04) | FK to `identity.identity_account` | ADA-016 context data ownership | GAR-001 |
-| TD-S2-10 | Enum codes = constant names with exact labels; text columns with `CHECK` lists | Lookup tables; PostgreSQL ENUM types | No seed data to keep in sync; forward migration per approved change | GAR-001 |
-| TD-S2-11 | Price amount as a decimal string; `NUMERIC` without scale; ≥ 0, ≤ 12 integer digits, scale ≤ currency minor unit, `java.util.Currency` codes | JSON number; fixed scale; currency allow-list | Exactness without floating point; provisional bounds pending OPEN-S2-01 | GAR-001 |
-| TD-S2-12 | Brand: exact text, ≤ 100 code points, blank = not supplied, no normalization | Trimming or case folding; brand catalogue | BRULE-GAR-010 user authority; provisional pending OPEN-S2-01 | GAR-001 |
-| TD-S2-13 | Style is a single optional value | A set like Materials | The singular "selection" wording, mirroring Pattern; pending OPEN-S2-08 | GAR-001 |
-| TD-S2-14 | `Idempotency-Key` header (UUID), unique per owner, permanent, with SHA-256 value fingerprint; 201 / 200 / 422 | Body field; server draft id; value deduplication; expiring keys | ADA-009 logical-action identity; distinguishes a retry from a second identical garment | GAR-001 |
-| TD-S2-15 | Flat responses with every field present (`null` when absent); constant `recommendationEligibility: NOT_EVALUATED`; no image field | Omitted fields; readiness column; always-null image | Existing contract convention; truthful eligibility; no implied capability | GAR-001, WAR-001, WAR-002 |
-| TD-S2-16 | Provenance `USER_ENTERED` per garment | Per attribute | Per-attribute provenance only matters once AI suggestions exist | GAR-001 |
-| TD-S2-17 | Explicit `confirmed: true` | Confirmation implied by POST | AC distinguishes missing from unconfirmed | GAR-001 |
-| TD-S2-18 | `removed_at` column; removed state created by test fixtures only | A removal endpoint now | Removal belongs to PBI-016; current-ownership filtering must already be correct | GAR-001, WAR-001, WAR-002 |
-| TD-S2-19 | Overview ordered `created_at DESC, id`, whole wardrobe, no pagination | Unordered; client sort; cursor pagination | Deterministic; the story excludes sorting/pagination rules; pending OPEN-S2-10 | WAR-001 |
-| TD-S2-20 | 404 `GARMENT_NOT_FOUND` for unknown, malformed and others' ids; 410 `GARMENT_NO_LONGER_CURRENT` for the owner's removed garment | 403; 400 for malformed ids; 404 for removed | No existence oracle; AC-09 distinguishes "no longer current" | WAR-002 |
-| TD-S2-21 | `recordedUse: {availability: UNAVAILABLE}` | Omit; zero count | BRULE-HIST-001: no evidence is not zero use | WAR-002 |
-| TD-S2-22 | Generalize `IdentityOpenApiContractIT` (tokens, `Idempotency-Key`, path parameters) instead of a Wardrobe copy | A second contract test | One contract file, one test; every handler covered | GAR-001, WAR-002 |
-| TD-S2-23 | Wardrobe reuses the single application `Clock` bean | A Wardrobe `Clock` bean | Two beans would break injection and the shared `MutableClock` | GAR-001 |
-| TD-S2-24 | `WardrobeIntegrationTestSupport extends IdentityIntegrationTestSupport` | Independent Wardrobe context | Same context and container, so there is no extra startup and real authentication is used in every Wardrobe IT | GAR-001 |
-| TD-S2-25 | Schema-upgrade tests on a separate database (`IsolatedMigrationDatabase`) | Scratch schema via Flyway `schemas` (the Sprint 1 technique) | V6 and later move or create tables in the shared owner schemas, so a scratch schema would collide with the application's tables | AUTH-005, GAR-001 |
+| ID       | Decision                                                                                                                                     | Alternatives rejected                                           | Reason                                                                                                                          | Guide                     |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| TD-S2-01 | Recovery lives in Identity; garments in Wardrobe, starting from its existing package                                                         | A separate recovery module; garments in `wardrobeintelligence`  | ADA-015/016 ownership; Wardrobe was already a documented owner                                                                  | AUTH-005, GAR-001         |
+| TD-S2-02 | Three public POST operations (`request`, `check`, `complete`) and one invalid code                                                           | Two operations; distinct codes for expired/used/replaced        | AC requires that opening an invalid link reports rejection; one code avoids leaking interaction state                           | AUTH-005                  |
+| TD-S2-03 | 256-bit random secret, SHA-256 stored                                                                                                        | Signed JWT; encryption; slow hash                               | Single use and replacement need a row anyway; a full-entropy secret needs no slow hash                                          | AUTH-005                  |
+| TD-S2-04 | SMTP via `JavaMailSender`, asynchronous after commit, bounded queue                                                                          | Provider SDK; synchronous send; outbox table                    | Provider-neutral; no timing leak; no new infrastructure. Loss on crash is accepted because the user can request again           | AUTH-005                  |
+| TD-S2-05 | Configurable instruction link with `#token=` fragment                                                                                        | Query parameter; typed code                                     | Fragments are not sent to servers; a typed code would be a new recovery method                                                  | AUTH-005                  |
+| TD-S2-06 | Fixed lock order account → reset → sessions, READ COMMITTED                                                                                  | SERIALIZABLE with retries; advisory locks; version column       | Matches the existing transaction style; deadlock-free by construction                                                           | AUTH-005                  |
+| TD-S2-07 | Revoke the account's **active** sessions (`PASSWORD_RESET`)                                                                                  | Delete sessions; revoke expired ones too                        | Revocation is what the requirements describe; expired sessions are already unusable                                             | AUTH-005                  |
+| TD-S2-08 | Login rechecks the hash under `FOR SHARE` inside its transaction                                                                             | Verify the password inside the lock; credential version         | Keeps PBKDF2 outside the lock; no schema change                                                                                 | AUTH-005                  |
+| TD-S2-09 | `owner_account_id` without FK into Identity (now also required by [ARCH] AR-04)                                                              | FK to `identity.identity_account`                               | ADA-016 context data ownership                                                                                                  | GAR-001                   |
+| TD-S2-10 | Enum codes = constant names with exact labels; text columns with `CHECK` lists                                                               | Lookup tables; PostgreSQL ENUM types                            | No seed data to keep in sync; forward migration per approved change                                                             | GAR-001                   |
+| TD-S2-11 | Price amount as a decimal string; `NUMERIC` without scale; ≥ 0, ≤ 12 integer digits, scale ≤ currency minor unit, `java.util.Currency` codes | JSON number; fixed scale; currency allow-list                   | Exactness without floating point; provisional bounds pending OPEN-S2-01                                                         | GAR-001                   |
+| TD-S2-12 | Brand: exact text, ≤ 100 code points, blank = not supplied, no normalization                                                                 | Trimming or case folding; brand catalogue                       | BRULE-GAR-010 user authority; provisional pending OPEN-S2-01                                                                    | GAR-001                   |
+| TD-S2-13 | Style is a single optional value                                                                                                             | A set like Materials                                            | The singular "selection" wording, mirroring Pattern; pending OPEN-S2-08                                                         | GAR-001                   |
+| TD-S2-14 | `Idempotency-Key` header (UUID), unique per owner, permanent, with SHA-256 value fingerprint; 201 / 200 / 422                                | Body field; server draft id; value deduplication; expiring keys | ADA-009 logical-action identity; distinguishes a retry from a second identical garment                                          | GAR-001                   |
+| TD-S2-15 | Flat responses with every field present (`null` when absent); constant `recommendationEligibility: NOT_EVALUATED`; no image field            | Omitted fields; readiness column; always-null image             | Existing contract convention; truthful eligibility; no implied capability                                                       | GAR-001, WAR-001, WAR-002 |
+| TD-S2-16 | Provenance `USER_ENTERED` per garment                                                                                                        | Per attribute                                                   | Per-attribute provenance only matters once AI suggestions exist                                                                 | GAR-001                   |
+| TD-S2-17 | Explicit `confirmed: true`                                                                                                                   | Confirmation implied by POST                                    | AC distinguishes missing from unconfirmed                                                                                       | GAR-001                   |
+| TD-S2-18 | `removed_at` column; removed state created by test fixtures only                                                                             | A removal endpoint now                                          | Removal belongs to PBI-016; current-ownership filtering must already be correct                                                 | GAR-001, WAR-001, WAR-002 |
+| TD-S2-19 | Overview ordered `created_at DESC, id`, whole wardrobe, no pagination                                                                        | Unordered; client sort; cursor pagination                       | Deterministic; the story excludes sorting/pagination rules; pending OPEN-S2-10                                                  | WAR-001                   |
+| TD-S2-20 | 404 `GARMENT_NOT_FOUND` for unknown, malformed and others' ids; 410 `GARMENT_NO_LONGER_CURRENT` for the owner's removed garment              | 403; 400 for malformed ids; 404 for removed                     | No existence oracle; AC-09 distinguishes "no longer current"                                                                    | WAR-002                   |
+| TD-S2-21 | `recordedUse: {availability: UNAVAILABLE}`                                                                                                   | Omit; zero count                                                | BRULE-HIST-001: no evidence is not zero use                                                                                     | WAR-002                   |
+| TD-S2-22 | Generalize `IdentityOpenApiContractIT` (tokens, `Idempotency-Key`, path parameters) instead of a Wardrobe copy                               | A second contract test                                          | One contract file, one test; every handler covered                                                                              | GAR-001, WAR-002          |
+| TD-S2-23 | Wardrobe reuses the single application `Clock` bean                                                                                          | A Wardrobe `Clock` bean                                         | Two beans would break injection and the shared `MutableClock`                                                                   | GAR-001                   |
+| TD-S2-24 | `WardrobeIntegrationTestSupport extends IdentityIntegrationTestSupport`                                                                      | Independent Wardrobe context                                    | Same context and container, so there is no extra startup and real authentication is used in every Wardrobe IT                   | GAR-001                   |
+| TD-S2-25 | Schema-upgrade tests on a separate database (`IsolatedMigrationDatabase`)                                                                    | Scratch schema via Flyway `schemas` (the Sprint 1 technique)    | V6 and later move or create tables in the shared owner schemas, so a scratch schema would collide with the application's tables | AUTH-005, GAR-001         |
 
 ### 22.2 Open decisions
 
-| ID | Question | Provisional default in the guides | Owner | Blocks Done? |
-| --- | --- | --- | --- | --- |
-| OPEN-S2-01 | Price bounds, zero, precision, currency list; Brand length/blank/normalization (PRD OPQ-013) | TD-S2-11, TD-S2-12 | Product Owner | Yes, for US-GAR-001 acceptance |
-| OPEN-S2-02 | Instruction-link contract with the mobile app | `capsuleai://reset-password#token=…`, configurable | PO + mobile | Yes, for the end-to-end journey |
-| OPEN-S2-03 | Final Vietnamese email wording | Plain-text draft in `SmtpPasswordResetInstructionSender` | PO / UX writing | Yes, for acceptance |
-| OPEN-S2-04 | Rate limiting of recovery requests | None; bounded delivery queue only | Team + PO | Risk decision |
-| OPEN-S2-05 | Timing equivalence; enumeration through partial failures | Response equivalence only (tested) | Team | Risk decision |
-| OPEN-S2-06 | Compromised-password denylist | None (Sprint 1 policy: 12–128 code points) | PO + security | Not for Sprint 2 unless decided |
-| OPEN-S2-07 | Retention of consumed, replaced and expired reset rows | Kept; no purge job | PO + privacy | No |
-| OPEN-S2-08 | Style cardinality | Single (TD-S2-13) | Product Owner | Yes, for US-GAR-001 acceptance |
-| OPEN-S2-09 | Production email provider and delivery evidence | SMTP configuration only; Mailpit evidence | PO + operations | Yes, for real delivery evidence (Sprint plan §6.1) |
-| OPEN-S2-10 | Pagination for large wardrobes | None (TD-S2-19) | Team + PO | No |
-| OPEN-S2-11 | PRD FEAT-WAR-001 item 2 still speaks of entries "needing additional compatibility information" | Ignored in favour of BRULE-GAR-003 / OPQ-015 | PO / BA | Documentation alignment |
-| OPEN-S2-12 | DATA-GAR-002 verification still mentions "SOLID density" | Ignored (attribute removed) | BA | Documentation alignment |
+| ID         | Question                                                                                       | Provisional default in the guides                        | Owner           | Blocks Done?                                       |
+| ---------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------- | -------------------------------------------------- |
+| OPEN-S2-01 | Price bounds, zero, precision, currency list; Brand length/blank/normalization (PRD OPQ-013)   | TD-S2-11, TD-S2-12                                       | Product Owner   | Yes, for US-GAR-001 acceptance                     |
+| OPEN-S2-02 | Instruction-link contract with the mobile app                                                  | `capsuleai://reset-password#token=…`, configurable       | PO + mobile     | Yes, for the end-to-end journey                    |
+| OPEN-S2-03 | Final Vietnamese email wording                                                                 | Plain-text draft in `SmtpPasswordResetInstructionSender` | PO / UX writing | Yes, for acceptance                                |
+| OPEN-S2-04 | Rate limiting of recovery requests                                                             | None; bounded delivery queue only                        | Team + PO       | Risk decision                                      |
+| OPEN-S2-05 | Timing equivalence; enumeration through partial failures                                       | Response equivalence only (tested)                       | Team            | Risk decision                                      |
+| OPEN-S2-06 | Compromised-password denylist                                                                  | None (Sprint 1 policy: 12–128 code points)               | PO + security   | Not for Sprint 2 unless decided                    |
+| OPEN-S2-07 | Retention of consumed, replaced and expired reset rows                                         | Kept; no purge job                                       | PO + privacy    | No                                                 |
+| OPEN-S2-08 | Style cardinality                                                                              | Single (TD-S2-13)                                        | Product Owner   | Yes, for US-GAR-001 acceptance                     |
+| OPEN-S2-09 | Production email provider and delivery evidence                                                | SMTP configuration only; Mailpit evidence                | PO + operations | Yes, for real delivery evidence (Sprint plan §6.1) |
+| OPEN-S2-10 | Pagination for large wardrobes                                                                 | None (TD-S2-19)                                          | Team + PO       | No                                                 |
+| OPEN-S2-11 | PRD FEAT-WAR-001 item 2 still speaks of entries "needing additional compatibility information" | Ignored in favour of BRULE-GAR-003 / OPQ-015             | PO / BA         | Documentation alignment                            |
+| OPEN-S2-12 | DATA-GAR-002 verification still mentions "SOLID density"                                       | Ignored (attribute removed)                              | BA              | Documentation alignment                            |
 
 ### 22.3 Cross-story contradictions and their treatment
 
-| # | Conflict | Treatment |
-| --- | --- | --- |
-| X-1 | Older readiness wording (FR-GAR-005, PRD FEAT-WAR-001 item 2, UC-008 A4 "unready") versus the 2026-11-05 decision that eligibility is not evaluated | The newer PO decision governs: no readiness anywhere; constant `NOT_EVALUATED` (OPEN-S2-11) |
-| X-2 | "All account Refresh Sessions" (FR-AUTH-004, AC-05) versus "all **active** Refresh Sessions" (SRS §3.1.1) | TD-S2-07: active sessions, which leaves no usable session either way |
-| X-3 | Stories mention images (AC wording) versus no image capability in Sprint 2 | TD-S2-15: no image field; imageless entries are complete |
-| X-4 | Removal states in AC (WAR-001 AC-08, WAR-002 AC-09) versus no removal story in Sprint 2 | TD-S2-18: `removed_at` plus fixtures |
-| X-5 | Recorded-use AC (WAR-002 AC-06/AC-07) versus no Wear capability | TD-S2-21: explicit `UNAVAILABLE` |
-| X-6 | Price/Brand rules and Style cardinality unresolved in the authority and PRD | Provisional TD-S2-11/12/13; PO decision OPEN-S2-01/08 before acceptance |
+| #   | Conflict                                                                                                                                                  | Treatment                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| X-1 | Older readiness wording (FR-GAR-005, PRD FEAT-WAR-001 item 2, UC-008 A4 "unready") versus the 2026-11-05 decision that eligibility is not evaluated       | The newer PO decision governs: no readiness anywhere; constant `NOT_EVALUATED` (OPEN-S2-11)                                                                                                                                                                                                                                                                                        |
+| X-2 | "All account Refresh Sessions" (FR-AUTH-004, AC-05) versus "all **active** Refresh Sessions" (SRS §3.1.1)                                                 | TD-S2-07: active sessions, which leaves no usable session either way                                                                                                                                                                                                                                                                                                               |
+| X-3 | Stories mention images (AC wording) versus no image capability in Sprint 2                                                                                | TD-S2-15: no image field; imageless entries are complete                                                                                                                                                                                                                                                                                                                           |
+| X-4 | Removal states in AC (WAR-001 AC-08, WAR-002 AC-09) versus no removal story in Sprint 2                                                                   | TD-S2-18: `removed_at` plus fixtures                                                                                                                                                                                                                                                                                                                                               |
+| X-5 | Recorded-use AC (WAR-002 AC-06/AC-07) versus no Wear capability                                                                                           | TD-S2-21: explicit `UNAVAILABLE`                                                                                                                                                                                                                                                                                                                                                   |
+| X-6 | Price/Brand rules and Style cardinality unresolved in the authority and PRD                                                                               | Provisional TD-S2-11/12/13; PO decision OPEN-S2-01/08 before acceptance                                                                                                                                                                                                                                                                                                            |
 | X-7 | ADD §9.4 left "exact schema/FK/joins/access rules" downstream "rather than a universal cross-context FK ban" versus the 2026-11-06 refinement AR-01–AR-08 | Resolved by the Product Owner: the refinement decides those details (one schema per owner; no cross-schema join, access or FK). It is recorded as a refinement in [selected architecture decisions §8](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas); the historical ADA text is unchanged. |
 
 Each story guide's §9.3 lists the story-local contradictions in full, next to the verbatim source text.
