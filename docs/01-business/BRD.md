@@ -8,7 +8,7 @@
 |---|---|
 | Document Name | CapsuleAI — Business Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | Baseline Draft |
 | Last Updated | 2026-11-05 |
 | Primary Owner / Role | Business Analyst / Product; accountable to the Product Owner |
@@ -56,6 +56,7 @@ Stable IDs in this BRD identify business intent. Subsequent artifacts must refer
 | 0.3 | 2026-10-05 | Resolved capsule-needs and initial-interface-language business questions and synchronized wear-history semantics; no change to core product positioning, scope, or stable IDs. |
 | 0.4 | 2026-11-05 | Approved eight-category wardrobe taxonomy and optional Brand/purchase Price; existing goals and business IDs preserved, product-policy follow-ups explicit. |
 | 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
+| 0.6 | 2026-11-07 | Product Owner decision: Style is a set of zero or more distinct approved values, like Material (property table synchronized with the garment-property authority); no change to business scope or IDs. |
 
 ### 1.4 Business Visualization Policy
 
@@ -305,7 +306,7 @@ The current approved garment profile has exactly 13 fashion properties, with val
 | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 | 5 | Pattern | All categories | No | One optional approved Pattern. |
-| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 | 7 | Fit | Tops | No | Optional approved Fit. |
 | 8 | Neckline | Tops | No | Optional approved Neckline. |
 | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |

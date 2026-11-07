@@ -2,7 +2,7 @@
 
 ## 1. Authority and Scope
 
-**Status: Product Owner-approved property model, 2026-11-05.** This existing file is the source of truth for the current garment properties, category applicability and explicitly listed vocabulary labels. The Product Owner approved all lists below; their previous research-candidate status is superseded. BRD/PRD/SRS, Business Rules, stories, plans and future contracts must follow this catalogue. This approval changes requirements; it does not claim implemented Wardrobe functionality or document-wide approval of downstream drafts.
+**Status: Product Owner-approved property model, 2026-11-05; Product Owner decisions of 2026-11-07 applied (Style cardinality, Brand and Price validation, Tanks & Camis spelling).** This existing file is the source of truth for the current garment properties, category applicability and explicitly listed vocabulary labels. The Product Owner approved all lists below; their previous research-candidate status is superseded. BRD/PRD/SRS, Business Rules, stories, plans and future contracts must follow this catalogue. This approval changes requirements; it does not claim implemented Wardrobe functionality or document-wide approval of downstream drafts.
 
 The current fashion-property model contains exactly the following 13 properties. Technical metadata and optional media are separate (Section 5). Category and Color require explicit user confirmation when the garment is saved; all other applicable properties are optional. All 13 applicable properties belong to the selected Sprint 2 creation/inspection scope.
 
@@ -15,7 +15,7 @@ The current fashion-property model contains exactly the following 13 properties.
 | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 | 5 | Pattern | All categories | No | One optional approved Pattern. |
-| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 | 7 | Fit | Tops | No | Optional approved Fit. |
 | 8 | Neckline | Tops | No | Optional approved Neckline. |
 | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -34,7 +34,7 @@ Labels and spelling below are authoritative product values. Category codes and t
 
 | Category Display Name | Category Identifier | Approved Subtypes |
 |---|---|---|
-| Tops | `TOPS` | T-shirts, Long Sleeve T-shirts, Sleeveless T-shirts, Polo Shirts, Tanks & Camils, Crop Tops, Blouses, Shirts, Sweatshirts, Hoodies, Sweaters, Sweater Vests, Sports Tops, Bodysuits |
+| Tops | `TOPS` | T-shirts, Long Sleeve T-shirts, Sleeveless T-shirts, Polo Shirts, Tanks & Camis, Crop Tops, Blouses, Shirts, Sweatshirts, Hoodies, Sweaters, Sweater Vests, Sports Tops, Bodysuits |
 | Dresses/Jumpsuits | `DRESSES_JUMPSUITS` | Day Dress, T-Shirt Dress, Shirt Dress, Sweatshirt Dress, Sweater Dress, Jacket Dress, Suspender Dress, Jumpsuit, Party Dress, Mini Dress |
 | Pants | `PANTS` | Jeans, Trousers, Dress Pants, Track Pants, Leggings, Shorts |
 | Skirts | `SKIRTS` | Mini Skirts, Midi Skirts, Maxi Skirts |
@@ -65,7 +65,7 @@ Labels and spelling below are authoritative product values. Category codes and t
 | Pattern | Solid, Striped, Graphic, Dotted, Animal, Floral, Tropical, Paisley, Argyle, Camo, Color-Block, Repeated, Checkerboard, Plaid, Gingham, Houndstooth, Herringbone, Chevron, Tweed, Abstract, Tie Dye, Geometric, Lace, Other Patterns |
 | Style | Comfortable, Casual, Business Casual, Formal, Modern, Classic, Minimalist, Bohemian, Luxury, Sporty, Athleisure, Trendy, Kidcore, Artistic, Dressy, Feminine, Street |
 
-Color is one dominant color; Colorful is the listed value for multicolored garments. It adds no secondary-color or coordinate field. Material is an optional collection of distinct approved values; repeated selections do not create repeated semantic materials. Material percentages/proportions are neither required nor fabricated. Pattern is one optional value. Style applies to every category; the same named list was repeated for Tops, Pants and other categories in the former layout. The former word Etc was explanatory, not a fashion style, wildcard or enum member. New styles require Product Owner approval.
+Color is one dominant color; Colorful is the listed value for multicolored garments. It adds no secondary-color or coordinate field. Material is an optional collection of distinct approved values; repeated selections do not create repeated semantic materials. Material percentages/proportions are neither required nor fabricated. Pattern is one optional value. Style is an optional collection of distinct approved values, like Material: zero, one or several Styles per garment, and repeated selections do not create repeated semantic styles (Product Owner decision 2026-11-07). Style applies to every category; the same named list was repeated for Tops, Pants and other categories in the former layout. The former word Etc was explanatory, not a fashion style, wildcard or enum member. New styles require Product Owner approval.
 
 ### 3.3 Category-Specific Controlled Properties
 
@@ -78,13 +78,13 @@ Color is one dominant color; Colorful is the listed value for multicolored garme
 | Length | Pants | Short, Long |
 | Silhouette | Pants | Flare, Slim, Tapered, Baggy, Skinny, Bootcut, Wide-leg |
 
-Do not apply Tops/Pants-specific fields to Dresses/Jumpsuits, Skirts, Outerwear, Shoes, Bags or Headwear. All global properties remain available for every category. Explicit labels such as Tanks & Camils are preserved as supplied; no semantic rename is introduced by this revision.
+Do not apply Tops/Pants-specific fields to Dresses/Jumpsuits, Skirts, Outerwear, Shoes, Bags or Headwear. All global properties remain available for every category. The Tops subtype is labelled **Tanks & Camis** (canonical identifier `TANKS_AND_CAMIS`); the Product Owner corrected the earlier misspelling "Tanks & Camils" on 2026-11-07. No other label is renamed.
 
 ## 4. Brand, Price, Confirmation and Eligibility
 
-Brand is optional user-entered text across all categories, without a fixed enum, external catalogue or brand-recognition feature. Preserve accepted values, and represent unspecified Brand truthfully.
+Brand is optional user-entered text across all categories, without a fixed enum, external catalogue or brand-recognition feature. Preserve accepted values, and represent unspecified Brand truthfully. A Brand has at most 100 Unicode code points; a blank value means the Brand is unspecified; an accepted nonblank value is kept exactly as entered, without trimming, case change, accent removal or whitespace normalization (Product Owner decision 2026-11-07).
 
-Price is the optional user-reported amount originally paid to purchase the owned garment. When supplied it consists of a decimal amount and explicit ISO 4217 currency code. Both amount and currency must be supplied together or cleared; missing Price is unknown, not zero. Never infer currency from location, infer Price from appearance, use floating-point monetary values, or introduce conversion. This meaning is separate from market/resale/replacement/catalogue/affiliate values. Amount bounds, zero/negative handling, precision/rounding and currency-list policy remain unresolved where not otherwise approved; Brand length/normalization and Style selection cardinality need the applicable story-specific contract decision without adding vocabulary values.
+Price is the optional user-reported amount originally paid to purchase the owned garment. When supplied it consists of a decimal amount and explicit ISO 4217 currency code. Both amount and currency must be supplied together or cleared; missing Price is unknown, not zero. Never infer currency from location, infer Price from appearance, use floating-point monetary values, or introduce conversion. This meaning is separate from market/resale/replacement/catalogue/affiliate values. Approved validation (Product Owner decision 2026-11-07): zero is a valid known amount (a free purchase); negative amounts are invalid; the amount has at most 12 integer digits and no more fractional digits than the currency's ISO 4217 minor unit (for example none for VND, two for USD), and excess precision is rejected, never rounded; the currency is a valid upper-case ISO 4217 code.
 
 User-confirmed information is authoritative. Later image upload or AI suggestions cannot silently overwrite accepted properties. Future analysis is suggestion-only and must stay within this model; a Brand suggestion requires acceptance and Price never comes from the photograph alone. Missing images or AI failure never block manual creation. Preserve ownership, privacy, provenance, failed/uncertain-action distinctions and safe retries with at most one accepted garment per logical addition.
 

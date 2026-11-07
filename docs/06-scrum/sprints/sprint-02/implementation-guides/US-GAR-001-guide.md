@@ -5,12 +5,12 @@
 | Sprint | Sprint 2 — Recover Access and Establish a Private Wardrobe |
 | Story / parent PBI | US-GAR-001 — Add an owned garment manually / [PBI-006](../../../product-backlog.md#pbi-006--add-a-confirmed-garment-manually) |
 | Implementation order | **2 of 4** (US-AUTH-005 → **US-GAR-001** → US-WAR-001 → US-WAR-002) |
-| Starts from | "Stage 1": Stage 0 (the corrected Sprint 1 baseline, [README §3](README.md#3-repository-baseline)) plus everything in the [US-AUTH-005 guide](US-AUTH-005-guide.md) |
+| Starts from | "Stage 1": Stage 0 (`sprint_02` at `90d3237`, [README §3](README.md#3-repository-baseline)) plus everything in the [US-AUTH-005 guide](US-AUTH-005-guide.md) |
 | Leaves | "Stage 2": the Wardrobe model, persistence and creation API that US-WAR-001 and US-WAR-002 reuse |
 | Read with | [README](README.md), [shared architecture](shared-architecture.md) |
-| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author in an isolated scratch copy of this repository** (Stage 2 commit: `clean verify` passed with 373 unit and 199 integration tests; full four-stage result: 382 and 228). Not applied to this repository, not run in hosted CI. US-GAR-001 is **not Done**. |
+| Code status | **Proposed implementation code — compiled and its automated tests executed by the guide author on 2026-11-07 in an isolated scratch copy of this repository, after the Product Owner decisions of that day were incorporated** (Stage 2 commit: `clean verify` passed with 413 unit and 220 integration tests; full four-stage result: 461 and 258). Not applied to this repository's `backend/` (⏳ BACKEND IMPLEMENTATION PENDING), not run in hosted CI. US-GAR-001 is **not Done**. |
 
-Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** proposed technical decision of this guide, **[OPEN]** unresolved. Sections 3–8 are verbatim source text.
+Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** proposed technical decision of this guide, **[OPEN]** unresolved (none remains after the Product Owner decisions of 2026-11-07). Sections 3–8 are verbatim source text. Status markers: ✅ APPROVED AND INCORPORATED INTO GUIDES · ⏳ BACKEND IMPLEMENTATION PENDING · ⚠️ EXTERNAL VERIFICATION PENDING · 🟡 DEFERRED BY APPROVED DECISION.
 
 ---
 
@@ -21,11 +21,11 @@ Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** prop
 | Story ID / name | US-GAR-001 — Add an owned garment manually |
 | Parent PBI | PBI-006 (Garment domain, Digital Wardrobe theme) |
 | User value | A trustworthy, owned wardrobe entry from an explicitly confirmed Category and one dominant Color, without an image or AI; every other approved property can be added and is kept exactly. |
-| Backend objective | The Wardrobe module's first real code: the 13-property model with all approved vocabularies and category applicability; validation that identifies every invalid/inapplicable value without substituting or discarding it; owner-scoped PostgreSQL persistence (Flyway V8); an authenticated, idempotent `POST /api/v1/wardrobe/garments` with at most one accepted garment per logical addition; truthful "eligibility not evaluated". |
+| Backend objective | The Wardrobe module's first real code: the 13-property model with all approved vocabularies and category applicability, Materials and Styles as distinct sets, the approved Brand and Price rules; validation that identifies every invalid/inapplicable value without substituting or discarding it; owner-scoped PostgreSQL persistence (Flyway V8); an authenticated, idempotent `POST /api/v1/wardrobe/garments` with at most one accepted garment per logical addition; truthful "eligibility not evaluated". |
 | Hard dependencies | Usable authenticated access (Sprint 1, unchanged by Stage 1). The approved [garment-property authority](../../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). US-AUTH-005 is **not** a technical prerequisite, but its Stage 1 code is the starting state. |
 | Scope (backend) | Package `com.capsuleai.wardrobe` (domain, application, ports, JDBC adapter, web adapter, configuration); V8; CORS `Idempotency-Key`; OpenAPI v0.6.0; generalized contract test; CI; README. |
 | Out of scope | Images, AI suggestions, editing (PBI-008), removal (PBI-016), search/filter (PBI-015), recommendation eligibility or any compatibility rule, a server-side draft store, mobile screens. |
-| Expected outcome | AC-01–AC-13 backend parts implemented and verified; AC-14 (accessibility) and client draft handling remain client evidence; OPQ-013 validation choices awaiting PO confirmation. |
+| Expected outcome | AC-01–AC-13 backend parts implemented and verified, including the approved Price and Brand rules (OPEN-S2-01A/01B) and several Styles per garment (OPEN-S2-08); AC-14 (accessibility) and client draft handling remain client evidence. |
 
 ## 2. Repository Baseline (Stage 1)
 
@@ -36,7 +36,7 @@ Labels: **[REQ]** requirement, **[ARCH]** architecture decision, **[TECH]** prop
 | `IdentitySecurityConfiguration` | Default-deny: `/api/v1/wardrobe/**` is protected automatically (JWT + usable session). Its CORS bean allows `Authorization`, `Content-Type`, `Accept`. |
 | `IdentityConfiguration.identityClock()` | The application's only `Clock` bean (tests replace it with `MutableClock`). |
 | Spring `JdbcClient`, `PlatformTransactionManager` | Persistence and transaction infrastructure used by Identity. |
-| Flyway V1–V7 | V6 moved the Sprint 1 tables into the `identity` schema; V7 added `identity.identity_password_reset`. Next free version: **V8**. |
+| Flyway V1–V7 | V6 moved the Sprint 1 tables into the `identity` schema; V7 added `identity.identity_password_reset` and `identity.identity_password_reset_attempt`. Next free version: **V8**. |
 | Schemas | `identity` (Identity's tables) and `public` (only Flyway's history). **No `wardrobe` schema exists**: this story's V8 creates it (AR-01). Wardrobe never reads, joins or references `identity.*` (AR-02–AR-04). |
 | `foundation/IsolatedMigrationDatabase.java` (test) | A separate empty database for upgrade tests; `GarmentSchemaIT` upgrades from V7 to V8 on it. |
 | `IdentityIntegrationTestSupport`, `IdentityTestConfiguration` | Shared real-application test context (PostgreSQL container, MockMvc, `MutableClock`, recording reset sender). |
@@ -53,13 +53,13 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 
 ### 3.1 Business goal, requirements and capabilities
 
-**Source:** [BRD.md — 7. Business Goals](../../../../01-business/BRD.md#7-business-goals) · lines 140–140 at Stage 0
+**Source:** [BRD.md — 7. Business Goals](../../../../01-business/BRD.md#7-business-goals) · lines 141–141 at Stage 0
 
 > | ID | Goal | Rationale | Expected Business / User Value | Related Product Capabilities |
 > |---|---|---|---|---|
 > | BG-01 | Reduce Wardrobe Digitization Effort | Manual setup delays access to useful wardrobe advice. | Faster access to a trustworthy digital closet with less repetitive entry. | CAP-01–CAP-04 |
 
-**Source:** [BRD.md — 15.1 Wardrobe Digitization and Management](../../../../01-business/BRD.md#151-wardrobe-digitization-and-management) · lines 462–465 at Stage 0
+**Source:** [BRD.md — 15.1 Wardrobe Digitization and Management](../../../../01-business/BRD.md#151-wardrobe-digitization-and-management) · lines 463–466 at Stage 0
 
 > | ID | Requirement | Business Rationale | Priority | Related Goals |
 > |---|---|---|---|---|
@@ -68,7 +68,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 > | BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually. | Preserve value when automation is unavailable or inaccurate. | Must | BG-01 |
 > | BR-005 | Users must be able to maintain, browse, search, and filter an accurate current wardrobe, including adding, changing, and removing garments. | Decisions must reflect accessible, current possessions. | Must | BG-01, BG-02, BG-03 |
 
-**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 288–289 at Stage 0
+**Source:** [BRD.md — 13.1 Capability Map](../../../../01-business/BRD.md#131-capability-map) · lines 289–290 at Stage 0
 
 > | ID | Capability | Business Purpose |
 > |---|---|---|
@@ -77,7 +77,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 
 ### 3.2 BRD §13.2, referenced by BR-003
 
-**Source:** [BRD.md — 13.2 Garment Intelligence and User Authority](../../../../01-business/BRD.md#132-garment-intelligence-and-user-authority) · lines 297–321 at Stage 0
+**Source:** [BRD.md — 13.2 Garment Intelligence and User Authority](../../../../01-business/BRD.md#132-garment-intelligence-and-user-authority) · lines 298–322 at Stage 0
 
 > ### 13.2 Garment Intelligence and User Authority
 >
@@ -90,7 +90,7 @@ All wording in Sections 3–8 is copied mechanically from the repository at Stag
 > | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 > | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 > | 5 | Pattern | All categories | No | One optional approved Pattern. |
-> | 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+> | 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 > | 7 | Fit | Tops | No | Optional approved Fit. |
 > | 8 | Neckline | Tops | No | Optional approved Neckline. |
 > | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -117,7 +117,7 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 >
 > ## 1. Authority and Scope
 >
-> **Status: Product Owner-approved property model, 2026-11-05.** This existing file is the source of truth for the current garment properties, category applicability and explicitly listed vocabulary labels. The Product Owner approved all lists below; their previous research-candidate status is superseded. BRD/PRD/SRS, Business Rules, stories, plans and future contracts must follow this catalogue. This approval changes requirements; it does not claim implemented Wardrobe functionality or document-wide approval of downstream drafts.
+> **Status: Product Owner-approved property model, 2026-11-05; Product Owner decisions of 2026-11-07 applied (Style cardinality, Brand and Price validation, Tanks & Camis spelling).** This existing file is the source of truth for the current garment properties, category applicability and explicitly listed vocabulary labels. The Product Owner approved all lists below; their previous research-candidate status is superseded. BRD/PRD/SRS, Business Rules, stories, plans and future contracts must follow this catalogue. This approval changes requirements; it does not claim implemented Wardrobe functionality or document-wide approval of downstream drafts.
 >
 > The current fashion-property model contains exactly the following 13 properties. Technical metadata and optional media are separate (Section 5). Category and Color require explicit user confirmation when the garment is saved; all other applicable properties are optional. All 13 applicable properties belong to the selected Sprint 2 creation/inspection scope.
 >
@@ -130,7 +130,7 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 > | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 > | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 > | 5 | Pattern | All categories | No | One optional approved Pattern. |
-> | 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+> | 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 > | 7 | Fit | Tops | No | Optional approved Fit. |
 > | 8 | Neckline | Tops | No | Optional approved Neckline. |
 > | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -149,7 +149,7 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 >
 > | Category Display Name | Category Identifier | Approved Subtypes |
 > |---|---|---|
-> | Tops | `TOPS` | T-shirts, Long Sleeve T-shirts, Sleeveless T-shirts, Polo Shirts, Tanks & Camils, Crop Tops, Blouses, Shirts, Sweatshirts, Hoodies, Sweaters, Sweater Vests, Sports Tops, Bodysuits |
+> | Tops | `TOPS` | T-shirts, Long Sleeve T-shirts, Sleeveless T-shirts, Polo Shirts, Tanks & Camis, Crop Tops, Blouses, Shirts, Sweatshirts, Hoodies, Sweaters, Sweater Vests, Sports Tops, Bodysuits |
 > | Dresses/Jumpsuits | `DRESSES_JUMPSUITS` | Day Dress, T-Shirt Dress, Shirt Dress, Sweatshirt Dress, Sweater Dress, Jacket Dress, Suspender Dress, Jumpsuit, Party Dress, Mini Dress |
 > | Pants | `PANTS` | Jeans, Trousers, Dress Pants, Track Pants, Leggings, Shorts |
 > | Skirts | `SKIRTS` | Mini Skirts, Midi Skirts, Maxi Skirts |
@@ -180,7 +180,7 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 > | Pattern | Solid, Striped, Graphic, Dotted, Animal, Floral, Tropical, Paisley, Argyle, Camo, Color-Block, Repeated, Checkerboard, Plaid, Gingham, Houndstooth, Herringbone, Chevron, Tweed, Abstract, Tie Dye, Geometric, Lace, Other Patterns |
 > | Style | Comfortable, Casual, Business Casual, Formal, Modern, Classic, Minimalist, Bohemian, Luxury, Sporty, Athleisure, Trendy, Kidcore, Artistic, Dressy, Feminine, Street |
 >
-> Color is one dominant color; Colorful is the listed value for multicolored garments. It adds no secondary-color or coordinate field. Material is an optional collection of distinct approved values; repeated selections do not create repeated semantic materials. Material percentages/proportions are neither required nor fabricated. Pattern is one optional value. Style applies to every category; the same named list was repeated for Tops, Pants and other categories in the former layout. The former word Etc was explanatory, not a fashion style, wildcard or enum member. New styles require Product Owner approval.
+> Color is one dominant color; Colorful is the listed value for multicolored garments. It adds no secondary-color or coordinate field. Material is an optional collection of distinct approved values; repeated selections do not create repeated semantic materials. Material percentages/proportions are neither required nor fabricated. Pattern is one optional value. Style is an optional collection of distinct approved values, like Material: zero, one or several Styles per garment, and repeated selections do not create repeated semantic styles (Product Owner decision 2026-11-07). Style applies to every category; the same named list was repeated for Tops, Pants and other categories in the former layout. The former word Etc was explanatory, not a fashion style, wildcard or enum member. New styles require Product Owner approval.
 >
 > ### 3.3 Category-Specific Controlled Properties
 >
@@ -193,13 +193,13 @@ This file is the Product Owner-approved source of truth for the 13 properties, t
 > | Length | Pants | Short, Long |
 > | Silhouette | Pants | Flare, Slim, Tapered, Baggy, Skinny, Bootcut, Wide-leg |
 >
-> Do not apply Tops/Pants-specific fields to Dresses/Jumpsuits, Skirts, Outerwear, Shoes, Bags or Headwear. All global properties remain available for every category. Explicit labels such as Tanks & Camils are preserved as supplied; no semantic rename is introduced by this revision.
+> Do not apply Tops/Pants-specific fields to Dresses/Jumpsuits, Skirts, Outerwear, Shoes, Bags or Headwear. All global properties remain available for every category. The Tops subtype is labelled **Tanks & Camis** (canonical identifier `TANKS_AND_CAMIS`); the Product Owner corrected the earlier misspelling "Tanks & Camils" on 2026-11-07. No other label is renamed.
 >
 > ## 4. Brand, Price, Confirmation and Eligibility
 >
-> Brand is optional user-entered text across all categories, without a fixed enum, external catalogue or brand-recognition feature. Preserve accepted values, and represent unspecified Brand truthfully.
+> Brand is optional user-entered text across all categories, without a fixed enum, external catalogue or brand-recognition feature. Preserve accepted values, and represent unspecified Brand truthfully. A Brand has at most 100 Unicode code points; a blank value means the Brand is unspecified; an accepted nonblank value is kept exactly as entered, without trimming, case change, accent removal or whitespace normalization (Product Owner decision 2026-11-07).
 >
-> Price is the optional user-reported amount originally paid to purchase the owned garment. When supplied it consists of a decimal amount and explicit ISO 4217 currency code. Both amount and currency must be supplied together or cleared; missing Price is unknown, not zero. Never infer currency from location, infer Price from appearance, use floating-point monetary values, or introduce conversion. This meaning is separate from market/resale/replacement/catalogue/affiliate values. Amount bounds, zero/negative handling, precision/rounding and currency-list policy remain unresolved where not otherwise approved; Brand length/normalization and Style selection cardinality need the applicable story-specific contract decision without adding vocabulary values.
+> Price is the optional user-reported amount originally paid to purchase the owned garment. When supplied it consists of a decimal amount and explicit ISO 4217 currency code. Both amount and currency must be supplied together or cleared; missing Price is unknown, not zero. Never infer currency from location, infer Price from appearance, use floating-point monetary values, or introduce conversion. This meaning is separate from market/resale/replacement/catalogue/affiliate values. Approved validation (Product Owner decision 2026-11-07): zero is a valid known amount (a free purchase); negative amounts are invalid; the amount has at most 12 integer digits and no more fractional digits than the currency's ISO 4217 minor unit (for example none for VND, two for USD), and excess precision is rejected, never rounded; the currency is a valid upper-case ISO 4217 code.
 >
 > User-confirmed information is authoritative. Later image upload or AI suggestions cannot silently overwrite accepted properties. Future analysis is suggestion-only and must stay within this model; a Brand suggestion requires acceptance and Price never comes from the photograph alone. Missing images or AI failure never block manual creation. Preserve ownership, privacy, provenance, failed/uncertain-action distinctions and safe retries with at most one accepted garment per logical addition.
 >
@@ -233,7 +233,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 4.3 JRN-02 and FEAT-AI-002
 
-**Source:** [PRD.md — 8.2 JRN-02 — Garment Digitization](../../../../02-product/PRD.md#82-jrn-02--garment-digitization) · lines 202–233 at Stage 0
+**Source:** [PRD.md — 8.2 JRN-02 — Garment Digitization](../../../../02-product/PRD.md#82-jrn-02--garment-digitization) · lines 203–234 at Stage 0
 
 > ### 8.2 JRN-02 — Garment Digitization
 >
@@ -268,7 +268,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > A prediction can still require correction even when usable. Only the user's confirmation creates the authoritative wardrobe entry; AI availability and optional profile data are not conditions for manual completion. **Features:** FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001.
 
-**Source:** [PRD.md — 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry](../../../../02-product/PRD.md#122-feat-ai-002--review-confirmation-and-manual-entry) · lines 506–541 at Stage 0
+**Source:** [PRD.md — 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry](../../../../02-product/PRD.md#122-feat-ai-002--review-confirmation-and-manual-entry) · lines 507–542 at Stage 0
 
 > ### 12.2 FEAT-AI-002 — Review, Confirmation, and Manual Entry
 >
@@ -309,7 +309,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 4.4 FEAT-GAR-001 and its subsections
 
-**Source:** [PRD.md — 13.1 FEAT-GAR-001 — Approved Garment Property Experience](../../../../02-product/PRD.md#131-feat-gar-001--approved-garment-property-experience) · lines 545–579 at Stage 0
+**Source:** [PRD.md — 13.1 FEAT-GAR-001 — Approved Garment Property Experience](../../../../02-product/PRD.md#131-feat-gar-001--approved-garment-property-experience) · lines 546–580 at Stage 0
 
 > ### 13.1 FEAT-GAR-001 — Approved Garment Property Experience
 >
@@ -324,7 +324,7 @@ Only its application note applies; the research body introduces no garment prope
 > | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 > | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 > | 5 | Pattern | All categories | No | One optional approved Pattern. |
-> | 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+> | 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 > | 7 | Fit | Tops | No | Optional approved Fit. |
 > | 8 | Neckline | Tops | No | Optional approved Neckline. |
 > | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -347,7 +347,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Delivery boundary:** All applicable creation properties and detail retrieval are included in the selected Sprint 2 stories. Later editing, photo/AI assistance and recommendation engines retain their separate PBIs; no whole-MVP API/schema design is required now.
 
-**Source:** [PRD.md — 13.2 Controlled Initial Garment Subtypes](../../../../02-product/PRD.md#132-controlled-initial-garment-subtypes) · lines 581–585 at Stage 0
+**Source:** [PRD.md — 13.2 Controlled Initial Garment Subtypes](../../../../02-product/PRD.md#132-controlled-initial-garment-subtypes) · lines 582–586 at Stage 0
 
 > ### 13.2 Controlled Initial Garment Subtypes
 >
@@ -355,17 +355,17 @@ Only its application note applies; the research body introduces no garment prope
 >
 > Subtype is optional, but a supplied value must belong to the selected category. A category change requires review of incompatible subtype and category-specific fields. MINI_DRESS may overlap length and PARTY_DRESS occasion as concepts, but no extra Length applicability or garment Occasion property follows. JACKET_DRESS remains under Dresses/Jumpsuits; JUMPSUIT stays in that combined category. Further categories or vocabulary values require Product Owner approval.
 
-**Source:** [PRD.md — 13.3 Saving and Deferred Recommendation Eligibility](../../../../02-product/PRD.md#133-saving-and-deferred-recommendation-eligibility) · lines 587–593 at Stage 0
+**Source:** [PRD.md — 13.3 Saving and Deferred Recommendation Eligibility](../../../../02-product/PRD.md#133-saving-and-deferred-recommendation-eligibility) · lines 588–594 at Stage 0
 
 > ### 13.3 Saving and Deferred Recommendation Eligibility
 >
-> Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+> Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 >
 > Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 >
 > Removed fashion properties and the earlier readiness policy are explicitly superseded in the authority's Section 5. User-profile preferences, request occasion/weather and technical metadata remain separate. Their existence cannot recreate removed garment fields or a hidden compatibility gate.
 
-**Source:** [PRD.md — 13.4 Confidence and Provenance Experience](../../../../02-product/PRD.md#134-confidence-and-provenance-experience) · lines 595–607 at Stage 0
+**Source:** [PRD.md — 13.4 Confidence and Provenance Experience](../../../../02-product/PRD.md#134-confidence-and-provenance-experience) · lines 596–608 at Stage 0
 
 > ### 13.4 Confidence and Provenance Experience
 >
@@ -381,17 +381,17 @@ Only its application note applies; the research body introduces no garment prope
 >
 > Provenance distinguishes **AI Suggested**, **User Confirmed**, **User Corrected**, and **User Entered**. Provenance answers how a value was established, while confidence qualifies an AI proposal. After user confirmation/correction, the user's value is authoritative regardless of the earlier AI confidence; neither confidence nor confirmation claims verified physical fabric composition.
 
-**Source:** [PRD.md — 13.5 Optional Brand and Purchase Price](../../../../02-product/PRD.md#135-optional-brand-and-purchase-price) · lines 609–613 at Stage 0
+**Source:** [PRD.md — 13.5 Optional Brand and Purchase Price](../../../../02-product/PRD.md#135-optional-brand-and-purchase-price) · lines 610–614 at Stage 0
 
 > ### 13.5 Optional Brand and Purchase Price
 >
 > Brand is optional user-entered text for every category, with no enum/catalogue or recognition feature. Price is the optional amount originally paid for the garment, expressed as a decimal amount and explicit ISO 4217 currency code. Amount/currency must be supplied together or cleared; unknown Price is not zero. No location default, appearance inference, floating-point monetary value or currency conversion is introduced. Preserve accepted values through creation/detail and future editing; automated output cannot silently overwrite them.
 >
-> This is personal purchase information, distinct from retailer/affiliate guidance and its freshness rules. PRD OPQ-013 retains genuinely unresolved monetary-validation details. Brand bounds/normalization and technical serialization are proportional JIT work under existing conventions; they must not silently change confirmed information.
+> This is personal purchase information, distinct from retailer/affiliate guidance and its freshness rules. Approved validation (OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points, a blank Brand means unspecified, and accepted Brand text is kept exactly (no trimming, case change, accent removal or whitespace normalization). A Price of zero is a valid known amount and differs from a missing Price; negative amounts are invalid; amounts have at most 12 integer digits and no more fractional digits than the currency's ISO 4217 minor unit, and excess precision is rejected rather than rounded; the currency is a valid upper-case ISO 4217 code.
 
 ### 4.5 Approved taxonomy decisions and open follow-ups
 
-**Source:** [PRD.md — 34.1 Approved Taxonomy Revision and Open Follow-up Decisions](../../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) · lines 1522–1530 at Stage 0
+**Source:** [PRD.md — 34.1 Approved Taxonomy Revision and Open Follow-up Decisions](../../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) · lines 1524–1535 at Stage 0
 
 > ### 34.1 Approved Taxonomy Revision and Open Follow-up Decisions
 >
@@ -399,15 +399,18 @@ Only its application note applies; the research body introduces no garment prope
 > |---|---|---|---|
 > | OPQ-011 | Eight primary categories, exactly ten Dresses/Jumpsuits subtypes, optional subtype/Brand/Price; Price means user-reported purchase price with decimal amount and explicit ISO 4217 currency. | User-approved; recorded 2026-11-05 | Sections 12–14; BRD BR-002/003/005; SRS FR-GAR-001–006/011–013 and DATA-GAR-002; selected Sprint 2 wardrobe stories. |
 > | OPQ-012 | Previous category-specific readiness question is superseded: all recommendation eligibility/composition/compatibility policy is deferred to engine development, without ready/ineligible claims in Sprint 2. | Resolved deferral; future design | All eight categories; no hidden garment descriptors or old category-to-role mapping. |
-> | OPQ-013 | Decide monetary amount bounds, zero/negative handling, precision/rounding and supported currency-list policy; decide Brand length, blank handling and any normalization that affects user values. No location default or exchange-rate behavior is approved. | Open policy / selected-story JIT validation | Before implementing affected optional-field validation; approved meaning and optionality remain fixed. |
+> | OPQ-013 | Brand: at most 100 Unicode code points; blank means unspecified; accepted text kept exactly. Price: zero is a valid known amount; negative invalid; at most 12 integer digits; fractional digits limited to the currency's ISO 4217 minor unit and rejected, never rounded, beyond it; valid upper-case ISO 4217 currency; amount and currency together. No location default, appearance inference or exchange-rate behavior. | Resolved by Product Owner decision, 2026-11-07 | Section 13.5; SRS FR-GAR-012/013 and Section 3.5.2; BRULE-GAR-010; US-GAR-001. |
 > | OPQ-014 | All explicitly listed category subtypes and fashion vocabularies are approved in Image to Properties Extraction.md. Overlap never implies automatic property derivation. | Resolved by final Product Owner decision | Complete vocabulary applies now; no pending Bags/Headwear subtype approval. |
+> | OPQ-016 | Style allows zero, one or several distinct approved values per garment, like Material; no value is added to the vocabulary and no fourteenth property is created. | Product Owner decision, 2026-11-07 | Section 13.1; SRS FR-GAR-009 and DATA-GAR-002; US-GAR-001/US-WAR-002. |
+> | OPQ-017 | The Tops subtype label is corrected from "Tanks & Camils" to "Tanks & Camis" (identifier `TANKS_AND_CAMIS`); no other taxonomy change. | Product Owner decision, 2026-11-07 | Section 13.2 and the garment-property authority. |
+> | OPQ-018 | The wardrobe overview is delivered page by page in a stable newest-first order with explicit continuation, without omitting or repeating garments that stay current. | Product Owner decision, 2026-11-07 | FEAT-WAR-001; SRS FR-WAR-001; US-WAR-001. |
 > | OPQ-015 | Exactly 13 source-owned properties, all listed values approved, multiple Materials, one dominant Color, category applicability, removed obsolete attributes, deferred eligibility and all applicable properties in Sprint 2. | Final Product Owner approval, 2026-11-05 | Supersedes conflicting OPQ-003/004/011–014 property/readiness descriptions; unrelated profile/context decisions remain valid. |
 
 ## 5. Original Software Requirements — Verbatim
 
 ### 5.1 Garment ingestion (SRS §3.4) and manual-entry requirements
 
-**Source:** [SRS.md — 3.4 Garment Ingestion](../../../../03-requirements/SRS.md#34-garment-ingestion) · lines 227–236 at Stage 0
+**Source:** [SRS.md — 3.4 Garment Ingestion](../../../../03-requirements/SRS.md#34-garment-ingestion) · lines 230–239 at Stage 0
 
 > ### 3.4 Garment Ingestion
 >
@@ -420,7 +423,7 @@ Only its application note applies; the research body introduces no garment prope
 > | Confirm category and dominant color | Create the authoritative owned entry and show guidance that eligibility is not evaluated. |
 > | Cancel or processing fails | Do not create a confirmed item; allow appropriate replacement/retry/manual continuation. |
 
-**Source:** [SRS.md — 3.4.1 Image Input and Preview Criteria](../../../../03-requirements/SRS.md#341-image-input-and-preview-criteria) · lines 256–263 at Stage 0
+**Source:** [SRS.md — 3.4.1 Image Input and Preview Criteria](../../../../03-requirements/SRS.md#341-image-input-and-preview-criteria) · lines 259–266 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -431,7 +434,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.2 Garment intelligence (SRS §3.5, §3.5.1)
 
-**Source:** [SRS.md — 3.5 Garment Intelligence](../../../../03-requirements/SRS.md#35-garment-intelligence) · lines 267–277 at Stage 0
+**Source:** [SRS.md — 3.5 Garment Intelligence](../../../../03-requirements/SRS.md#35-garment-intelligence) · lines 270–280 at Stage 0
 
 > ### 3.5 Garment Intelligence
 >
@@ -445,7 +448,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > The old readiness predicates are superseded. Retained superseded/deferred IDs establish no implementation obligation for removed fields. Optional absence is separate from invalid supplied input, failed persistence and lost authorization.
 
-**Source:** [SRS.md — 3.5.1 Saving and Deferred Recommendation Eligibility](../../../../03-requirements/SRS.md#351-saving-and-deferred-recommendation-eligibility) · lines 282–294 at Stage 0
+**Source:** [SRS.md — 3.5.1 Saving and Deferred Recommendation Eligibility](../../../../03-requirements/SRS.md#351-saving-and-deferred-recommendation-eligibility) · lines 285–297 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -457,25 +460,25 @@ Only its application note applies; the research body introduces no garment prope
 > | FR-GAR-006 | The system shall keep all properties except Category and Color optional for saving, enforce category applicability on supplied values and preserve valid accepted optional information without fabricating missing values. | MVP | FEAT-GAR-001; BR-003 | T: every optional omission and supplied-value/applicability case. |
 > | FR-GAR-007 | The system shall support optional Fit, Neckline and Sleeve Length only for Tops, category-specific Length only for Tops/Pants, and Silhouette only for Pants, using exact approved lists and correcting or clearing inapplicable supplied fields. | MVP | FEAT-GAR-001; BR-003 | T/I: every approved category-specific detail/value and inapplicable input. |
 > | FR-GAR-008 | The system shall require exactly one dominant Color from the complete approved list, including Colorful, without secondary-color or coordinate extensions. | MVP | FEAT-GAR-001; BR-003 | T: all approved single Colors; no extra color property. |
-> | FR-GAR-009 | The system shall support one optional Pattern and optional named Style selection using complete source lists, without accepting Etc, arbitrary additions or deriving unsupported compatibility descriptors. | MVP | FEAT-GAR-001; BR-003 | T: every approved optional Pattern/Style; Etc and arbitrary values rejected. |
+> | FR-GAR-009 | The system shall support one optional Pattern and zero, one or multiple distinct approved Style values per garment using complete source lists, without duplicate semantic Style selections, accepting Etc, arbitrary additions or deriving unsupported compatibility descriptors. | MVP | FEAT-GAR-001; BR-003 | T: every approved optional Pattern/Style; multiple and repeated Style selections; Etc and arbitrary values rejected. |
 > | FR-GAR-010 | The system shall support zero, one or multiple distinct approved Material values per garment, avoiding duplicate semantic selections and fabricated percentages, proportions or verified-composition claims. | MVP | FEAT-GAR-001; BR-003 | T: uncertain material case. |
 > | FR-GAR-011 | The system shall make user-confirmed/corrected/entered values authoritative and prevent later automated output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002 | T: analysis after correction. |
-> | FR-GAR-012 | The system shall support optional user-entered Brand text for every supported garment category, preserve confirmed values for inspection and future editing, and keep unavailable or unaccepted suggested Brand distinct from confirmed information without a fixed brand enum or silent automated overwrite. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/present Brand across eight categories, value fidelity and late-proposal protection. |
-> | FR-GAR-013 | The system shall support optional user-reported purchase Price for every supported garment category as a decimal monetary amount with explicit ISO 4217 currency code when supplied, preserve it for inspection and future editing, and allow omission without save/readiness failure. It shall not fabricate Price from appearance, infer currency from location, use floating-point monetary calculations or silently overwrite confirmed Price. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/present amount-and-currency, partial-pair correction, decimal fidelity and non-fabrication; Section 3.5.2 / PRD OPQ-013. |
+> | FR-GAR-012 | The system shall support optional user-entered Brand text of at most 100 Unicode code points for every supported garment category, treat a blank value as unspecified, preserve accepted nonblank text exactly (no trimming, case change, accent removal or whitespace normalization) for inspection and future editing, and keep unavailable or unaccepted suggested Brand distinct from confirmed information without a fixed brand enum or silent automated overwrite. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/blank/present Brand across eight categories, length boundary, exact value fidelity and late-proposal protection. |
+> | FR-GAR-013 | The system shall support optional user-reported purchase Price for every supported garment category as an exact decimal monetary amount with an explicit valid upper-case ISO 4217 currency code when supplied, preserve it for inspection and future editing, and allow omission without save/readiness failure. Zero is a valid known amount distinct from a missing Price; negative amounts, more than 12 integer digits and more fractional digits than the currency's minor unit are rejected, never rounded. It shall not fabricate Price from appearance, infer currency from location, use floating-point monetary calculations, convert currencies or silently overwrite confirmed Price. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/present amount-and-currency, zero, negative, precision per currency, partial-pair correction, decimal fidelity and non-fabrication; Section 3.5.2 / PRD OPQ-013 (resolved). |
 
 ### 5.3 Optional Brand and Purchase Price (SRS §3.5.2)
 
-**Source:** [SRS.md — 3.5.2 Optional Brand and Purchase Price](../../../../03-requirements/SRS.md#352-optional-brand-and-purchase-price) · lines 296–300 at Stage 0
+**Source:** [SRS.md — 3.5.2 Optional Brand and Purchase Price](../../../../03-requirements/SRS.md#352-optional-brand-and-purchase-price) · lines 299–303 at Stage 0
 
 > #### 3.5.2 Optional Brand and Purchase Price
 >
 > Brand is optional user-entered text across all categories, without an enum/catalogue. Price is the optional amount originally paid: decimal amount plus explicit ISO 4217 currency, supplied together or cleared. Unknown Price is not zero; no appearance/location inference, floating-point monetary representation or currency conversion is permitted. Preserve confirmed values through the authorized addition and its safe-retry outcome. No AI output silently replaces them.
 >
-> Amount limits, zero/negative treatment, precision/rounding, currency-list maintenance and reasonable text/normalization conventions remain proportional selected-story JIT work under PRD OPQ-013; Style selection cardinality is not prescribed by a speculative wire/schema design. Resolve genuine externally visible ambiguities before dependent implementation. DATA-INT-001/004 and privacy/ownership continue to apply.
+> Approved validation (PRD OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points; a blank Brand means unspecified; accepted nonblank Brand text is preserved exactly, without trimming, case change, accent removal or whitespace normalization. A Price of zero is a valid known amount and differs from a missing Price; negative amounts are invalid; an amount has at most 12 integer digits and no more fractional digits than its currency's ISO 4217 minor unit, and excess precision is rejected rather than rounded; the currency is a valid upper-case ISO 4217 code. Style accepts zero, one or several distinct approved values (PRD OPQ-016). DATA-INT-001/004 and privacy/ownership continue to apply.
 
 ### 5.4 Authorization
 
-**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 188–189 at Stage 0
+**Source:** [SRS.md — 3.1.1 Authentication and Recovery Rules](../../../../03-requirements/SRS.md#311-authentication-and-recovery-rules) · lines 189–190 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -484,24 +487,24 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.5 Data requirements
 
-**Source:** [SRS.md — 4.3 Garment & Wardrobe Data](../../../../03-requirements/SRS.md#43-garment--wardrobe-data) · lines 657–661 at Stage 0
+**Source:** [SRS.md — 4.3 Garment & Wardrobe Data](../../../../03-requirements/SRS.md#43-garment--wardrobe-data) · lines 661–665 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | DATA-GAR-001 | The system shall associate each current garment and accepted profile with its authorized owner, supported Category and one confirmed approved Color, preserving confirmation and active ownership separately from future evaluation. | MVP | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005 | T/I: owner and saveable minimum. |
-> | DATA-GAR-002 | The system shall preserve exactly the 13 source-approved fashion properties and applicability, including optional multiple distinct Materials, one dominant Color, category-specific fields, Brand text and decimal purchase Price with explicit ISO 4217 currency; absent values and necessary metadata shall remain distinct. | MVP | FEAT-GAR-001; BR-003 | I/T: descriptor sets, scales, SOLID density and non-mandatory rich information. |
+> | DATA-GAR-002 | The system shall preserve exactly the 13 source-approved fashion properties and applicability, including optional multiple distinct Materials and Styles, one dominant Color, category-specific fields, Brand text and decimal purchase Price with explicit ISO 4217 currency; absent values and necessary metadata shall remain distinct. | MVP | FEAT-GAR-001; BR-003 | I/T: every approved value, distinct Material and Style sets, category applicability and non-mandatory rich information. |
 > | DATA-GAR-003 | The system shall associate proposals with evidence-based confidence/provenance under Section 8.1 separately from authoritative user values, without treating numeric confidence as confirmation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: default thresholds, evidence guards, calibration and confirmation. |
 > | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
 > | DATA-GAR-005 | The system shall represent active/removed ownership independently from missing optional properties and unevaluated recommendation eligibility, without requiring a readiness flag, NOT_EVALUATED enum, compatibility field or physical schema prescribed by this SRS. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: ownership and unevaluated eligibility remain distinct; no property gate. |
 
-**Source:** [SRS.md — 4.7 Data Integrity](../../../../03-requirements/SRS.md#47-data-integrity) · lines 693–696 at Stage 0
+**Source:** [SRS.md — 4.7 Data Integrity](../../../../03-requirements/SRS.md#47-data-integrity) · lines 697–700 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | DATA-INT-001 | The system shall prevent an AI proposal or later analysis from silently superseding a confirmed/corrected garment value. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002 | T: authority preservation. |
 > | DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions. | MVP | FEAT-AI-002, FEAT-PERS-002; BR-005, BR-011 | T: interrupted additions/Wear actions; retry versus explicit same-outfit/day repeat. |
 
-**Source:** [SRS.md — 4.10 Controlled Vocabularies and Descriptor Scales](../../../../03-requirements/SRS.md#410-controlled-vocabularies-and-descriptor-scales) · lines 715–745 at Stage 0
+**Source:** [SRS.md — 4.10 Controlled Vocabularies and Descriptor Scales](../../../../03-requirements/SRS.md#410-controlled-vocabularies-and-descriptor-scales) · lines 719–749 at Stage 0
 
 > ### 4.10 Controlled Vocabularies and Descriptor Scales
 >
@@ -514,7 +517,7 @@ Only its application note applies; the research body introduces no garment prope
 > | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 > | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 > | 5 | Pattern | All categories | No | One optional approved Pattern. |
-> | 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+> | 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 > | 7 | Fit | Tops | No | Optional approved Fit. |
 > | 8 | Neckline | Tops | No | Optional approved Neckline. |
 > | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -537,14 +540,14 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.6 Interfaces
 
-**Source:** [SRS.md — 5.1 User Interfaces](../../../../03-requirements/SRS.md#51-user-interfaces) · lines 758–760 at Stage 0
+**Source:** [SRS.md — 5.1 User Interfaces](../../../../03-requirements/SRS.md#51-user-interfaces) · lines 762–764 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | UI-004 | The system shall display garment identity/category/color, guidance that eligibility is not evaluated, and available image without hiding imageless manual entries. | MVP | FEAT-WAR-001, FEAT-GAR-001; BR-005, BR-003 | I: cards and minimum-only detail. |
 > | UI-006 | The system shall require explicit confirmation for an authoritative garment entry and expose correction/manual controls. | MVP | FEAT-AI-002; BR-002 | D: proposal to corrected confirmation. |
 
-**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 788–789 at Stage 0
+**Source:** [SRS.md — 5.4 Communication Interfaces](../../../../03-requirements/SRS.md#54-communication-interfaces) · lines 792–793 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -553,20 +556,20 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.7 Error and failure requirements
 
-**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 982–984 at Stage 0
+**Source:** [SRS.md — 9. Error and Failure Requirements](../../../../03-requirements/SRS.md#9-error-and-failure-requirements) · lines 986–988 at Stage 0
 
 > ## 9. Error and Failure Requirements
 >
 > These requirements specify recoverable outcomes, not exception types or infrastructure retry algorithms. Previously confirmed information remains authoritative. An interrupted response is not proof that an action failed; uncertain outcomes must remain distinguishable from accepted results, and recovery must not create accidental duplicate logical actions.
 
-**Source:** [SRS.md — 9.3 Garment Completeness](../../../../03-requirements/SRS.md#93-garment-completeness) · lines 1005–1006 at Stage 0
+**Source:** [SRS.md — 9.3 Garment Completeness](../../../../03-requirements/SRS.md#93-garment-completeness) · lines 1009–1010 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
 > | ERR-GAR-001 | Save attempted without the saveable minimum. | The system shall explain missing confirmed Primary Category or Dominant Color and retain the draft for correction rather than save it as an authoritative garment. | User supplies/changes the missing information; existing garments remain unchanged. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: each minimum value missing. |
 > | ERR-GAR-002 | Recommendation eligibility has not been evaluated. | The system shall disclose the unevaluated state without calling the garment invalid, unsuitable or ineligible; the previous missing-compatibility-field error is superseded. | Retain accepted information and ordinary wardrobe access; no enrichment gate. | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005, BR-022 | T/I: no unsupported eligibility claim or save/browse/detail gate. |
 
-**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1048–1048 at Stage 0
+**Source:** [SRS.md — 9.9 Communication and Partial Dependency Failure](../../../../03-requirements/SRS.md#99-communication-and-partial-dependency-failure) · lines 1052–1052 at Stage 0
 
 > | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 > |---|---|---|---|---|---|
@@ -574,33 +577,33 @@ Only its application note applies; the research body introduces no garment prope
 
 ### 5.8 Security, privacy, reliability, accessibility and localization
 
-**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 809–810 at Stage 0
+**Source:** [SRS.md — 6.2 Security](../../../../03-requirements/SRS.md#62-security) · lines 813–814 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-SEC-001 | The system shall permit zero successful unauthorized cross-user wardrobe/image accesses in the agreed validation scenarios. | MVP | FEAT-AUTH-001, FEAT-WAR-001; BR-021 | T: two-account and unauthenticated attempts; MET-Q06. |
 > | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
 
-**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 817–817 at Stage 0
+**Source:** [SRS.md — 6.3 Privacy](../../../../03-requirements/SRS.md#63-privacy) · lines 821–821 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
 
-**Source:** [SRS.md — 6.4 Reliability](../../../../03-requirements/SRS.md#64-reliability) · lines 824–824 at Stage 0
+**Source:** [SRS.md — 6.4 Reliability](../../../../03-requirements/SRS.md#64-reliability) · lines 828–828 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-REL-001 | The system shall preserve manual garment creation in all agreed representative AI-failure scenarios without changing confirmed information into an unconfirmed proposal. | MVP | FEAT-AI-001, FEAT-AI-002; BR-002, BR-004 | T: agreed unavailable/failed/uncertain analysis cases; MET-Q05. |
 
-**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 849–850 at Stage 0
+**Source:** [SRS.md — 6.7 Accessibility](../../../../03-requirements/SRS.md#67-accessibility) · lines 853–854 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
 > | NFR-ACC-001 | The system shall communicate meaningful confidence, unevaluated eligibility, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
 > | NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
 
-**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 894–895 at Stage 0
+**Source:** [SRS.md — 7. Localization Requirements](../../../../03-requirements/SRS.md#7-localization-requirements) · lines 898–899 at Stage 0
 
 > | ID | Requirement | Scope | Source | Verification |
 > |---|---|---|---|---|
@@ -609,7 +612,7 @@ Only its application note applies; the research body introduces no garment prope
 
 ## 6. Original Business Rules — Verbatim
 
-**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 80–86 at Stage 0
+**Source:** [business-rules.md — BRULE-AUTH-001 — Authorized Personal Operations](../../../../03-requirements/business-rules.md#brule-auth-001--authorized-personal-operations) · lines 81–87 at Stage 0
 
 > ### BRULE-AUTH-001 — Authorized Personal Operations
 >
@@ -619,7 +622,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-AUTH-008, ERR-AUTH-001, DATA-GAR-001.
 
-**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 130–138 at Stage 0
+**Source:** [business-rules.md — BRULE-AUTH-007 — Purpose-Limited Private Data Use](../../../../03-requirements/business-rules.md#brule-auth-007--purpose-limited-private-data-use) · lines 131–139 at Stage 0
 
 > ### BRULE-AUTH-007 — Purpose-Limited Private Data Use
 >
@@ -631,7 +634,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-AUTH-008, NFR-PRIV-001, NFR-PRIV-002, SI-002, SI-003, COM-003, FR-MET-006, DATA-RET-001, DATA-RET-002, DATA-RET-003.
 
-**Source:** [business-rules.md — BRULE-GAR-001 — Canonical Garment Authority](../../../../03-requirements/business-rules.md#brule-gar-001--canonical-garment-authority) · lines 172–178 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-001 — Canonical Garment Authority](../../../../03-requirements/business-rules.md#brule-gar-001--canonical-garment-authority) · lines 173–179 at Stage 0
 
 > ### BRULE-GAR-001 — Canonical Garment Authority
 >
@@ -641,7 +644,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** DATA-GAR-001, FR-GAR-011, AI-REQ-001, AI-REQ-007, DATA-INT-001.
 
-**Source:** [business-rules.md — BRULE-GAR-002 — Saveable Minimum](../../../../03-requirements/business-rules.md#brule-gar-002--saveable-minimum) · lines 182–188 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-002 — Saveable Minimum](../../../../03-requirements/business-rules.md#brule-gar-002--saveable-minimum) · lines 183–189 at Stage 0
 
 > ### BRULE-GAR-002 — Saveable Minimum
 >
@@ -651,7 +654,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-003, FR-AI-003, FR-AI-008, FR-AI-009, ERR-GAR-001.
 
-**Source:** [business-rules.md — BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness](../../../../03-requirements/business-rules.md#brule-gar-003--evaluation-specific-recommendation-readiness) · lines 192–198 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness](../../../../03-requirements/business-rules.md#brule-gar-003--evaluation-specific-recommendation-readiness) · lines 193–199 at Stage 0
 
 > ### BRULE-GAR-003 — Evaluation-Specific Recommendation-Readiness
 >
@@ -661,7 +664,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-004/005, DATA-GAR-005, ERR-GAR-002; final Product Owner property-model decision.
 
-**Source:** [business-rules.md — BRULE-GAR-004 — Controlled Classification and Context Vocabularies](../../../../03-requirements/business-rules.md#brule-gar-004--controlled-classification-and-context-vocabularies) · lines 202–208 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-004 — Controlled Classification and Context Vocabularies](../../../../03-requirements/business-rules.md#brule-gar-004--controlled-classification-and-context-vocabularies) · lines 203–209 at Stage 0
 
 > ### BRULE-GAR-004 — Controlled Classification and Context Vocabularies
 >
@@ -671,7 +674,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-001/002, DATA-GAR-002; FR-PROF-002/004 for separate context.
 
-**Source:** [business-rules.md — BRULE-GAR-005 — Bounded Garment Descriptors](../../../../03-requirements/business-rules.md#brule-gar-005--bounded-garment-descriptors) · lines 210–232 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-005 — Bounded Garment Descriptors](../../../../03-requirements/business-rules.md#brule-gar-005--bounded-garment-descriptors) · lines 211–233 at Stage 0
 
 > ### BRULE-GAR-005 — Bounded Garment Descriptors
 >
@@ -684,7 +687,7 @@ Only its application note applies; the research body introduces no garment prope
 > | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 > | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 > | 5 | Pattern | All categories | No | One optional approved Pattern. |
-> | 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+> | 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 > | 7 | Fit | Tops | No | Optional approved Fit. |
 > | 8 | Neckline | Tops | No | Optional approved Neckline. |
 > | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -697,15 +700,15 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** FR-GAR-002/006–010/012/013, DATA-GAR-002.
 
-**Source:** [business-rules.md — BRULE-GAR-006 — Descriptor Consistency and Unknown Information](../../../../03-requirements/business-rules.md#brule-gar-006--descriptor-consistency-and-unknown-information) · lines 234–238 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-006 — Descriptor Consistency and Unknown Information](../../../../03-requirements/business-rules.md#brule-gar-006--descriptor-consistency-and-unknown-information) · lines 235–239 at Stage 0
 
 > ### BRULE-GAR-006 — Descriptor Consistency and Unknown Information
 >
-> **Rule:** Unknown optional information remains absent rather than an invented value. Material selections form distinct semantic values, without percentages/proportions. Color is one approved dominant value; Pattern is one optional value. Validate applicability and supplied labels before confirmation; correct/clear invalid or inapplicable fields without silent substitution or discard. No cross-property inference is approved merely because a subtype overlaps length, style or occasion. Etc is not a Style value. Removed descriptors cannot be reconstructed as hidden fields or readiness gates.
+> **Rule:** Unknown optional information remains absent rather than an invented value. Material selections form distinct semantic values, without percentages/proportions. Color is one approved dominant value; Pattern is one optional value; Style, like Material, is an optional set of distinct values. Validate applicability and supplied labels before confirmation; correct/clear invalid or inapplicable fields without silent substitution or discard. No cross-property inference is approved merely because a subtype overlaps length, style or occasion. Etc is not a Style value. Removed descriptors cannot be reconstructed as hidden fields or readiness gates.
 >
 > **Source:** FR-GAR-002/006–010, DATA-GAR-002, AI-REQ-008.
 
-**Source:** [business-rules.md — BRULE-GAR-008 — Provenance Is Distinct from Confidence](../../../../03-requirements/business-rules.md#brule-gar-008--provenance-is-distinct-from-confidence) · lines 258–264 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-008 — Provenance Is Distinct from Confidence](../../../../03-requirements/business-rules.md#brule-gar-008--provenance-is-distinct-from-confidence) · lines 259–265 at Stage 0
 
 > ### BRULE-GAR-008 — Provenance Is Distinct from Confidence
 >
@@ -715,13 +718,13 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **Source:** AI-REQ-006, AI-REQ-007, AI-REQ-009, FR-GAR-010, DATA-GAR-003.
 
-**Source:** [business-rules.md — BRULE-GAR-010 — Optional Brand and Purchase Price Authority](../../../../03-requirements/business-rules.md#brule-gar-010--optional-brand-and-purchase-price-authority) · lines 278–286 at Stage 0
+**Source:** [business-rules.md — BRULE-GAR-010 — Optional Brand and Purchase Price Authority](../../../../03-requirements/business-rules.md#brule-gar-010--optional-brand-and-purchase-price-authority) · lines 279–287 at Stage 0
 
 > ### BRULE-GAR-010 — Optional Brand and Purchase Price Authority
 >
 > **Rule:** Brand is optional user-entered text across all eight categories, with no fixed enum or external catalogue. Preserve the confirmed value; unknown is not a fabricated brand. Price is the optional user-reported purchase price of the owned garment, represented by a decimal amount together with an explicit ISO 4217 currency code. An amount without currency, or currency without amount, is incomplete supplied information and must be corrected or cleared before confirmation; omitting both is valid and does not mean zero. Never infer currency from location or perform floating-point monetary calculations. This is not market/resale/replacement value or a retailer/affiliate price; no conversion feature is introduced. Neither field is a save or readiness requirement. Price must not be inferred from a photograph; any future Brand suggestion remains unconfirmed until user acceptance. Later analysis or image upload must not silently replace confirmed Brand or Price.
 >
-> Future edits may revise or clear these properties with explicit user confirmation. Supplied valid values participate in the same accepted garment addition and safe-retry outcome; they do not create separate ownership or duplicate accepted additions. Applicable monetary/Brand validation details remain open under PRD OPQ-013 and must be resolved before dependent implementation, without defaulting or silently altering confirmed values.
+> Future edits may revise or clear these properties with explicit user confirmation. Supplied valid values participate in the same accepted garment addition and safe-retry outcome; they do not create separate ownership or duplicate accepted additions. Approved validation (PRD OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points, a blank Brand is unspecified, and accepted Brand text is kept exactly. A Price of zero is a known amount, not a missing one; negative amounts, more than 12 integer digits and more fractional digits than the currency's ISO 4217 minor unit are rejected, never rounded; the currency is a valid upper-case ISO 4217 code. Nothing is defaulted or silently altered.
 >
 > **Applies To:** manual entry, inspection, future editing and assisted-review protection across all eight categories.
 >
@@ -818,7 +821,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > **When** I omit or provide the other applicable properties
 >
-> **Then** omission does not block saving. Support all 13 properties in this Sprint: optional Subtype, zero or multiple distinct Materials, one optional Pattern, Style, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand text and purchase Price. Material duplicates add no semantic material; no percentages/proportions are fabricated. Price uses decimal amount plus explicit ISO 4217 currency together or is cleared; missing Price is unknown, not zero. Preserve all accepted values without float calculations, image/location inference or currency conversion.
+> **Then** omission does not block saving. Support all 13 properties in this Sprint: optional Subtype, zero or multiple distinct Materials, one optional Pattern, zero or multiple distinct Styles, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand text and purchase Price. Material duplicates add no semantic material; no percentages/proportions are fabricated. Price uses decimal amount plus explicit ISO 4217 currency together or is cleared; missing Price is unknown, not zero. Preserve all accepted values without float calculations, image/location inference or currency conversion.
 >
 > ### AC-07 — Apply category-specific detail validation
 >
@@ -916,6 +919,8 @@ Only its application note applies; the research body introduces no garment prope
 > | Completion / Verification | [Definition of Done](../../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 >
 > ## 10. Open Refinement Notes
+>
+> **2026-11-07 Product Owner decisions.** Style accepts zero, one or several distinct approved values (OPEN-S2-08). Brand: at most 100 Unicode code points, blank means unspecified, accepted text kept exactly (OPEN-S2-01B). Price: zero is valid, negative invalid, at most 12 integer digits, fractional digits limited to the currency's ISO 4217 minor unit and rejected, never rounded, beyond it; valid upper-case ISO 4217 currency (OPEN-S2-01A; PRD OPQ-013 resolved). The Tops subtype is spelled Tanks & Camis (`TANKS_AND_CAMIS`). No image field is introduced; eligibility stays `NOT_EVALUATED`. See the [decision implementation notes](../decision-implementation-notes.md).
 >
 > **2026-11-05 product revision:** [PRD Section 34.1](../../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../sprint-plan.md); source status remains Baseline Draft.
 >
@@ -1065,13 +1070,13 @@ Only its application note applies; the research body introduces no garment prope
 >
 > - One accepted garment belongs to the User's active wardrobe; confirmed/corrected/entered-and-confirmed values are authoritative.
 > - Applicable confidence/provenance and unknown states remain distinct; later automated output cannot silently replace accepted values.
-> - Readiness is explained separately from Saveable ownership; an imageless manual entry remains accessible.
+> - Recommendation eligibility is reported as not evaluated, separately from Saveable ownership; an imageless manual entry remains accessible.
 >
 > ## 10. Minimal / Failure Postconditions
 >
 > - Canceled/unconfirmed/rejected work creates no confirmed wardrobe entry and does not alter existing garments.
 > - Known failed saving is not reported as successful; an uncertain outcome must be reviewed before safe retry.
-> - Missing compatibility information is not fabricated and cannot justify an unsupported ready/valid-outfit claim.
+> - No compatibility information is requested or fabricated, and no ready/unready or valid-outfit claim is made (PRD OPQ-015; FEAT-WAR-001 updated 2026-11-07).
 > - Loss of access pauses protected use; inaccessible personal data is not exposed or labeled empty. Prior accepted information remains governed by its authorized state.
 >
 > ## 11. Business Rules
@@ -1133,7 +1138,7 @@ Only its application note applies; the research body introduces no garment prope
 >
 > ## 15. Open Issues
 >
-> PRD OPQ-012–014 now track unresolved category readiness/composition and optional-field/subtype policies. Earlier issue review below predates this revision.
+> PRD OPQ-012 defers readiness/composition to engine development; OPQ-013 (Brand/Price validation) and OPQ-014 are resolved, and OPQ-016–018 (multiple Styles, Tanks & Camis, paged overview) were decided on 2026-11-07. Earlier issue review below predates this revision.
 >
 > The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 >
@@ -1344,7 +1349,7 @@ stop
 >
 > **Status:** Selected
 
-**Source:** [selected-architecture-decisions.md — 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) · lines 286–351 at Stage 0
+**Source:** [selected-architecture-decisions.md — 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) · lines 286–353 at Stage 0
 
 > ## 8. Approved Architecture Refinement AR-01–AR-08 — Context-Owned Schemas
 >
@@ -1404,6 +1409,8 @@ stop
 >
 > These checks run in `mvnw clean verify`, and the CI report guard requires them. They detect violations at build time; they do not restrict a running application, because the single database role can access every schema (AR-08).
 >
+> **Product Owner confirmation, 2026-11-07 (REVIEW-DB-ROLE).** Keep the single application DataSource and database role with these build-time checks; do not introduce per-context runtime roles now. Separate runtime roles may be reconsidered only through a future architecture decision.
+>
 > ### 8.6 Realization for the Implemented Identity Module
 >
 > V1–V5 created the Identity tables unqualified in Flyway's default schema. They have been applied to persistent databases and are never edited. The forward migration `V6__move_identity_tables_into_identity_schema.sql` creates the `identity` schema and moves the three tables with `ALTER TABLE ${flyway:defaultSchema}.<table> SET SCHEMA identity`:
@@ -1423,7 +1430,7 @@ stop
 | Main 6: validate vocabulary, applicability, Price pair | `GarmentEntryValidator` + V8 constraints; every problem reported in `fieldErrors` | Inline correction; keeps the draft | — |
 | Main 7: explicit confirmation | `confirmed: true` required | Confirmation control | — |
 | Main 8: acknowledge one accepted garment; eligibility not evaluated | 201 with the stored garment and `recommendationEligibility: NOT_EVALUATED` | Acknowledgement | Browse/detail: US-WAR-001/002 |
-| A4: save with optional information absent | Absent values stored as NULL / no material rows | — | — |
+| A4: save with optional information absent | Absent values stored as NULL / no Material or Style rows | — | — |
 | A5: cancel before confirmation | Nothing to do: drafts are never sent or stored | Cancel/leave | — |
 | E3: missing minimum or invalid information | 400 `VALIDATION_FAILED`, nothing stored | Keeps the draft | — |
 | E4: failed or uncertain save | 503 (rolled back, nothing stored); retry with the same `Idempotency-Key` returns the accepted garment (200) or creates it once (201) | Outcome review / retry | — |
@@ -1450,9 +1457,9 @@ stop
 | AC-01 | One INSERT per accepted addition; every supplied value stored exactly and returned; `recommendationEligibility: NOT_EVALUATED` | Human review/confirmation presentation |
 | AC-02 | No image field, upload or analysis anywhere in the manual path | — |
 | AC-03 | Nothing persists before `POST` with `confirmed: true`; the stored values are exactly the last submitted ones | Draft editing and review (client-held) |
-| AC-04 | Complete source lists as enums (checked against the authority); parent/applicability validation; `UNSUPPORTED_VALUE` / `NOT_IN_CATEGORY` instead of replacement; no Etc; Color single-valued | Vietnamese labels |
+| AC-04 | Complete source lists as enums (checked against the authority, including the corrected "Tanks & Camis"); parent/applicability validation; `UNSUPPORTED_VALUE` / `NOT_IN_CATEGORY` instead of replacement; no Etc; Color single-valued | Vietnamese labels |
 | AC-05 | Missing/unconfirmed Category/Color → 400 with every field listed; no write | Draft retained by the client |
-| AC-06 | All 13 properties supported and optional except the minimum; repeated Materials collapse; Price amount+currency together, exact decimal string, no conversion | — |
+| AC-06 | All 13 properties supported and optional except the minimum; repeated Materials and repeated Styles collapse; several Styles in every category; Brand kept exactly; Price amount+currency together, exact decimal string, 0 valid, no rounding or conversion | — |
 | AC-07 | `NOT_APPLICABLE` for Tops-only/Pants-only fields outside their category; `NOT_IN_CATEGORY` for a Length from the other list; nothing discarded | Category-change review UI |
 | AC-08 | No readiness predicate, column or field except the constant `NOT_EVALUATED` | Explanation wording |
 | AC-09 | `provenance: USER_ENTERED`; no code path can overwrite accepted values (no update operation exists); Brand/Price never inferred | Future AI-overwrite regression when AI exists |
@@ -1467,11 +1474,11 @@ stop
 | # | Statements (source) | Treatment |
 | --- | --- | --- |
 | C-1 | FR-GAR-005 is retained but "Superseded — no active obligation" (SRS §3.5.1) | Not implemented; no readiness gate anywhere. |
-| C-2 | PRD FEAT-WAR-001 item 2: "distinguish saveable entries needing additional compatibility information from recommendation-garments evaluated under a future approved policy" versus the authority §4 / BRULE-GAR-003 / OPQ-015 ("No ready/unready result … is approved") | The 2026-11-05 authority and OPQ-015 supersede the older wording. Nothing is labelled as "needing compatibility information" ([OPEN] OPEN-S2-11: the PRD text should be aligned by the PO/BA). |
-| C-3 | DATA-GAR-002's verification column still mentions "SOLID density", a removed attribute | Stale verification note; Pattern Density is not implemented ([OPEN] OPEN-S2-12). |
-| C-4 | Authority §4 and PRD OPQ-013 leave Price bounds, zero/negative, precision/rounding and currency list, and Brand length/blank/normalization unresolved | **Product decision still open** ([OPEN] OPEN-S2-01). This guide implements the smallest defensible policy ([TECH] TD-S2-11/TD-S2-12), each kept in one class. It must be confirmed before the story is accepted. |
-| C-5 | Style: "Optional named Style selection" without a stated cardinality; authority §4 says cardinality "need[s] the applicable story-specific contract decision" | [TECH] TD-S2-13: **one** optional Style, read as the singular "selection", the way Pattern is single. [OPEN] OPEN-S2-08: if the PO wants several, add a child table like Materials and change `style` to `styles`. |
-| C-6 | Only the ten Dresses/Jumpsuits subtypes have approved identifiers; authority §3: other representations "belong to selected-story JIT design" | [TECH] TD-S2-10: codes derived mechanically from labels (`Tanks & Camils` → `TANKS_AND_CAMILS`); every label kept exactly via `label()`. |
+| C-2 | PRD FEAT-WAR-001 used to "distinguish saveable entries needing additional compatibility information" | Resolved (OPEN-S2-11): the PRD now says eligibility is not evaluated and no entry is labelled ready or unready. The backend returns the constant `NOT_EVALUATED` (X-1). ✅ |
+| C-3 | DATA-GAR-002's verification column mentioned "SOLID density", a removed attribute | Resolved (OPEN-S2-12): the SRS verification text was corrected; Solid remains a Pattern value and no density attribute exists. ✅ |
+| C-4 | Price bounds, zero/negative, precision/rounding and currency list, and Brand length/blank/normalization were unresolved (PRD OPQ-013) | Resolved: the Product Owner approved TD-S2-11 exactly (OPEN-S2-01A) and TD-S2-12 (OPEN-S2-01B) on 2026-11-07; the PRD, SRS §3.5.2, BRULE-GAR-010 and the authority now state the rules. ✅ ⏳ |
+| C-5 | Style cardinality was not stated | Resolved: OPEN-S2-08 option B, **multiple Styles like Materials** (zero, one or several distinct approved values, every category, no 14th property). It supersedes the former single-value TD-S2-13; the guide now stores a set in `wardrobe.wardrobe_garment_style` and exchanges `"styles": [...]`. ✅ ⏳ |
+| C-6 | Only the ten Dresses/Jumpsuits subtypes have approved identifiers; authority §3: other representations "belong to selected-story JIT design" | [TECH] TD-S2-10: codes derived mechanically from labels (`Tanks & Camis` → `TANKS_AND_CAMIS`); every label kept exactly via `label()`. The earlier misspelling "Tanks & Camils" was corrected by the PO (REVIEW-TAXONOMY). ✅ ⏳ |
 | C-7 | Listed fallbacks (Neckline "Other", "Other Materials", "Other Patterns", "Colorful") versus "no invented UNKNOWN/OTHER" | Listed fallbacks are ordinary values; any other `OTHER`/`UNKNOWN`/`ETC` is `UNSUPPORTED_VALUE`. |
 | C-8 | SRS §3.5 has a stray `\|---\|---\|` line before the FR-GAR table header | Formatting defect only; the verbatim quotation above starts at the real header. |
 
@@ -1503,7 +1510,7 @@ flowchart TB
     jdbc --> ports
     jdbc --> domain
     config --> jdbc & app
-    jdbc --> pg[(PostgreSQL schema wardrobe:<br/>wardrobe_garment,<br/>wardrobe_garment_material)]
+    jdbc --> pg[(PostgreSQL schema wardrobe:<br/>wardrobe_garment,<br/>wardrobe_garment_material,<br/>wardrobe_garment_style)]
 ```
 
 Wardrobe depends on Identity **only** through `identity.api` (enforced by `ArchitectureDependencyTest`). Domain and application import no Spring, JDBC or Jackson types.
@@ -1527,7 +1534,7 @@ classDiagram
         GarmentColor color
         Set~GarmentMaterial~ materials
         Optional~GarmentPattern~ pattern
-        Optional~GarmentStyle~ style
+        Set~GarmentStyle~ styles
         Optional~GarmentFit~ fit
         Optional~GarmentNeckline~ neckline
         Optional~GarmentSleeveLength~ sleeveLength
@@ -1548,7 +1555,7 @@ classDiagram
     GarmentProfile --> Brand
 ```
 
-`GarmentProfile` is exactly the 13 approved properties; nothing else is a fashion property. Identity, owner, timestamps, provenance and removal are **metadata** (authority §5).
+`GarmentProfile` is exactly the 13 approved properties; nothing else is a fashion property. Materials and Styles are sets of approved values; Style being a set adds no property. Identity, owner, timestamps, provenance and removal are **metadata** (authority §5).
 
 ### 10.3 Vocabulary representation
 
@@ -1559,7 +1566,7 @@ classDiagram
 | Color | 34 | all (required, exactly one) | `GarmentColor` |
 | Material | 28 | all (0..n distinct) | `GarmentMaterial` |
 | Pattern | 24 | all (0..1) | `GarmentPattern` |
-| Style | 17 | all (0..1, TD-S2-13) | `GarmentStyle` |
+| Style | 17 | all (0..n distinct, TD-S2-13) | `GarmentStyle` |
 | Fit / Neckline / Sleeve Length | 4 / 23 / 5 | TOPS | `GarmentFit` / `GarmentNeckline` / `GarmentSleeveLength` |
 | Length | 4 (TOPS) + 2 (PANTS) | TOPS, PANTS | `GarmentLength(category, label)` |
 | Silhouette | 7 | PANTS | `GarmentSilhouette` |
@@ -1568,11 +1575,12 @@ API and database carry the **code** (the enum constant name); `label()` returns 
 
 ### 10.4 Data model (V8)
 
-Both tables live in Wardrobe's own schema, which V8 creates as the first Wardrobe migration (`CREATE SCHEMA IF NOT EXISTS wardrobe`): `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material` ([ARCH] AR-01). The only foreign key, material → garment, stays inside `wardrobe`; `owner_account_id` is a plain identifier taken from the authenticated principal, with no foreign key into `identity` ([ARCH] AR-04). Every statement in `JdbcGarmentRepository` names `wardrobe.<table>`; no Wardrobe SQL names an `identity` table ([ARCH] AR-02, AR-03).
+All three tables live in Wardrobe's own schema, which V8 creates as the first Wardrobe migration (`CREATE SCHEMA IF NOT EXISTS wardrobe`): `wardrobe.wardrobe_garment`, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style` ([ARCH] AR-01). The only foreign keys, material → garment and style → garment, stay inside `wardrobe`; `owner_account_id` is a plain identifier taken from the authenticated principal, with no foreign key into `identity` ([ARCH] AR-04). Every statement in `JdbcGarmentRepository` names `wardrobe.<table>`; no Wardrobe SQL names an `identity` table ([ARCH] AR-02, AR-03).
 
 ```mermaid
 erDiagram
     wardrobe_garment ||--o{ wardrobe_garment_material : "has 0..28"
+    wardrobe_garment ||--o{ wardrobe_garment_style : "has 0..17"
     wardrobe_garment {
         uuid id PK
         uuid owner_account_id "authenticated Identity account id, no FK"
@@ -1582,13 +1590,12 @@ erDiagram
         text subtype "nullable, must belong to category"
         text color "34 codes"
         text pattern "nullable"
-        text style "nullable"
         text fit "nullable, TOPS only"
         text neckline "nullable, TOPS only"
         text sleeve_length "nullable, TOPS only"
         text length "nullable, TOPS or PANTS list"
         text silhouette "nullable, PANTS only"
-        text brand "nullable, 1-100 chars, not blank"
+        text brand "nullable, 1-100 code points, not blank, exact"
         numeric price_amount "nullable, >= 0, scale <= 4"
         text price_currency "nullable, ^[A-Z]{3}$, with amount"
         text value_provenance "USER_ENTERED"
@@ -1599,9 +1606,13 @@ erDiagram
         uuid garment_id PK,FK
         text material PK "28 codes"
     }
+    wardrobe_garment_style {
+        uuid garment_id PK,FK
+        text style PK "17 codes"
+    }
 ```
 
-Index `ix_wardrobe_garment_owner_current (owner_account_id, created_at DESC, id) WHERE removed_at IS NULL` serves US-WAR-001.
+Index `ix_wardrobe_garment_owner_current (owner_account_id, created_at DESC, id DESC) WHERE removed_at IS NULL` serves US-WAR-001's keyset pages: its order is exactly the overview order (OPEN-S2-10). There is no `style` column: a Style can only be stored as a row of the set table.
 
 ### 10.5 API contract
 
@@ -1615,7 +1626,7 @@ Index `ix_wardrobe_garment_owner_current (owner_account_id, created_at DESC, id)
   "color": "NAVY",
   "materials": ["COTTON", "SPANDEX_ELASTANE"],
   "pattern": "STRIPED",
-  "style": "CASUAL",
+  "styles": ["CASUAL", "MINIMALIST"],
   "fit": "REGULAR",
   "neckline": "ROUND",
   "sleeveLength": "SHORT_SLEEVE",
@@ -1628,7 +1639,7 @@ Index `ix_wardrobe_garment_owner_current (owner_account_id, created_at DESC, id)
 
 | Status | Meaning | Body |
 | --- | --- | --- |
-| 201 | This request created the garment | `Garment`: every field present, null when absent or not applicable, `materials: []` when none, `provenance: USER_ENTERED`, `recommendationEligibility: NOT_EVALUATED`, `createdAt` |
+| 201 | This request created the garment | `Garment`: every field present, null when absent or not applicable, `materials: []` and `styles: []` when none (both in catalogue order), `provenance: USER_ENTERED`, `recommendationEligibility: NOT_EVALUATED`, `createdAt`; no image field |
 | 200 | The same logical addition was already accepted | The same `Garment` |
 | 400 | `VALIDATION_FAILED` (with `fieldErrors[{field, code}]`) or `MALFORMED_REQUEST` | Problem; nothing stored |
 | 401 | Missing/invalid/expired token or unusable session | Problem `AUTHENTICATION_REQUIRED`; nothing stored |
@@ -1649,7 +1660,7 @@ sequenceDiagram
     Svc->>Svc: validate every field; fingerprint F
     Svc->>DB: BEGIN; INSERT garment (owner, K, F) ON CONFLICT (owner, K) DO NOTHING
     alt inserted
-        Svc->>DB: INSERT materials; COMMIT
+        Svc->>DB: INSERT materials; INSERT styles; COMMIT
         API-->>App: 201 Garment
     else key already used
         Svc->>DB: SELECT garment by (owner, K)
@@ -1668,7 +1679,8 @@ sequenceDiagram
 | Four concurrent deliveries of one addition | One INSERT wins; the others wait on the unique index, then find it; exactly one row | `ConcurrentGarmentCreationIT.concurrentDeliveriesOfOneAdditionCreateExactlyOneGarment` |
 | Two separate intentions with identical values | Two garments | `twoSeparateAdditionsOfIdenticalLookingGarmentsAreBothKept`, `concurrentSeparateAdditionsOfTheSameGarmentAreAllKept` |
 | Key reused for different values | 422; original unchanged | `reusingAKeyForADifferentGarmentIsRejectedAndChangesNothing` |
-| Connection lost after the garment INSERT | Rollback; 503; retry creates it once (201) | `WardrobeFailureIT.aFailedSaveIsRolledBackAndNotReportedAsCreatedAndTheRetryCreatesItOnce` |
+| Connection lost after the garment INSERT | Rollback, including Material and Style rows; 503; retry creates it once (201) | `WardrobeFailureIT.aFailedSaveIsRolledBackAndNotReportedAsCreatedAndTheRetryCreatesItOnce` |
+| Retry listing the same Styles in another order | 200, the same garment: the fingerprint uses the Style set | `AddGarmentApiIT.aRetryWithTheSameStylesInAnotherOrderIsTheSameAddition`, `GarmentCreationFingerprintTest` |
 | Same key used by two accounts | Independent additions | `theOwnerIsAlwaysTheAuthenticatedAccountAndKeysAreScopedPerOwner` |
 
 No row is locked explicitly: the unique constraint is the serialization point, and `INSERT … ON CONFLICT DO NOTHING` waits for a concurrent uncommitted insert with the same key before deciding, so READ COMMITTED is sufficient.
@@ -1676,7 +1688,7 @@ No row is locked explicitly: the unique constraint is the serialization point, a
 ### 10.7 Security and privacy
 
 - `/api/v1/wardrobe/**` is protected by the existing default-deny chain; no security rule is added. Every request needs a valid JWT **and** a usable persistent session, so logged-out, expired and reset-revoked credentials are refused (`AddGarmentApiIT.unusableAccessIsDeniedAndSavesNothing`).
-- The owner is taken from `AuthenticatedAccount`; the body has no owner field, and an `ownerAccountId` sent anyway is ignored.
+- The owner is taken from `AuthenticatedAccount`; the body has no owner field, and an `ownerAccountId` sent anyway is ignored. Like any unknown field, a former single `style` field is not part of the contract and is never stored; `styles` is the only Style field.
 - Error bodies never echo submitted values; logs record only the failure.
 - Browser clients: the CORS configuration now allows the `Idempotency-Key` header (`CorsSecurityIT.garmentAdditionPreflightMayCarryTheIdempotencyKey`).
 - Only the user's own entered data is stored; nothing is sent to any third party; no personal data is used for training (BRULE-AUTH-007).
@@ -1686,9 +1698,10 @@ No row is locked explicitly: the unique constraint is the serialization point, a
 | Decision | Chosen | Alternatives | Rationale |
 | --- | --- | --- | --- |
 | Vocabulary storage (TD-S2-10) | Text codes + CHECK constraints generated with the enums | Lookup tables with FKs; PostgreSQL ENUM types | One migration, no seed data to keep in sync, readable rows; adding approved values later is a forward migration replacing a constraint. ENUM types cannot drop values and complicate tests. |
-| Material storage | Child table, PK (garment, material) | Text array column; JSON | Enforces "distinct" in the database and stays queryable for future search (PBI-015). |
+| Material and Style storage (TD-S2-13) | Two child tables, PK (garment, material) and (garment, style) | Text array columns; JSON; a single `style` column (the former TD-S2-13) | Enforces "distinct" in the database, keeps one CHECK list per vocabulary, and stays queryable for future search (PBI-015). Style follows Material because the PO decided they have the same cardinality (OPEN-S2-08). |
 | Logical-action identity (TD-S2-14) | Client `Idempotency-Key` header (UUID), unique per owner, plus value fingerprint | Body field; server-generated draft id; dedupe by values | A header follows the IETF idempotency-key draft and keeps the body equal to the garment. Deduplicating by values would merge two genuinely separate similar garments, which AC-12 and the plan forbid. |
-| Price on the wire (TD-S2-11) | Decimal **string** | JSON number | JSON numbers are parsed as binary floating point by most clients, which the requirements forbid. |
+| Price on the wire (TD-S2-11, approved) | Decimal **string**; 0 valid; at most 12 integer digits; scale ≤ minor unit, rejected not rounded | JSON number; rounding | JSON numbers are parsed as binary floating point by most clients, which the requirements forbid. |
+| Brand (TD-S2-12, approved) | Exact text, ≤ 100 code points, blank = none | Trimming; case folding; catalogue | User authority over entered text (BRULE-GAR-010). |
 | Absent and inapplicable fields (TD-S2-15) | Always present, `null` | Omit inapplicable fields | Matches the existing contract convention ("every returned field is always present"), enforced by `IdentityOpenApiContractIT`; the category tells which fields apply. |
 | Owner integrity (TD-S2-09) | No FK into Identity | FK to `identity.identity_account` | ADA-016 and [ARCH] AR-04: contexts own their persistence; ownership comes from the published authenticated identity. |
 | Physical placement ([ARCH] AR-01) | Own schema `wardrobe`, created by V8 | Tables in `public` next to Flyway's history; one shared business schema | Required by the approved refinement: the schema expresses ownership, and the SQL and metadata tests can verify it. |
@@ -1705,15 +1718,15 @@ Every file this story adds or modifies, in implementation order (Stage 1 → Sta
 
 | # | Action | File | Layer | Purpose | Related requirements |
 |---|---|---|---|---|---|
-| P1 | [ADD] | `backend/src/main/resources/db/migration/V8__create_wardrobe_garment.sql` | Persistence (Flyway) | Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints. | DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016 |
+| P1 | [ADD] | `backend/src/main/resources/db/migration/V8__create_wardrobe_garment.sql` | Persistence (Flyway) | Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment`, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints, and the keyset index of the overview. | DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016 |
 | P2 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/ControlledValue.java` | Domain | Common contract of every vocabulary enum: code (`name()`), approved label, exact-code lookup without fallback. | BRULE-GAR-004, BRULE-GAR-005, BRULE-GAR-006 |
 | P3 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/CategorySpecificProperty.java` | Domain | Names the five category-specific properties. | FR-GAR-007 |
 | P4 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentCategory.java` | Domain | The eight categories and the applicability rule `accepts(CategorySpecificProperty)`. | FR-GAR-001, FR-GAR-007, BRULE-GAR-004, BRULE-GAR-005 |
-| P5 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentSubtype.java` | Domain | All 84 approved subtypes, each with its parent category. | FR-GAR-002, BRULE-GAR-004, OPQ-014 |
+| P5 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentSubtype.java` | Domain | All 84 approved subtypes, each with its parent category (including the corrected `TANKS_AND_CAMIS` "Tanks & Camis"). | FR-GAR-002, BRULE-GAR-004, OPQ-014 |
 | P6 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentColor.java` | Domain | All 34 approved dominant Colors, including Colorful. | FR-GAR-008 |
 | P7 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentMaterial.java` | Domain | All 28 approved Materials. | FR-GAR-010 |
 | P8 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentPattern.java` | Domain | All 24 approved Patterns. | FR-GAR-009 |
-| P9 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentStyle.java` | Domain | All 17 named Styles (Etc is not a value). | FR-GAR-009 |
+| P9 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentStyle.java` | Domain | All 17 named Styles (Etc is not a value); a garment holds a set of them. | FR-GAR-009, OPEN-S2-08 |
 | P10 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentFit.java` | Domain | The 4 Fits (Tops only). | FR-GAR-007 |
 | P11 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentNeckline.java` | Domain | The 23 Necklines (Tops only). | FR-GAR-007 |
 | P12 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentSleeveLength.java` | Domain | The 5 Sleeve Lengths (Tops only). | FR-GAR-007 |
@@ -1721,9 +1734,9 @@ Every file this story adds or modifies, in implementation order (Stage 1 → Sta
 | P14 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentSilhouette.java` | Domain | The 7 Silhouettes (Pants only). | FR-GAR-007 |
 | P15 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentValueProblem.java` | Domain | Stable field-error codes of the Wardrobe API. | ERR-GAR-001, AC-04, AC-05, AC-07 |
 | P16 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/InvalidGarmentValueException.java` | Domain | A Brand or Price value broke a rule; never echoes the value. | AC-06 |
-| P17 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/Brand.java` | Domain | Optional exact Brand text, at most 100 code points, blank = not supplied. | FR-GAR-012, BRULE-GAR-010, OPQ-013 |
-| P18 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/PurchasePrice.java` | Domain | Optional purchase Price as an exact `BigDecimal` plus `java.util.Currency`; parsing rules for amount and currency. | FR-GAR-013, BRULE-GAR-010, OPQ-013 |
-| P19 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentProfile.java` | Domain | The accepted values of exactly the 13 properties, with applicability invariants and distinct Materials in catalogue order. | DATA-GAR-002, BRULE-GAR-005, BRULE-GAR-006, FR-GAR-006, FR-GAR-007, FR-GAR-010 |
+| P17 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/Brand.java` | Domain | Optional exact Brand text, at most 100 code points, blank = not supplied. | FR-GAR-012, BRULE-GAR-010, OPQ-013 (resolved), OPEN-S2-01B |
+| P18 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/PurchasePrice.java` | Domain | Optional purchase Price as an exact `BigDecimal` plus `java.util.Currency`; parsing rules for amount and currency. | FR-GAR-013, BRULE-GAR-010, OPQ-013 (resolved), OPEN-S2-01A |
+| P19 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentProfile.java` | Domain | The accepted values of exactly the 13 properties, with applicability invariants and distinct Materials and Styles in catalogue order. | DATA-GAR-002, BRULE-GAR-005, BRULE-GAR-006, FR-GAR-006, FR-GAR-007, FR-GAR-009, FR-GAR-010, OPEN-S2-08 |
 | P20 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/ValueProvenance.java` | Domain | How accepted values were established; Sprint 2 has only `USER_ENTERED`. | BRULE-GAR-008, AC-09, SRS §4.10 |
 | P21 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/domain/Garment.java` | Domain | One confirmed garment: id, owner, profile, provenance, creation time and current/removed state. | DATA-GAR-001, DATA-GAR-005, BRULE-GAR-001 |
 | P22 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/WardrobeTransactions.java` | Application port | Wardrobe's own transaction boundary (it must not use Identity's private port). | ADA-009, ADA-015, ADA-016 |
@@ -1735,37 +1748,38 @@ Every file this story adds or modifies, in implementation order (Stage 1 → Sta
 | P28 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/IdempotencyKeyReusedException.java` | Application | A key reused for different values; nothing changed. | ADA-009, AC-12 |
 | P29 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreation.java` | Application | Accepted garment and whether this request created it. | FR-AI-010, AC-01, AC-12 |
 | P30 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentEntryValidator.java` | Application | Field-by-field validation of the 13 properties, confirmation and key; collects every problem; never substitutes or discards. | FR-GAR-002/003/006–010/012/013, BRULE-GAR-004–006/010, AC-03–AC-07, ERR-GAR-001 |
-| P31 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprint.java` | Application | SHA-256 of the accepted values, used to tell a retry from a key reused for a different garment. | ADA-009, AC-12 |
-| P32 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java` | Application (use case) | Validates, then inserts garment + materials + key atomically, or returns the garment an earlier delivery of the same addition created. | FR-AI-003, FR-AI-008, FR-AI-010, FR-GAR-003, DATA-INT-004, AC-01, AC-02, AC-05, AC-11, AC-12 |
+| P31 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprint.java` | Application | SHA-256 of the accepted values, used to tell a retry from a key reused for a different garment; Materials and Styles enter as catalogue-ordered sets. | ADA-009, AC-12 |
+| P32 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java` | Application (use case) | Validates, then inserts garment + Materials + Styles + key atomically, or returns the garment an earlier delivery of the same addition created. | FR-AI-003, FR-AI-008, FR-AI-010, FR-GAR-003, DATA-INT-004, AC-01, AC-02, AC-05, AC-11, AC-12 |
 | P33 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/SpringWardrobeTransactions.java` | Outbound adapter | `TransactionTemplate` implementation of the port. | ADA-015 |
-| P34 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepository.java` | Outbound adapter | PostgreSQL implementation: `INSERT ... ON CONFLICT DO NOTHING`, material rows, and one-statement reads with `ARRAY(...)` of materials. | DATA-GAR-001/002, DATA-INT-004 |
+| P34 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepository.java` | Outbound adapter | PostgreSQL implementation: `INSERT ... ON CONFLICT DO NOTHING`, Material and Style rows, and one-statement reads with `ARRAY(...)` of Materials and Styles. | DATA-GAR-001/002, DATA-INT-004 |
 | P35 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PriceRequest.java` | Inbound adapter (web) | Price `{amount: string, currency}`. | FR-GAR-013 |
-| P36 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentCreationRequest.java` | Inbound adapter (web) | JSON body: confirmation plus the 13 properties as codes; no owner field. | FR-GAR-001–013, AC-01, AC-13 |
+| P36 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentCreationRequest.java` | Inbound adapter (web) | JSON body: confirmation plus the 13 properties as codes (`materials` and `styles` are arrays); no owner field. | FR-GAR-001–013, AC-01, AC-13 |
 | P37 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PriceResponse.java` | Inbound adapter (web) | Price with the exact amount string. | FR-GAR-013 |
-| P38 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentResponse.java` | Inbound adapter (web) | One garment with every accepted value; every field always present, null when absent or inapplicable; `recommendationEligibility: NOT_EVALUATED`. | FR-GAR-004, DATA-GAR-002, DATA-GAR-005, AC-01, AC-08, AC-09 |
+| P38 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentResponse.java` | Inbound adapter (web) | One garment with every accepted value; every field always present, null when absent or inapplicable, `[]` for no Material or Style; `recommendationEligibility: NOT_EVALUATED`; no image field. | FR-GAR-004, DATA-GAR-002, DATA-GAR-005, AC-01, AC-08, AC-09 |
 | P39 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeGarmentController.java` | Inbound adapter (web) | The cohesive Wardrobe garment API at `/api/v1/wardrobe/garments`; this story adds `POST`. | FR-AUTH-008, AC-01, AC-12, AC-13, Backend conventions §1 |
 | P40 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java` | Inbound adapter (web) | Wardrobe-scoped RFC 9457 problems: 400 VALIDATION_FAILED, 422 IDEMPOTENCY_KEY_REUSED, 400 MALFORMED_REQUEST, 503 TEMPORARILY_UNAVAILABLE. | ERR-GAR-001, ERR-NET-001, AC-05, AC-11, AC-12 |
 | P41 | [ADD] | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobeConfiguration.java` | Configuration | Wires repository, transactions and `AddGarmentService`, reusing the single application `Clock`. | ADA-015 |
 | P42 | [MODIFY] | `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java` | Configuration — existing | Allows the `Idempotency-Key` request header in CORS so browser clients can add garments. | AC-12; CORS configuration of the previous task |
-| P43 | [MODIFY] | `docs/05-api/openapi.yaml` | API contract — existing | Documents `POST /api/v1/wardrobe/garments`, the vocabularies (code + approved label), Price, Garment and new errors; version 0.6.0. | DoD §5 API contract |
+| P43 | [MODIFY] | `docs/05-api/openapi.yaml` | API contract — existing | Documents `POST /api/v1/wardrobe/garments`, the vocabularies (code + approved label, `TANKS_AND_CAMIS`), the `styles` array, Brand and Price rules, Garment and new errors; version 0.6.0. | DoD §5 API contract |
 | P44 | [MODIFY] | `.github/workflows/backend-ci.yml` | CI — existing | Requires every new US-GAR-001 report. | DoD §4 Build and CI |
 | P45 | [MODIFY] | `backend/README.md` | Documentation — existing | Mentions manual garment creation, the Idempotency-Key CORS header and the Wardrobe test suites. | DoD §4 Documentation |
-| T1 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/ApprovedGarmentVocabularyTest.java` | Domain unit test | Compares every vocabulary with the approved property file itself: labels, order, counts, dress identifiers, applicability, no Etc/UNKNOWN. | FR-GAR-001/002/007–010, BRULE-GAR-004/005, OPQ-014, AC-04 |
-| T2 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/GarmentProfileTest.java` | Domain unit test | Minimum, Material ordering/immutability, applicability invariants. | BRULE-GAR-005/006 |
-| T3 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/BrandTest.java` | Domain unit test | Exact value, blank, 100/101 code points, malformed Unicode. | FR-GAR-012 |
-| T4 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/PurchasePriceTest.java` | Domain unit test | Accepted/rejected amounts, minor units, currencies; trailing zeros kept. | FR-GAR-013, OPQ-013 |
+| T1 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/ApprovedGarmentVocabularyTest.java` | Domain unit test | Compares every vocabulary with the approved property file itself: labels (including "Tanks & Camis"), order, counts, dress identifiers, applicability, no Etc/UNKNOWN. | FR-GAR-001/002/007–010, BRULE-GAR-004/005, OPQ-014, AC-04 |
+| T2 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/GarmentProfileTest.java` | Domain unit test | Minimum, Material and Style ordering/immutability, applicability invariants. | BRULE-GAR-005/006, OPEN-S2-08 |
+| T3 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/BrandTest.java` | Domain unit test | Exact value, blank, 100/101 code points, malformed Unicode. | FR-GAR-012, OPEN-S2-01B |
+| T4 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/domain/PurchasePriceTest.java` | Domain unit test | Accepted (including 0, `0.00 USD` and the 12-digit boundary) and rejected amounts, minor units without rounding, currencies; trailing zeros kept. | FR-GAR-013, OPEN-S2-01A |
 | T5 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/InMemoryGarmentRepository.java` | Test double | In-memory `GarmentRepository`. | — |
 | T6 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/ImmediateWardrobeTransactions.java` | Test double | Runs work directly, counts transactions. | — |
-| T7 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentEntryValidatorTest.java` | Application unit test | Every category minimum, every subtype under its category, wrong-category, missing/unconfirmed, unsupported, materials, applicability, Length lists, Price pairs, key, Brand. | AC-03–AC-07, ERR-GAR-001 |
-| T8 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java` | Application unit test | One garment, replay, separate additions, key reuse, owner-scoped keys, no transaction for invalid input, failed commit. | AC-01, AC-11, AC-12 |
-| T9 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java` | Test infrastructure | Wardrobe ITs on the shared real application: empties the `wardrobe` tables, adds garments through the protected API. | — |
-| T10 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java` | PostgreSQL integration test | Every V8 constraint on its own, Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database. | DATA-GAR-002, DATA-INT-004, DoD §5 schema |
-| T11 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepositoryIT.java` | PostgreSQL integration test | Every vocabulary value, all 28 Materials, Brand and Price round-trip exactly. | DATA-GAR-002, AC-01, AC-06 |
-| T12 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/AddGarmentApiIT.java` | HTTP/security integration test | Minimum in all eight categories, full Top/Pants, inapplicable/missing/unsupported values, retry/reuse/separate additions, key, owner, unusable access, malformed JSON. | AC-01, AC-02, AC-04–AC-08, AC-10–AC-13 |
-| T13 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentCreationIT.java` | Concurrency integration test | Concurrent deliveries of one addition create one garment; separate additions all kept. | AC-12, DATA-INT-004 |
-| T14 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeFailureIT.java` | Failure-injection integration test | A connection lost after the insert rolls everything back, is not reported as created, and the retry creates it once. | AC-11, AC-12, ERR-NET-001 |
-| T15 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java` | Security integration test — existing | New case: a browser preflight for a garment addition may carry `Idempotency-Key`. | AC-12 |
-| T16 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java` | Contract test — existing | Calls protected operations that have a body with a real token and a new Idempotency-Key, so required-field enforcement is checked for Wardrobe too. | DoD §5 API contract |
+| T7 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentEntryValidatorTest.java` | Application unit test | Every category minimum, every subtype under its category, wrong-category, missing/unconfirmed, unsupported, Materials, zero/one/several Styles in every category, applicability, Length lists, Price pairs and zero, key, exact and blank Brand. | AC-03–AC-07, ERR-GAR-001, OPEN-S2-01A/01B/08 |
+| T8 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprintTest.java` | Application unit test | Selection order and repeats of Styles do not change the fingerprint; a different Style set does. | ADA-009, AC-12, OPEN-S2-08 |
+| T9 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java` | Application unit test | One garment, replay, separate additions, key reuse, owner-scoped keys, no transaction for invalid input, failed commit. | AC-01, AC-11, AC-12 |
+| T10 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java` | Test infrastructure | Wardrobe ITs on the shared real application: empties the three `wardrobe` tables, adds garments through the protected API. | — |
+| T11 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java` | PostgreSQL integration test | Every V8 constraint on its own (including approved, distinct Style rows, no `style` column, `TANKS_AND_CAMIS` accepted and the misspelling rejected), Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database. | DATA-GAR-002, DATA-INT-004, DoD §5 schema |
+| T12 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepositoryIT.java` | PostgreSQL integration test | Every vocabulary value, all 28 Materials, all 17 Styles on one garment, Brand, Price and a zero Price round-trip exactly. | DATA-GAR-002, AC-01, AC-06 |
+| T13 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/AddGarmentApiIT.java` | HTTP/security integration test | Minimum in all eight categories, full Top/Pants with several Styles, inapplicable/missing/unsupported values, a zero Price, retry/reuse/separate additions (Style order irrelevant), key, owner, unusable access, malformed JSON. | AC-01, AC-02, AC-04–AC-08, AC-10–AC-13 |
+| T14 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentCreationIT.java` | Concurrency integration test | Concurrent deliveries of one addition create one garment; separate additions all kept. | AC-12, DATA-INT-004 |
+| T15 | [ADD] | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeFailureIT.java` | Failure-injection integration test | A connection lost after the insert rolls everything back, including Material and Style rows, is not reported as created, and the retry creates it once. | AC-11, AC-12, ERR-NET-001 |
+| T16 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java` | Security integration test — existing | New case: a browser preflight for a garment addition may carry `Idempotency-Key`. | AC-12 |
+| T17 | [MODIFY] | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java` | Contract test — existing | Calls protected operations that have a body with a real token and a new Idempotency-Key, so required-field enforcement is checked for Wardrobe too. | DoD §5 API contract |
 
 ## 12. Complete Production Implementation
 
@@ -1779,7 +1793,7 @@ There is no new configuration property or secret in this story. The migration (S
 **Path:** `backend/src/main/resources/db/migration/V8__create_wardrobe_garment.sql`  
 **Layer:** Persistence (Flyway)
 
-**Purpose:** Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints.
+**Purpose:** Creates Wardrobe's own schema `wardrobe` with `wardrobe.wardrobe_garment`, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`, including vocabulary, applicability, Price, Brand and one-addition-per-key constraints, and the keyset index of the overview.
 
 **Requirement references:** DATA-GAR-001, DATA-GAR-002, DATA-GAR-005, DATA-INT-004, FR-GAR-001–013, BRULE-GAR-002/004/005/006/010, ADA-009, ADA-016
 
@@ -1793,7 +1807,9 @@ There is no new configuration property or secret in this story. The migration (S
 - *`NUMERIC` without scale* for `price_amount`: PostgreSQL then keeps the scale as entered (`12.50` stays `12.50`); CHECKs bound it to non-negative, under 10¹², at most 4 decimals, and amount/currency together.
 - *`UNIQUE (owner_account_id, creation_key)`* makes "at most one accepted garment per logical addition" a database fact.
 - *`removed_at`* represents current versus no-longer-current ownership without any removal feature (removal is PBI-016).
-- *Materials* live in a child table whose primary key `(garment_id, material)` makes a repeated material impossible; no percentage column exists.
+- *Materials and Styles* live in two child tables whose primary keys `(garment_id, material)` and `(garment_id, style)` make a repeated value impossible; no percentage column exists. There is no `style` column on `wardrobe_garment`: the single-Style representation of the previous revision is gone (OPEN-S2-08 option B).
+- *`ix_wardrobe_garment_owner_current (owner_account_id, created_at DESC, id DESC) WHERE removed_at IS NULL`* matches US-WAR-001's keyset order exactly (OPEN-S2-10).
+- *Taxonomy correction:* the Tops subtype code is `TANKS_AND_CAMIS` (REVIEW-TAXONOMY).
 
 **Complete file:**
 
@@ -1819,7 +1835,6 @@ CREATE TABLE wardrobe.wardrobe_garment (
     subtype              TEXT        NULL,
     color                TEXT        NOT NULL,
     pattern              TEXT        NULL,
-    style                TEXT        NULL,
     fit                  TEXT        NULL,
     neckline             TEXT        NULL,
     sleeve_length        TEXT        NULL,
@@ -1843,7 +1858,7 @@ CREATE TABLE wardrobe.wardrobe_garment (
     CONSTRAINT ck_wardrobe_garment_subtype_in_category CHECK (subtype IS NULL OR CASE category
             WHEN 'TOPS' THEN subtype IN (
                 'T_SHIRTS', 'LONG_SLEEVE_T_SHIRTS', 'SLEEVELESS_T_SHIRTS', 'POLO_SHIRTS',
-                'TANKS_AND_CAMILS', 'CROP_TOPS', 'BLOUSES', 'SHIRTS', 'SWEATSHIRTS', 'HOODIES',
+                'TANKS_AND_CAMIS', 'CROP_TOPS', 'BLOUSES', 'SHIRTS', 'SWEATSHIRTS', 'HOODIES',
                 'SWEATERS', 'SWEATER_VESTS', 'SPORTS_TOPS', 'BODYSUITS')
             WHEN 'DRESSES_JUMPSUITS' THEN subtype IN (
                 'DAY_DRESS', 'T_SHIRT_DRESS', 'SHIRT_DRESS', 'SWEATSHIRT_DRESS', 'SWEATER_DRESS',
@@ -1879,10 +1894,6 @@ CREATE TABLE wardrobe.wardrobe_garment (
         'ARGYLE', 'CAMO', 'COLOR_BLOCK', 'REPEATED', 'CHECKERBOARD', 'PLAID', 'GINGHAM',
         'HOUNDSTOOTH', 'HERRINGBONE', 'CHEVRON', 'TWEED', 'ABSTRACT', 'TIE_DYE',
         'GEOMETRIC', 'LACE', 'OTHER_PATTERNS')),
-    CONSTRAINT ck_wardrobe_garment_style CHECK (style IS NULL OR style IN (
-        'COMFORTABLE', 'CASUAL', 'BUSINESS_CASUAL', 'FORMAL', 'MODERN', 'CLASSIC',
-        'MINIMALIST', 'BOHEMIAN', 'LUXURY', 'SPORTY', 'ATHLEISURE', 'TRENDY', 'KIDCORE',
-        'ARTISTIC', 'DRESSY', 'FEMININE', 'STREET')),
 
     -- Category applicability (FR-GAR-007): Fit, Neckline, Sleeve Length only for Tops;
     -- Length from the Tops or Pants list only for that category; Silhouette only for Pants.
@@ -1901,7 +1912,8 @@ CREATE TABLE wardrobe.wardrobe_garment (
     CONSTRAINT ck_wardrobe_garment_silhouette CHECK (silhouette IS NULL OR (category = 'PANTS' AND silhouette IN (
         'FLARE', 'SLIM', 'TAPERED', 'BAGGY', 'SKINNY', 'BOOTCUT', 'WIDE_LEG'))),
 
-    -- Optional Brand text (FR-GAR-012): never blank, at most 100 characters.
+    -- Optional Brand text (FR-GAR-012, OPEN-S2-01B): never blank, at most 100 Unicode
+    -- code points (char_length counts code points in a UTF8 database), kept exactly.
     CONSTRAINT ck_wardrobe_garment_brand
         CHECK (brand IS NULL OR (char_length(brand) BETWEEN 1 AND 100 AND brand ~ '\S')),
 
@@ -1921,9 +1933,10 @@ CREATE TABLE wardrobe.wardrobe_garment (
         CHECK (removed_at IS NULL OR removed_at >= created_at)
 );
 
--- The owner's current wardrobe, newest first (US-WAR-001).
+-- The owner's current wardrobe, newest first with the id as a stable tie-breaker, so a
+-- keyset page (created_at, id) < (cursor) is one ordered index range (US-WAR-001, OPEN-S2-10).
 CREATE INDEX ix_wardrobe_garment_owner_current
-    ON wardrobe.wardrobe_garment (owner_account_id, created_at DESC, id)
+    ON wardrobe.wardrobe_garment (owner_account_id, created_at DESC, id DESC)
     WHERE removed_at IS NULL;
 
 -- Zero, one or several distinct Materials per garment (FR-GAR-010). The primary
@@ -1937,6 +1950,19 @@ CREATE TABLE wardrobe.wardrobe_garment_material (
         'LINEN', 'ACRYLIC', 'SILK', 'RAYON', 'VISCOSE', 'TWEED', 'VELVET', 'CHIFFON',
         'SUEDE', 'CORDUROY', 'LACE', 'FUR', 'DOWN', 'LYOCELL', 'METAL', 'CUPRO',
         'CASHMERE', 'MOHAIR', 'ANGORA', 'ALPACA', 'OTHER_MATERIALS'))
+);
+
+-- Zero, one or several distinct Styles per garment (FR-GAR-009; Product Owner decision
+-- 2026-11-07, OPEN-S2-08). Stored like Materials: the primary key makes a repeated
+-- selection impossible, and Etc is not a value.
+CREATE TABLE wardrobe.wardrobe_garment_style (
+    garment_id UUID NOT NULL REFERENCES wardrobe.wardrobe_garment (id) ON DELETE CASCADE,
+    style      TEXT NOT NULL,
+    CONSTRAINT pk_wardrobe_garment_style PRIMARY KEY (garment_id, style),
+    CONSTRAINT ck_wardrobe_garment_style CHECK (style IN (
+        'COMFORTABLE', 'CASUAL', 'BUSINESS_CASUAL', 'FORMAL', 'MODERN', 'CLASSIC',
+        'MINIMALIST', 'BOHEMIAN', 'LUXURY', 'SPORTY', 'ATHLEISURE', 'TRENDY', 'KIDCORE',
+        'ARTISTIC', 'DRESSY', 'FEMININE', 'STREET'))
 );
 ```
 
@@ -2079,7 +2105,7 @@ public enum GarmentCategory implements ControlledValue {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentSubtype.java`  
 **Layer:** Domain
 
-**Purpose:** All 84 approved subtypes, each with its parent category.
+**Purpose:** All 84 approved subtypes, each with its parent category (including the corrected `TANKS_AND_CAMIS` "Tanks & Camis").
 
 **Requirement references:** FR-GAR-002, BRULE-GAR-004, OPQ-014
 
@@ -2108,7 +2134,7 @@ public enum GarmentSubtype implements ControlledValue {
     LONG_SLEEVE_T_SHIRTS(GarmentCategory.TOPS, "Long Sleeve T-shirts"),
     SLEEVELESS_T_SHIRTS(GarmentCategory.TOPS, "Sleeveless T-shirts"),
     POLO_SHIRTS(GarmentCategory.TOPS, "Polo Shirts"),
-    TANKS_AND_CAMILS(GarmentCategory.TOPS, "Tanks & Camils"),
+    TANKS_AND_CAMIS(GarmentCategory.TOPS, "Tanks & Camis"),
     CROP_TOPS(GarmentCategory.TOPS, "Crop Tops"),
     BLOUSES(GarmentCategory.TOPS, "Blouses"),
     SHIRTS(GarmentCategory.TOPS, "Shirts"),
@@ -2434,9 +2460,9 @@ public enum GarmentPattern implements ControlledValue {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentStyle.java`  
 **Layer:** Domain
 
-**Purpose:** All 17 named Styles (Etc is not a value).
+**Purpose:** All 17 named Styles (Etc is not a value); a garment holds a set of them.
 
-**Requirement references:** FR-GAR-009
+**Requirement references:** FR-GAR-009, OPEN-S2-08
 
 **Dependencies:** None
 
@@ -2448,7 +2474,8 @@ public enum GarmentPattern implements ControlledValue {
 package com.capsuleai.wardrobe.domain;
 
 /**
- * Garment Style: Optional named Style for every category; Etc is explanatory, never a value (FR-GAR-009).
+ * Garment Style: zero, one or several distinct named Styles for every category; Etc is
+ * explanatory, never a value (FR-GAR-009, Product Owner decision 2026-11-07).
  * Labels are the approved values of the garment-property authority
  * ({@code Initial files/Image to Properties Extraction.md}, Section 3).
  */
@@ -2844,11 +2871,11 @@ public final class InvalidGarmentValueException extends RuntimeException {
 
 **Purpose:** Optional exact Brand text, at most 100 code points, blank = not supplied.
 
-**Requirement references:** FR-GAR-012, BRULE-GAR-010, OPQ-013
+**Requirement references:** FR-GAR-012, BRULE-GAR-010, OPQ-013 (resolved), OPEN-S2-01B
 
 **Dependencies:** `InvalidGarmentValueException`
 
-**[TECH]/[OPEN] choices (TD-S2-12, OPEN-S2-01).** The value is preserved exactly, like the existing `DisplayName`; blank means "not supplied"; 100 code points is a proposed technical bound. These follow "existing conventions" (PRD §13.5) but Brand length/blank/normalization is still PRD OPQ-013: confirm with the PO/BA before merging.
+**Approved rules (OPEN-S2-01B, TD-S2-12).** A supplied value is preserved exactly, like the existing `DisplayName`: no trimming of a non-blank value and no case, accent or whitespace change. Blank means "not supplied". At most 100 Unicode code points (so 100 emoji are allowed). Free text: no enum, catalogue or recognition. Malformed UTF-16 is rejected because PostgreSQL could not store it faithfully.
 
 **Complete file:**
 
@@ -2863,12 +2890,12 @@ import java.util.Optional;
  *
  * <p>A supplied Brand is kept exactly as entered, including case, diacritics and
  * spaces, following the existing Display Name convention. Blank input means
- * "not supplied". The length bound is a proposed technical limit pending PRD
- * OPQ-013.
+ * "not supplied". The Product Owner approved these rules on 2026-11-07
+ * (OPEN-S2-01B, TD-S2-12, PRD OPQ-013).
  */
 public record Brand(String value) {
 
-    /** Proposed technical bound in Unicode code points; see Sprint 2 shared architecture, OPQ-013. */
+    /** Approved bound in Unicode code points (OPEN-S2-01B). */
     public static final int MAX_LENGTH = 100;
 
     public Brand {
@@ -2919,17 +2946,17 @@ public record Brand(String value) {
 
 **Purpose:** Optional purchase Price as an exact `BigDecimal` plus `java.util.Currency`; parsing rules for amount and currency.
 
-**Requirement references:** FR-GAR-013, BRULE-GAR-010, OPQ-013
+**Requirement references:** FR-GAR-013, BRULE-GAR-010, OPQ-013 (resolved), OPEN-S2-01A
 
 **Dependencies:** `InvalidGarmentValueException`
 
-**[TECH]/[OPEN] validation (TD-S2-11, OPEN-S2-01).** The *meaning* is approved (amount originally paid, decimal, explicit ISO 4217, together or cleared, no float, no conversion). The *bounds* are not (PRD OPQ-013), so this class proposes the smallest defensible policy and keeps it in one place:
+**Approved validation (OPEN-S2-01A, TD-S2-11).** The Product Owner approved exactly these rules on 2026-11-07:
 
-- amount is a plain decimal **string** `0|[1-9][0-9]{0,11}` with an optional fraction: non-negative, no exponent, no grouping, at most 12 integer digits; **zero is accepted** as an explicit "paid nothing" distinct from absent;
+- Price is optional; a missing Price is unknown and is never stored or shown as 0;
+- amount is a plain decimal **string** `0|[1-9][0-9]{0,11}` with an optional fraction: no exponent, no grouping, at most 12 integer digits; **0 is valid**, a negative amount is invalid;
 - decimals may not exceed the currency's ISO minor unit (VND 0, USD 2, BHD 3): excess precision is **rejected, never rounded**;
-- currency must be upper-case `[A-Z]{3}` and a real currency known to the JDK's ISO 4217 table with a minor unit (metals/test codes such as XAU are rejected); lower case is rejected rather than silently changed.
-
-If the PO decides differently (for example "zero is not allowed"), only `PurchasePrice` and its test change.
+- currency must be upper-case `[A-Z]{3}` and a real currency known to the JDK's ISO 4217 table with a minor unit (metals/test codes such as XAU are rejected); lower case is rejected rather than silently changed;
+- amount and currency come together or are both omitted (checked by `GarmentEntryValidator`); no currency or price is inferred and nothing is converted.
 
 **Complete file:**
 
@@ -2946,7 +2973,7 @@ import java.util.regex.Pattern;
  * decimal with an explicit ISO 4217 currency (FR-GAR-013, BRULE-GAR-010). Never
  * floating point, never converted, never inferred from location or appearance.
  *
- * <p>Proposed validation pending PRD OPQ-013 (Sprint 2 shared architecture):
+ * <p>Validation approved by the Product Owner on 2026-11-07 (OPEN-S2-01A, TD-S2-11):
  * the amount is a plain non-negative decimal string with at most 12 integer
  * digits and no more decimals than the currency's ISO minor unit (no rounding);
  * the currency is an upper-case ISO 4217 code that names a real currency (codes
@@ -3015,11 +3042,13 @@ public record PurchasePrice(BigDecimal amount, Currency currency) {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentProfile.java`  
 **Layer:** Domain
 
-**Purpose:** The accepted values of exactly the 13 properties, with applicability invariants and distinct Materials in catalogue order.
+**Purpose:** The accepted values of exactly the 13 properties, with applicability invariants and distinct Materials and Styles in catalogue order.
 
-**Requirement references:** DATA-GAR-002, BRULE-GAR-005, BRULE-GAR-006, FR-GAR-006, FR-GAR-007, FR-GAR-010
+**Requirement references:** DATA-GAR-002, BRULE-GAR-005, BRULE-GAR-006, FR-GAR-006, FR-GAR-007, FR-GAR-009, FR-GAR-010, OPEN-S2-08
 
 **Dependencies:** All vocabulary types, `Brand`, `PurchasePrice`
+
+**Sets, not lists.** `materials` and `styles` are normalized to unmodifiable `EnumSet`s, so two selections of the same value are one value, the order is the authority's catalogue order, and a profile cannot be changed after it was accepted. An empty set means "none supplied"; nothing is invented.
 
 **Complete file:**
 
@@ -3037,11 +3066,12 @@ import java.util.Set;
  * The accepted, user-confirmed values of exactly the 13 approved garment
  * properties (DATA-GAR-002, BRULE-GAR-005). Category and Color are required;
  * every other property is optional, and an absent value is {@code Optional.empty()}
- * or an empty Material set, never an invented UNKNOWN.
+ * or an empty Material or Style set, never an invented UNKNOWN.
  *
  * <p>The constructor enforces category applicability; user input is validated
  * before construction so that invalid entries can be reported field by field.
- * Materials are a set in catalogue order, so repeated selections collapse.
+ * Materials and Styles are sets in catalogue order, so repeated selections collapse
+ * (FR-GAR-009/010; multiple Styles approved by the Product Owner, 2026-11-07).
  */
 public record GarmentProfile(
         GarmentCategory category,
@@ -3049,7 +3079,7 @@ public record GarmentProfile(
         GarmentColor color,
         Set<GarmentMaterial> materials,
         Optional<GarmentPattern> pattern,
-        Optional<GarmentStyle> style,
+        Set<GarmentStyle> styles,
         Optional<GarmentFit> fit,
         Optional<GarmentNeckline> neckline,
         Optional<GarmentSleeveLength> sleeveLength,
@@ -3064,7 +3094,7 @@ public record GarmentProfile(
         Objects.requireNonNull(color, "color");
         Objects.requireNonNull(materials, "materials must be empty when absent");
         Objects.requireNonNull(pattern, "pattern must be Optional.empty() when absent");
-        Objects.requireNonNull(style, "style must be Optional.empty() when absent");
+        Objects.requireNonNull(styles, "styles must be empty when absent");
         Objects.requireNonNull(fit, "fit must be Optional.empty() when absent");
         Objects.requireNonNull(neckline, "neckline must be Optional.empty() when absent");
         Objects.requireNonNull(sleeveLength, "sleeveLength must be Optional.empty() when absent");
@@ -3084,12 +3114,13 @@ public record GarmentProfile(
         if (length.isPresent() && length.get().category() != category) {
             throw new IllegalArgumentException("The length belongs to another category's list");
         }
-        materials = distinctInCatalogueOrder(materials);
+        materials = distinctInCatalogueOrder(GarmentMaterial.class, materials);
+        styles = distinctInCatalogueOrder(GarmentStyle.class, styles);
     }
 
     /** A profile with only the Saveable minimum (BRULE-GAR-002). */
     public static GarmentProfile minimum(GarmentCategory category, GarmentColor color) {
-        return new GarmentProfile(category, Optional.empty(), color, Set.of(), Optional.empty(), Optional.empty(),
+        return new GarmentProfile(category, Optional.empty(), color, Set.of(), Optional.empty(), Set.of(),
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.empty(), Optional.empty());
     }
@@ -3101,9 +3132,9 @@ public record GarmentProfile(
         }
     }
 
-    private static Set<GarmentMaterial> distinctInCatalogueOrder(Collection<GarmentMaterial> materials) {
-        EnumSet<GarmentMaterial> distinct = EnumSet.noneOf(GarmentMaterial.class);
-        distinct.addAll(materials);
+    private static <E extends Enum<E>> Set<E> distinctInCatalogueOrder(Class<E> vocabulary, Collection<E> values) {
+        EnumSet<E> distinct = EnumSet.noneOf(vocabulary);
+        distinct.addAll(values);
         return Collections.unmodifiableSet(distinct);
     }
 }
@@ -3340,7 +3371,7 @@ public record AddGarmentCommand(
         String color,
         List<String> materials,
         String pattern,
-        String style,
+        List<String> styles,
         String fit,
         String neckline,
         String sleeveLength,
@@ -3502,12 +3533,13 @@ public record GarmentCreation(Garment garment, boolean newlyCreated) {
 | `category`, `color` | an approved code | `REQUIRED`, `UNSUPPORTED_VALUE` |
 | `subtype` | a code of the selected category | `UNSUPPORTED_VALUE`, `NOT_IN_CATEGORY` |
 | `materials[i]` | approved codes; repeats collapse | `UNSUPPORTED_VALUE` at its position |
-| `pattern`, `style` | an approved code | `UNSUPPORTED_VALUE` (`ETC`, `UNKNOWN`, lower case…) |
+| `pattern` | an approved code | `UNSUPPORTED_VALUE` (`UNKNOWN`, lower case…) |
+| `styles[i]` | approved codes, every category; repeats collapse | `UNSUPPORTED_VALUE` at its position (`ETC`, `Etc`, lower case, `null`…) |
 | `fit`, `neckline`, `sleeveLength` | an approved code, TOPS only | `NOT_APPLICABLE`, `UNSUPPORTED_VALUE` |
 | `length` | TOPS or PANTS list of that category | `NOT_APPLICABLE`, `NOT_IN_CATEGORY`, `UNSUPPORTED_VALUE` |
 | `silhouette` | an approved code, PANTS only | `NOT_APPLICABLE`, `UNSUPPORTED_VALUE` |
-| `brand` | see `Brand` | `TOO_LONG`, `INVALID_CHARACTERS` |
-| `price` | amount and currency together | `INCOMPLETE_PRICE` (`price`), `INVALID_AMOUNT` / `TOO_MANY_DECIMALS` (`price.amount`), `UNSUPPORTED_CURRENCY` (`price.currency`) |
+| `brand` | exact text; blank = none | `TOO_LONG`, `INVALID_CHARACTERS` |
+| `price` | amount and currency together; 0 allowed | `INCOMPLETE_PRICE` (`price`), `INVALID_AMOUNT` / `TOO_MANY_DECIMALS` (`price.amount`), `UNSUPPORTED_CURRENCY` (`price.currency`) |
 
 Blank optional values mean "not supplied". When the category is missing or unknown, category-dependent checks are skipped so the client gets one clear message to fix first.
 
@@ -3579,9 +3611,9 @@ final class GarmentEntryValidator {
         Optional<GarmentCategory> category = required(GarmentCategory.class, "category", command.category());
         Optional<GarmentColor> color = required(GarmentColor.class, "color", command.color());
         Optional<GarmentSubtype> subtype = subtype(command.subtype(), category);
-        Set<GarmentMaterial> materials = materials(command.materials());
+        Set<GarmentMaterial> materials = distinct(GarmentMaterial.class, "materials", command.materials());
         Optional<GarmentPattern> pattern = optional(GarmentPattern.class, "pattern", command.pattern());
-        Optional<GarmentStyle> style = optional(GarmentStyle.class, "style", command.style());
+        Set<GarmentStyle> styles = distinct(GarmentStyle.class, "styles", command.styles());
         Optional<GarmentFit> fit = categorySpecific(
                 GarmentFit.class, "fit", command.fit(), CategorySpecificProperty.FIT, category);
         Optional<GarmentNeckline> neckline = categorySpecific(
@@ -3598,7 +3630,7 @@ final class GarmentEntryValidator {
             throw new GarmentValidationException(violations);
         }
         GarmentProfile profile = new GarmentProfile(category.orElseThrow(), subtype, color.orElseThrow(), materials,
-                pattern, style, fit, neckline, sleeveLength, length, silhouette, brand, price);
+                pattern, styles, fit, neckline, sleeveLength, length, silhouette, brand, price);
         return new ValidatedGarmentEntry(creationKey, profile);
     }
 
@@ -3651,21 +3683,26 @@ final class GarmentEntryValidator {
         return subtype;
     }
 
-    /** Distinct approved Materials; repeated selections collapse into one (FR-GAR-010). */
-    private Set<GarmentMaterial> materials(List<String> codes) {
-        Set<GarmentMaterial> materials = EnumSet.noneOf(GarmentMaterial.class);
+    /**
+     * Distinct approved values of a multi-valued property, Material (FR-GAR-010) or Style
+     * (FR-GAR-009): repeated selections collapse into one, and each unsupported entry is
+     * identified by its position, for example {@code styles[1]}.
+     */
+    private <E extends Enum<E> & ControlledValue> Set<E> distinct(
+            Class<E> vocabulary, String field, List<String> codes) {
+        Set<E> values = EnumSet.noneOf(vocabulary);
         if (codes == null) {
-            return materials;
+            return values;
         }
         for (int index = 0; index < codes.size(); index++) {
-            Optional<GarmentMaterial> material = ControlledValue.fromCode(GarmentMaterial.class, codes.get(index));
-            if (material.isPresent()) {
-                materials.add(material.get());
+            Optional<E> value = ControlledValue.fromCode(vocabulary, codes.get(index));
+            if (value.isPresent()) {
+                values.add(value.get());
             } else {
-                reject("materials[" + index + "]", GarmentValueProblem.UNSUPPORTED_VALUE);
+                reject(field + "[" + index + "]", GarmentValueProblem.UNSUPPORTED_VALUE);
             }
         }
-        return materials;
+        return values;
     }
 
     private <E extends Enum<E> & ControlledValue> Optional<E> categorySpecific(Class<E> vocabulary, String field,
@@ -3737,7 +3774,7 @@ final class GarmentEntryValidator {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprint.java`  
 **Layer:** Application
 
-**Purpose:** SHA-256 of the accepted values, used to tell a retry from a key reused for a different garment.
+**Purpose:** SHA-256 of the accepted values, used to tell a retry from a key reused for a different garment; Materials and Styles enter as catalogue-ordered sets.
 
 **Requirement references:** ADA-009, AC-12
 
@@ -3752,6 +3789,7 @@ import com.capsuleai.wardrobe.domain.Brand;
 import com.capsuleai.wardrobe.domain.ControlledValue;
 import com.capsuleai.wardrobe.domain.GarmentMaterial;
 import com.capsuleai.wardrobe.domain.GarmentProfile;
+import com.capsuleai.wardrobe.domain.GarmentStyle;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -3763,6 +3801,8 @@ import java.util.stream.Collectors;
  * SHA-256 of the accepted values of one addition. A retry with the same
  * Idempotency-Key must carry the same values; a different fingerprint means the
  * client reused a key for a different garment, which is rejected (ADA-009).
+ * Materials and Styles are sets in catalogue order, so the selection order and
+ * repeated selections do not change the fingerprint.
  */
 final class GarmentCreationFingerprint {
 
@@ -3776,7 +3816,7 @@ final class GarmentCreationFingerprint {
                 "color=" + profile.color().name(),
                 "materials=" + profile.materials().stream().map(GarmentMaterial::name).collect(Collectors.joining(",")),
                 "pattern=" + code(profile.pattern()),
-                "style=" + code(profile.style()),
+                "styles=" + profile.styles().stream().map(GarmentStyle::name).collect(Collectors.joining(",")),
                 "fit=" + code(profile.fit()),
                 "neckline=" + code(profile.neckline()),
                 "sleeveLength=" + code(profile.sleeveLength()),
@@ -3805,7 +3845,7 @@ final class GarmentCreationFingerprint {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java`  
 **Layer:** Application (use case)
 
-**Purpose:** Validates, then inserts garment + materials + key atomically, or returns the garment an earlier delivery of the same addition created.
+**Purpose:** Validates, then inserts garment + Materials + Styles + key atomically, or returns the garment an earlier delivery of the same addition created.
 
 **Requirement references:** FR-AI-003, FR-AI-008, FR-AI-010, FR-GAR-003, DATA-INT-004, AC-01, AC-02, AC-05, AC-11, AC-12
 
@@ -3935,7 +3975,7 @@ public final class SpringWardrobeTransactions implements WardrobeTransactions {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepository.java`  
 **Layer:** Outbound adapter
 
-**Purpose:** PostgreSQL implementation: `INSERT ... ON CONFLICT DO NOTHING`, material rows, and one-statement reads with `ARRAY(...)` of materials.
+**Purpose:** PostgreSQL implementation: `INSERT ... ON CONFLICT DO NOTHING`, Material and Style rows, and one-statement reads with `ARRAY(...)` of Materials and Styles.
 
 **Requirement references:** DATA-GAR-001/002, DATA-INT-004
 
@@ -3984,12 +4024,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 /** PostgreSQL implementation of {@link GarmentRepository}. */
 public final class JdbcGarmentRepository implements GarmentRepository {
 
-    /** Every garment column plus its materials, read in one statement for a consistent snapshot. */
+    /** Every garment column plus its Materials and Styles, read in one statement for a consistent snapshot. */
     static final String SELECT_GARMENT = """
             SELECT g.id, g.owner_account_id, g.creation_fingerprint, g.category, g.subtype, g.color,
-                   g.pattern, g.style, g.fit, g.neckline, g.sleeve_length, g.length, g.silhouette,
+                   g.pattern, g.fit, g.neckline, g.sleeve_length, g.length, g.silhouette,
                    g.brand, g.price_amount, g.price_currency, g.value_provenance, g.created_at, g.removed_at,
-                   ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials
+                   ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials,
+                   ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles
             FROM wardrobe.wardrobe_garment g
             """;
 
@@ -4005,11 +4046,11 @@ public final class JdbcGarmentRepository implements GarmentRepository {
         int inserted = jdbc.sql("""
                         INSERT INTO wardrobe.wardrobe_garment (
                             id, owner_account_id, creation_key, creation_fingerprint, category, subtype, color,
-                            pattern, style, fit, neckline, sleeve_length, length, silhouette, brand,
+                            pattern, fit, neckline, sleeve_length, length, silhouette, brand,
                             price_amount, price_currency, value_provenance, created_at)
                         VALUES (
                             :id, :ownerAccountId, :creationKey, :creationFingerprint, :category, :subtype, :color,
-                            :pattern, :style, :fit, :neckline, :sleeveLength, :length, :silhouette, :brand,
+                            :pattern, :fit, :neckline, :sleeveLength, :length, :silhouette, :brand,
                             :priceAmount, :priceCurrency, :valueProvenance, :createdAt)
                         ON CONFLICT (owner_account_id, creation_key) DO NOTHING
                         """)
@@ -4021,7 +4062,6 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 .param("subtype", code(profile.subtype()), Types.VARCHAR)
                 .param("color", profile.color().name())
                 .param("pattern", code(profile.pattern()), Types.VARCHAR)
-                .param("style", code(profile.style()), Types.VARCHAR)
                 .param("fit", code(profile.fit()), Types.VARCHAR)
                 .param("neckline", code(profile.neckline()), Types.VARCHAR)
                 .param("sleeveLength", code(profile.sleeveLength()), Types.VARCHAR)
@@ -4040,6 +4080,12 @@ public final class JdbcGarmentRepository implements GarmentRepository {
             jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
                     .param("garmentId", garment.id())
                     .param("material", material.name())
+                    .update();
+        }
+        for (GarmentStyle style : profile.styles()) {
+            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_style (garment_id, style) VALUES (:garmentId, :style)")
+                    .param("garmentId", garment.id())
+                    .param("style", style.name())
                     .update();
         }
         return true;
@@ -4064,9 +4110,9 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 required(GarmentCategory.class, row.getString("category")),
                 optional(GarmentSubtype.class, row.getString("subtype")),
                 required(GarmentColor.class, row.getString("color")),
-                materials(row.getArray("materials")),
+                codes(GarmentMaterial.class, row.getArray("materials")),
                 optional(GarmentPattern.class, row.getString("pattern")),
-                optional(GarmentStyle.class, row.getString("style")),
+                codes(GarmentStyle.class, row.getArray("styles")),
                 optional(GarmentFit.class, row.getString("fit")),
                 optional(GarmentNeckline.class, row.getString("neckline")),
                 optional(GarmentSleeveLength.class, row.getString("sleeve_length")),
@@ -4083,12 +4129,14 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 fromDatabase(row, "removed_at"));
     }
 
-    private static Set<GarmentMaterial> materials(Array column) throws SQLException {
-        Set<GarmentMaterial> materials = EnumSet.noneOf(GarmentMaterial.class);
+    /** The distinct stored codes of a multi-valued property (Materials, Styles) as a catalogue-ordered set. */
+    private static <E extends Enum<E> & ControlledValue> Set<E> codes(Class<E> vocabulary, Array column)
+            throws SQLException {
+        Set<E> values = EnumSet.noneOf(vocabulary);
         Arrays.stream((String[]) column.getArray())
-                .map(code -> required(GarmentMaterial.class, code))
-                .forEach(materials::add);
-        return materials;
+                .map(code -> required(vocabulary, code))
+                .forEach(values::add);
+        return values;
     }
 
     private static <E extends Enum<E> & ControlledValue> E required(Class<E> vocabulary, String code) {
@@ -4147,7 +4195,7 @@ public record PriceRequest(String amount, String currency) {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentCreationRequest.java`  
 **Layer:** Inbound adapter (web)
 
-**Purpose:** JSON body: confirmation plus the 13 properties as codes; no owner field.
+**Purpose:** JSON body: confirmation plus the 13 properties as codes (`materials` and `styles` are arrays); no owner field.
 
 **Requirement references:** FR-GAR-001–013, AC-01, AC-13
 
@@ -4164,8 +4212,8 @@ import java.util.UUID;
 
 /**
  * JSON body of POST /api/v1/wardrobe/garments: the 13 approved properties plus
- * the explicit confirmation. Controlled values are codes; missing fields arrive
- * as null. There is no owner field: the owner is the authenticated account.
+ * the explicit confirmation. Controlled values are codes; Materials and Styles are
+ * arrays of codes; missing fields arrive as null. There is no owner field: the owner is the authenticated account.
  */
 public record GarmentCreationRequest(
         Boolean confirmed,
@@ -4174,7 +4222,7 @@ public record GarmentCreationRequest(
         String color,
         List<String> materials,
         String pattern,
-        String style,
+        List<String> styles,
         String fit,
         String neckline,
         String sleeveLength,
@@ -4185,7 +4233,7 @@ public record GarmentCreationRequest(
 
     AddGarmentCommand toCommand(UUID ownerAccountId, String idempotencyKey) {
         return new AddGarmentCommand(ownerAccountId, idempotencyKey, confirmed, category, subtype, color,
-                materials, pattern, style, fit, neckline, sleeveLength, length, silhouette, brand,
+                materials, pattern, styles, fit, neckline, sleeveLength, length, silhouette, brand,
                 price == null ? null : price.amount(),
                 price == null ? null : price.currency());
     }
@@ -4226,7 +4274,7 @@ public record PriceResponse(String amount, String currency) {
 **Path:** `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentResponse.java`  
 **Layer:** Inbound adapter (web)
 
-**Purpose:** One garment with every accepted value; every field always present, null when absent or inapplicable; `recommendationEligibility: NOT_EVALUATED`.
+**Purpose:** One garment with every accepted value; every field always present, null when absent or inapplicable, `[]` for no Material or Style; `recommendationEligibility: NOT_EVALUATED`; no image field.
 
 **Requirement references:** FR-GAR-004, DATA-GAR-002, DATA-GAR-005, AC-01, AC-08, AC-09
 
@@ -4249,7 +4297,7 @@ import java.util.UUID;
  * One owned garment with every accepted property. Every field is always present:
  * an optional property that was not supplied, or does not apply to the category
  * (Fit, Neckline, Sleeve Length outside Tops; Length outside Tops and Pants;
- * Silhouette outside Pants), is {@code null}, and no Material is {@code []}.
+ * Silhouette outside Pants), is {@code null}, and no Material or Style is {@code []}.
  * Nothing is filled in to make the profile look complete (DATA-GAR-002, AC-08).
  *
  * <p>{@code recommendationEligibility} is always {@code NOT_EVALUATED}: no
@@ -4262,7 +4310,7 @@ public record GarmentResponse(
         String color,
         List<String> materials,
         String pattern,
-        String style,
+        List<String> styles,
         String fit,
         String neckline,
         String sleeveLength,
@@ -4285,7 +4333,7 @@ public record GarmentResponse(
                 profile.color().name(),
                 profile.materials().stream().map(Enum::name).toList(),
                 code(profile.pattern()),
-                code(profile.style()),
+                profile.styles().stream().map(Enum::name).toList(),
                 code(profile.fit()),
                 code(profile.neckline()),
                 code(profile.sleeveLength()),
@@ -4627,7 +4675,7 @@ AFTER
 **Path:** `docs/05-api/openapi.yaml`  
 **Layer:** API contract — existing
 
-**Purpose:** Documents `POST /api/v1/wardrobe/garments`, the vocabularies (code + approved label), Price, Garment and new errors; version 0.6.0.
+**Purpose:** Documents `POST /api/v1/wardrobe/garments`, the vocabularies (code + approved label, `TANKS_AND_CAMIS`), the `styles` array, Brand and Price rules, Garment and new errors; version 0.6.0.
 
 **Requirement references:** DoD §5 API contract
 
@@ -4762,7 +4810,7 @@ tags:
 security:
 ```
 
-**Change 5 of 10** — state after US-AUTH-005, starting at line 536. Unique anchor in the current file: `components:`
+**Change 5 of 10** — state after US-AUTH-005, starting at line 555. Unique anchor in the current file: `components:`
 
 BEFORE
 
@@ -4805,11 +4853,15 @@ AFTER
         that category; Silhouette only for PANTS. An invalid or
         inapplicable value is reported in fieldErrors for
         correction or clearing; nothing is replaced, discarded or
-        saved. Repeated Materials collapse into one.
+        saved. Material and Style are arrays: zero, one or several
+        approved codes, and a repeated code collapses into one.
 
-        Price, when supplied, is the amount originally paid as a
-        decimal string plus an ISO 4217 currency, both together;
-        it is never converted or rounded.
+        Brand, when supplied, is kept exactly as entered (at most
+        100 Unicode code points); a blank Brand means none. Price,
+        when supplied, is the amount originally paid as a decimal
+        string plus an ISO 4217 currency, both together; 0 is a
+        valid Price, a missing Price is unknown, and the amount is
+        never converted or rounded.
 
         The Idempotency-Key header names the logical addition.
         Repeating the same addition (same key and values), for
@@ -4840,7 +4892,9 @@ AFTER
                     - "COTTON"
                     - "SPANDEX_ELASTANE"
                   pattern: "STRIPED"
-                  style: "CASUAL"
+                  styles:
+                    - "CASUAL"
+                    - "MINIMALIST"
                   fit: "REGULAR"
                   neckline: "ROUND"
                   sleeveLength: "SHORT_SLEEVE"
@@ -4870,7 +4924,7 @@ AFTER
                 color: "BLACK"
                 materials: []
                 pattern: null
-                style: null
+                styles: []
                 fit: null
                 neckline: null
                 sleeveLength: null
@@ -4923,7 +4977,7 @@ components:
       scheme: bearer
 ```
 
-**Change 6 of 10** — state after US-AUTH-005, starting at line 837. Unique anchor in the current file: `12–128 Unicode characters, kept exactly as entered:`
+**Change 6 of 10** — state after US-AUTH-005, starting at line 856. Unique anchor in the current file: `12–128 Unicode characters, kept exactly as entered:`
 
 BEFORE
 
@@ -4977,10 +5031,11 @@ AFTER
           anyOf:
             - $ref: "#/components/schemas/GarmentPatternCode"
             - type: "null"
-        style:
-          anyOf:
-            - $ref: "#/components/schemas/GarmentStyleCode"
-            - type: "null"
+        styles:
+          type: array
+          description: Zero or more Styles; repeated values collapse into one.
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
         fit:
           anyOf:
             - $ref: "#/components/schemas/GarmentFitCode"
@@ -5004,7 +5059,10 @@ AFTER
         brand:
           type: [string, "null"]
           maxLength: 100
-          description: Kept exactly as entered. Blank means not supplied.
+          description: |
+            Kept exactly as entered, including case, accents and
+            spaces; at most 100 Unicode code points; free text, not
+            a catalogue. Blank means not supplied.
         price:
           anyOf:
             - $ref: "#/components/schemas/Price"
@@ -5042,7 +5100,7 @@ AFTER
         One garment owned by the authenticated account, with every
         accepted value. Every field is always present: a property
         that was not supplied, or does not apply to the category,
-        is null, and no Material is []. Codes are those of the
+        is null, and no Material or Style is []. Codes are those of the
         vocabulary schemas.
       required:
         - id
@@ -5051,7 +5109,7 @@ AFTER
         - color
         - materials
         - pattern
-        - style
+        - styles
         - fit
         - neckline
         - sleeveLength
@@ -5083,10 +5141,11 @@ AFTER
           anyOf:
             - $ref: "#/components/schemas/GarmentPatternCode"
             - type: "null"
-        style:
-          anyOf:
-            - $ref: "#/components/schemas/GarmentStyleCode"
-            - type: "null"
+        styles:
+          type: array
+          description: Distinct Styles in catalogue order.
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
         fit:
           anyOf:
             - $ref: "#/components/schemas/GarmentFitCode"
@@ -5162,8 +5221,8 @@ AFTER
           title: "Sleeveless T-shirts"
         - const: POLO_SHIRTS
           title: "Polo Shirts"
-        - const: TANKS_AND_CAMILS
-          title: "Tanks & Camils"
+        - const: TANKS_AND_CAMIS
+          title: "Tanks & Camis"
         - const: CROP_TOPS
           title: "Crop Tops"
         - const: BLOUSES
@@ -5516,7 +5575,8 @@ AFTER
     GarmentStyleCode:
       type: string
       description: |
-        One optional named Style (Etc is not a value).
+        One approved named Style; a garment has zero, one or
+        several distinct Styles (Etc is not a value).
       oneOf:
         - const: COMFORTABLE
           title: "Comfortable"
@@ -5679,7 +5739,7 @@ AFTER
       required:
 ```
 
-**Change 7 of 10** — state after US-AUTH-005, starting at line 846. Unique anchor in the current file: `field:`
+**Change 7 of 10** — state after US-AUTH-005, starting at line 865. Unique anchor in the current file: `field:`
 
 BEFORE
 
@@ -5706,7 +5766,7 @@ AFTER
           type: string
           description: |
             Name of the invalid request field, a position such as
-            materials[1] or price.amount, or the Idempotency-Key
+            materials[1], styles[0] or price.amount, or the Idempotency-Key
             header.
           examples:
             - "email"
@@ -5717,7 +5777,7 @@ AFTER
           description: |
 ```
 
-**Change 8 of 10** — state after US-AUTH-005, starting at line 863. Unique anchor in the current file: `- TOO_SHORT`
+**Change 8 of 10** — state after US-AUTH-005, starting at line 882. Unique anchor in the current file: `- TOO_SHORT`
 
 BEFORE
 
@@ -5753,7 +5813,7 @@ AFTER
       description: |
 ```
 
-**Change 9 of 10** — state after US-AUTH-005, starting at line 925. Unique anchor in the current file: `- "MALFORMED_REQUEST"`
+**Change 9 of 10** — state after US-AUTH-005, starting at line 944. Unique anchor in the current file: `- "MALFORMED_REQUEST"`
 
 BEFORE
 
@@ -5782,15 +5842,15 @@ AFTER
           type: array
 ```
 
-**Change 10 of 10** — state after US-AUTH-005, starting at line 946. Unique anchor in the current file: `code: "PASSWORD_RESET_INVALID"`
+**Change 10 of 10** — state after US-AUTH-005, starting at line 989. Unique anchor in the current file: `detail: "Too many password-reset attempts. Wait a little and try again."`
 
 BEFORE
 
 ```yaml
-        instance: "/api/v1/auth/password-reset/complete"
-        code: "PASSWORD_RESET_INVALID"
+            detail: "Too many password-reset attempts. Wait a little and try again."
+            instance: "/api/v1/auth/password-reset/request"
+            code: "RATE_LIMITED"
 
-  responses:
     BadRequest:
       description: |
         Request validation failed or the JSON request
@@ -5800,10 +5860,10 @@ BEFORE
 AFTER
 
 ```yaml
-        instance: "/api/v1/auth/password-reset/complete"
-        code: "PASSWORD_RESET_INVALID"
+            detail: "Too many password-reset attempts. Wait a little and try again."
+            instance: "/api/v1/auth/password-reset/request"
+            code: "RATE_LIMITED"
 
-  responses:
     GarmentRejected:
       description: |
         The entry was not saved. VALIDATION_FAILED lists every
@@ -5875,8 +5935,8 @@ BEFORE
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.CorsSecurityIT.xml' = 25
             'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenTest.xml' = 7
             'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenHashTest.xml' = 4
-            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 8
-            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 13
+            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 5
 ```
 
 AFTER
@@ -5889,19 +5949,19 @@ AFTER
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.CorsSecurityIT.xml' = 26
             'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenTest.xml' = 7
             'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenHashTest.xml' = 4
-            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 8
-            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 13
+            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 5
 ```
 
-**Change 2 of 2** — state after US-AUTH-005, starting at line 80. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3`
+**Change 2 of 2** — state after US-AUTH-005, starting at line 88. Unique anchor in the current file: `'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.JdbcPasswordResetAttemptLimiterIT.xml' = 4`
 
 BEFORE
 
 ```yaml
-            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3
-            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentPasswordResetIT.xml' = 3
-            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetFailureIT.xml' = 2
-            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetLoginRaceIT.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.JdbcPasswordResetAttemptLimiterIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetRateLimitIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetTimingIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {
@@ -5911,19 +5971,20 @@ BEFORE
 AFTER
 
 ```yaml
-            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3
-            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentPasswordResetIT.xml' = 3
-            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetFailureIT.xml' = 2
-            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetLoginRaceIT.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.JdbcPasswordResetAttemptLimiterIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetRateLimitIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetTimingIT.xml' = 1
             'surefire-reports/TEST-com.capsuleai.wardrobe.domain.ApprovedGarmentVocabularyTest.xml' = 14
-            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentProfileTest.xml' = 6
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentProfileTest.xml' = 7
             'surefire-reports/TEST-com.capsuleai.wardrobe.domain.BrandTest.xml' = 5
-            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.PurchasePriceTest.xml' = 27
-            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentEntryValidatorTest.xml' = 105
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.PurchasePriceTest.xml' = 29
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentEntryValidatorTest.xml' = 117
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.AddGarmentServiceTest.xml' = 7
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentSchemaIT.xml' = 10
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepositoryIT.xml' = 7
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.AddGarmentApiIT.xml' = 20
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentCreationFingerprintTest.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentSchemaIT.xml' = 12
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepositoryIT.xml' = 9
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.AddGarmentApiIT.xml' = 22
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeFailureIT.xml' = 2
             'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentCreationIT.xml' = 2
           }
@@ -5976,7 +6037,7 @@ The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** th
 Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/maven-wrapper.properties), [Compose](../compose.yaml) and Boot's [4.1.1 dependency BOM](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom).
 ```
 
-**Change 2 of 5** — state after US-AUTH-005, starting at line 304. Unique anchor in the current file: `| 'local' profile | 'https://editor.swagger.io', unless 'CAPSULE_CORS_ALLOWED_ORIGINS' replaces the list |`
+**Change 2 of 5** — state after US-AUTH-005, starting at line 313. Unique anchor in the current file: `| 'local' profile | 'https://editor.swagger.io', unless 'CAPSULE_CORS_ALLOWED_ORIGINS' replaces the list |`
 
 BEFORE
 
@@ -6006,7 +6067,7 @@ To also allow a browser frontend during development, list its real dev-server or
 ```powershell
 ````
 
-**Change 3 of 5** — state after US-AUTH-005, starting at line 329. Unique anchor in the current file: `## 10. Database migrations`
+**Change 3 of 5** — state after US-AUTH-005, starting at line 338. Unique anchor in the current file: `## 10. Database migrations`
 
 BEFORE
 
@@ -6015,7 +6076,7 @@ BEFORE
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset` and the `PASSWORD_RESET` session-revocation reason. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
@@ -6036,7 +6097,7 @@ AFTER
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and `wardrobe.wardrobe_garment_material`. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and its two set tables, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
@@ -6050,7 +6111,7 @@ docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_
 ```
 ````
 
-**Change 4 of 5** — state after US-AUTH-005, starting at line 365. Unique anchor in the current file: `| Identity unit — 'identity/**/*Test' | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation ('CorsPropertiesTest') | No database or Docker |`
+**Change 4 of 5** — state after US-AUTH-005, starting at line 374. Unique anchor in the current file: `| Identity unit — 'identity/**/*Test' | Email, password, display-name, session and rotation policies; use cases with in-memory fakes; JWT converter and error translation; CORS origin validation ('CorsPropertiesTest') | No database or Docker |`
 
 BEFORE
 
@@ -6078,7 +6139,7 @@ AFTER
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
 ```
 
-**Change 5 of 5** — state after US-AUTH-005, starting at line 460. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 5 of 5** — state after US-AUTH-005, starting at line 469. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
@@ -6087,7 +6148,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
@@ -6101,7 +6162,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. Wardrobe browsing and detail, garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. Wardrobe browsing and detail, garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
@@ -6113,7 +6174,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | Level | Classes | What they establish |
 | --- | --- | --- |
 | Domain unit | `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `BrandTest`, `PurchasePriceTest` | Exact vocabularies against the authority; profile invariants; Brand/Price rules |
-| Application unit | `GarmentEntryValidatorTest`, `AddGarmentServiceTest` (+ two fakes) | Every validation outcome; idempotent acceptance semantics |
+| Application unit | `GarmentEntryValidatorTest`, `GarmentCreationFingerprintTest`, `AddGarmentServiceTest` (+ two fakes) | Every validation outcome; Style sets in the fingerprint; idempotent acceptance semantics |
 | PostgreSQL | `GarmentSchemaIT`, `JdbcGarmentRepositoryIT` | Constraints on their own; every value round-trips exactly; V7 → V8 upgrade |
 | HTTP/security | `AddGarmentApiIT`, `CorsSecurityIT` (modified) | Real protected API, owner isolation, retries, unusable access, CORS header |
 | Concurrency / failure | `ConcurrentGarmentCreationIT`, `WardrobeFailureIT` | One effect per logical addition; rollback on a lost connection |
@@ -6127,7 +6188,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/domain/ApprovedGarmentVocabularyTest.java`  
 **Layer:** Domain unit test
 
-**Purpose:** Compares every vocabulary with the approved property file itself: labels, order, counts, dress identifiers, applicability, no Etc/UNKNOWN.
+**Purpose:** Compares every vocabulary with the approved property file itself: labels (including "Tanks & Camis"), order, counts, dress identifiers, applicability, no Etc/UNKNOWN.
 
 **Requirement references:** FR-GAR-001/002/007–010, BRULE-GAR-004/005, OPQ-014, AC-04
 
@@ -6314,11 +6375,11 @@ class ApprovedGarmentVocabularyTest {
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/domain/GarmentProfileTest.java`  
 **Layer:** Domain unit test
 
-**Purpose:** Minimum, Material ordering/immutability, applicability invariants.
+**Purpose:** Minimum, Material and Style ordering/immutability, applicability invariants.
 
-**Requirement references:** BRULE-GAR-005/006
+**Requirement references:** BRULE-GAR-005/006, OPEN-S2-08
 
-**Dependencies:** Step P19
+**Dependencies:** `GarmentProfile`
 
 **Complete file:**
 
@@ -6342,7 +6403,8 @@ class GarmentProfileTest {
         assertThat(minimum.category()).isEqualTo(GarmentCategory.SHOES);
         assertThat(minimum.color()).isEqualTo(GarmentColor.BLACK);
         assertThat(minimum.materials()).isEmpty();
-        assertThat(List.of(minimum.subtype(), minimum.pattern(), minimum.style(), minimum.fit(), minimum.neckline(),
+        assertThat(minimum.styles()).isEmpty();
+        assertThat(List.of(minimum.subtype(), minimum.pattern(), minimum.fit(), minimum.neckline(),
                 minimum.sleeveLength(), minimum.length(), minimum.silhouette(), minimum.brand(), minimum.price()))
                 .allSatisfy(absent -> assertThat(absent).isEmpty());
     }
@@ -6350,7 +6412,7 @@ class GarmentProfileTest {
     @Test
     void materialsAreDistinctInCatalogueOrderAndCannotBeChangedAfterwards() {
         GarmentProfile profile = profile(GarmentCategory.TOPS, Optional.empty(),
-                List.of(GarmentMaterial.SPANDEX_ELASTANE, GarmentMaterial.COTTON));
+                List.of(GarmentMaterial.SPANDEX_ELASTANE, GarmentMaterial.COTTON), List.of());
 
         assertThat(profile.materials()).containsExactly(GarmentMaterial.COTTON, GarmentMaterial.SPANDEX_ELASTANE);
         assertThatThrownBy(() -> profile.materials().add(GarmentMaterial.WOOL))
@@ -6358,15 +6420,26 @@ class GarmentProfileTest {
     }
 
     @Test
+    void stylesAreDistinctInCatalogueOrderAndCannotBeChangedAfterwards() {
+        GarmentProfile profile = profile(GarmentCategory.BAGS, Optional.empty(),
+                List.of(), List.of(GarmentStyle.STREET, GarmentStyle.CASUAL));
+
+        assertThat(profile.styles()).containsExactly(GarmentStyle.CASUAL, GarmentStyle.STREET);
+        assertThatThrownBy(() -> profile.styles().add(GarmentStyle.FORMAL))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
     void aSubtypeFromAnotherCategoryIsRefused() {
-        assertThatThrownBy(() -> profile(GarmentCategory.PANTS, Optional.of(GarmentSubtype.T_SHIRTS), List.of()))
+        assertThatThrownBy(() -> profile(GarmentCategory.PANTS, Optional.of(GarmentSubtype.T_SHIRTS), List.of(),
+                List.of()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void topsOnlyPropertiesAreRefusedOutsideTops() {
         assertThatThrownBy(() -> new GarmentProfile(GarmentCategory.DRESSES_JUMPSUITS, Optional.empty(),
-                GarmentColor.RED, Set.of(), Optional.empty(), Optional.empty(), Optional.of(GarmentFit.SLIM),
+                GarmentColor.RED, Set.of(), Optional.empty(), Set.of(), Optional.of(GarmentFit.SLIM),
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -6375,11 +6448,11 @@ class GarmentProfileTest {
     @Test
     void lengthMustComeFromTheCategoryList() {
         assertThatThrownBy(() -> new GarmentProfile(GarmentCategory.PANTS, Optional.empty(), GarmentColor.BLUE,
-                Set.of(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Set.of(), Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.of(GarmentLength.CROPPED), Optional.empty(), Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new GarmentProfile(GarmentCategory.SKIRTS, Optional.empty(), GarmentColor.BLUE,
-                Set.of(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Set.of(), Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.of(GarmentLength.LONG), Optional.empty(), Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -6387,15 +6460,15 @@ class GarmentProfileTest {
     @Test
     void silhouetteIsOnlyForPants() {
         assertThatThrownBy(() -> new GarmentProfile(GarmentCategory.SKIRTS, Optional.empty(), GarmentColor.BLUE,
-                Set.of(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Set.of(), Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.empty(), Optional.of(GarmentSilhouette.FLARE), Optional.empty(), Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    private static GarmentProfile profile(
-            GarmentCategory category, Optional<GarmentSubtype> subtype, List<GarmentMaterial> materials) {
+    private static GarmentProfile profile(GarmentCategory category, Optional<GarmentSubtype> subtype,
+                                          List<GarmentMaterial> materials, List<GarmentStyle> styles) {
         return new GarmentProfile(category, subtype, GarmentColor.NAVY, Set.copyOf(materials), Optional.empty(),
-                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Set.copyOf(styles), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.empty(), Optional.empty(), Optional.empty());
     }
 }
@@ -6409,9 +6482,9 @@ class GarmentProfileTest {
 
 **Purpose:** Exact value, blank, 100/101 code points, malformed Unicode.
 
-**Requirement references:** FR-GAR-012
+**Requirement references:** FR-GAR-012, OPEN-S2-01B
 
-**Dependencies:** Step P17
+**Dependencies:** `Brand`
 
 **Complete file:**
 
@@ -6466,11 +6539,11 @@ class BrandTest {
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/domain/PurchasePriceTest.java`  
 **Layer:** Domain unit test
 
-**Purpose:** Accepted/rejected amounts, minor units, currencies; trailing zeros kept.
+**Purpose:** Accepted (including 0, `0.00 USD` and the 12-digit boundary) and rejected amounts, minor units without rounding, currencies; trailing zeros kept.
 
-**Requirement references:** FR-GAR-013, OPQ-013
+**Requirement references:** FR-GAR-013, OPEN-S2-01A
 
-**Dependencies:** Step P18
+**Dependencies:** `PurchasePrice`
 
 **Complete file:**
 
@@ -6495,6 +6568,8 @@ class PurchasePriceTest {
             "12.50, USD",
             "12.5, USD",
             "999999999999, JPY",
+            "0.00, USD",
+            "999999999999.99, USD",
             "1.234, BHD"})
     void anExactNonNegativeAmountWithinTheCurrencyMinorUnitIsAccepted(String amount, String currency) {
         PurchasePrice price = PurchasePrice.of(amount, currency);
@@ -6545,7 +6620,7 @@ class PurchasePriceTest {
 
 **Requirement references:** —
 
-**Dependencies:** Step P24
+**Dependencies:** Port `GarmentRepository`
 
 **Complete file:**
 
@@ -6596,7 +6671,7 @@ final class InMemoryGarmentRepository implements GarmentRepository {
 
 **Requirement references:** —
 
-**Dependencies:** Step P22
+**Dependencies:** Port `WardrobeTransactions`
 
 **Complete file:**
 
@@ -6629,11 +6704,11 @@ final class ImmediateWardrobeTransactions implements WardrobeTransactions {
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentEntryValidatorTest.java`  
 **Layer:** Application unit test
 
-**Purpose:** Every category minimum, every subtype under its category, wrong-category, missing/unconfirmed, unsupported, materials, applicability, Length lists, Price pairs, key, Brand.
+**Purpose:** Every category minimum, every subtype under its category, wrong-category, missing/unconfirmed, unsupported, Materials, zero/one/several Styles in every category, applicability, Length lists, Price pairs and zero, key, exact and blank Brand.
 
-**Requirement references:** AC-03–AC-07, ERR-GAR-001
+**Requirement references:** AC-03–AC-07, ERR-GAR-001, OPEN-S2-01A/01B/08
 
-**Dependencies:** Step P30
+**Dependencies:** `GarmentEntryValidator`
 
 **Complete file:**
 
@@ -6641,11 +6716,13 @@ final class ImmediateWardrobeTransactions implements WardrobeTransactions {
 package com.capsuleai.wardrobe.application;
 
 import com.capsuleai.wardrobe.application.GarmentEntryValidator.ValidatedGarmentEntry;
+import com.capsuleai.wardrobe.domain.Brand;
 import com.capsuleai.wardrobe.domain.GarmentCategory;
 import com.capsuleai.wardrobe.domain.GarmentColor;
 import com.capsuleai.wardrobe.domain.GarmentLength;
 import com.capsuleai.wardrobe.domain.GarmentMaterial;
 import com.capsuleai.wardrobe.domain.GarmentProfile;
+import com.capsuleai.wardrobe.domain.GarmentStyle;
 import com.capsuleai.wardrobe.domain.GarmentSubtype;
 import com.capsuleai.wardrobe.domain.GarmentValueProblem;
 import java.util.Arrays;
@@ -6708,10 +6785,10 @@ class GarmentEntryValidatorTest {
 
     @Test
     void unsupportedCodesAreRejectedIncludingEtcLowerCaseAndUnknown() {
-        assertViolations(entry("TOPS", "red", c -> with(with(c, "style", "ETC"), "pattern", "UNKNOWN")),
+        assertViolations(entry("TOPS", "red", c -> withStyles(with(c, "pattern", "UNKNOWN"), List.of("ETC"))),
                 new GarmentFieldViolation("color", GarmentValueProblem.UNSUPPORTED_VALUE),
                 new GarmentFieldViolation("pattern", GarmentValueProblem.UNSUPPORTED_VALUE),
-                new GarmentFieldViolation("style", GarmentValueProblem.UNSUPPORTED_VALUE));
+                new GarmentFieldViolation("styles[0]", GarmentValueProblem.UNSUPPORTED_VALUE));
         assertViolations(entry("SOCKS", "RED", c -> c),
                 new GarmentFieldViolation("category", GarmentValueProblem.UNSUPPORTED_VALUE));
     }
@@ -6735,6 +6812,37 @@ class GarmentEntryValidatorTest {
         assertViolations(entry("TOPS", "WHITE", c -> withMaterials(c, Arrays.asList("COTTON", "PLASTIC", null))),
                 new GarmentFieldViolation("materials[1]", GarmentValueProblem.UNSUPPORTED_VALUE),
                 new GarmentFieldViolation("materials[2]", GarmentValueProblem.UNSUPPORTED_VALUE));
+    }
+
+    @Test
+    void zeroOneOrSeveralStylesAreAcceptedAndRepeatedStylesCollapse() {
+        assertThat(GarmentEntryValidator.validate(entry("SHOES", "WHITE", c -> c)).profile().styles()).isEmpty();
+        assertThat(GarmentEntryValidator.validate(entry("SHOES", "WHITE", c -> withStyles(c, List.of())))
+                .profile().styles()).isEmpty();
+        assertThat(GarmentEntryValidator.validate(entry("SHOES", "WHITE", c -> withStyles(c, List.of("SPORTY"))))
+                .profile().styles()).containsExactly(GarmentStyle.SPORTY);
+
+        GarmentProfile profile = GarmentEntryValidator.validate(entry("DRESSES_JUMPSUITS", "RED",
+                c -> withStyles(c, List.of("FEMININE", "CASUAL", "FEMININE")))).profile();
+
+        assertThat(profile.styles()).containsExactly(GarmentStyle.CASUAL, GarmentStyle.FEMININE);
+    }
+
+    @ParameterizedTest
+    @EnumSource(GarmentCategory.class)
+    void severalStylesApplyToEveryCategory(GarmentCategory category) {
+        GarmentProfile profile = GarmentEntryValidator.validate(entry(category.name(), "BLACK",
+                c -> withStyles(c, List.of("STREET", "MINIMALIST")))).profile();
+
+        assertThat(profile.styles()).containsExactly(GarmentStyle.MINIMALIST, GarmentStyle.STREET);
+    }
+
+    @Test
+    void eachUnsupportedStyleIsIdentifiedByItsPosition() {
+        assertViolations(entry("TOPS", "WHITE", c -> withStyles(c, Arrays.asList("CASUAL", "Etc", "casual", null))),
+                new GarmentFieldViolation("styles[1]", GarmentValueProblem.UNSUPPORTED_VALUE),
+                new GarmentFieldViolation("styles[2]", GarmentValueProblem.UNSUPPORTED_VALUE),
+                new GarmentFieldViolation("styles[3]", GarmentValueProblem.UNSUPPORTED_VALUE));
     }
 
     @Test
@@ -6778,6 +6886,17 @@ class GarmentEntryValidatorTest {
                 new GarmentFieldViolation("price.amount", GarmentValueProblem.TOO_MANY_DECIMALS));
         assertViolations(entry("SHOES", "WHITE", c -> withPrice(c, "5", "DONG")),
                 new GarmentFieldViolation("price.currency", GarmentValueProblem.UNSUPPORTED_CURRENCY));
+        assertViolations(entry("SHOES", "WHITE", c -> withPrice(c, "5", "usd")),
+                new GarmentFieldViolation("price.currency", GarmentValueProblem.UNSUPPORTED_CURRENCY));
+        assertViolations(entry("SHOES", "WHITE", c -> withPrice(c, "12.505", "USD")),
+                new GarmentFieldViolation("price.amount", GarmentValueProblem.TOO_MANY_DECIMALS));
+    }
+
+    @Test
+    void aZeroPriceIsAKnownPriceWhileAMissingPriceStaysUnknown() {
+        assertThat(GarmentEntryValidator.validate(entry("SHOES", "WHITE", c -> withPrice(c, "0", "USD")))
+                .profile().price()).hasValueSatisfying(price -> assertThat(price.amountText()).isEqualTo("0"));
+        assertThat(GarmentEntryValidator.validate(entry("SHOES", "WHITE", c -> c)).profile().price()).isEmpty();
     }
 
     @Test
@@ -6791,6 +6910,16 @@ class GarmentEntryValidatorTest {
     void aTooLongBrandIsIdentified() {
         assertViolations(entry("BAGS", "BLACK", c -> with(c, "brand", "b".repeat(101))),
                 new GarmentFieldViolation("brand", GarmentValueProblem.TOO_LONG));
+    }
+
+    @Test
+    void aSuppliedBrandIsKeptExactlyAndABlankBrandMeansNoBrand() {
+        assertThat(GarmentEntryValidator.validate(entry("BAGS", "BLACK", c -> with(c, "brand", "  Maison  Ébène ")))
+                .profile().brand()).map(Brand::value).contains("  Maison  Ébène ");
+        assertThat(GarmentEntryValidator.validate(entry("BAGS", "BLACK", c -> with(c, "brand", "\t  ")))
+                .profile().brand()).isEmpty();
+        assertThat(GarmentEntryValidator.validate(entry("BAGS", "BLACK", c -> with(c, "brand", "b".repeat(100))))
+                .profile().brand()).isPresent();
     }
 
     private static void assertViolations(AddGarmentCommand command, GarmentFieldViolation... expected) {
@@ -6813,7 +6942,7 @@ class GarmentEntryValidatorTest {
         return new AddGarmentCommand(c.ownerAccountId(), c.idempotencyKey(), c.confirmed(), c.category(),
                 field.equals("subtype") ? value : c.subtype(), c.color(), c.materials(),
                 field.equals("pattern") ? value : c.pattern(),
-                field.equals("style") ? value : c.style(),
+                c.styles(),
                 c.fit(), c.neckline(), c.sleeveLength(),
                 field.equals("length") ? value : c.length(),
                 c.silhouette(),
@@ -6823,19 +6952,81 @@ class GarmentEntryValidatorTest {
 
     private static AddGarmentCommand withMaterials(AddGarmentCommand c, List<String> materials) {
         return new AddGarmentCommand(c.ownerAccountId(), c.idempotencyKey(), c.confirmed(), c.category(),
-                c.subtype(), c.color(), materials, c.pattern(), c.style(), c.fit(), c.neckline(), c.sleeveLength(),
+                c.subtype(), c.color(), materials, c.pattern(), c.styles(), c.fit(), c.neckline(), c.sleeveLength(),
+                c.length(), c.silhouette(), c.brand(), c.priceAmount(), c.priceCurrency());
+    }
+
+    private static AddGarmentCommand withStyles(AddGarmentCommand c, List<String> styles) {
+        return new AddGarmentCommand(c.ownerAccountId(), c.idempotencyKey(), c.confirmed(), c.category(),
+                c.subtype(), c.color(), c.materials(), c.pattern(), styles, c.fit(), c.neckline(), c.sleeveLength(),
                 c.length(), c.silhouette(), c.brand(), c.priceAmount(), c.priceCurrency());
     }
 
     private static AddGarmentCommand withPrice(AddGarmentCommand c, String amount, String currency) {
         return new AddGarmentCommand(c.ownerAccountId(), c.idempotencyKey(), c.confirmed(), c.category(),
-                c.subtype(), c.color(), c.materials(), c.pattern(), c.style(), c.fit(), c.neckline(),
+                c.subtype(), c.color(), c.materials(), c.pattern(), c.styles(), c.fit(), c.neckline(),
                 c.sleeveLength(), c.length(), c.silhouette(), c.brand(), amount, currency);
     }
 }
 ```
 
-### Step T8 — [ADD] `AddGarmentServiceTest.java`
+### Step T8 — [ADD] `GarmentCreationFingerprintTest.java`
+
+**Action:** [ADD]  
+**Path:** `backend/src/test/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprintTest.java`  
+**Layer:** Application unit test
+
+**Purpose:** Selection order and repeats of Styles do not change the fingerprint; a different Style set does.
+
+**Requirement references:** ADA-009, AC-12, OPEN-S2-08
+
+**Dependencies:** `GarmentCreationFingerprint`
+
+**Complete file:**
+
+```java
+package com.capsuleai.wardrobe.application;
+
+import com.capsuleai.wardrobe.domain.GarmentCategory;
+import com.capsuleai.wardrobe.domain.GarmentColor;
+import com.capsuleai.wardrobe.domain.GarmentProfile;
+import com.capsuleai.wardrobe.domain.GarmentStyle;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/** The idempotency fingerprint compares the accepted Style set, not the order it was selected in (ADA-009). */
+class GarmentCreationFingerprintTest {
+
+    @Test
+    void theOrderAndRepetitionOfSelectedStylesDoNotChangeTheFingerprint() {
+        assertThat(GarmentCreationFingerprint.of(withStyles(List.of(GarmentStyle.STREET, GarmentStyle.CASUAL))))
+                .isEqualTo(GarmentCreationFingerprint.of(withStyles(
+                        List.of(GarmentStyle.CASUAL, GarmentStyle.STREET, GarmentStyle.CASUAL))));
+    }
+
+    @Test
+    void aDifferentStyleSetIsADifferentGarment() {
+        String casual = GarmentCreationFingerprint.of(withStyles(List.of(GarmentStyle.CASUAL)));
+
+        assertThat(GarmentCreationFingerprint.of(withStyles(List.of()))).isNotEqualTo(casual);
+        assertThat(GarmentCreationFingerprint.of(withStyles(List.of(GarmentStyle.CASUAL, GarmentStyle.STREET))))
+                .isNotEqualTo(casual);
+        assertThat(casual).matches("[0-9a-f]{64}");
+    }
+
+    private static GarmentProfile withStyles(List<GarmentStyle> styles) {
+        return new GarmentProfile(GarmentCategory.BAGS, Optional.empty(), GarmentColor.BLACK, Set.of(),
+                Optional.empty(), Set.copyOf(styles), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+    }
+}
+```
+
+### Step T9 — [ADD] `AddGarmentServiceTest.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java`  
@@ -6845,7 +7036,7 @@ class GarmentEntryValidatorTest {
 
 **Requirement references:** AC-01, AC-11, AC-12
 
-**Dependencies:** Step P32
+**Dependencies:** `AddGarmentService`
 
 **Complete file:**
 
@@ -6965,13 +7156,13 @@ class AddGarmentServiceTest {
 }
 ```
 
-### Step T9 — [ADD] `WardrobeIntegrationTestSupport.java`
+### Step T10 — [ADD] `WardrobeIntegrationTestSupport.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java`  
 **Layer:** Test infrastructure
 
-**Purpose:** Wardrobe ITs on the shared real application: empties the `wardrobe` tables, adds garments through the protected API.
+**Purpose:** Wardrobe ITs on the shared real application: empties the three `wardrobe` tables, adds garments through the protected API.
 
 **Requirement references:** —
 
@@ -7015,7 +7206,8 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 
     @BeforeEach
     protected void resetWardrobeState() {
-        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment").update();
+        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment_style, "
+                + "wardrobe.wardrobe_garment").update();
     }
 
     /** POSTs one addition with the given logical-action key. */
@@ -7068,17 +7260,17 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 }
 ```
 
-### Step T10 — [ADD] `GarmentSchemaIT.java`
+### Step T11 — [ADD] `GarmentSchemaIT.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/GarmentSchemaIT.java`  
 **Layer:** PostgreSQL integration test
 
-**Purpose:** Every V8 constraint on its own, Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database.
+**Purpose:** Every V8 constraint on its own (including approved, distinct Style rows, no `style` column, `TANKS_AND_CAMIS` accepted and the misspelling rejected), Wardrobe tables only in the `wardrobe` schema, and upgrade from V7 with existing Identity data on a separate database.
 
 **Requirement references:** DATA-GAR-002, DATA-INT-004, DoD §5 schema
 
-**Dependencies:** Step P1
+**Dependencies:** V8
 
 **Complete file:**
 
@@ -7136,13 +7328,14 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     void categoryAndColorMustBeApprovedCodes() {
         assertRejected(Map.of("category", "SOCKS"));
         assertRejected(Map.of("color", "red"));
-        assertRejected(Map.of("style", "ETC"));
     }
 
     @Test
     void aSubtypeMustBelongToTheCategory() {
         assertRejected(Map.of("category", "PANTS", "subtype", "T_SHIRTS"));
+        assertRejected(Map.of("category", "TOPS", "subtype", "TANKS_AND_CAMILS"));
         insertGarment(Map.of("category", "PANTS", "subtype", "JEANS"));
+        insertGarment(Map.of("category", "TOPS", "subtype", "TANKS_AND_CAMIS"));
     }
 
     @Test
@@ -7185,6 +7378,21 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     }
 
     @Test
+    void stylesAreApprovedDistinctRowsAndTheFormerSingleStyleColumnIsGone() {
+        UUID garmentId = insertGarment(Map.of());
+        insertStyle(garmentId, "CASUAL");
+        insertStyle(garmentId, "STREET");
+
+        assertThatThrownBy(() -> insertStyle(garmentId, "CASUAL")).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertStyle(garmentId, "ETC")).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertStyle(UUID.randomUUID(), "CASUAL"))
+                .as("a Style belongs to an existing garment").isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.sql("SELECT count(*) FROM information_schema.columns "
+                        + "WHERE table_schema = 'wardrobe' AND table_name = 'wardrobe_garment' AND column_name = 'style'")
+                .query(Long.class).single()).isZero();
+    }
+
+    @Test
     void aCreationKeyIsUsedOncePerOwnerButIndependentlyAcrossOwners() {
         UUID owner = UUID.randomUUID();
         UUID key = UUID.randomUUID();
@@ -7198,7 +7406,7 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     void wardrobeTablesLiveOnlyInTheWardrobeSchema() {
         assertThat(jdbc.sql("SELECT tablename FROM pg_tables WHERE schemaname = 'wardrobe' ORDER BY tablename")
                 .query(String.class).list())
-                .containsExactly("wardrobe_garment", "wardrobe_garment_material");
+                .containsExactly("wardrobe_garment", "wardrobe_garment_material", "wardrobe_garment_style");
         assertThat(jdbc.sql("SELECT count(*) FROM pg_tables WHERE tablename LIKE 'wardrobe\\_%' AND schemaname <> 'wardrobe'")
                 .query(Long.class).single()).isZero();
     }
@@ -7264,6 +7472,13 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
         return (UUID) columns.get("id");
     }
 
+    private void insertStyle(UUID garmentId, String style) {
+        jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_style (garment_id, style) VALUES (:garmentId, :style)")
+                .param("garmentId", garmentId)
+                .param("style", style)
+                .update();
+    }
+
     private void insertMaterial(UUID garmentId, String material) {
         jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
                 .param("garmentId", garmentId)
@@ -7273,17 +7488,17 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
 }
 ```
 
-### Step T11 — [ADD] `JdbcGarmentRepositoryIT.java`
+### Step T12 — [ADD] `JdbcGarmentRepositoryIT.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepositoryIT.java`  
 **Layer:** PostgreSQL integration test
 
-**Purpose:** Every vocabulary value, all 28 Materials, Brand and Price round-trip exactly.
+**Purpose:** Every vocabulary value, all 28 Materials, all 17 Styles on one garment, Brand, Price and a zero Price round-trip exactly.
 
 **Requirement references:** DATA-GAR-002, AC-01, AC-06
 
-**Dependencies:** Step P34
+**Dependencies:** `JdbcGarmentRepository`
 
 **Complete file:**
 
@@ -7346,7 +7561,7 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
     void everyApprovedSubtypeRoundTrips() {
         for (GarmentSubtype subtype : GarmentSubtype.values()) {
             assertRoundTrip(profile(subtype.category(), Optional.of(subtype), GarmentColor.WHITE, Set.of(),
-                    Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                     Optional.empty(), Optional.empty()));
         }
     }
@@ -7358,12 +7573,12 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
         }
         for (GarmentPattern pattern : GarmentPattern.values()) {
             assertRoundTrip(profile(GarmentCategory.HEADWEAR, Optional.empty(), GarmentColor.RED, Set.of(),
-                    Optional.of(pattern), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.of(pattern), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                     Optional.empty(), Optional.empty()));
         }
         for (GarmentStyle style : GarmentStyle.values()) {
             assertRoundTrip(profile(GarmentCategory.OUTERWEAR, Optional.empty(), GarmentColor.RED, Set.of(),
-                    Optional.empty(), Optional.of(style), Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.empty(), Set.of(style), Optional.empty(), Optional.empty(), Optional.empty(),
                     Optional.empty(), Optional.empty()));
         }
     }
@@ -7371,10 +7586,20 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
     @Test
     void allTwentyEightMaterialsOnOneGarmentRoundTripInCatalogueOrder() {
         Garment stored = assertRoundTrip(profile(GarmentCategory.TOPS, Optional.empty(), GarmentColor.NAVY,
-                EnumSet.allOf(GarmentMaterial.class), Optional.empty(), Optional.empty(), Optional.empty(),
+                EnumSet.allOf(GarmentMaterial.class), Optional.empty(), Set.of(), Optional.empty(),
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
 
         assertThat(stored.profile().materials()).containsExactly(GarmentMaterial.values());
+    }
+
+    @Test
+    void allSeventeenStylesOnOneGarmentRoundTripInCatalogueOrder() {
+        Garment stored = assertRoundTrip(profile(GarmentCategory.DRESSES_JUMPSUITS, Optional.empty(),
+                GarmentColor.BLACK, Set.of(GarmentMaterial.SILK), Optional.empty(), EnumSet.allOf(GarmentStyle.class),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
+
+        assertThat(stored.profile().styles()).containsExactly(GarmentStyle.values());
+        assertThat(stored.profile().materials()).containsExactly(GarmentMaterial.SILK);
     }
 
     @Test
@@ -7394,12 +7619,12 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
     void everyLengthAndSilhouetteRoundTripsUnderItsCategory() {
         for (GarmentLength length : GarmentLength.values()) {
             assertRoundTrip(profile(length.category(), Optional.empty(), GarmentColor.BLUE, Set.of(),
-                    Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                     Optional.of(length), Optional.empty()));
         }
         for (GarmentSilhouette silhouette : GarmentSilhouette.values()) {
             assertRoundTrip(profile(GarmentCategory.PANTS, Optional.empty(), GarmentColor.BLUE, Set.of(),
-                    Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                    Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                     Optional.empty(), Optional.of(silhouette)));
         }
     }
@@ -7407,7 +7632,7 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
     @Test
     void brandAndPriceAreKeptExactlyIncludingTrailingZerosAndDiacritics() {
         GarmentProfile withBrandAndPrice = new GarmentProfile(GarmentCategory.SHOES, Optional.empty(),
-                GarmentColor.WHITE, Set.of(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                GarmentColor.WHITE, Set.of(), Optional.empty(), Set.of(), Optional.empty(), Optional.empty(),
                 Optional.empty(), Optional.empty(), Optional.empty(), Brand.optional(" Giày Việt "),
                 Optional.of(PurchasePrice.of("12.50", "USD")));
 
@@ -7415,6 +7640,17 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
 
         assertThat(stored.profile().brand()).map(Brand::value).contains(" Giày Việt ");
         assertThat(stored.profile().price()).map(PurchasePrice::amountText).contains("12.50");
+    }
+
+    @Test
+    void aZeroPriceIsStoredAsAKnownZeroNotAsAMissingPrice() {
+        GarmentProfile gift = new GarmentProfile(GarmentCategory.HEADWEAR, Optional.empty(), GarmentColor.BEIGE,
+                Set.of(), Optional.empty(), Set.of(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(PurchasePrice.of("0", "VND")));
+
+        Garment stored = assertRoundTrip(gift);
+
+        assertThat(stored.profile().price()).map(PurchasePrice::amountText).contains("0");
     }
 
     private Garment assertRoundTrip(GarmentProfile profile) {
@@ -7433,33 +7669,33 @@ class JdbcGarmentRepositoryIT extends WardrobeIntegrationTestSupport {
     private static GarmentProfile tops(Optional<GarmentFit> fit, Optional<GarmentNeckline> neckline,
                                        Optional<GarmentSleeveLength> sleeveLength, Optional<GarmentLength> length) {
         return new GarmentProfile(GarmentCategory.TOPS, Optional.empty(), GarmentColor.NAVY, Set.of(),
-                Optional.empty(), Optional.empty(), fit, neckline, sleeveLength, length, Optional.empty(),
+                Optional.empty(), Set.of(), fit, neckline, sleeveLength, length, Optional.empty(),
                 Optional.empty(), Optional.empty());
     }
 
     private static GarmentProfile profile(GarmentCategory category, Optional<GarmentSubtype> subtype,
                                           GarmentColor color, Set<GarmentMaterial> materials,
-                                          Optional<GarmentPattern> pattern, Optional<GarmentStyle> style,
+                                          Optional<GarmentPattern> pattern, Set<GarmentStyle> styles,
                                           Optional<GarmentFit> fit, Optional<GarmentNeckline> neckline,
                                           Optional<GarmentSleeveLength> sleeveLength, Optional<GarmentLength> length,
                                           Optional<GarmentSilhouette> silhouette) {
-        return new GarmentProfile(category, subtype, color, materials, pattern, style, fit, neckline, sleeveLength,
+        return new GarmentProfile(category, subtype, color, materials, pattern, styles, fit, neckline, sleeveLength,
                 length, silhouette, Optional.empty(), Optional.empty());
     }
 }
 ```
 
-### Step T12 — [ADD] `AddGarmentApiIT.java`
+### Step T13 — [ADD] `AddGarmentApiIT.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/AddGarmentApiIT.java`  
 **Layer:** HTTP/security integration test
 
-**Purpose:** Minimum in all eight categories, full Top/Pants, inapplicable/missing/unsupported values, retry/reuse/separate additions, key, owner, unusable access, malformed JSON.
+**Purpose:** Minimum in all eight categories, full Top/Pants with several Styles, inapplicable/missing/unsupported values, a zero Price, retry/reuse/separate additions (Style order irrelevant), key, owner, unusable access, malformed JSON.
 
 **Requirement references:** AC-01, AC-02, AC-04–AC-08, AC-10–AC-13
 
-**Dependencies:** Steps P35–P41
+**Dependencies:** Controller, exception handler, test support
 
 **Complete file:**
 
@@ -7503,7 +7739,8 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
                 .andExpect(jsonPath("$.subtype").value(nullValue()))
                 .andExpect(jsonPath("$.materials").isEmpty())
                 .andExpect(jsonPath("$.pattern").value(nullValue()))
-                .andExpect(jsonPath("$.style").value(nullValue()))
+                .andExpect(jsonPath("$.styles").isEmpty())
+                .andExpect(jsonPath("$.style").doesNotExist())
                 .andExpect(jsonPath("$.fit").value(nullValue()))
                 .andExpect(jsonPath("$.length").value(nullValue()))
                 .andExpect(jsonPath("$.brand").value(nullValue()))
@@ -7519,10 +7756,10 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
     void aFullyDescribedTopKeepsEveryAcceptedValueExactly() throws Exception {
         IssuedTokens tokens = registerAndLogIn("tops@example.com");
         Map<String, Object> body = garment("TOPS", "NAVY",
-                "subtype", "TANKS_AND_CAMILS",
+                "subtype", "TANKS_AND_CAMIS",
                 "materials", List.of("SPANDEX_ELASTANE", "COTTON"),
                 "pattern", "STRIPED",
-                "style", "BUSINESS_CASUAL",
+                "styles", List.of("FORMAL", "BUSINESS_CASUAL", "FORMAL"),
                 "fit", "OVERSIZED",
                 "neckline", "SCOOP_U",
                 "sleeveLength", "THREE_QUARTER_SLEEVE",
@@ -7532,11 +7769,13 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
 
         addGarment(tokens.accessToken(), UUID.randomUUID().toString(), body)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.subtype").value("TANKS_AND_CAMILS"))
+                .andExpect(jsonPath("$.subtype").value("TANKS_AND_CAMIS"))
                 .andExpect(jsonPath("$.materials[0]").value("COTTON"))
                 .andExpect(jsonPath("$.materials[1]").value("SPANDEX_ELASTANE"))
                 .andExpect(jsonPath("$.pattern").value("STRIPED"))
-                .andExpect(jsonPath("$.style").value("BUSINESS_CASUAL"))
+                .andExpect(jsonPath("$.styles.length()").value(2))
+                .andExpect(jsonPath("$.styles[0]").value("BUSINESS_CASUAL"))
+                .andExpect(jsonPath("$.styles[1]").value("FORMAL"))
                 .andExpect(jsonPath("$.fit").value("OVERSIZED"))
                 .andExpect(jsonPath("$.neckline").value("SCOOP_U"))
                 .andExpect(jsonPath("$.sleeveLength").value("THREE_QUARTER_SLEEVE"))
@@ -7596,15 +7835,45 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
         IssuedTokens tokens = registerAndLogIn("vocabulary@example.com");
 
         addGarment(tokens.accessToken(), UUID.randomUUID().toString(),
-                garment("PANTS", "BLUE", "subtype", "T_SHIRTS", "style", "ETC", "price",
+                garment("PANTS", "BLUE", "subtype", "T_SHIRTS", "styles", List.of("CASUAL", "ETC"), "price",
                         Map.of("amount", "100")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("subtype"))
                 .andExpect(jsonPath("$.fieldErrors[0].code").value("NOT_IN_CATEGORY"))
-                .andExpect(jsonPath("$.fieldErrors[1].field").value("style"))
+                .andExpect(jsonPath("$.fieldErrors[1].field").value("styles[1]"))
                 .andExpect(jsonPath("$.fieldErrors[1].code").value("UNSUPPORTED_VALUE"))
                 .andExpect(jsonPath("$.fieldErrors[2].field").value("price"))
                 .andExpect(jsonPath("$.fieldErrors[2].code").value("INCOMPLETE_PRICE"));
+    }
+
+    @Test
+    void aRetryWithTheSameStylesInAnotherOrderIsTheSameAddition() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("styles-retry@example.com");
+        String key = UUID.randomUUID().toString();
+
+        addGarment(tokens.accessToken(), key, garment("OUTERWEAR", "CAMEL", "styles", List.of("CLASSIC", "LUXURY")))
+                .andExpect(status().isCreated());
+        addGarment(tokens.accessToken(), key, garment("OUTERWEAR", "CAMEL", "styles", List.of("LUXURY", "CLASSIC")))
+                .andExpect(status().isOk());
+        addGarment(tokens.accessToken(), key, garment("OUTERWEAR", "CAMEL", "styles", List.of("CLASSIC")))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("IDEMPOTENCY_KEY_REUSED"));
+
+        assertThat(jdbc.sql("SELECT style FROM wardrobe.wardrobe_garment_style s "
+                        + "JOIN wardrobe.wardrobe_garment g ON g.id = s.garment_id "
+                        + "WHERE g.owner_account_id = :owner ORDER BY style")
+                .param("owner", tokens.accountId()).query(String.class).list()).containsExactly("CLASSIC", "LUXURY");
+    }
+
+    @Test
+    void aZeroPriceIsSavedAsAKnownZero() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("gift@example.com");
+
+        addGarment(tokens.accessToken(), UUID.randomUUID().toString(), garment("BAGS", "BLACK",
+                "price", Map.of("amount", "0", "currency", "VND")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.price.amount").value("0"))
+                .andExpect(jsonPath("$.price.currency").value("VND"));
     }
 
     @Test
@@ -7720,7 +7989,7 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
 }
 ```
 
-### Step T13 — [ADD] `ConcurrentGarmentCreationIT.java`
+### Step T14 — [ADD] `ConcurrentGarmentCreationIT.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentCreationIT.java`  
@@ -7730,7 +7999,7 @@ class AddGarmentApiIT extends WardrobeIntegrationTestSupport {
 
 **Requirement references:** AC-12, DATA-INT-004
 
-**Dependencies:** Step P32
+**Dependencies:** `AddGarmentService`
 
 **Complete file:**
 
@@ -7829,17 +8098,17 @@ class ConcurrentGarmentCreationIT extends WardrobeIntegrationTestSupport {
 }
 ```
 
-### Step T14 — [ADD] `WardrobeFailureIT.java`
+### Step T15 — [ADD] `WardrobeFailureIT.java`
 
 **Action:** [ADD]  
 **Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeFailureIT.java`  
 **Layer:** Failure-injection integration test
 
-**Purpose:** A connection lost after the insert rolls everything back, is not reported as created, and the retry creates it once.
+**Purpose:** A connection lost after the insert rolls everything back, including Material and Style rows, is not reported as created, and the retry creates it once.
 
 **Requirement references:** AC-11, AC-12, ERR-NET-001
 
-**Dependencies:** Steps P32, P40
+**Dependencies:** `AddGarmentService`, exception handler
 
 **Complete file:**
 
@@ -7851,6 +8120,8 @@ import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
 import com.capsuleai.wardrobe.domain.Garment;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -7936,15 +8207,20 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         String key = UUID.randomUUID().toString();
         failingGarmentRepository.failNextWriteAfterItRan();
 
-        addGarment(tokens.accessToken(), key, minimumGarment("OUTERWEAR", "CAMEL"))
+        Map<String, Object> coat = garment("OUTERWEAR", "CAMEL", "materials", List.of("WOOL"),
+                "styles", List.of("CLASSIC", "LUXURY"));
+
+        addGarment(tokens.accessToken(), key, coat)
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
                 .andExpect(jsonPath("$.id").doesNotExist());
         assertThat(countGarmentsOf(tokens.accountId())).isZero();
         assertThat(countRows("wardrobe.wardrobe_garment_material")).isZero();
+        assertThat(countRows("wardrobe.wardrobe_garment_style")).isZero();
 
-        addGarment(tokens.accessToken(), key, minimumGarment("OUTERWEAR", "CAMEL")).andExpect(status().isCreated());
+        addGarment(tokens.accessToken(), key, coat).andExpect(status().isCreated());
         assertThat(countGarmentsOf(tokens.accountId())).isOne();
+        assertThat(countRows("wardrobe.wardrobe_garment_style")).isEqualTo(2);
     }
 
     @Test
@@ -7962,7 +8238,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
 }
 ```
 
-### Step T15 — [MODIFY] `CorsSecurityIT.java`
+### Step T16 — [MODIFY] `CorsSecurityIT.java`
 
 **Action:** [MODIFY]  
 **Path:** `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java`  
@@ -7972,7 +8248,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
 
 **Requirement references:** AC-12
 
-**Dependencies:** Step P42
+**Dependencies:** `IdentitySecurityConfiguration`
 
 **Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java` (state after US-AUTH-005). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
@@ -8015,7 +8291,7 @@ AFTER
                 .andExpect(status().isOk())
 ```
 
-### Step T16 — [MODIFY] `IdentityOpenApiContractIT.java`
+### Step T17 — [MODIFY] `IdentityOpenApiContractIT.java`
 
 **Action:** [MODIFY]  
 **Path:** `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java`  
@@ -8025,7 +8301,7 @@ AFTER
 
 **Requirement references:** DoD §5 API contract
 
-**Dependencies:** Step P43
+**Dependencies:** OpenAPI 0.6.0
 
 **Verified path at this stage:** `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java` (state after US-AUTH-005). Apply every change below; everything outside the shown hunks stays exactly as it is.
 
@@ -8170,7 +8446,7 @@ AFTER
 Set-Location 'D:\CapsuleAI\backend'
 
 # Unit tests (no Docker)
-.\mvnw.cmd '-Dtest=ApprovedGarmentVocabularyTest,GarmentProfileTest,BrandTest,PurchasePriceTest,GarmentEntryValidatorTest,AddGarmentServiceTest' test
+.\mvnw.cmd '-Dtest=ApprovedGarmentVocabularyTest,GarmentProfileTest,BrandTest,PurchasePriceTest,GarmentEntryValidatorTest,GarmentCreationFingerprintTest,AddGarmentServiceTest' test
 
 # Wardrobe integration tests + the modified Identity ITs (Docker)
 .\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=GarmentSchemaIT,JdbcGarmentRepositoryIT,AddGarmentApiIT,ConcurrentGarmentCreationIT,WardrobeFailureIT,CorsSecurityIT,IdentityOpenApiContractIT' verify
@@ -8179,7 +8455,7 @@ Set-Location 'D:\CapsuleAI\backend'
 .\mvnw.cmd --batch-mode --no-transfer-progress clean verify
 ```
 
-**Regression after this stage:** every Identity suite (including all US-AUTH-005 suites), `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest` (which now have real Wardrobe classes and SQL to check) and `DatabaseSchemaOwnershipIT` (which now sees the `wardrobe` schema). Expected: zero failures, errors or skips; read the counts from the reports.
+**Regression after this stage:** every Identity suite (including all US-AUTH-005 suites), `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest` (which now have real Wardrobe classes and SQL to check) and `DatabaseSchemaOwnershipIT` (which now sees the `wardrobe` schema). Expected: zero failures, errors or skips; read the counts from the reports (the guide author measured 413 unit and 220 integration tests and 61 of 61 required reports at Stage 2 on 2026-11-07).
 
 
 ---
@@ -8205,23 +8481,36 @@ Invoke-WebRequest -Method Post -Uri $garments -ContentType $json -Headers ($head
 Invoke-WebRequest -Method Post -Uri $garments -ContentType $json -Headers ($headers + @{'Idempotency-Key'=$key}) -Body $minimum | Select-Object StatusCode, Content
 
 # 3. Every applicable property of a Top
-$top = '{"confirmed":true,"category":"TOPS","subtype":"TANKS_AND_CAMILS","color":"NAVY","materials":["COTTON","SPANDEX_ELASTANE","COTTON"],"pattern":"STRIPED","style":"CASUAL","fit":"REGULAR","neckline":"SCOOP_U","sleeveLength":"THREE_QUARTER_SLEEVE","length":"HIP","brand":"Uniqlo","price":{"amount":"299000","currency":"VND"}}'
+$top = '{"confirmed":true,"category":"TOPS","subtype":"TANKS_AND_CAMIS","color":"NAVY","materials":["COTTON","SPANDEX_ELASTANE","COTTON"],"pattern":"STRIPED","styles":["MINIMALIST","CASUAL","MINIMALIST"],"fit":"REGULAR","neckline":"SCOOP_U","sleeveLength":"THREE_QUARTER_SLEEVE","length":"HIP","brand":"  Uniqlo ","price":{"amount":"299000","currency":"VND"}}'
 Invoke-RestMethod -Method Post -Uri $garments -ContentType $json -Headers ($headers + @{'Idempotency-Key'=[guid]::NewGuid().ToString()}) -Body $top
 
-# 4. Rejected inputs: inapplicable Fit on Shoes, half a Price, unconfirmed
-$bad = '{"confirmed":false,"category":"SHOES","color":"WHITE","fit":"SLIM","price":{"amount":"100"}}'
+# 4. A gift: Price 0 is a known Price, not a missing one
+$gift = '{"confirmed":true,"category":"BAGS","color":"BEIGE","styles":["CLASSIC"],"price":{"amount":"0","currency":"VND"}}'
+Invoke-RestMethod -Method Post -Uri $garments -ContentType $json -Headers ($headers + @{'Idempotency-Key'=[guid]::NewGuid().ToString()}) -Body $gift
+
+# 5. Rejected inputs: inapplicable Fit on Shoes, half a Price, unconfirmed, an unsupported Style, too many decimals
+$bad = '{"confirmed":false,"category":"SHOES","color":"WHITE","fit":"SLIM","styles":["CASUAL","ETC"],"price":{"amount":"100"}}'
 try { Invoke-RestMethod -Method Post -Uri $garments -ContentType $json -Headers ($headers + @{'Idempotency-Key'=[guid]::NewGuid().ToString()}) -Body $bad } catch { $_.ErrorDetails.Message }
+$rounded = '{"confirmed":true,"category":"SHOES","color":"WHITE","price":{"amount":"12.505","currency":"USD"}}'
+try { Invoke-RestMethod -Method Post -Uri $garments -ContentType $json -Headers ($headers + @{'Idempotency-Key'=[guid]::NewGuid().ToString()}) -Body $rounded } catch { $_.ErrorDetails.Message }
 ```
 
-Expected for step 4: `VALIDATION_FAILED` listing `confirmed` `NOT_CONFIRMED`, `fit` `NOT_APPLICABLE`, `price` `INCOMPLETE_PRICE`; no new row.
+Expected:
+
+- Step 3 returns `styles: ["CASUAL", "MINIMALIST"]` (repeats collapsed, catalogue order), `subtype: "TANKS_AND_CAMIS"` and `brand: "  Uniqlo "` exactly as typed.
+- Step 4 returns `price: {"amount": "0", "currency": "VND"}`.
+- The first request of step 5 is `VALIDATION_FAILED` listing `confirmed` `NOT_CONFIRMED`, `fit` `NOT_APPLICABLE`, `styles[1]` `UNSUPPORTED_VALUE` and `price` `INCOMPLETE_PRICE`.
+- The second is `price.amount` `TOO_MANY_DECIMALS`: USD has two decimals, and nothing is rounded.
+- Neither request in step 5 adds a row.
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT category, subtype, color, brand, price_amount::text, price_currency, removed_at FROM wardrobe.wardrobe_garment ORDER BY created_at;"
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT material FROM wardrobe.wardrobe_garment_material;"
+docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c "SELECT style FROM wardrobe.wardrobe_garment_style ORDER BY style;"
 ```
 
-Expected: two garments (the retry did not add one); `price_amount` is exactly `299000`; materials `COTTON` and `SPANDEX_ELASTANE` once each.
+Expected: three garments (the retry did not add one); `price_amount` is exactly `299000` and `0`; materials `COTTON` and `SPANDEX_ELASTANE` once each; styles `CASUAL`, `CLASSIC`, `MINIMALIST` once each. `wardrobe.wardrobe_garment` has no `style` column.
 
 ## 15. Acceptance Criteria Verification Matrix
 
@@ -8232,15 +8521,15 @@ Expected: two garments (the retry did not add one); `price_amount` is exactly `2
 | AC-01 | `AddGarmentApiIT.aFullyDescribedTopKeepsEveryAcceptedValueExactly`, `theConfirmedMinimumSavesOneImagelessGarmentInEveryCategory`; `JdbcGarmentRepositoryIT` (all methods); `AddGarmentServiceTest.aConfirmedEntryBecomesOneOwnedUserEnteredGarment` | Review/confirmation presentation |
 | AC-02 | `AddGarmentApiIT.theConfirmedMinimumSavesOneImagelessGarmentInEveryCategory` (no image field, no analysis dependency) | — |
 | AC-03 | `GarmentEntryValidatorTest` (the stored profile is exactly the submitted values); no draft endpoint exists | Draft editing/review (client) |
-| AC-04 | `ApprovedGarmentVocabularyTest` (all methods); `GarmentEntryValidatorTest.everyApprovedSubtypeIsAcceptedUnderItsOwnCategory`, `aSubtypeFromAnotherCategoryIsIdentifiedNotReplaced`, `unsupportedCodesAreRejectedIncludingEtcLowerCaseAndUnknown`, `colorfulIsTheOneListedValueForMulticoloredGarments`; `JdbcGarmentRepositoryIT.everyApprovedSubtypeRoundTrips`, `everyColorPatternAndStyleRoundTrips`; `GarmentSchemaIT.categoryAndColorMustBeApprovedCodes`, `aSubtypeMustBelongToTheCategory`; `AddGarmentApiIT.unsupportedValuesAreNotSilentlyReplaced` | Vietnamese labels |
+| AC-04 | `ApprovedGarmentVocabularyTest` (all methods, including "Tanks & Camis"); `GarmentEntryValidatorTest.everyApprovedSubtypeIsAcceptedUnderItsOwnCategory`, `aSubtypeFromAnotherCategoryIsIdentifiedNotReplaced`, `unsupportedCodesAreRejectedIncludingEtcLowerCaseAndUnknown`, `colorfulIsTheOneListedValueForMulticoloredGarments`; `JdbcGarmentRepositoryIT.everyApprovedSubtypeRoundTrips`, `everyColorPatternAndStyleRoundTrips`; `GarmentSchemaIT.categoryAndColorMustBeApprovedCodes`, `aSubtypeMustBelongToTheCategory` (`TANKS_AND_CAMIS` accepted, the misspelling rejected), `stylesAreApprovedDistinctRowsAndTheFormerSingleStyleColumnIsGone`; `AddGarmentApiIT.unsupportedValuesAreNotSilentlyReplaced` | Vietnamese labels |
 | AC-05 | `GarmentEntryValidatorTest.missingCategoryColorAndConfirmationAreAllReported`, `anUnconfirmedEntryIsNotSaveable`; `AddGarmentApiIT.aMissingOrUnconfirmedMinimumCreatesNoGarment` | Draft retention (client) |
-| AC-06 | `GarmentEntryValidatorTest.repeatedMaterialsAddNoSecondSemanticMaterial`, `halfAPriceIsIncompleteAndBothHalvesTogetherAreAccepted`, `priceProblemsNameTheAmountOrTheCurrency`; `PurchasePriceTest` (all); `BrandTest` (all); `JdbcGarmentRepositoryIT.allTwentyEightMaterialsOnOneGarmentRoundTripInCatalogueOrder`, `brandAndPriceAreKeptExactlyIncludingTrailingZerosAndDiacritics`; `GarmentSchemaIT.priceIsCompleteNonNegativeAndExact`, `aMaterialCannotBeRepeatedOnOneGarment` | — |
+| AC-06 | `GarmentEntryValidatorTest.repeatedMaterialsAddNoSecondSemanticMaterial`, `zeroOneOrSeveralStylesAreAcceptedAndRepeatedStylesCollapse`, `severalStylesApplyToEveryCategory`, `eachUnsupportedStyleIsIdentifiedByItsPosition`, `halfAPriceIsIncompleteAndBothHalvesTogetherAreAccepted`, `priceProblemsNameTheAmountOrTheCurrency`, `aZeroPriceIsAKnownPriceWhileAMissingPriceStaysUnknown`, `aSuppliedBrandIsKeptExactlyAndABlankBrandMeansNoBrand`; `GarmentProfileTest.stylesAreDistinctInCatalogueOrderAndCannotBeChangedAfterwards`; `PurchasePriceTest` (all); `BrandTest` (all); `JdbcGarmentRepositoryIT.allTwentyEightMaterialsOnOneGarmentRoundTripInCatalogueOrder`, `allSeventeenStylesOnOneGarmentRoundTripInCatalogueOrder`, `brandAndPriceAreKeptExactlyIncludingTrailingZerosAndDiacritics`, `aZeroPriceIsStoredAsAKnownZeroNotAsAMissingPrice`; `GarmentSchemaIT.priceIsCompleteNonNegativeAndExact`, `aMaterialCannotBeRepeatedOnOneGarment`; `AddGarmentApiIT.aZeroPriceIsSavedAsAKnownZero` | — |
 | AC-07 | `GarmentEntryValidatorTest.topsOnlyAndPantsOnlyDetailsAreRejectedOutsideTheirCategory`, `lengthUsesTheSeparateTopsAndPantsLists`; `GarmentProfileTest` (applicability); `GarmentSchemaIT.categorySpecificColumnsAreRefusedOutsideTheirCategories`; `JdbcGarmentRepositoryIT.everyTopsDetailRoundTrips`, `everyLengthAndSilhouetteRoundTripsUnderItsCategory`; `AddGarmentApiIT.inapplicableDetailsAreIdentifiedForCorrectionAndNothingIsSaved`, `aFullyDescribedPairOfPantsUsesThePantsLengthAndSilhouette` | Category-change review UI |
 | AC-08 | `AddGarmentApiIT.theConfirmedMinimumSavesOneImagelessGarmentInEveryCategory` (`recommendationEligibility: NOT_EVALUATED`, nothing else) | Explanation wording |
 | AC-09 | `AddGarmentServiceTest.aConfirmedEntryBecomesOneOwnedUserEnteredGarment` (`USER_ENTERED`); `AddGarmentApiIT` (`provenance`); no update path exists | Future AI-overwrite regression (PBI-013) |
 | AC-10 | Nothing is stored without an accepted `POST` (`AddGarmentServiceTest.anInvalidEntryIsRejectedBeforeAnyTransaction`) | Cancel/leave (client) |
 | AC-11 | `WardrobeFailureIT.aFailedSaveIsRolledBackAndNotReportedAsCreatedAndTheRetryCreatesItOnce`, `earlierAcceptedGarmentsAreUntouchedByALaterFailedSave`; `AddGarmentServiceTest.aFailedCommitIsNotReportedAsACreatedGarment` | Keeping entered work (client) |
-| AC-12 | `AddGarmentApiIT.aRetryOfTheSameAdditionReturnsTheAlreadyAcceptedGarment`, `reusingAKeyForADifferentGarmentIsRejectedAndChangesNothing`, `twoSeparateAdditionsOfIdenticalLookingGarmentsAreBothKept`, `anAdditionWithoutAnIdempotencyKeyIsRejected`; `ConcurrentGarmentCreationIT` (both); `GarmentSchemaIT.aCreationKeyIsUsedOncePerOwnerButIndependentlyAcrossOwners` | Outcome review UI |
+| AC-12 | `AddGarmentApiIT.aRetryOfTheSameAdditionReturnsTheAlreadyAcceptedGarment`, `aRetryWithTheSameStylesInAnotherOrderIsTheSameAddition`, `reusingAKeyForADifferentGarmentIsRejectedAndChangesNothing`; `GarmentCreationFingerprintTest` (both); `twoSeparateAdditionsOfIdenticalLookingGarmentsAreBothKept`, `anAdditionWithoutAnIdempotencyKeyIsRejected`; `ConcurrentGarmentCreationIT` (both); `GarmentSchemaIT.aCreationKeyIsUsedOncePerOwnerButIndependentlyAcrossOwners` | Outcome review UI |
 | AC-13 | `AddGarmentApiIT.unusableAccessIsDeniedAndSavesNothing` (logged out, reset-revoked, expired, no token), `theOwnerIsAlwaysTheAuthenticatedAccountAndKeysAreScopedPerOwner` | Re-authentication/resume UI |
 | AC-14 | Distinct stable codes only | **Vietnamese assistive-technology and 200% text evidence** |
 
@@ -8255,18 +8544,31 @@ Expected: two garments (the retry did not add one); `price_amount` is exactly `2
 | FR-GAR-006, FR-GAR-007, BRULE-GAR-005/006 | AC-06, AC-07 | Optional omission; applicability | `GarmentEntryValidatorTest`, `GarmentSchemaIT`, `AddGarmentApiIT` | `topsOnlyAndPantsOnlyDetailsAreRejectedOutsideTheirCategory`, `lengthUsesTheSeparateTopsAndPantsLists`, `categorySpecificColumnsAreRefusedOutsideTheirCategories`, `inapplicableDetailsAreIdentifiedForCorrectionAndNothingIsSaved` | Unit / PostgreSQL IT / HTTP IT |
 | FR-GAR-008 | AC-04 | One dominant Color incl. Colorful | `ApprovedGarmentVocabularyTest`, `GarmentEntryValidatorTest` | `globalVocabulariesMatchTheApprovedListsExactly`, `colorfulIsTheOneListedValueForMulticoloredGarments` | Unit |
 | FR-GAR-009 | AC-04 | Pattern/Style complete lists, Etc rejected | `ApprovedGarmentVocabularyTest`, `GarmentEntryValidatorTest` | `etcIsNotAStyleAndNoUnknownFallbackWasInvented`, `unsupportedCodesAreRejectedIncludingEtcLowerCaseAndUnknown` | Unit |
+| FR-GAR-009, OPEN-S2-08 | AC-06 | 0..n distinct Styles in every category, catalogue order, set in the fingerprint, no single-Style column | `GarmentEntryValidatorTest`, `GarmentProfileTest`, `JdbcGarmentRepositoryIT`, `GarmentSchemaIT`, `GarmentCreationFingerprintTest`, `AddGarmentApiIT` | `zeroOneOrSeveralStylesAreAcceptedAndRepeatedStylesCollapse`, `severalStylesApplyToEveryCategory`, `stylesAreDistinctInCatalogueOrderAndCannotBeChangedAfterwards`, `allSeventeenStylesOnOneGarmentRoundTripInCatalogueOrder`, `stylesAreApprovedDistinctRowsAndTheFormerSingleStyleColumnIsGone`, `theOrderAndRepetitionOfSelectedStylesDoNotChangeTheFingerprint`, `aRetryWithTheSameStylesInAnotherOrderIsTheSameAddition` | Unit / PostgreSQL IT / HTTP IT |
 | FR-GAR-010 | AC-06 | 0..n distinct Materials, no percentages | `GarmentEntryValidatorTest`, `JdbcGarmentRepositoryIT`, `GarmentSchemaIT` | `repeatedMaterialsAddNoSecondSemanticMaterial`, `allTwentyEightMaterialsOnOneGarmentRoundTripInCatalogueOrder`, `aMaterialCannotBeRepeatedOnOneGarment` | Unit / PostgreSQL IT |
 | FR-GAR-011, BRULE-GAR-001/008 | AC-09 | User-entered authority, provenance | `AddGarmentServiceTest` | `aConfirmedEntryBecomesOneOwnedUserEnteredGarment` | Unit |
-| FR-GAR-012, BRULE-GAR-010 | AC-06 | Brand exact, bounds | `BrandTest`, `JdbcGarmentRepositoryIT` | all `BrandTest`, `brandAndPriceAreKeptExactlyIncludingTrailingZerosAndDiacritics` | Unit / PostgreSQL IT |
-| FR-GAR-013, BRULE-GAR-010 | AC-06 | Price pair, exact decimal, currency | `PurchasePriceTest`, `GarmentEntryValidatorTest`, `GarmentSchemaIT` | all `PurchasePriceTest`, `halfAPriceIsIncompleteAndBothHalvesTogetherAreAccepted`, `priceIsCompleteNonNegativeAndExact` | Unit / PostgreSQL IT |
-| DATA-GAR-001, DATA-GAR-002 | AC-01 | Exact persistence of every value | `JdbcGarmentRepositoryIT` | all 7 methods | PostgreSQL IT |
+| FR-GAR-012, BRULE-GAR-010, OPEN-S2-01B | AC-06 | Brand exact (no trim, case or accent change), blank = none, 100 code points | `BrandTest`, `GarmentEntryValidatorTest`, `JdbcGarmentRepositoryIT` | all `BrandTest`, `aSuppliedBrandIsKeptExactlyAndABlankBrandMeansNoBrand`, `aTooLongBrandIsIdentified`, `brandAndPriceAreKeptExactlyIncludingTrailingZerosAndDiacritics` | Unit / PostgreSQL IT |
+| FR-GAR-013, BRULE-GAR-010, OPEN-S2-01A | AC-06 | Price optional, pair, 0 valid, negative invalid, 12 integer digits, minor unit without rounding, upper-case ISO 4217 | `PurchasePriceTest`, `GarmentEntryValidatorTest`, `GarmentSchemaIT`, `JdbcGarmentRepositoryIT`, `AddGarmentApiIT` | all `PurchasePriceTest`, `halfAPriceIsIncompleteAndBothHalvesTogetherAreAccepted`, `priceProblemsNameTheAmountOrTheCurrency`, `aZeroPriceIsAKnownPriceWhileAMissingPriceStaysUnknown`, `priceIsCompleteNonNegativeAndExact`, `aZeroPriceIsStoredAsAKnownZeroNotAsAMissingPrice`, `aZeroPriceIsSavedAsAKnownZero` | Unit / PostgreSQL IT / HTTP IT |
+| DATA-GAR-001, DATA-GAR-002 | AC-01 | Exact persistence of every value, distinct Material and Style sets | `JdbcGarmentRepositoryIT` | all 9 methods | PostgreSQL IT |
 | DATA-INT-004, ADA-009, FR-AI-010 | AC-12 | One effect per logical addition | `ConcurrentGarmentCreationIT`, `AddGarmentApiIT`, `AddGarmentServiceTest` | `concurrentDeliveriesOfOneAdditionCreateExactlyOneGarment`, `aRetryOfTheSameAdditionReturnsTheAlreadyAcceptedGarment`, `repeatingTheSameAdditionReturnsTheAcceptedGarmentWithoutASecondOne` | Concurrency / HTTP IT / unit |
 | ERR-NET-001, COM-002 | AC-11, AC-12 | Lost connection rolls back; retry safe | `WardrobeFailureIT` | `aFailedSaveIsRolledBackAndNotReportedAsCreatedAndTheRetryCreatesItOnce` | Failure IT |
 | FR-AUTH-008, NFR-SEC-001, BRULE-AUTH-001 | AC-13 | Owner isolation, unusable access | `AddGarmentApiIT` | `theOwnerIsAlwaysTheAuthenticatedAccountAndKeysAreScopedPerOwner`, `unusableAccessIsDeniedAndSavesNothing` | Security IT |
-| DoD §5 schema | — | V8 constraints and upgrade | `GarmentSchemaIT` | all 11 methods | PostgreSQL IT |
+| DoD §5 schema | — | V8 constraints and upgrade | `GarmentSchemaIT` | all 12 methods | PostgreSQL IT |
 | ADA-016, AR-01–AR-04 | — | Wardrobe tables only in `wardrobe`; no cross-schema foreign key; Wardrobe SQL names only `wardrobe.*` | `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` | `wardrobeTablesLiveOnlyInTheWardrobeSchema`, `existingIdentityDataSurvivesTheUpgradeFromV7`; all methods | PostgreSQL IT / unit |
 | DoD §5 API contract | — | OpenAPI = handlers | `IdentityOpenApiContractIT` | all 5 methods | Contract IT |
 | ADA-015, ADA-016 | — | Wardrobe uses only `identity.api`; framework-free core | `ArchitectureDependencyTest` | all methods | Architecture |
+
+### 15.3 Product Owner decisions applied in this guide
+
+| Decision | What this guide does | Status |
+| --- | --- | --- |
+| OPEN-S2-01A (TD-S2-11) | `PurchasePrice`, the validator's pair rule and the V8 CHECKs implement the approved Price rules; tests cover 0, negative, 12 digits, minor units without rounding and currency case | ✅ ⏳ |
+| OPEN-S2-01B (TD-S2-12) | `Brand` keeps a supplied value exactly, treats blank as none and bounds it at 100 code points; no catalogue | ✅ ⏳ |
+| OPEN-S2-08 option B (TD-S2-13) | `Set<GarmentStyle> styles` in the domain, request, response, validator (`styles[i]`), fingerprint, `wardrobe.wardrobe_garment_style`, JDBC and OpenAPI; the single-Style column and field are gone | ✅ ⏳ |
+| REVIEW-TAXONOMY | `TANKS_AND_CAMIS` / "Tanks & Camis" in the enum, V8 and OpenAPI; the misspelling is rejected by the database | ✅ ⏳ |
+| X-1 | Constant `recommendationEligibility: NOT_EVALUATED`; no readiness anywhere | ✅ ⏳ |
+| X-3, X-4 | No image field; `removed_at` for test fixtures only, no removal endpoint | ✅ ⏳ |
+| OPEN-S2-11, OPEN-S2-12 | Requirement documents already aligned; nothing to implement | ✅ |
 
 ## 16. Definition of Done
 
@@ -8296,14 +8598,14 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 | DoD area | Evidence for US-GAR-001 |
 | --- | --- |
-| Acceptance and scope | Section 15; AC-14 and client parts outstanding; OPQ-013 choices confirmed by the PO |
+| Acceptance and scope | Section 15; AC-14 and client parts outstanding; Price, Brand and Style rules are the approved ones (Section 15.3) |
 | Implementation completeness | Sections 11–12 |
 | Automated tests | Section 13; `clean verify` green |
 | Integration behavior | Real filter chain, real PostgreSQL |
 | Security and authorization | Owner from session; cross-account and unusable-access tests |
 | Privacy and isolation | No third-party exchange; owner-scoped data |
 | Errors and recovery | Rollback, retry, key reuse, malformed input |
-| Build and CI | Hosted CI on the PR with the updated report guard |
+| Build and CI | Hosted CI on the PR into `sprint_02` with the updated report guard |
 | Review and defects | Code review; no Critical defect |
 | Documentation and traceability | OpenAPI 0.6.0, README, this guide |
 | Increment integration | Mobile manual-entry journey |
@@ -8312,16 +8614,18 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 | Symptom | Cause / action |
 | --- | --- |
-| `relation "wardrobe_garment" does not exist` | Unqualified SQL: write `wardrobe.wardrobe_garment` (and `wardrobe.wardrobe_garment_material`). |
+| `relation "wardrobe_garment" does not exist` | Unqualified SQL: write `wardrobe.wardrobe_garment` (and `wardrobe.wardrobe_garment_material`, `wardrobe.wardrobe_garment_style`). |
+| `column g.style does not exist` | Code from the previous guide revision. Styles are a set: read them with the `ARRAY(SELECT s.style …)` subquery of `SELECT_GARMENT` and write rows into `wardrobe.wardrobe_garment_style`. |
+| `cannot truncate a table referenced in a foreign key constraint` in an IT | The test support truncates the tables by name: `WardrobeIntegrationTestSupport` must list `wardrobe_garment_material`, `wardrobe_garment_style` and `wardrobe_garment` together. |
 | `PersistenceOwnershipSqlTest` fails | A statement names an unqualified or foreign table, or V8 names another schema. The message gives file, line and the qualified name; Wardrobe obtains Identity information only through `identity.api`. |
 | `DatabaseSchemaOwnershipIT`: table in the wrong schema | V8 created a table without `wardrobe.`; fix the migration before it is applied anywhere. |
-| `ApprovedGarmentVocabularyTest` fails with a label difference | An enum label was retyped. Copy it exactly from Step P4–P14 (watch `Tanks & Camils`, `Spandex (elastane)`, `Scoop (U)`, `3/4 Sleeve`, `Wide-leg`). |
+| `ApprovedGarmentVocabularyTest` fails with a label difference | An enum label was retyped. Copy it exactly from Step P4–P14 (watch `Tanks & Camis`, `Spandex (elastane)`, `Scoop (U)`, `3/4 Sleeve`, `Wide-leg`). |
 | `ApprovedGarmentVocabularyTest`: authority file not found | Tests run from `backend`; the file must be at `../Initial files/Image to Properties Extraction.md`. |
 | `JdbcGarmentRepositoryIT` fails with a CHECK violation | The V8 value list and the enum differ; regenerate neither by hand, compare both with the authority. |
 | 401 on `POST /garments` with a fresh token | Missing `Bearer ` prefix, or the session was revoked (logout/reset). |
 | 400 `Idempotency-Key` `REQUIRED` from a browser | CORS must allow the header (Step P42); check the preflight's `Access-Control-Allow-Headers`. |
 | 422 `IDEMPOTENCY_KEY_REUSED` | The client reused a key for a different garment; generate one key per intended addition and reuse it only for retries. |
-| `price.amount` `TOO_MANY_DECIMALS` for VND | VND has no minor unit; send `"150000"`, not `"150000.00"`. |
+| `price.amount` `TOO_MANY_DECIMALS` for VND | VND has no minor unit; send `"150000"`, not `"150000.00"`. Nothing is rounded (OPEN-S2-01A). |
 | Two `Clock` beans / ambiguous injection at startup | Do not declare a Clock in `WardrobeConfiguration`; reuse the existing one. |
 | Contract IT fails "documented but not served" | The OpenAPI path or method differs from the controller mapping. |
 
@@ -8344,7 +8648,7 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 ### 18.2 Testing checklist
 
-- [ ] T1–T16 exactly as in Section 13
+- [ ] T1–T17 exactly as in Section 13
 - [ ] Unit, focused IT and `clean verify` commands green; reports inspected
 - [ ] Manual verification (Section 14)
 - [ ] Hosted CI green on the pull request
@@ -8354,7 +8658,7 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 - [ ] AC-01 · [ ] AC-02 · [ ] AC-03 · [ ] AC-04 · [ ] AC-05 · [ ] AC-06 · [ ] AC-07
 - [ ] AC-08 · [ ] AC-09 · [ ] AC-10 · [ ] AC-11 · [ ] AC-12 · [ ] AC-13 (backend parts)
 - [ ] AC-14 and client parts (client evidence)
-- [ ] PO decision on OPQ-013 (Price/Brand validation) and Style cardinality recorded
+- [ ] Approved Price, Brand and multiple-Style rules demonstrated (Section 14, steps 3–5)
 
 ### 18.4 Definition of Done checklist
 
@@ -8362,6 +8666,6 @@ Triggered conditional criteria: **HTTP API contract** (OpenAPI v0.6.0), **databa
 
 ### 18.5 Known limitations
 
-- Price/Brand validation bounds and single-valued Style are provisional ([OPEN] OPEN-S2-01, OPEN-S2-08).
+- A request that still sends the former single `style` field is not rejected: like any unknown field it is ignored and stored nowhere. Clients must send `styles`.
 - No image, editing, removal or search (other PBIs); removal state exists only as `removed_at`, set by test fixtures.
 - Per-attribute provenance and AI-overwrite protection are only structurally prepared (no update path exists).

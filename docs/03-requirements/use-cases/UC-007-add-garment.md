@@ -130,13 +130,13 @@ At Main Step 1:
 
 - One accepted garment belongs to the User's active wardrobe; confirmed/corrected/entered-and-confirmed values are authoritative.
 - Applicable confidence/provenance and unknown states remain distinct; later automated output cannot silently replace accepted values.
-- Readiness is explained separately from Saveable ownership; an imageless manual entry remains accessible.
+- Recommendation eligibility is reported as not evaluated, separately from Saveable ownership; an imageless manual entry remains accessible.
 
 ## 10. Minimal / Failure Postconditions
 
 - Canceled/unconfirmed/rejected work creates no confirmed wardrobe entry and does not alter existing garments.
 - Known failed saving is not reported as successful; an uncertain outcome must be reviewed before safe retry.
-- Missing compatibility information is not fabricated and cannot justify an unsupported ready/valid-outfit claim.
+- No compatibility information is requested or fabricated, and no ready/unready or valid-outfit claim is made (PRD OPQ-015; FEAT-WAR-001 updated 2026-11-07).
 - Loss of access pauses protected use; inaccessible personal data is not exposed or labeled empty. Prior accepted information remains governed by its authorized state.
 
 ## 11. Business Rules
@@ -198,7 +198,7 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-PRD OPQ-012–014 now track unresolved category readiness/composition and optional-field/subtype policies. Earlier issue review below predates this revision.
+PRD OPQ-012 defers readiness/composition to engine development; OPQ-013 (Brand/Price validation) and OPQ-014 are resolved, and OPQ-016–018 (multiple Styles, Tanks & Camis, paged overview) were decided on 2026-11-07. Earlier issue review below predates this revision.
 
 The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 

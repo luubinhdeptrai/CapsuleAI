@@ -44,7 +44,7 @@ Read-only detail for a selected current confirmed garment, including available i
 
 **When** detail retrieval succeeds
 
-**Then** return the correct accepted Category, Subtype, Color, Material selections, Pattern, Style, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand and purchase Price with currency. Missing optional values stay missing; multiple distinct Materials and exact accepted labels/amounts are preserved. Available image and useful metadata remain separate; suggestions never replace confirmed values.
+**Then** return the correct accepted Category, Subtype, Color, Material selections, Pattern, Style selections, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand and purchase Price with currency. Missing optional values stay missing; multiple distinct Materials and exact accepted labels/amounts are preserved. Available image and useful metadata remain separate; suggestions never replace confirmed values.
 
 ### AC-02 — Inspect an imageless or incomplete entry
 
@@ -167,6 +167,8 @@ Collection browsing is US-WAR-001. All 13 applicable creation properties belong 
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-07 Product Owner decisions.** Detail returns zero or more distinct Styles (OPEN-S2-08), Brand and Price under the approved validation (OPEN-S2-01A/01B), `recommendationEligibility: NOT_EVALUATED` (X-1), `recordedUse.availability: UNAVAILABLE` without a fabricated count or date (X-5) and no image field (X-3). Selection comes from the paged overview of US-WAR-001 (OPEN-S2-10). See the [decision implementation notes](../../sprints/sprint-02/decision-implementation-notes.md).
 
 **2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 

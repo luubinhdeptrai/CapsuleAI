@@ -85,7 +85,7 @@ Recommendation eligibility has not been evaluated. A saved garment is not invali
 
 **When** I omit or provide the other applicable properties
 
-**Then** omission does not block saving. Support all 13 properties in this Sprint: optional Subtype, zero or multiple distinct Materials, one optional Pattern, Style, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand text and purchase Price. Material duplicates add no semantic material; no percentages/proportions are fabricated. Price uses decimal amount plus explicit ISO 4217 currency together or is cleared; missing Price is unknown, not zero. Preserve all accepted values without float calculations, image/location inference or currency conversion.
+**Then** omission does not block saving. Support all 13 properties in this Sprint: optional Subtype, zero or multiple distinct Materials, one optional Pattern, zero or multiple distinct Styles, applicable Fit/Neckline/Sleeve Length/Length/Silhouette, Brand text and purchase Price. Material duplicates add no semantic material; no percentages/proportions are fabricated. Price uses decimal amount plus explicit ISO 4217 currency together or is cleared; missing Price is unknown, not zero. Preserve all accepted values without float calculations, image/location inference or currency conversion.
 
 ### AC-07 — Apply category-specific detail validation
 
@@ -183,6 +183,8 @@ All 13 applicable properties are included in manual creation. Later editing rema
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-07 Product Owner decisions.** Style accepts zero, one or several distinct approved values (OPEN-S2-08). Brand: at most 100 Unicode code points, blank means unspecified, accepted text kept exactly (OPEN-S2-01B). Price: zero is valid, negative invalid, at most 12 integer digits, fractional digits limited to the currency's ISO 4217 minor unit and rejected, never rounded, beyond it; valid upper-case ISO 4217 currency (OPEN-S2-01A; PRD OPQ-013 resolved). The Tops subtype is spelled Tanks & Camis (`TANKS_AND_CAMIS`). No image field is introduced; eligibility stays `NOT_EVALUATED`. See the [decision implementation notes](../../sprints/sprint-02/decision-implementation-notes.md).
 
 **2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 

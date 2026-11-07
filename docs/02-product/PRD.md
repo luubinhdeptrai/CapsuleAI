@@ -62,6 +62,7 @@ Conflict precedence is: explicit BRD decisions; explicit later CapsuleAI decisio
 | 0.2 | 2026-10-05 | Resolved OPQ-001–OPQ-010 and synchronized journeys, features, Wear Event semantics, authentication, garment completeness, confidence experience, coverage context, and candidate information. Business effects are synchronized with BRD v0.3; document approval is not implied. | Baseline Draft |
 | 0.3 | 2026-11-05 | Adopted approved taxonomy, optional properties and explicit Price approval; OPQ-011 records approval and OPQ-012–014 track unresolved policy. | Baseline Draft |
 | 0.4 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. | Baseline Draft |
+| 0.5 | 2026-11-07 | Product Owner decisions: OPQ-013 resolved (Brand and Price validation); multiple Styles (OPQ-016); Tanks & Camis spelling (OPQ-017); paged wardrobe overview (OPQ-018); obsolete compatibility-readiness wording removed from FEAT-WAR-001. Existing IDs retained. | Baseline Draft |
 
 ### 1.4 Artifact Boundary
 
@@ -555,7 +556,7 @@ The [garment-property authority](../../Initial%20files/Image%20to%20Properties%2
 | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 | 5 | Pattern | All categories | No | One optional approved Pattern. |
-| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 | 7 | Fit | Tops | No | Optional approved Fit. |
 | 8 | Neckline | Tops | No | Optional approved Neckline. |
 | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -586,7 +587,7 @@ Subtype is optional, but a supplied value must belong to the selected category. 
 
 ### 13.3 Saving and Deferred Recommendation Eligibility
 
-Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
 Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
@@ -610,7 +611,7 @@ Provenance distinguishes **AI Suggested**, **User Confirmed**, **User Corrected*
 
 Brand is optional user-entered text for every category, with no enum/catalogue or recognition feature. Price is the optional amount originally paid for the garment, expressed as a decimal amount and explicit ISO 4217 currency code. Amount/currency must be supplied together or cleared; unknown Price is not zero. No location default, appearance inference, floating-point monetary value or currency conversion is introduced. Preserve accepted values through creation/detail and future editing; automated output cannot silently overwrite them.
 
-This is personal purchase information, distinct from retailer/affiliate guidance and its freshness rules. PRD OPQ-013 retains genuinely unresolved monetary-validation details. Brand bounds/normalization and technical serialization are proportional JIT work under existing conventions; they must not silently change confirmed information.
+This is personal purchase information, distinct from retailer/affiliate guidance and its freshness rules. Approved validation (OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points, a blank Brand means unspecified, and accepted Brand text is kept exactly (no trimming, case change, accent removal or whitespace normalization). A Price of zero is a valid known amount and differs from a missing Price; negative amounts are invalid; amounts have at most 12 integer digits and no more fractional digits than the currency's ISO 4217 minor unit, and excess precision is rejected rather than rounded; the currency is a valid upper-case ISO 4217 code.
 
 ## 14. Wardrobe Management Features
 
@@ -627,11 +628,12 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 **Product behavior:**
 
 1. Show owned garment cards with an available image/visual, category/subtype, and dominant color; manually created garments remain accessible without an image.
-2. Where applicable, distinguish saveable entries needing additional compatibility information from recommendation-garments evaluated under a future approved policy.
+2. Present every confirmed garment as owned and saved, with the truthful statement that recommendation eligibility has not been evaluated. Do not classify garments as ready, unready, suitable or unsuitable, and do not ask for additional compatibility information: composition, compatibility and sufficient-evidence policy belong to future recommendation-engine development (OPQ-015).
 3. Offer relevant recorded-use indicators with clear meaning, including no recorded Wear Events.
 4. Open garment detail for confirmed information across all eight categories, including available subtype, Brand and purchase Price with currency (Section 13.5), useful provenance/uncertainty, guidance that eligibility is not evaluated, and utilization. Unknown optional fields remain unknown and never hide an owned garment.
 5. Provide Add Garment and access to search/filter/edit/remove actions.
 6. Distinguish empty wardrobe from loading, unavailable information, and no matching search results.
+7. Present a large wardrobe page by page in a stable newest-first order, with an explicit way to continue, so that no garment that stays current is omitted or repeated (OPQ-018).
 
 **User controls:** Browse, open/return from detail, add, and move to management or insights. **Product states:** Loading, empty, populated, detail available, load failed.
 
@@ -646,7 +648,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 - **AC-05:** A data-loading failure is distinguishable from an empty wardrobe.
 - **AC-06:** A manually saved garment without an image remains identifiable/accessibly displayed; an incomplete entry provides useful guidance that eligibility is not evaluated.
 
-**Out of scope / deferred detail:** Pixel layout, collection organization, advanced sorting, pagination, and storage are not defined here. Shared/public wardrobes are outside MVP.
+**Out of scope / deferred detail:** Pixel layout, collection organization, advanced (user-selectable) sorting and storage are not defined here. Shared/public wardrobes are outside MVP.
 
 ### 14.2 FEAT-WAR-002 — Edit and Remove Garments
 
@@ -1517,7 +1519,7 @@ The ten decisions below were explicitly approved by the user on October 5, 2026.
 | OPQ-009 | Welcome → Register/Login → Style → Common Needs → Optional Personal Context → Location/manual/skip → recommended non-blocking First Garment → Today/Wardrobe. No arbitrary inventory quota. | Resolved | JRN-01, navigation, profile, account/empty-wardrobe states. |
 | OPQ-010 | Usable candidates show applicable visual/identity/category/subtype/gap/attributes/+N/reason/previews; credible price/material/longevity/retailer/link remain optional. No fabricated claims or opaque vanity scores. | Resolved | JRN-07; FEAT-SHOP-001/FEAT-SHOP-002/FEAT-MULT-001; display/states/explanations. |
 
-Historical decisions remain traceable. OPQ-015 now governs the garment model and readiness deferral; OPQ-013 retains only genuinely unresolved validation details. Future compatibility/composition design is outside Sprint 2 and cannot reuse removed attributes without new approval.
+Historical decisions remain traceable. OPQ-015 now governs the garment model and readiness deferral; OPQ-013 was resolved on 2026-11-07. Future compatibility/composition design is outside Sprint 2 and cannot reuse removed attributes without new approval.
 
 ### 34.1 Approved Taxonomy Revision and Open Follow-up Decisions
 
@@ -1525,8 +1527,11 @@ Historical decisions remain traceable. OPQ-015 now governs the garment model and
 |---|---|---|---|
 | OPQ-011 | Eight primary categories, exactly ten Dresses/Jumpsuits subtypes, optional subtype/Brand/Price; Price means user-reported purchase price with decimal amount and explicit ISO 4217 currency. | User-approved; recorded 2026-11-05 | Sections 12–14; BRD BR-002/003/005; SRS FR-GAR-001–006/011–013 and DATA-GAR-002; selected Sprint 2 wardrobe stories. |
 | OPQ-012 | Previous category-specific readiness question is superseded: all recommendation eligibility/composition/compatibility policy is deferred to engine development, without ready/ineligible claims in Sprint 2. | Resolved deferral; future design | All eight categories; no hidden garment descriptors or old category-to-role mapping. |
-| OPQ-013 | Decide monetary amount bounds, zero/negative handling, precision/rounding and supported currency-list policy; decide Brand length, blank handling and any normalization that affects user values. No location default or exchange-rate behavior is approved. | Open policy / selected-story JIT validation | Before implementing affected optional-field validation; approved meaning and optionality remain fixed. |
+| OPQ-013 | Brand: at most 100 Unicode code points; blank means unspecified; accepted text kept exactly. Price: zero is a valid known amount; negative invalid; at most 12 integer digits; fractional digits limited to the currency's ISO 4217 minor unit and rejected, never rounded, beyond it; valid upper-case ISO 4217 currency; amount and currency together. No location default, appearance inference or exchange-rate behavior. | Resolved by Product Owner decision, 2026-11-07 | Section 13.5; SRS FR-GAR-012/013 and Section 3.5.2; BRULE-GAR-010; US-GAR-001. |
 | OPQ-014 | All explicitly listed category subtypes and fashion vocabularies are approved in Image to Properties Extraction.md. Overlap never implies automatic property derivation. | Resolved by final Product Owner decision | Complete vocabulary applies now; no pending Bags/Headwear subtype approval. |
+| OPQ-016 | Style allows zero, one or several distinct approved values per garment, like Material; no value is added to the vocabulary and no fourteenth property is created. | Product Owner decision, 2026-11-07 | Section 13.1; SRS FR-GAR-009 and DATA-GAR-002; US-GAR-001/US-WAR-002. |
+| OPQ-017 | The Tops subtype label is corrected from "Tanks & Camils" to "Tanks & Camis" (identifier `TANKS_AND_CAMIS`); no other taxonomy change. | Product Owner decision, 2026-11-07 | Section 13.2 and the garment-property authority. |
+| OPQ-018 | The wardrobe overview is delivered page by page in a stable newest-first order with explicit continuation, without omitting or repeating garments that stay current. | Product Owner decision, 2026-11-07 | FEAT-WAR-001; SRS FR-WAR-001; US-WAR-001. |
 | OPQ-015 | Exactly 13 source-owned properties, all listed values approved, multiple Materials, one dominant Color, category applicability, removed obsolete attributes, deferred eligibility and all applicable properties in Sprint 2. | Final Product Owner approval, 2026-11-05 | Supersedes conflicting OPQ-003/004/011–014 property/readiness descriptions; unrelated profile/context decisions remain valid. |
 
 ## 35. Approval / Exit Criteria

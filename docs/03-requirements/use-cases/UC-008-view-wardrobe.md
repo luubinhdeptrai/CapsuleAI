@@ -20,7 +20,7 @@ Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD]
 
 ## 2. Goal
 
-Browse and find current owned garments, inspect their confirmed details/readiness and understand available reported-use information without changing wardrobe ownership.
+Browse and find current owned garments, inspect their confirmed details and unevaluated recommendation eligibility and understand available reported-use information without changing wardrobe ownership.
 
 ## 3. Stakeholders and Interests
 
@@ -69,12 +69,19 @@ At Main Step 2:
 1. CapsuleAI explains the confirmed empty state and offers Add Garment.
 2. The User may start UC-007 or leave the wardrobe without a fixed garment-quota requirement.
 
-### A4 — Imageless, unready or no-recorded-use entry
+### A4 — Imageless, minimum-only or no-recorded-use entry
 
 At Main Step 6:
 
 1. CapsuleAI keeps the entry identifiable without an image, explains missing eligibility under a future approved policy fields and labels missing reports as no recorded use.
 2. The User can inspect/enrich the garment without an inference that it has never been physically worn.
+
+### A5 — Large wardrobe
+
+At Main Step 2 (PO decision 2026-11-07, FR-WAR-001):
+
+1. CapsuleAI presents the first page of current garments, newest first, and indicates whether more are available.
+2. The User asks for more; CapsuleAI continues after the last presented garment without repeating or omitting garments that remain current. Garments added after browsing began appear when the User starts again from the first page.
 
 ## 8. Exception / Failure Flows
 
@@ -102,7 +109,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - Displayed inventory/details match the available current confirmed wardrobe and visible search/filter conditions.
-- Readiness and recorded-use limitations are understandable, and no item is added/edited/removed by viewing.
+- Unevaluated eligibility and recorded-use limitations are understandable, and no item is added/edited/removed by viewing.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -120,7 +127,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-001` | Confirmed garment values govern displayed current information. |
 | `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
-| `BRULE-GAR-003` | Show eligibility under a future approved policy without hiding Saveable but unready entries. |
+| `BRULE-GAR-003` | Show that recommendation eligibility is not evaluated, without hiding any saveable entry or labelling it ready or unready. |
 | `BRULE-HIST-001` | Usage indicators are reported evidence, not verified physical behavior. |
 | `BRULE-HIST-002` | Historical removed snapshots do not enter current inventory. |
 
@@ -162,7 +169,7 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-PRD OPQ-012–014 now track unresolved category readiness/composition and optional-field/subtype policies. Earlier issue review below predates this revision.
+PRD OPQ-012 defers readiness/composition to engine development; OPQ-013 (Brand/Price validation) and OPQ-014 are resolved, and OPQ-016–018 (multiple Styles, Tanks & Camis, paged overview) were decided on 2026-11-07. Earlier issue review below predates this revision.
 
 The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 

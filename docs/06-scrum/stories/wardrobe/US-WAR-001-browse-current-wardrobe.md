@@ -125,6 +125,14 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 **Then** these entries, actions and states remain operable and understandable through meaningful accessible names/roles/states and information beyond image or color alone; missing image, unevaluated eligibility and unavailable retrieval retain their distinct meanings.
 
+### AC-12 — Browse a large wardrobe page by page
+
+**Given** my current wardrobe holds more garments than one overview page shows
+
+**When** I browse and ask for more
+
+**Then** CapsuleAI shows my current garments newest first, one page at a time, and says whether more remain. Continuing never repeats or omits a garment that stays current; a garment I remove in the meantime simply no longer appears, and a garment added in the meantime appears when I start again from the first page. Pages contain only my own current garments. *(Added 2026-11-07, Product Owner decision OPEN-S2-10; FR-WAR-001.)*
+
 ## 6. Business Rules and Constraints
 
 - BRULE-AUTH-001 and BRULE-GAR-001–BRULE-GAR-003 constrain authorized current ownership, confirmed information and retention of Saveable entries despite unevaluated eligibility fields.
@@ -142,7 +150,7 @@ Read-only current wardrobe browsing with identifiable summaries, visible imagele
 
 ## 8. Out of Scope
 
-Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich entry and editing are PBI-008, measurement PBI-009, photo/AI entry PBI-012/PBI-013, search/filter conditions and no-match/reset behavior PBI-015, removal/retention enforcement PBI-016, and utilization analytics PBI-025. This story introduces no sorting, pagination rule, archive/restore, wear-reporting action, new event or universal offline guarantee.
+Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich entry and editing are PBI-008, measurement PBI-009, photo/AI entry PBI-012/PBI-013, search/filter conditions and no-match/reset behavior PBI-015, removal/retention enforcement PBI-016, and utilization analytics PBI-025. This story introduces no user-selectable sorting, archive/restore, wear-reporting action, new event or universal offline guarantee; the overview is paged newest first (AC-12).
 
 ## 9. Traceability
 
@@ -158,6 +166,8 @@ Garment creation is PBI-006; the selected profile/detail is US-WAR-002. Rich ent
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-07 Product Owner decisions.** The overview is paged with an explicit continuation (OPEN-S2-10, AC-12). No image field (X-3); eligibility stays `NOT_EVALUATED` (X-1); removed garments are excluded using `removed_at` fixtures, with no removal endpoint (X-4). See the [decision implementation notes](../../sprints/sprint-02/decision-implementation-notes.md).
 
 **2026-11-05 product revision:** [PRD Section 34.1](../../../02-product/PRD.md#341-approved-taxonomy-revision-and-open-follow-up-decisions) records the final 13-property/vocabulary approval and resolved eligibility deferral; only genuine validation/contract details remain open. Resolve applicable validation before dependent implementation; these questions do not make optional fields mandatory. Historical refinement notes below are subject to this revision. Sprint 2 selection is recorded in the [Sprint plan](../../sprints/sprint-02/sprint-plan.md); source status remains Baseline Draft.
 

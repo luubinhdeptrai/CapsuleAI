@@ -135,7 +135,7 @@ The following are **planning summaries** of every original AC, with proposed ver
 
 **Primary source anchors:** BR-021/BR-023, CAP-01; FR-AUTH-003/FR-AUTH-004/FR-AUTH-008/FR-AUTH-009/FR-AUTH-015/FR-AUTH-017/FR-AUTH-018; DATA-AUTH-001/DATA-AUTH-005; SI-003, COM-001–COM-003, ERR-AUTH-002/ERR-AUTH-003/ERR-NET-001/ERR-DEP-001; BRULE-AUTH-002–BRULE-AUTH-007; UC-004/AD-004 and UC-002 login handoff.
 
-**[OPEN] Required JIT decisions:** delivery provider/access and instruction-opening contract; reset-secret representation/protection; durable issuance/replacement and accepted-completion coordination; public request/error semantics; safe uncertain-outcome recovery. Do not select SMTP/provider SDKs, token lengths, retention periods or new recovery methods here.
+**Resolved 2026-11-07 (Product Owner):** instruction link, email wording, rate limiting, timing/partial-failure handling, denylist deferral, 30-day retention and provider-neutral SMTP with real delivery evidence before Done; see Section 12.3. **[Historical OPEN, resolved]** Required JIT decisions: delivery provider/access and instruction-opening contract; reset-secret representation/protection; durable issuance/replacement and accepted-completion coordination; public request/error semantics; safe uncertain-outcome recovery. Do not select SMTP/provider SDKs, token lengths, retention periods or new recovery methods here.
 
 ### 6.2 US-GAR-001 — Add an owned garment manually
 
@@ -148,7 +148,7 @@ The following are **planning summaries** of every original AC, with proposed ver
 | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 | 5 | Pattern | All categories | No | One optional approved Pattern. |
-| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 | 7 | Fit | Tops | No | Optional approved Fit. |
 | 8 | Neckline | Tops | No | Optional approved Neckline. |
 | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -204,7 +204,7 @@ Recommendation eligibility has not been evaluated. A saved garment is not invali
 
 **Primary source anchors:** BR-003/BR-005/BR-021/BR-022, CAP-03/CAP-04; FR-WAR-001 and FR-WAR-008 empty/loading/unavailable slice only; FR-GAR-004/FR-AUTH-008/FR-AUTH-009; DATA-GAR-001/DATA-GAR-004/DATA-GAR-005, ERR-AUTH-001/ERR-NET-001, COM-001; BRULE-AUTH-001/BRULE-AUTH-007, BRULE-GAR-001–BRULE-GAR-003, BRULE-HIST-002; UC-008 browsing and UC-007 Add handoff only.
 
-**[OPEN] Required JIT decisions:** collection contract and current-state query/projection/error semantics. No sorting, pagination policy, search/filtering, analytics or removal implementation is selected by this story.
+**Resolved 2026-11-07 (Product Owner):** the overview uses cursor pagination, newest first (OPEN-S2-10, US-WAR-001 AC-12). **[Historical OPEN, resolved]** Required JIT decisions: collection contract and current-state query/projection/error semantics. No user-selectable sorting, search/filtering, analytics or removal implementation is selected by this story.
 
 ### 6.4 US-WAR-002 — Inspect an owned garment
 
@@ -389,7 +389,7 @@ Previously recorded Display Name bounds, broader foundation completion and unrel
 | Question | Effect | Owner / resolution point |
 | --- | --- | --- |
 | PRD OPQ-012: eligibility/composition deferral | Resolved deferral for every category; no Sprint 2 engine or readiness gate. | Future engine design; no reapproval of the current property model. |
-| PRD OPQ-013: monetary bounds, zero/negative handling, precision/rounding, currency-list and Brand validation/normalization | Meaning, decimal representation, explicit currency and optionality are approved; unsupported validation decisions are not. | PO/BA with Developers during affected JIT work, before dependent implementation. |
+| PRD OPQ-013: monetary bounds, zero/negative handling, precision/rounding, currency-list and Brand validation/normalization | **Resolved 2026-11-07:** zero valid, negative invalid, at most 12 integer digits, currency minor-unit precision without rounding, valid upper-case ISO 4217 currency; Brand ≤ 100 code points, blank unspecified, exact text. | Closed; see Section 12.3. |
 | PRD OPQ-014: vocabulary approval | Resolved: every source-listed subtype/value is approved now, with no Etc Style. | Implement complete lists; technical representations remain JIT. |
 
 ### 12.2 Feasibility assessment
@@ -401,6 +401,10 @@ The work has a credible architectural base: existing account/session security, J
 The scope is still substantial: recovery adds a real external boundary and security-sensitive concurrent authority transitions; manual entry introduces durable acceptance/idempotency; list/detail require current owner isolation and honest conditional evidence. Missing current runtime and integrated verification increases uncertainty; Section 3 distinguishes the historical static findings from the inspected revision. A completion date or “fits one Sprint” claim would be unsupported.
 
 All four stories remain selected. Resolve affected blockers with bounded engineering work and responsible PO/Developer coordination while progressing independent selected work. This document provides no reduced scope, stretch category or permission to omit security, recovery or verification obligations.
+
+### 12.3 Product Owner decisions of 2026-11-07
+
+The Product Owner finalized every open Sprint 2 question; the selected stories and Sprint Goal are unchanged. Decisions: OPEN-S2-01A (Price validation), OPEN-S2-01B (Brand), OPEN-S2-02 (HTTPS App/Universal Links; custom scheme for development only), OPEN-S2-03 (Vietnamese email wording), OPEN-S2-04 (configurable per-address and per-client rate limits), OPEN-S2-05 (truthful 503, timing hardening, documented residual risk), OPEN-S2-06 (denylist deferred), OPEN-S2-07 (30-day reset-record retention with automated cleanup), OPEN-S2-08 (multiple Styles), OPEN-S2-09 (provider-neutral SMTP now; real provider and delivery evidence before release/Done), OPEN-S2-10 (cursor pagination), OPEN-S2-11 (PRD readiness wording removed), OPEN-S2-12 (SOLID-density verification removed), X-1–X-7, REVIEW-CI (CI on pull requests to `sprint_02`), REVIEW-DB-ROLE (single database role with build-time ownership checks) and REVIEW-TAXONOMY (Tanks & Camis). Where each one is incorporated: [decision implementation notes](decision-implementation-notes.md) and the [implementation guides](implementation-guides/README.md).
 
 ## 13. Sprint Review Evidence
 

@@ -23,6 +23,7 @@
 | 0.1.1 | 2026-10-06 | Defined completed elapsed 24-hour periods for behavioral age/recency and the latest surviving Wear Event as the normalized Wear-group evidence anchor. No other rule semantics changed. |
 | 0.1.2 | 2026-10-06 | Defined purpose-limited private data use, removal/measurement retention, weather and commercial freshness, and navigation-independent utility; normalized current rule presentation and preserved established domain semantics. |
 | 0.3 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
+| 0.4 | 2026-11-07 | Product Owner decisions: multiple Styles, Brand/Price validation, recovery rate limits, active-session-only revocation on reset, 30-day reset-record retention. Existing IDs retained. |
 
 ### 1.1 Purpose
 
@@ -105,7 +106,7 @@ Candidate evaluation is a separately identified hypothetical scope: the candidat
 
 ### BRULE-AUTH-004 — Password-Reset Interaction Validity
 
-**Rule:** A password-reset interaction is associated with its account, has a 30-minute lifetime, and permits one successful use. Expired or consumed interactions cannot change credentials. Successfully issuing a new password-reset interaction invalidates all earlier unused password-reset interactions for that account.
+**Rule:** A password-reset interaction is associated with its account, has a 30-minute lifetime, and permits one successful use. Expired or consumed interactions cannot change credentials. Successfully issuing a new password-reset interaction invalidates all earlier unused password-reset interactions for that account. A consumed, replaced or expired interaction is deleted 30 days after it became terminal; a usable interaction is never deleted (DATA-AUTH-006).
 
 **Applies To:** password recovery and repeated recovery requests.
 
@@ -113,7 +114,7 @@ Candidate evaluation is a separately identified hypothetical scope: the candidat
 
 ### BRULE-AUTH-005 — Completed Reset and Recovery Privacy
 
-**Rule:** A successful reset sets a policy-valid password, consumes the reset interaction, revokes all account Refresh Sessions, and requires renewed authentication with the new password. Failed recovery must not be reported as completed. Initial recovery responses are equivalent for registered and unregistered email identities and do not disclose account existence.
+**Rule:** A successful reset sets a policy-valid password, consumes the reset interaction, revokes every currently active session of the account (already expired or revoked sessions keep their historical state and reason), and requires renewed authentication with the new password; no pre-reset session credential remains usable. Failed recovery must not be reported as completed. Initial recovery responses are equivalent for registered and unregistered email identities and do not disclose account existence. Excessive initiation, checking and completion attempts are limited per address and per client, with identical limited outcomes for registered and unregistered identities (FR-AUTH-019).
 
 **Applies To:** account recovery, returning access.
 
@@ -218,7 +219,7 @@ The [garment-property authority](../../Initial%20files/Image%20to%20Properties%2
 | 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
 | 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
 | 5 | Pattern | All categories | No | One optional approved Pattern. |
-| 6 | Style | All categories | No | Optional named Style selection; Etc is explanatory, never a value. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
 | 7 | Fit | Tops | No | Optional approved Fit. |
 | 8 | Neckline | Tops | No | Optional approved Neckline. |
 | 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
@@ -233,7 +234,7 @@ Complete values are in the [source authority](../../Initial%20files/Image%20to%2
 
 ### BRULE-GAR-006 — Descriptor Consistency and Unknown Information
 
-**Rule:** Unknown optional information remains absent rather than an invented value. Material selections form distinct semantic values, without percentages/proportions. Color is one approved dominant value; Pattern is one optional value. Validate applicability and supplied labels before confirmation; correct/clear invalid or inapplicable fields without silent substitution or discard. No cross-property inference is approved merely because a subtype overlaps length, style or occasion. Etc is not a Style value. Removed descriptors cannot be reconstructed as hidden fields or readiness gates.
+**Rule:** Unknown optional information remains absent rather than an invented value. Material selections form distinct semantic values, without percentages/proportions. Color is one approved dominant value; Pattern is one optional value; Style, like Material, is an optional set of distinct values. Validate applicability and supplied labels before confirmation; correct/clear invalid or inapplicable fields without silent substitution or discard. No cross-property inference is approved merely because a subtype overlaps length, style or occasion. Etc is not a Style value. Removed descriptors cannot be reconstructed as hidden fields or readiness gates.
 
 **Source:** FR-GAR-002/006–010, DATA-GAR-002, AI-REQ-008.
 
@@ -279,7 +280,7 @@ High Confidence is prohibited when evidence is unavailable/materially conflictin
 
 **Rule:** Brand is optional user-entered text across all eight categories, with no fixed enum or external catalogue. Preserve the confirmed value; unknown is not a fabricated brand. Price is the optional user-reported purchase price of the owned garment, represented by a decimal amount together with an explicit ISO 4217 currency code. An amount without currency, or currency without amount, is incomplete supplied information and must be corrected or cleared before confirmation; omitting both is valid and does not mean zero. Never infer currency from location or perform floating-point monetary calculations. This is not market/resale/replacement value or a retailer/affiliate price; no conversion feature is introduced. Neither field is a save or readiness requirement. Price must not be inferred from a photograph; any future Brand suggestion remains unconfirmed until user acceptance. Later analysis or image upload must not silently replace confirmed Brand or Price.
 
-Future edits may revise or clear these properties with explicit user confirmation. Supplied valid values participate in the same accepted garment addition and safe-retry outcome; they do not create separate ownership or duplicate accepted additions. Applicable monetary/Brand validation details remain open under PRD OPQ-013 and must be resolved before dependent implementation, without defaulting or silently altering confirmed values.
+Future edits may revise or clear these properties with explicit user confirmation. Supplied valid values participate in the same accepted garment addition and safe-retry outcome; they do not create separate ownership or duplicate accepted additions. Approved validation (PRD OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points, a blank Brand is unspecified, and accepted Brand text is kept exactly. A Price of zero is a known amount, not a missing one; negative amounts, more than 12 integer digits and more fractional digits than the currency's ISO 4217 minor unit are rejected, never rounded; the currency is a valid upper-case ISO 4217 code. Nothing is defaulted or silently altered.
 
 **Applies To:** manual entry, inspection, future editing and assisted-review protection across all eight categories.
 
