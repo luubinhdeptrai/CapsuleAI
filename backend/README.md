@@ -6,7 +6,7 @@ CapsuleAI helps users understand their wardrobe, choose outfits and evaluate war
 
 The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** through [PR #1](https://github.com/luubinhdeptrai/CapsuleAI/pull/1). It provides the application/build foundation, six documented module boundaries, PostgreSQL configuration, Flyway migrations, automated smoke/dependency tests and GitHub Actions verification.
 
-**Sprint 1 Identity authentication is implemented** (US-AUTH-001–004): registration, login, persistent login sessions with HS256 JWT access tokens, refresh-token rotation with reuse detection and current-session logout, under `/api/v1/auth` ([OpenAPI contract](../docs/05-api/openapi.yaml)). Garments, outfits, Wear/history, Coverage/Multiplier, shopping, password recovery and real provider integrations remain selected-story work. This is not a production deployment or a completed product Increment; story completion follows the Definition of Done.
+**Sprint 1 Identity authentication is implemented** (US-AUTH-001–004): registration, login, persistent login sessions with HS256 JWT access tokens, refresh-token rotation with reuse detection and current-session logout, under `/api/v1/auth` ([OpenAPI contract](../docs/05-api/openapi.yaml)). **Sprint 2 adds email password recovery** (US-AUTH-005) under `/api/v1/auth/password-reset/*`, delivered through SMTP. Garments, outfits, Wear/history, Coverage/Multiplier, shopping and other real provider integrations remain selected-story work. This is not a production deployment or a completed product Increment; story completion follows the Definition of Done.
 
 ## 2. Technology stack
 
@@ -17,6 +17,8 @@ Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/mave
 | Java | 21 | Compilation/runtime |
 | Spring Boot / servlet MVC | 4.1.1 | Application configuration and embedded HTTP server |
 | Spring Security (OAuth2 resource server, JOSE, crypto) | 7.1.1 | Bearer JWT authentication and password hashing |
+| Spring Boot Mail (Jakarta Mail) | Managed by Boot 4.1.1 | SMTP delivery of password-reset instructions |
+| Mailpit | `axllent/mailpit:v1.27.11` image | Local SMTP sink (Compose) and real-SMTP integration tests |
 | Maven / Maven Wrapper | 3.9.16 / 3.3.4 | Reproducible build; Wrapper uses `only-script` |
 | PostgreSQL | `17.11-bookworm` image | Development and integration-test databases |
 | Flyway / PostgreSQL JDBC | 12.4.0 / 42.7.13 | Migrations and connectivity |
@@ -227,6 +229,36 @@ $env:CAPSULE_JWT_SIGNING_SECRET = [Convert]::ToBase64String($secretBytes)
 
 A new secret on each start only invalidates earlier access tokens, which is fine for development. Never commit or share the value.
 
+**Password-reset email (US-AUTH-005).** The `local` profile sends reset instructions to the Mailpit service in [Compose](../compose.yaml) (SMTP `127.0.0.1:1025`); nothing leaves the machine. Start it from the repository root and read received mail at <http://localhost:8025>:
+
+```powershell
+Set-Location 'D:\CapsuleAI'
+docker compose --env-file .env up -d mailpit
+```
+
+To use a real SMTP provider instead, set its values in the launching terminal before starting Boot (prompt for the password as for the database password). `CAPSULE_PASSWORD_RESET_LINK` is the link the mobile app opens; the reset secret is appended as `#token=…`. Outside local development it must be an `https` address on the verified domain that the Android App Links and iOS Universal Links of the app are associated with (OPEN-S2-02); a custom scheme such as `capsuleai://` starts only where `capsuleai.identity.password-reset.development-custom-scheme-allowed=true` (the `local` profile sets it):
+
+```powershell
+$env:CAPSULE_MAIL_HOST = 'smtp.example.com'
+$env:CAPSULE_MAIL_PORT = '587'
+$env:CAPSULE_MAIL_USERNAME = 'apikey-or-user'
+$mailPassword = Read-Host 'SMTP password' -AsSecureString
+$env:CAPSULE_MAIL_PASSWORD = [System.Net.NetworkCredential]::new('', $mailPassword).Password
+$env:CAPSULE_MAIL_SMTP_AUTH = 'true'
+$env:CAPSULE_MAIL_STARTTLS = 'true'
+$env:CAPSULE_MAIL_FROM = 'no-reply@your-domain.example'
+$env:CAPSULE_PASSWORD_RESET_LINK = 'capsuleai://reset-password'
+```
+
+**Recovery protection and retention (US-AUTH-005).** `capsuleai.identity.password-reset.protection.*` sets the attempt limits: requests per normalized email (default 3), requests per client address (20), and link checks/completions per client address (30), each per 15-minute window. It also sets the minimum response time of a successful request (250 ms). These are conservative technical defaults (TD-S2-26), counted in PostgreSQL, so they hold across restarts and instances. The client address is the servlet `remoteAddr`. Behind a reverse proxy, enable Spring Boot's forwarded-header support (`server.forward-headers-strategy=native`) and restrict `server.tomcat.remoteip.internal-proxies` to the real proxy; otherwise every user shares the proxy's address. A scheduled Identity job deletes reset interactions 30 days after they end (`capsuleai.identity.password-reset.cleanup.*`).
+
+**Before release (OPEN-S2-09).** Mailpit proves the SMTP adapter, not delivery. A release requires:
+
+- A real production-capable provider.
+- A sender domain with SPF, DKIM and DMARC.
+- STARTTLS or SMTPS (`CAPSULE_MAIL_STARTTLS=true` or the provider's TLS port).
+- Recorded evidence that a reset email reached a real mailbox.
+
 Choose **one** startup method in that terminal.
 
 **Maven plugin:**
@@ -265,6 +297,8 @@ $env:CAPSULE_DB_USER = $null
 $env:CAPSULE_JWT_SIGNING_SECRET = $null
 $secretBytes = $null
 $env:CAPSULE_CORS_ALLOWED_ORIGINS = $null
+$env:CAPSULE_MAIL_PASSWORD = $null
+$mailPassword = $null
 ```
 
 See [Boot profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) and [Maven plugin options](https://docs.spring.io/spring-boot/maven-plugin/run.html).
@@ -305,14 +339,14 @@ curl.exe -i -X OPTIONS http://localhost:8080/api/v1/auth/login `
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
 ```
 
-Expect successful rows for versions `1` to `6`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+Expect successful rows for versions `1` to `7`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
 
 ```powershell
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
@@ -436,7 +470,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Password recovery, Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. Wardrobe and all other business endpoints and tables, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 
@@ -456,6 +490,8 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 | Integration tests did not run | `test`/`package` intentionally omit ITs; use `verify` and inspect Failsafe. |
 | Invalid architecture fixture | Intentional test-only violation; its detector must find it. Production import excludes tests. |
 | Root HTTP 401 | Expected: unknown routes are protected by default. |
+| Startup: `password-reset.sender-address` or `instruction-link is not configured` | Run with the `local` profile (it has Mailpit defaults) or set `CAPSULE_MAIL_FROM` and `CAPSULE_PASSWORD_RESET_LINK` (Section 9). |
+| Forgot Password answers 202 but no email arrives | Expected for an unregistered email. Otherwise check Mailpit at <http://localhost:8025>, then the log line "Password-reset instructions could not be handed to the mail server" and the `CAPSULE_MAIL_*` settings. The response is deliberately the same either way. |
 | Startup: `capsuleai.cors.allowed-origins entry … is not an exact origin` | Fix that entry in `CAPSULE_CORS_ALLOWED_ORIGINS`: `scheme://host[:port]` only (Section 9, Browser access). |
 | Browser console: blocked by CORS policy; preflight `403` | The page's origin is not listed exactly (scheme, host and port must match), or it asked for a method/header other than `GET`/`POST` and `Authorization`/`Content-Type`/`Accept`. Fix the list and restart Boot. |
 | Browser: `Failed to fetch` and the backend logs nothing | Not CORS. Check that Boot runs on the server URL's port, that the browser runs on the same machine, and that the Local Network Access prompt was allowed (site settings). Use Chrome, Edge or Firefox if a browser blocks `http://localhost` from an HTTPS page as mixed content. |

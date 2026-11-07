@@ -28,6 +28,13 @@ public class IdentityTestConfiguration {
         return new MutableClock(MutableClock.DEFAULT_START);
     }
 
+    /** Replaces asynchronous SMTP delivery so tests can read the emailed reset secret. */
+    @Bean
+    @Primary
+    RecordingPasswordResetInstructionSender recordingPasswordResetInstructionSender() {
+        return new RecordingPasswordResetInstructionSender();
+    }
+
     /**
      * TEST-ONLY protected operation. Production has no such endpoint. It returns
      * the principal resolved by the real security chain.
