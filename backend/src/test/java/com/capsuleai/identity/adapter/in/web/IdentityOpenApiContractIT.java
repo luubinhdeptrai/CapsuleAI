@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,7 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
     private Map<String, Object> specification;
     private Map<String, DocumentedOperation> documentedOperations;
     private Map<String, HandlerMethod> implementedOperations;
+    private String contractAccessToken;
 
     /** One documented path + method, keyed like {@code "POST /api/v1/auth/login"}. */
     private record DocumentedOperation(String method, String path, Map<String, Object> definition) {
@@ -174,7 +176,9 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
                 Map<String, Object> withoutRequiredField = new LinkedHashMap<>(documentedExample);
                 withoutRequiredField.remove(requiredField);
 
-                MockHttpServletResponse response = perform(operation, withoutRequiredField);
+                MockHttpServletResponse response = operation.isPublic()
+                        ? perform(operation, withoutRequiredField)
+                        : performAuthenticated(operation, withoutRequiredField);
                 String body = response.getContentAsString(StandardCharsets.UTF_8);
 
                 assertThat(response.getStatus())
@@ -192,6 +196,25 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
     private MockHttpServletResponse perform(DocumentedOperation operation, Map<String, Object> body) throws Exception {
         return mockMvc.perform(request(HttpMethod.valueOf(operation.method().toUpperCase(Locale.ROOT)),
                                 operation.path())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(body)))
+                .andReturn()
+                .getResponse();
+    }
+
+    /**
+     * Calls a protected operation as a freshly registered user with a new
+     * Idempotency-Key, so that only the request body is under test.
+     */
+    private MockHttpServletResponse performAuthenticated(DocumentedOperation operation, Map<String, Object> body)
+            throws Exception {
+        if (contractAccessToken == null) {
+            contractAccessToken = registerAndLogIn("openapi-contract@example.com").accessToken();
+        }
+        return mockMvc.perform(request(HttpMethod.valueOf(operation.method().toUpperCase(Locale.ROOT)),
+                                operation.path())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + contractAccessToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(body)))
                 .andReturn()

@@ -73,6 +73,17 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
                 .andExpect(content().string(""));
     }
 
+    /** US-GAR-001: a browser client must be allowed to send the Idempotency-Key of a garment addition. */
+    @Test
+    void garmentAdditionPreflightMayCarryTheIdempotencyKey() throws Exception {
+        mockMvc.perform(preflight("/api/v1/wardrobe/garments", WEB_CLIENT, "POST",
+                        "authorization,content-type,idempotency-key"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, WEB_CLIENT))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_HEADERS, containsString("idempotency-key")))
+                .andExpect(header().doesNotExist(WWW_AUTHENTICATE));
+    }
+
     @Test
     void protectedOperationPreflightNeedsNoTokenButTheActualRequestStillDoes() throws Exception {
         mockMvc.perform(preflight(PROTECTED_PROBE, SWAGGER_EDITOR, "GET", "authorization"))
