@@ -38,6 +38,12 @@
             <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
         </dependency>
 
+        <!-- US-AUTH-005: SMTP delivery of password-reset instructions (JavaMailSender) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- US-AUTH-001: MockMvc support for HTTP integration tests (Boot 4 test module) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -28,6 +28,15 @@ public interface SessionRepository {
     boolean revoke(UUID sessionId, UUID accountId, RevocationReason reason, Instant revokedAt);
 
     /**
+     * Revokes every active (not revoked, not yet expired) session of the account in
+     * one statement (FR-AUTH-004, NFR-SEC-002). Other accounts are untouched.
+     * Call inside {@link IdentityTransactions} after the account lock.
+     *
+     * @return how many sessions this call revoked
+     */
+    int revokeAllActiveForAccount(UUID accountId, RevocationReason reason, Instant revokedAt);
+
+    /**
      * Finds a refresh token by hash together with its session and LOCKS both rows
      * until the surrounding transaction ends, so competing renewals and logouts
      * of the same session run one after another.

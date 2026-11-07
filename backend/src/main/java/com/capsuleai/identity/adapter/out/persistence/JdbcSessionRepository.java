@@ -64,6 +64,19 @@ public final class JdbcSessionRepository implements SessionRepository {
     }
 
     @Override
+    public int revokeAllActiveForAccount(UUID accountId, RevocationReason reason, Instant revokedAt) {
+        return jdbc.sql("""
+                        UPDATE identity.identity_session
+                        SET revoked_at = :revokedAt, revocation_reason = :reason
+                        WHERE account_id = :accountId AND revoked_at IS NULL AND expires_at > :revokedAt
+                        """)
+                .param("revokedAt", JdbcTime.toDatabase(revokedAt))
+                .param("reason", reason.name())
+                .param("accountId", accountId)
+                .update();
+    }
+
+    @Override
     public Optional<LockedRefreshCredential> lockByRefreshToken(RefreshTokenHash hash) {
         return jdbc.sql("""
                         SELECT t.id          AS token_id,

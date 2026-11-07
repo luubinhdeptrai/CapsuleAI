@@ -39,15 +39,19 @@ public class IdentitySecurityConfiguration {
     /** How long a browser may reuse a granted preflight before asking again. */
     static final Duration CORS_PREFLIGHT_MAX_AGE = Duration.ofMinutes(30);
 
-    /**
+ /**
      * Operations anyone may call. Renewal is public because the refresh token in
      * the body is its credential; requiring a still-valid access token would make
-     * renewal at access expiry impossible (Sprint plan §4).
+     * renewal at access expiry impossible (Sprint plan §4). Password recovery is
+     * public because the user cannot log in; the reset secret is its credential.
      */
     static final RequestMatcher PUBLIC_ENDPOINTS = new OrRequestMatcher(
             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/registrations"),
             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/login"),
-            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/refresh"));
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/refresh"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/password-reset/request"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/password-reset/check"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/password-reset/complete"));
 
     @Bean
     SecurityFilterChain identitySecurityFilterChain(HttpSecurity http,

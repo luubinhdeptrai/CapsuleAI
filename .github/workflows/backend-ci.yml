@@ -67,6 +67,28 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityOpenApiContractIT.xml' = 5
             'surefire-reports/TEST-com.capsuleai.identity.configuration.CorsPropertiesTest.xml' = 23
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.CorsSecurityIT.xml' = 25
+            'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenHashTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 13
+            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.identity.application.CompletePasswordResetServiceTest.xml' = 14
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.email.AsyncPasswordResetInstructionSenderTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderTest.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.identity.configuration.PasswordResetPropertiesTest.xml' = 10
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetApiIT.xml' = 15
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetSchemaIT.xml' = 7
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentPasswordResetIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetFailureIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetLoginRaceIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.identity.application.PasswordResetAttemptGuardTest.xml' = 6
+            'surefire-reports/TEST-com.capsuleai.identity.application.PurgeEndedPasswordResetsServiceTest.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.timing.MinimumResponseTimePacingTest.xml' = 3
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.scheduling.PasswordResetCleanupJobTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.JdbcPasswordResetAttemptLimiterIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetRateLimitIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetTimingIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {

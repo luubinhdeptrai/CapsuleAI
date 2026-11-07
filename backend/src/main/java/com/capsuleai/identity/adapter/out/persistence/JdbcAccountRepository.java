@@ -49,6 +49,48 @@ public final class JdbcAccountRepository implements AccountRepository {
                 .optional();
     }
 
+        @Override
+    public Optional<PasswordHash> lockCredentialAgainstChange(UUID accountId) {
+        return jdbc.sql("""
+                        SELECT password_hash
+                        FROM identity.identity_account
+                        WHERE id = :id
+                        FOR SHARE
+                        """)
+                .param("id", accountId)
+                .query((row, rowNumber) -> new PasswordHash(row.getString("password_hash")))
+                .optional();
+    }
+
+    @Override
+    public boolean lockForCredentialChange(UUID accountId) {
+        return jdbc.sql("""
+                        SELECT id
+                        FROM identity.identity_account
+                        WHERE id = :id
+                        FOR UPDATE
+                        """)
+                .param("id", accountId)
+                .query(UUID.class)
+                .optional()
+                .isPresent();
+    }
+
+    @Override
+    public void replacePasswordHash(UUID accountId, PasswordHash newPasswordHash) {
+        int updated = jdbc.sql("""
+                        UPDATE identity.identity_account
+                        SET password_hash = :passwordHash
+                        WHERE id = :id
+                        """)
+                .param("passwordHash", newPasswordHash.value())
+                .param("id", accountId)
+                .update();
+        if (updated != 1) {
+            throw new IllegalStateException("Account " + accountId + " does not exist");
+        }
+    }
+    
     private static Account mapAccount(ResultSet row, int rowNumber) throws SQLException {
         return new Account(
                 row.getObject("id", UUID.class),
