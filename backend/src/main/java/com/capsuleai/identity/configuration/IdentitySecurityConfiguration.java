@@ -39,6 +39,9 @@ public class IdentitySecurityConfiguration {
     /** How long a browser may reuse a granted preflight before asking again. */
     static final Duration CORS_PREFLIGHT_MAX_AGE = Duration.ofMinutes(30);
 
+    /** Request header naming one logical garment addition (US-GAR-001); browsers must be allowed to send it. */
+    static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
+
  /**
      * Operations anyone may call. Renewal is public because the refresh token in
      * the body is its credential; requiring a still-valid access token would make
@@ -94,8 +97,8 @@ public class IdentitySecurityConfiguration {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(corsProperties.allowedOrigins());
         corsConfiguration.setAllowedMethods(List.of(HttpMethod.GET.name(), HttpMethod.POST.name()));
-        corsConfiguration.setAllowedHeaders(
-                List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT));
+        corsConfiguration.setAllowedHeaders(List.of(
+                HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT, IDEMPOTENCY_KEY_HEADER));
         corsConfiguration.setAllowCredentials(false);
         corsConfiguration.setMaxAge(CORS_PREFLIGHT_MAX_AGE);
         UrlBasedCorsConfigurationSource corsConfigurationSource = new UrlBasedCorsConfigurationSource();
