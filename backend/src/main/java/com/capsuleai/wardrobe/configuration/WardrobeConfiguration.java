@@ -1,8 +1,10 @@
 package com.capsuleai.wardrobe.configuration;
 
+
 import com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepository;
 import com.capsuleai.wardrobe.adapter.out.persistence.SpringWardrobeTransactions;
 import com.capsuleai.wardrobe.application.AddGarmentService;
+import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
@@ -32,5 +34,10 @@ public class WardrobeConfiguration {
     @Bean
     AddGarmentService addGarmentService(GarmentRepository garments, WardrobeTransactions transactions, Clock clock) {
         return new AddGarmentService(garments, transactions, clock);
+    }
+
+    @Bean
+    BrowseWardrobeService browseWardrobeService(GarmentRepository garments) {
+        return new BrowseWardrobeService(garments);
     }
 }

@@ -2,6 +2,7 @@ package com.capsuleai.wardrobe.adapter.out.persistence;
 
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
+import com.capsuleai.wardrobe.application.ports.WardrobePosition;
 import com.capsuleai.wardrobe.domain.Brand;
 import com.capsuleai.wardrobe.domain.ControlledValue;
 import com.capsuleai.wardrobe.domain.Garment;
@@ -30,6 +31,7 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Currency;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +48,25 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                    ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials,
                    ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles
             FROM wardrobe.wardrobe_garment g
+            """;
+
+    /**
+     * The first page of the owner's current wardrobe. The order matches the partial index
+     * ix_wardrobe_garment_owner_current, so PostgreSQL reads one index range and stops after
+     * maximumCount rows, without sorting the whole wardrobe.
+     */
+    static final String SELECT_CURRENT_FIRST_PAGE = SELECT_GARMENT + """
+            WHERE g.owner_account_id = :ownerAccountId AND g.removed_at IS NULL
+            ORDER BY g.created_at DESC, g.id DESC
+            LIMIT :maximumCount
+            """;
+
+    /** A later page: strictly after the (created_at, id) position, in the same order. */
+    static final String SELECT_CURRENT_PAGE_AFTER = SELECT_GARMENT + """
+            WHERE g.owner_account_id = :ownerAccountId AND g.removed_at IS NULL
+              AND (g.created_at, g.id) < (:afterCreatedAt, :afterGarmentId)
+            ORDER BY g.created_at DESC, g.id DESC
+            LIMIT :maximumCount
             """;
 
     private final JdbcClient jdbc;
@@ -113,6 +134,24 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 .query((row, rowNumber) ->
                         new RecordedGarmentCreation(mapGarment(row), row.getString("creation_fingerprint")))
                 .optional();
+    }
+
+    @Override
+    public List<Garment> findCurrentByOwner(UUID ownerAccountId, Optional<WardrobePosition> after, int maximumCount) {
+        if (after.isEmpty()) {
+            return jdbc.sql(SELECT_CURRENT_FIRST_PAGE)
+                    .param("ownerAccountId", ownerAccountId)
+                    .param("maximumCount", maximumCount)
+                    .query((row, rowNumber) -> mapGarment(row))
+                    .list();
+        }
+        return jdbc.sql(SELECT_CURRENT_PAGE_AFTER)
+                .param("ownerAccountId", ownerAccountId)
+                .param("afterCreatedAt", toDatabase(after.get().createdAt()))
+                .param("afterGarmentId", after.get().garmentId())
+                .param("maximumCount", maximumCount)
+                .query((row, rowNumber) -> mapGarment(row))
+                .list();
     }
 
     static Garment mapGarment(ResultSet row) throws SQLException {

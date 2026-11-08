@@ -1,6 +1,7 @@
 package com.capsuleai.wardrobe.application.ports;
 
 import com.capsuleai.wardrobe.domain.Garment;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +22,14 @@ public interface GarmentRepository {
 
     /** @return the garment the owner's earlier addition with this key created, if any */
     Optional<RecordedGarmentCreation> findCreation(UUID ownerAccountId, UUID creationKey);
+
+    /**
+     * One page of the owner's current garments (not removed), newest first with ties broken
+     * by id, descending (US-WAR-001, OPEN-S2-10): at most {@code maximumCount} garments that
+     * come strictly after {@code after} in that order, or from the newest when {@code after}
+     * is empty. Read-only; one statement, so a page is one consistent snapshot.
+     *
+     * @return an empty list when no current garment follows the position
+     */
+    List<Garment> findCurrentByOwner(UUID ownerAccountId, Optional<WardrobePosition> after, int maximumCount);
 }

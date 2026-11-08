@@ -41,6 +41,22 @@ public class WardrobeApiExceptionHandler {
         return respond(problem);
     }
 
+    /** OPEN-S2-10: an unusable limit or cursor is a client error, never an empty or restarted page. */
+    @ExceptionHandler(InvalidWardrobePageException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidPage(InvalidWardrobePageException exception) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED",
+                "This page of the wardrobe cannot be loaded. Load the wardrobe again from the first page.");
+        problem.setProperty("fieldErrors", exception.errors().stream()
+                .map(error -> {
+                    Map<String, String> fieldError = new LinkedHashMap<>();
+                    fieldError.put("field", error.field());
+                    fieldError.put("code", error.code());
+                    return fieldError;
+                })
+                .toList());
+        return respond(problem);
+    }
+
     @ExceptionHandler(IdempotencyKeyReusedException.class)
     public ResponseEntity<ProblemDetail> handleIdempotencyKeyReused(IdempotencyKeyReusedException exception) {
         return respond(problem(HttpStatus.UNPROCESSABLE_CONTENT, "IDEMPOTENCY_KEY_REUSED",
