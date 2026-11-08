@@ -6,7 +6,7 @@ CapsuleAI helps users understand their wardrobe, choose outfits and evaluate war
 
 The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** through [PR #1](https://github.com/luubinhdeptrai/CapsuleAI/pull/1). It provides the application/build foundation, six documented module boundaries, PostgreSQL configuration, Flyway migrations, automated smoke/dependency tests and GitHub Actions verification.
 
-**Sprint 1 Identity authentication is implemented** (US-AUTH-001–004): registration, login, persistent login sessions with HS256 JWT access tokens, refresh-token rotation with reuse detection and current-session logout, under `/api/v1/auth` ([OpenAPI contract](../docs/05-api/openapi.yaml)). **Sprint 2 adds email password recovery** (US-AUTH-005) under `/api/v1/auth/password-reset/*`, delivered through SMTP, and **manual garment creation** (US-GAR-001) with all 13 approved properties under `/api/v1/wardrobe/garments`. Garment browsing/detail, outfits, Wear/history, Coverage/Multiplier, shopping and other real provider integrations remain selected-story work. This is not a production deployment or a completed product Increment; story completion follows the Definition of Done.
+**Sprint 1 Identity authentication is implemented** (US-AUTH-001–004): registration, login, persistent login sessions with HS256 JWT access tokens, refresh-token rotation with reuse detection and current-session logout, under `/api/v1/auth` ([OpenAPI contract](../docs/05-api/openapi.yaml)). **Sprint 2 adds email password recovery** (US-AUTH-005) under `/api/v1/auth/password-reset/*`, delivered through SMTP, and **manual garment creation** (US-GAR-001) with all 13 approved properties under `/api/v1/wardrobe/garments`. **Browsing the current wardrobe** (US-WAR-001) uses the same path and returns cursor pages, newest first (`limit` 1–100, default 20; send `nextCursor` back as `cursor`). Garment detail, outfits, Wear/history, Coverage/Multiplier, shopping and other real provider integrations remain selected-story work. This is not a production deployment or a completed product Increment; story completion follows the Definition of Done.
 
 ## 2. Technology stack
 
@@ -335,6 +335,33 @@ curl.exe -i -X OPTIONS http://localhost:8080/api/v1/auth/login `
 
 **Swagger Editor.** Open `https://editor.swagger.io` in a browser on the machine that runs Boot (it listens on `127.0.0.1` only) and paste the [OpenAPI contract](../docs/05-api/openapi.yaml), whose server is `http://localhost:8080`. Use **Try it out** to register and log in, then **Authorize** with the returned `accessToken` for logout. Chrome and Edge ask once whether the editor may access apps on this device ([Local Network Access](https://developer.chrome.com/blog/local-network-access)). Allow it; a denied prompt blocks requests in the browser before they reach the backend.
 
+### Browsing the current wardrobe
+
+`GET /api/v1/wardrobe/garments` (US-WAR-001) returns the authenticated account's current garments, newest first, one page at a time. It requires `Authorization: Bearer <access token>`. The owner always comes from the token, never from the request.
+
+| Query parameter | Meaning |
+| --- | --- |
+| `limit` | Garments per page, from 1 to 100. Default 20. |
+| `cursor` | The `nextCursor` of the previous page, sent back unchanged. Omit it for the first page. |
+
+The body is `{"garments": [...], "nextCursor": "..."}`. To load every garment, repeat the request with `cursor=<nextCursor>` until `nextCursor` is `null`. The cursor is opaque: do not build, parse or keep it. A garment added while paging appears when you start again from the first page, a removed garment disappears, and no current garment is repeated or skipped.
+
+| Outcome | Response |
+| --- | --- |
+| Genuinely empty wardrobe | `200` with `garments: []` and `nextCursor: null` |
+| `limit` outside 1–100 or not an integer, or an unusable `cursor` | `400 VALIDATION_FAILED` with `fieldErrors` for `limit` or `cursor`; start again from the first page |
+| Missing, invalid, expired or revoked access | `401 AUTHENTICATION_REQUIRED` |
+| Database unavailable | `503 TEMPORARILY_UNAVAILABLE`, never an empty list; retry the same request |
+
+Focused tests, from `backend` (the second command needs Docker):
+
+```powershell
+.\mvnw.cmd '-Dtest=BrowseWardrobeServiceTest,WardrobeCursorTest,WardrobePageRequestTest' test
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=BrowseWardrobeApiIT,CurrentWardrobePageIT,WardrobeFailureIT,IdentityOpenApiContractIT' verify
+```
+
+Each summary identifies a garment by Category, Subtype, Color and Brand. Search, filters and user-selectable sorting (US-WAR-003), garment detail (US-WAR-002) and images are not implemented.
+
 ## 10. Database migrations
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
@@ -472,7 +499,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. Wardrobe browsing and detail, garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. It also adds current-wardrobe browsing. Garment detail, garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 

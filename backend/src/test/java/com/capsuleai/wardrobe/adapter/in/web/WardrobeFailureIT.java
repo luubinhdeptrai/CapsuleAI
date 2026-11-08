@@ -3,8 +3,11 @@ package com.capsuleai.wardrobe.adapter.in.web;
 import com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepository;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
+import com.capsuleai.wardrobe.application.ports.WardrobePosition;
 import com.capsuleai.wardrobe.domain.Garment;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
+import com.jayway.jsonpath.JsonPath;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,9 +21,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,6 +58,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
 
         private final GarmentRepository delegate;
         private final AtomicBoolean failAfterWrite = new AtomicBoolean();
+        private final AtomicBoolean failReads = new AtomicBoolean();
 
         FailingGarmentRepository(GarmentRepository delegate) {
             this.delegate = delegate;
@@ -62,8 +68,13 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
             failAfterWrite.set(true);
         }
 
+        void failReadsUntilReset() {
+            failReads.set(true);
+        }
+
         void reset() {
             failAfterWrite.set(false);
+            failReads.set(false);
         }
 
         @Override
@@ -78,6 +89,19 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         @Override
         public Optional<RecordedGarmentCreation> findCreation(UUID ownerAccountId, UUID creationKey) {
             return delegate.findCreation(ownerAccountId, creationKey);
+        }
+
+        @Override
+        public List<Garment> findCurrentByOwner(
+                UUID ownerAccountId, Optional<WardrobePosition> after, int maximumCount) {
+            failReadIfRequested();
+            return delegate.findCurrentByOwner(ownerAccountId, after, maximumCount);
+        }
+
+        private void failReadIfRequested() {
+            if (failReads.get()) {
+                throw new DataAccessResourceFailureException("connection lost during the read (simulated)");
+            }
         }
     }
 
@@ -106,6 +130,52 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         addGarment(tokens.accessToken(), key, coat).andExpect(status().isCreated());
         assertThat(countGarmentsOf(tokens.accountId())).isOne();
         assertThat(countRows("wardrobe.wardrobe_garment_style")).isEqualTo(2);
+    }
+
+    /** US-WAR-001 AC-05: unavailable data is not an empty wardrobe, and retry shows the real one. */
+    @Test
+    void aFailedOverviewIsUnavailableNotEmptyAndARetryShowsTheActualWardrobe() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("failed-overview@example.com");
+        UUID garmentId = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("BAGS", "GOLD"));
+        failingGarmentRepository.failReadsUntilReset();
+
+        mockMvc.perform(get(GARMENTS).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.garments").doesNotExist());
+
+        failingGarmentRepository.reset();
+        mockMvc.perform(get(GARMENTS).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.garments[0].id").value(garmentId.toString()));
+        assertThat(countGarmentsOf(tokens.accountId())).isOne();
+    }
+
+    /** OPEN-S2-10: a later page that cannot be read is unavailable, and the same cursor works on retry. */
+    @Test
+    void aFailedLaterPageIsUnavailableNotTheEndAndTheSameCursorWorksOnRetry() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("failed-page@example.com");
+        UUID older = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("SHOES", "BROWN"));
+        clock.advance(Duration.ofSeconds(1));
+        addGarmentAndReturnId(tokens.accessToken(), minimumGarment("SHOES", "WHITE"));
+        String cursor = JsonPath.read(mockMvc.perform(get(GARMENTS).queryParam("limit", "1")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "$.nextCursor");
+        failingGarmentRepository.failReadsUntilReset();
+
+        mockMvc.perform(get(GARMENTS).queryParam("limit", "1").queryParam("cursor", cursor)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.garments").doesNotExist())
+                .andExpect(jsonPath("$.nextCursor").doesNotExist());
+
+        failingGarmentRepository.reset();
+        mockMvc.perform(get(GARMENTS).queryParam("limit", "1").queryParam("cursor", cursor)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.garments[0].id").value(older.toString()));
     }
 
     @Test

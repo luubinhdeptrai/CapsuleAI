@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.6.0
+  version: 0.7.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -14,6 +14,7 @@ info:
       - US-AUTH-003: Resume access through refresh-token rotation
       - US-AUTH-005: Recover account access through email
       - US-GAR-001: Add an owned garment manually
+      - US-WAR-001: Browse my current wardrobe
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -568,6 +569,101 @@ paths:
           $ref: "#/components/responses/Unavailable"
 
   /api/v1/wardrobe/garments:
+    get:
+      tags:
+        - Wardrobe
+      operationId: browseWardrobe
+      summary: List the current wardrobe
+      description: |
+        US-WAR-001 (FR-WAR-001, FR-WAR-008, BRULE-HIST-002).
+
+        Returns one page of the authenticated account's current
+        confirmed garments, newest first (created time, then id,
+        both descending). Each summary identifies the
+        garment through Category, Color and, when supplied,
+        Subtype and Brand; a minimum-only garment is listed like
+        any other. No image is stored in this release, so clients
+        show a category/color placeholder. Removed garments, other
+        accounts' garments and unconfirmed drafts never appear.
+
+        Pages (OPEN-S2-10): omit cursor for the first page. When
+        nextCursor is a string, send it back unchanged as cursor
+        to load the following page; null means this is the last
+        page. The cursor is opaque: do not build, parse or store
+        it beyond the current browsing session. A garment added
+        while paging appears when the overview is loaded again
+        from the first page; a removed garment disappears; no
+        current garment is repeated or skipped.
+
+        200 with an empty first page means the wardrobe is
+        genuinely empty. A 400, 401 or 503 is never an empty
+        wardrobe. Browsing changes nothing. There is no sorting
+        option, filter or search in this release.
+
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Garments per page, from 1 to 100. Default 20.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          required: false
+          description: |
+            The nextCursor of the previous page, unchanged. An
+            altered or unknown value is rejected with 400; it
+            never restarts or ends the overview silently.
+          schema:
+            type: string
+            maxLength: 200
+            pattern: "^[A-Za-z0-9_-]+$"
+
+      responses:
+        "200":
+          description: The current wardrobe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WardrobeOverview"
+              examples:
+                populated:
+                  summary: A first page (limit=2) with more garments to follow
+                  value:
+                    garments:
+                      - id: "4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69"
+                        category: "TOPS"
+                        subtype: "T_SHIRTS"
+                        color: "NAVY"
+                        brand: "Uniqlo"
+                        recommendationEligibility: "NOT_EVALUATED"
+                        createdAt: "2026-11-05T09:31:00.123456Z"
+                      - id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+                        category: "SHOES"
+                        subtype: null
+                        color: "BLACK"
+                        brand: null
+                        recommendationEligibility: "NOT_EVALUATED"
+                        createdAt: "2026-11-05T09:30:00.123456Z"
+                    nextCursor: "djF8MjAyNi0xMS0wNVQwOTozMDowMC4xMjM0NTZafDlhOGI3YzZkLTVlNGYtNGEzYi04YzJkLTFlMGY5YThiN2M2ZA"
+                empty:
+                  summary: A genuinely empty wardrobe
+                  value:
+                    garments: []
+                    nextCursor: null
+
+        "400":
+          $ref: "#/components/responses/PageRequestRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
     post:
       tags:
         - Wardrobe
@@ -1192,6 +1288,63 @@ components:
           type: string
           format: date-time
 
+    WardrobeOverview:
+      type: object
+      description: One page of the current wardrobe, newest first.
+      required:
+        - garments
+        - nextCursor
+      properties:
+        garments:
+          type: array
+          maxItems: 100
+          description: |
+            Current garments, newest first; [] on the first page
+            only when the wardrobe is empty.
+          items:
+            $ref: "#/components/schemas/GarmentSummary"
+        nextCursor:
+          type: [string, "null"]
+          description: |
+            Opaque position after the last garment of this page.
+            Send it as cursor to load the next page; null on the
+            last page.
+
+    GarmentSummary:
+      type: object
+      description: |
+        Enough to recognize and select a garment. Subtype and
+        Brand are null when not supplied. Detail returns every
+        accepted property.
+      required:
+        - id
+        - category
+        - subtype
+        - color
+        - brand
+        - recommendationEligibility
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        brand:
+          type: [string, "null"]
+        recommendationEligibility:
+          type: string
+          const: NOT_EVALUATED
+        createdAt:
+          type: string
+          format: date-time
+
     GarmentCategoryCode:
       type: string
       description: |
@@ -1750,8 +1903,9 @@ components:
           type: string
           description: |
             Name of the invalid request field, a position such as
-            materials[1], styles[0] or price.amount, or the Idempotency-Key
-            header.
+            materials[1], styles[0] or price.amount, the
+            Idempotency-Key header, or the limit or cursor query
+            parameter.
           examples:
             - "email"
             - "price.amount"
@@ -1777,6 +1931,7 @@ components:
             - INVALID_AMOUNT
             - TOO_MANY_DECIMALS
             - UNSUPPORTED_CURRENCY
+            - OUT_OF_RANGE
 
     Problem:
       type: object
@@ -1907,6 +2062,26 @@ components:
                 fieldErrors:
                   - field: "fit"
                     code: "NOT_APPLICABLE"
+
+    PageRequestRejected:
+      description: |
+        The limit is not an integer from 1 to 100, or the cursor
+        is not a nextCursor this API issued (INVALID_FORMAT). No
+        garment was read; load the wardrobe again from the first
+        page.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "This page of the wardrobe cannot be loaded. Load the wardrobe again from the first page."
+            instance: "/api/v1/wardrobe/garments"
+            code: "VALIDATION_FAILED"
+            fieldErrors:
+              - field: "cursor"
+                code: "INVALID_FORMAT"
 
     IdempotencyKeyReused:
       description: |

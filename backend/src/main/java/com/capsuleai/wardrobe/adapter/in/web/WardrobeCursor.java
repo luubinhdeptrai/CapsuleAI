@@ -28,6 +28,14 @@ final class WardrobeCursor {
     private static final Pattern CANONICAL_UUID =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
+    /**
+     * A garment's creation time always has a four-digit year. An instant outside these bounds
+     * parses, but it cannot have been issued and PostgreSQL could not compare it, so it is
+     * rejected here as an unusable cursor instead of failing later as a database error.
+     */
+    private static final Instant EARLIEST_POSITION = Instant.parse("0000-01-01T00:00:00Z");
+    private static final Instant LATEST_POSITION = Instant.parse("9999-12-31T23:59:59.999999999Z");
+
     private WardrobeCursor() {
     }
 
@@ -47,7 +55,11 @@ final class WardrobeCursor {
             if (parts.length != 3 || !parts[0].equals(VERSION) || !CANONICAL_UUID.matcher(parts[2]).matches()) {
                 return Optional.empty();
             }
-            WardrobePosition position = new WardrobePosition(Instant.parse(parts[1]), UUID.fromString(parts[2]));
+            Instant createdAt = Instant.parse(parts[1]);
+            if (createdAt.isBefore(EARLIEST_POSITION) || createdAt.isAfter(LATEST_POSITION)) {
+                return Optional.empty();
+            }
+            WardrobePosition position = new WardrobePosition(createdAt, UUID.fromString(parts[2]));
             return encode(position).equals(cursor) ? Optional.of(position) : Optional.empty();
         } catch (IllegalArgumentException | DateTimeParseException notACursor) {
             return Optional.empty();
