@@ -51,6 +51,13 @@ final class InMemoryGarmentRepository implements GarmentRepository {
         return byTime < 0 || (byTime == 0 && garment.id().compareTo(position.garmentId()) < 0);
     }
 
+    @Override
+    public synchronized Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId) {
+        return all().stream()
+                .filter(garment -> garment.isOwnedBy(ownerAccountId) && garment.id().equals(garmentId))
+                .findFirst();
+    }
+
     synchronized void add(Garment garment) {
         creations.put(new CreationKey(garment.ownerAccountId(), UUID.randomUUID()),
                 new RecordedGarmentCreation(garment, "0".repeat(64)));

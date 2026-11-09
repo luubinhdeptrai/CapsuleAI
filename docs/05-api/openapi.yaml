@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.7.0
+  version: 0.8.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -15,6 +15,7 @@ info:
       - US-AUTH-005: Recover account access through email
       - US-GAR-001: Add an owned garment manually
       - US-WAR-001: Browse my current wardrobe
+      - US-WAR-002: Inspect an owned garment
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -53,8 +54,8 @@ info:
 
     This specification does not introduce endpoints for
     session listing, all-device logout, garment editing or
-    removal, garment images, search,
-    wardrobe data, or user profiles.
+    removal, garment images, search, filtering or user
+    profiles.
 
 servers:
   - url: http://localhost:8080
@@ -764,6 +765,8 @@ paths:
                 price: null
                 provenance: "USER_ENTERED"
                 recommendationEligibility: "NOT_EVALUATED"
+                recordedUse:
+                  availability: "UNAVAILABLE"
                 createdAt: "2026-11-05T09:30:00.123456Z"
 
         "200":
@@ -783,6 +786,55 @@ paths:
 
         "422":
           $ref: "#/components/responses/IdempotencyKeyReused"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments/{garmentId}:
+    get:
+      tags:
+        - Wardrobe
+      operationId: inspectGarment
+      summary: Inspect one owned garment
+      description: |
+        US-WAR-002 (FR-WAR-001/002, FR-GAR-004–006, BRULE-HIST-001/002).
+
+        Returns every accepted property of one current garment of
+        the authenticated account. Absent optional values stay
+        null; nothing is filled in. Recommendation eligibility is
+        NOT_EVALUATED, and recorded use is UNAVAILABLE because no
+        Wear capability exists yet: that is not zero uses.
+
+        404 GARMENT_NOT_FOUND is the same for an unknown id, a
+        malformed id and another account's garment. 410
+        GARMENT_NO_LONGER_CURRENT means the account's own garment
+        left the current wardrobe. Inspecting changes nothing.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview.
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        "200":
+          description: The garment with every accepted property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/GarmentNotFound"
+
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
 
         "503":
           $ref: "#/components/responses/Unavailable"
@@ -1221,6 +1273,7 @@ components:
         - price
         - provenance
         - recommendationEligibility
+        - recordedUse
         - createdAt
       properties:
         id:
@@ -1284,9 +1337,24 @@ components:
           description: |
             No recommendation-eligibility policy is approved yet. A
             garment is never called ready, unsuitable or ineligible.
+        recordedUse:
+          $ref: "#/components/schemas/RecordedUse"
         createdAt:
           type: string
           format: date-time
+
+    RecordedUse:
+      type: object
+      description: |
+        Whether reported-use (Wear Event) evidence is available.
+        UNAVAILABLE means no evidence can be shown: it is not zero
+        uses, not "never worn" and carries no last-worn date.
+      required:
+        - availability
+      properties:
+        availability:
+          type: string
+          const: UNAVAILABLE
 
     WardrobeOverview:
       type: object
@@ -1995,6 +2063,8 @@ components:
             - "AUTHENTICATION_REQUIRED"
             - "PASSWORD_RESET_INVALID"
             - "IDEMPOTENCY_KEY_REUSED"
+            - "GARMENT_NOT_FOUND"
+            - "GARMENT_NO_LONGER_CURRENT"
             - "TEMPORARILY_UNAVAILABLE"
 
         fieldErrors:
@@ -2062,6 +2132,36 @@ components:
                 fieldErrors:
                   - field: "fit"
                     code: "NOT_APPLICABLE"
+
+    GarmentNotFound:
+      description: |
+        The authenticated account has no garment with this id. The
+        same answer is given for another account's garment.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This garment is not in your wardrobe. Return to your wardrobe to choose another one."
+            instance: "/api/v1/wardrobe/garments/9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+            code: "GARMENT_NOT_FOUND"
+
+    GarmentNoLongerCurrent:
+      description: |
+        The account's garment is no longer in the current wardrobe;
+        refresh the overview.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Gone"
+            status: 410
+            detail: "This garment is no longer in your current wardrobe. Refresh your wardrobe to see what you own now."
+            instance: "/api/v1/wardrobe/garments/9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+            code: "GARMENT_NO_LONGER_CURRENT"
 
     PageRequestRejected:
       description: |

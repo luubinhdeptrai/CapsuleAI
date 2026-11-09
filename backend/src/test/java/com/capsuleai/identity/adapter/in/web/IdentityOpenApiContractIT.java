@@ -195,7 +195,7 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
 
     private MockHttpServletResponse perform(DocumentedOperation operation, Map<String, Object> body) throws Exception {
         return mockMvc.perform(request(HttpMethod.valueOf(operation.method().toUpperCase(Locale.ROOT)),
-                                operation.path())
+                                concretePath(operation))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(body)))
                 .andReturn()
@@ -212,13 +212,18 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
             contractAccessToken = registerAndLogIn("openapi-contract@example.com").accessToken();
         }
         return mockMvc.perform(request(HttpMethod.valueOf(operation.method().toUpperCase(Locale.ROOT)),
-                                operation.path())
+                                concretePath(operation))
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + contractAccessToken)
                         .header("Idempotency-Key", UUID.randomUUID().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JSON.writeValueAsString(body)))
                 .andReturn()
                 .getResponse();
+    }
+
+    /** Fills each path parameter such as {garmentId} with a random UUID that names no resource. */
+    private static String concretePath(DocumentedOperation operation) {
+        return operation.path().replaceAll("\\{[^}]+}", UUID.randomUUID().toString());
     }
 
     private HandlerMethod handlerFor(DocumentedOperation operation) {

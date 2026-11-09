@@ -98,6 +98,12 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
             return delegate.findCurrentByOwner(ownerAccountId, after, maximumCount);
         }
 
+        @Override
+        public Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId) {
+            failReadIfRequested();
+            return delegate.findOwned(ownerAccountId, garmentId);
+        }
+
         private void failReadIfRequested() {
             if (failReads.get()) {
                 throw new DataAccessResourceFailureException("connection lost during the read (simulated)");
@@ -176,6 +182,25 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.garments[0].id").value(older.toString()));
+    }
+
+    /** US-WAR-002 AC-08: a failed detail is unavailable, not "deleted", and changes nothing. */
+    @Test
+    void aFailedDetailIsUnavailableNotDeletedAndARetryShowsTheGarment() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("failed-detail@example.com");
+        UUID garmentId = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("TOPS", "IVORY"));
+        failingGarmentRepository.failReadsUntilReset();
+
+        mockMvc.perform(get(GARMENTS + "/" + garmentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"));
+
+        failingGarmentRepository.reset();
+        mockMvc.perform(get(GARMENTS + "/" + garmentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(garmentId.toString()));
     }
 
     @Test
