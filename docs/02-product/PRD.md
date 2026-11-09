@@ -1343,8 +1343,8 @@ The following are excluded from initial product acceptance:
 - Native cart, checkout, payment, order management, delivery/fulfillment, seller tools, or marketplace.
 - Required retailer contracts, live retailer inventory synchronization, or mandatory affiliate participation.
 - Advanced learned recommendation models as a delivery prerequisite.
-- A complete social/community network or public wardrobe sharing.
-- AR/virtual try-on, 3D avatars/clothing simulation, and real-time video ingestion.
+- Outfit-inspiration community limits (not a complete social network): MVP feed supports Like, Follow creator, outfit sharing, Edit-as-duplicate, Save look, and Try-On only. Excluded: comments, messaging, and public wardrobe sharing (sharing an entire wardrobe).
+- Personalized selfie avatar, AR/3D clothing simulation, and real-time video ingestion. Generic-model try-on preview is in scope per founder override 2026-11-09.
 - Automatic verification of wear, purchases, savings, or sustainability outcomes.
 - Mandatory body/gender profiling, category restrictions based on those attributes, or mandatory device-location permission.
 - Guaranteed full offline operation, new calendar/planning workflows, or unapproved promotional/reward experiments.
@@ -1359,8 +1359,9 @@ Some exclusions are candidate future opportunities; others are scope guardrails.
 | Advanced learned personalization | Improve ranking when trustworthy data and evaluation support it. | Evidence of need and benefit beyond the initial lightweight approach. |
 | Retailer integrations / affiliate partnerships | Better candidate information and optional destinations/referral evidence. | Approved commercial/privacy model and feasible partner arrangements. |
 | Subscription / premium insights | Evaluate packaging for sustained wardrobe intelligence. | Validated willingness to pay and an approved business decision. |
-| Social/community experiences | Optional inspiration/sharing. | Separate user-value, privacy, and scope assessment. |
-| AR / virtual try-on | Additional evaluation support. | Separate discovery, feasibility, and scope approval. |
+| Social/community experiences | Outfit-inspiration feed. | MVP includes Like, Follow creator, outfit sharing, Edit-as-duplicate, Save, Try-On (no comments, no messaging, no wardrobe sharing). Full social graph pending separate assessment. |
+| Generic-model try-on preview | In MVP scope per founder override 2026-11-09. | Personal avatar, AR/3D remain deferred pending separate approval. |
+| Internal catalog search + bulk import | In MVP scope per founder override 2026-11-09. | Catalog curation/source and batch limits require refinement. |
 | More markets / localization | Adapt climate, occasion, language, and catalog context. | Market-specific validation and approved release scope. |
 
 These possibilities have no MVP feature acceptance criteria or committed delivery dates.

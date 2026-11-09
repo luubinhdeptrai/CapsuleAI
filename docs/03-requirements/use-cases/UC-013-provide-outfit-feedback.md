@@ -17,7 +17,7 @@ Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD]
 
 ## 2. Goal
 
-Express, revise or clear Like/Dislike for an identified recommendation/exact outfit combination, with accepted feedback reflected in future soft personalization and no inference of physical wear.
+Express, revise or clear Like (AI-generated and community targets) or Dislike (AI-generated targets only: Today strip + chat suggestions, never community posts), with accepted state stored as an event for history and the matching engine's own rules. No fixed weight or decay applies.
 
 ## 3. Stakeholders and Interests
 
@@ -43,12 +43,12 @@ The User chooses Like, Dislike, a revision or clearing of feedback on the identi
 
 ## 7. Alternative Flows
 
-### A1 — Dislike
+### A1 — Dislike (AI-generated targets only)
 
 At Main Step 1:
 
-1. The User chooses Dislike for the exact target.
-2. Continue at Main Step 2 with Dislike; an accepted Dislike is negative soft evidence for that target, not a permanent ban on its garments/categories.
+1. The User chooses Dislike for an AI-generated target (Today suggestion or chat-suggested outfit). Community posts do not offer Dislike.
+2. Continue at Main Step 2 with Dislike; an accepted Dislike is stored negative preference state for that target, not a permanent ban on its garments/categories and not a fixed score.
 
 ### A2 — Revise an existing state
 
@@ -96,8 +96,8 @@ At Main Step 1:
 
 ## 9. Success Postconditions
 
-- The accepted Like, Dislike or cleared state is visible for the correct exact target, with contradictory states not simultaneously effective.
-- Applicable future evidence reflects accepted revision/clearing; no Wear Event, garment ban or ownership change is created.
+- The accepted Like, Dislike or cleared state is visible for the correct exact target, with contradictory states not simultaneously effective. Dislike is only offered/accepted on AI-generated targets.
+- Stored preference/history reflects accepted revision/clearing; no Wear Event, garment ban, ownership change, fixed score, or decay is created by this use case.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -113,9 +113,9 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
-| `BRULE-PERS-001` | Like +1 / Dislike −2 apply to the exact target with one effective state and no permanent garment ban. |
-| `BRULE-PERS-003` | Behavioral contribution ages by completed elapsed periods; feedback state is not automatically cleared at 90 days. |
-| `BRULE-PERS-006` | Accepted revision/clearing changes effective evidence. |
+| `BRULE-PERS-001` | Like on AI/community targets, Dislike on AI-generated targets only; store-only, no weights/decay. |
+| `BRULE-PERS-003` | No business-rule aging/decay (superseded 2026-11-09). |
+| `BRULE-PERS-006` | Accepted revision/clearing updates stored state (no decay). |
 | `BRULE-OUT-008` | Feedback influences soft ranking only after validity. |
 
 ## 12. Requirements Traceability
