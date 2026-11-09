@@ -1,6 +1,8 @@
 package com.capsuleai.wardrobe.adapter.in.web;
 
 import com.capsuleai.wardrobe.application.GarmentFieldViolation;
+import com.capsuleai.wardrobe.application.GarmentNoLongerCurrentException;
+import com.capsuleai.wardrobe.application.GarmentNotFoundException;
 import com.capsuleai.wardrobe.application.GarmentValidationException;
 import com.capsuleai.wardrobe.application.IdempotencyKeyReusedException;
 import java.sql.SQLException;
@@ -62,6 +64,20 @@ public class WardrobeApiExceptionHandler {
         return respond(problem(HttpStatus.UNPROCESSABLE_CONTENT, "IDEMPOTENCY_KEY_REUSED",
                 "This Idempotency-Key was already used for a different garment. Use a new key for a new garment; "
                         + "nothing was saved."));
+    }
+
+    /** The same answer for an unknown id and another account's garment (NFR-SEC-001). */
+    @ExceptionHandler(GarmentNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleGarmentNotFound(GarmentNotFoundException exception) {
+        return respond(problem(HttpStatus.NOT_FOUND, "GARMENT_NOT_FOUND",
+                "This garment is not in your wardrobe. Return to your wardrobe to choose another one."));
+    }
+
+    /** US-WAR-002 AC-09: the owner's garment is no longer current; it is not reported as deleted data loss. */
+    @ExceptionHandler(GarmentNoLongerCurrentException.class)
+    public ResponseEntity<ProblemDetail> handleGarmentNoLongerCurrent(GarmentNoLongerCurrentException exception) {
+        return respond(problem(HttpStatus.GONE, "GARMENT_NO_LONGER_CURRENT",
+                "This garment is no longer in your current wardrobe. Refresh your wardrobe to see what you own now."));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

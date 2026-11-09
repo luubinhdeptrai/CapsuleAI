@@ -4,10 +4,12 @@ import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.GarmentCreation;
+import com.capsuleai.wardrobe.application.InspectGarmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -30,11 +32,14 @@ public class WardrobeGarmentController {
 
     private final AddGarmentService addGarmentService;
     private final BrowseWardrobeService browseWardrobeService;
+    private final InspectGarmentService inspectGarmentService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
-                                     BrowseWardrobeService browseWardrobeService) {
+                                     BrowseWardrobeService browseWardrobeService,
+                                     InspectGarmentService inspectGarmentService) {
         this.addGarmentService = addGarmentService;
         this.browseWardrobeService = browseWardrobeService;
+        this.inspectGarmentService = inspectGarmentService;
     }
 
     /**
@@ -65,5 +70,15 @@ public class WardrobeGarmentController {
                                            String cursor) {
         WardrobePageRequest page = WardrobePageRequest.parse(limit, cursor);
         return WardrobeResponse.from(browseWardrobeService.browse(owner.accountId(), page.pageSize(), page.after()));
+    }
+
+    /**
+     * US-WAR-002 — one owned garment with every accepted property. The id is read as
+     * text so that a malformed id is simply "not found", like any id the caller does not own.
+     */
+    @GetMapping("/{garmentId}")
+    public GarmentResponse inspectGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                          @PathVariable String garmentId) {
+        return GarmentResponse.from(inspectGarmentService.inspect(owner.accountId(), garmentId));
     }
 }

@@ -154,6 +154,15 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 .list();
     }
 
+    @Override
+    public Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId) {
+        return jdbc.sql(SELECT_GARMENT + "WHERE g.owner_account_id = :ownerAccountId AND g.id = :garmentId")
+                .param("ownerAccountId", ownerAccountId)
+                .param("garmentId", garmentId)
+                .query((row, rowNumber) -> mapGarment(row))
+                .optional();
+    }
+
     static Garment mapGarment(ResultSet row) throws SQLException {
         BigDecimal priceAmount = row.getBigDecimal("price_amount");
         Optional<PurchasePrice> price = priceAmount == null

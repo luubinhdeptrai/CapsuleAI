@@ -17,6 +17,8 @@ import java.util.UUID;
  *
  * <p>{@code recommendationEligibility} is always {@code NOT_EVALUATED}: no
  * eligibility policy is approved, so none is stored or computed (FR-GAR-004).
+ * {@code recordedUse} says whether reported-use evidence exists; no Wear
+ * capability exists yet, so it is UNAVAILABLE, never zero (US-WAR-002 AC-07).
  */
 public record GarmentResponse(
         UUID id,
@@ -35,6 +37,7 @@ public record GarmentResponse(
         PriceResponse price,
         String provenance,
         String recommendationEligibility,
+        RecordedUseResponse recordedUse,
         String createdAt) {
 
     static final String ELIGIBILITY_NOT_EVALUATED = "NOT_EVALUATED";
@@ -58,6 +61,7 @@ public record GarmentResponse(
                 profile.price().map(PriceResponse::from).orElse(null),
                 garment.provenance().name(),
                 ELIGIBILITY_NOT_EVALUATED,
+                RecordedUseResponse.UNAVAILABLE,
                 garment.createdAt().toString());
     }
 

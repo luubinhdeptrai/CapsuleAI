@@ -32,4 +32,10 @@ public interface GarmentRepository {
      * @return an empty list when no current garment follows the position
      */
     List<Garment> findCurrentByOwner(UUID ownerAccountId, Optional<WardrobePosition> after, int maximumCount);
+
+    /**
+     * One garment of this owner, current or removed (US-WAR-002). Another owner's
+     * garment is never returned, so a guessed id reveals nothing. Read-only.
+     */
+    Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId);
 }
