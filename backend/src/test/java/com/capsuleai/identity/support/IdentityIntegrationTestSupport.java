@@ -35,6 +35,9 @@ public abstract class IdentityIntegrationTestSupport {
 
     protected static final String REGISTRATIONS = "/api/v1/auth/registrations";
     protected static final String LOGIN = "/api/v1/auth/login";
+    protected static final String PASSWORD_RESET_REQUEST = "/api/v1/auth/password-reset/request";
+    protected static final String PASSWORD_RESET_CHECK = "/api/v1/auth/password-reset/check";
+    protected static final String PASSWORD_RESET_COMPLETE = "/api/v1/auth/password-reset/complete";
     protected static final String PROTECTED_PROBE = IdentityTestConfiguration.ProtectedProbeController.PATH;
     protected static final String PASSWORD = "correct horse battery staple";
 
@@ -53,13 +56,19 @@ public abstract class IdentityIntegrationTestSupport {
     @Autowired
     protected MutableClock clock;
 
+    @Autowired
+    protected RecordingPasswordResetInstructionSender passwordResetInstructions;
+
     @BeforeEach
     protected void resetIdentityState() {
         clock.setInstant(MutableClock.DEFAULT_START);
+        passwordResetInstructions.clear();
+        // Every table Identity owns lives in its own schema (AR-01), so this also
+        // covers tables added by later Identity migrations.
         List<String> identityTables = jdbc.sql("""
-                        SELECT tablename
+                        SELECT format('%I.%I', schemaname, tablename)
                         FROM pg_tables
-                        WHERE schemaname = 'public' AND tablename LIKE 'identity%'
+                        WHERE schemaname = 'identity'
                         """)
                 .query(String.class)
                 .list();
@@ -139,6 +148,17 @@ public abstract class IdentityIntegrationTestSupport {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         return UUID.fromString(JsonPath.read(body, "$.sessionId"));
+    }
+
+    /** Requests recovery and returns the reset secret from the instructions CapsuleAI sent. */
+    protected String requestPasswordResetToken(String normalizedEmail) throws Exception {
+        postJson(PASSWORD_RESET_REQUEST, Map.of("email", normalizedEmail)).andExpect(status().isAccepted());
+        return passwordResetInstructions.latestTokenFor(normalizedEmail)
+                .orElseThrow(() -> new AssertionError("No reset instructions were sent to " + normalizedEmail));
+    }
+
+    protected ResultActions completePasswordReset(String resetToken, String newPassword) throws Exception {
+        return postJson(PASSWORD_RESET_COMPLETE, Map.of("token", resetToken, "newPassword", newPassword));
     }
 
     protected long countRows(String table) {

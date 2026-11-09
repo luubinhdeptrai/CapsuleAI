@@ -10,6 +10,7 @@ import com.capsuleai.identity.domain.Account;
 import com.capsuleai.identity.domain.EmailAddress;
 import com.capsuleai.identity.domain.InvalidValueException;
 import com.capsuleai.identity.domain.LoginSession;
+import com.capsuleai.identity.domain.PasswordHash;
 import com.capsuleai.identity.domain.RefreshTokenHash;
 import com.capsuleai.identity.domain.SessionPolicy;
 import com.capsuleai.identity.domain.ValueProblem;
@@ -70,8 +71,16 @@ public final class LogInService {
         String accessToken = accessTokens.issue(account.id(), session.id(), now, accessTokenExpiresAt);
 
         // Both rows commit together; tokens leave this method only after the commit.
-        transactions.inTransactionWithoutResult(
-                () -> sessions.create(session, RefreshTokenHash.of(refreshToken)));
+        // The password was verified outside this transaction, so recheck it under a
+        // shared account lock: a reset that replaced the credential meanwhile wins.
+        transactions.inTransactionWithoutResult(() -> {
+            PasswordHash currentPasswordHash = accounts.lockCredentialAgainstChange(account.id())
+                    .orElseThrow(InvalidCredentialsException::new);
+            if (!currentPasswordHash.equals(account.passwordHash())) {
+                throw new InvalidCredentialsException();
+            }
+            sessions.create(session, RefreshTokenHash.of(refreshToken));
+        });
 
         return new SessionTokens(account.id(), accessToken, accessTokenExpiresAt, refreshToken, session.expiresAt());
     }

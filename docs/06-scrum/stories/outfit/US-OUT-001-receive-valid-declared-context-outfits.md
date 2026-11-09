@@ -1,12 +1,14 @@
 # US-OUT-001 — Receive valid outfits for my declared context
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-OUT-001 |
-| Version | 0.1 |
+| Version | 0.3 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-017](../../product-backlog.md#pbi-017--receive-valid-daily-outfits-relevant-to-declared-context) |
@@ -14,6 +16,7 @@
 | Theme | Outfit Decision Support |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Clarified category versus retained outfit roles following approved taxonomy expansion; existing validity and calculation rules preserved. |
 
 ## 1. Story
 
@@ -25,11 +28,13 @@ Reduce daily decision effort with distinct wearable combinations of current owne
 
 ## 3. Scope
 
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
 Initial owned-wardrobe advice, applicable hard filtering before declared-context soft ranking, concise reasons and truthful limited/zero/insufficient/unavailable/outdated results.
 
 ## 4. Preconditions
 
-- The user has authorized wardrobe/context access; enough ready garments and useful choices are assessment conditions, not access quotas.
+- The user has authorized wardrobe/context access; enough garments evaluated under a future approved policy and useful choices are assessment conditions, not access quotas.
 
 ## 5. Acceptance Criteria
 
@@ -37,17 +42,17 @@ Initial owned-wardrobe advice, applicable hard filtering before declared-context
 
 Identify the current wardrobe, declared style/current occasion and available relevant personalization/environment actually used. Missing history/body/gender is not a gate, and request occasion does not overwrite common needs.
 
-### AC-02 — Use eligible owned garments
+### AC-02 — Preserve confirmed ownership before future evaluation
 
-Count only confirmed, active, currently owned garments ready for the applicable checks. Exclude drafts, removed items and hypothetical candidates; explain missing applicable roles/attributes without fabricating readiness.
+Use authorized confirmed active current owned garments; exclude drafts, removed inventory and hypothetical candidates. Eligibility/composition policy is deferred; saving or optional absence cannot determine it.
 
-### AC-03 — Apply composition and layering
+### AC-03 — Defer composition policy
 
-Each valid outfit has exactly one TOP, BOTTOM and FOOTWEAR with zero or one OUTERWEAR. Layered inner TOP is BASE/MID and applicable outer role OUTER/SHELL; where bulk applies, outer bulk is at least inner bulk. Unknown required information cannot establish compatibility.
+**Superseded policy; AC identity retained.** The former fixed composition/category mapping is no longer an approved algorithm. Define composition during future recommendation-engine development under the approved property model; no current implementation or test of old roles is required.
 
-### AC-04 — Apply severe pattern and environment rules
+### AC-04 — Defer property-based compatibility policy
 
-Among TOP/BOTTOM/OUTERWEAR, at most one garment has Visual Noise >=4 or HIGH Pattern Density, counting a garment meeting both once and excluding FOOTWEAR from that count. Applicable environmental filtering uses the source temperature bands/suitability, with equality at 30/24/18/12 degrees Celsius mapping to HOT/WARM/MILD/COOL.
+**Superseded policy; AC identity retained.** Former removed-property pattern/environment/layer checks are no longer active. Request weather/occasion remain contextual inputs; future engine policy must define compatibility without hidden garment fields or unsupported valid-outfit claims.
 
 ### AC-05 — Rank only valid choices
 
@@ -59,7 +64,7 @@ With at least three valid distinct garment-identity combinations, present at lea
 
 ### AC-07 — Distinguish completed zero and insufficient data
 
-A complete supported assessment with no valid combination explains no-valid results. Missing ready roles/information is insufficient assessment instead; neither outcome erases owned data, imposes a wardrobe quota or fabricates a capability gap.
+A complete supported assessment with no valid combination explains no-valid results. Missing evidence required by a future evaluation policy/information is insufficient assessment instead; neither outcome erases owned data, imposes a wardrobe quota or fabricates a capability gap.
 
 ### AC-08 — Disclose missing weather
 
@@ -101,7 +106,7 @@ Detailed inspection is [US-OUT-002](../outfit/US-OUT-002-inspect-outfit-constitu
 
 ## 10. Open Refinement Notes
 
-Validity and initial ranking semantics are established. Developers must assess feasible candidate generation and test evidence without prescribing full algorithms/contracts before Sprint selection; exact soft ordering is not a new universal AC.
+Validity and initial ranking semantics are established for the retained separated-garment template; PRD OPQ-012 remains open for newly supported categories. Developers must assess feasible candidate generation and test evidence without prescribing full algorithms/contracts before Sprint selection; exact soft ordering is not a new universal AC.
 
 ## 11. Status
 

@@ -38,10 +38,10 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
     void revocationTimeAndReasonMustBeRecordedTogether() {
         UUID sessionId = insertSession();
 
-        assertThatThrownBy(() -> jdbc.sql("UPDATE identity_session SET revoked_at = now() WHERE id = :id")
+        assertThatThrownBy(() -> jdbc.sql("UPDATE identity.identity_session SET revoked_at = now() WHERE id = :id")
                 .param("id", sessionId).update())
                 .isInstanceOf(DataIntegrityViolationException.class);
-        assertThatThrownBy(() -> jdbc.sql("UPDATE identity_session SET revocation_reason = 'LOGOUT' WHERE id = :id")
+        assertThatThrownBy(() -> jdbc.sql("UPDATE identity.identity_session SET revocation_reason = 'LOGOUT' WHERE id = :id")
                 .param("id", sessionId).update())
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
@@ -54,7 +54,7 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         revoke(sessionId, "LOGOUT");
-        assertThat(jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        assertThat(jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId).query(String.class).single()).isEqualTo("LOGOUT");
     }
 
@@ -74,7 +74,7 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
                     .param("accountId", accountId)
                     .update();
 
-            migrateTransitionSchema(null);
+            migrateTransitionSchema("4");
 
             Map<String, Object> row = jdbc.sql("SELECT revoked_at, revocation_reason FROM "
                             + TRANSITION_SCHEMA + ".identity_session WHERE id = :id")
@@ -88,22 +88,24 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
         }
     }
 
-    /** Runs the real migration files into a scratch schema, up to {@code target} (null = latest). */
+    /**
+     * Runs the real migration files into a scratch schema, up to {@code target}.
+     * Stops at the migration under test: V6 and later move Identity tables into the
+     * shared {@code identity} schema, which a scratch schema must not touch.
+     */
     private void migrateTransitionSchema(String target) {
         var configuration = Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(TRANSITION_SCHEMA)
                 .locations("classpath:db/migration");
-        if (target != null) {
-            configuration.target(target);
-        }
+        configuration.target(target);
         configuration.load().migrate();
     }
 
     private UUID insertSession() {
         UUID accountId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_account (id, email, password_hash, created_at)
+                        INSERT INTO identity.identity_account (id, email, password_hash, created_at)
                         VALUES (:id, :email, '{test}hash', now())
                         """)
                 .param("id", accountId)
@@ -111,7 +113,7 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
                 .update();
         UUID sessionId = UUID.randomUUID();
         jdbc.sql("""
-                        INSERT INTO identity_session (id, account_id, established_at, expires_at)
+                        INSERT INTO identity.identity_session (id, account_id, established_at, expires_at)
                         VALUES (:id, :accountId, :establishedAt, :expiresAt)
                         """)
                 .param("id", sessionId)
@@ -123,7 +125,7 @@ class SessionRevocationSchemaIT extends IdentityIntegrationTestSupport {
     }
 
     private void revoke(UUID sessionId, String reason) {
-        jdbc.sql("UPDATE identity_session SET revoked_at = :at, revocation_reason = :reason WHERE id = :id")
+        jdbc.sql("UPDATE identity.identity_session SET revoked_at = :at, revocation_reason = :reason WHERE id = :id")
                 .param("at", ESTABLISHED.plusSeconds(60).atOffset(ZoneOffset.UTC))
                 .param("reason", reason)
                 .param("id", sessionId)

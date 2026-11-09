@@ -44,7 +44,7 @@ class ConcurrentRefreshIT extends IdentityIntegrationTestSupport {
         assertThatThrownBy(() -> refreshSessionService.renew(new RenewSessionCommand(successes.get(0).refreshToken())))
                 .isInstanceOf(AuthenticationRequiredException.class);
         assertThat(jdbc.sql("""
-                        SELECT count(*) FROM identity_refresh_token
+                        SELECT count(*) FROM identity.identity_refresh_token
                         WHERE session_id = :id AND consumed_at IS NULL
                         """)
                 .param("id", sessionId).query(Long.class).single()).isOne();
@@ -104,7 +104,7 @@ class ConcurrentRefreshIT extends IdentityIntegrationTestSupport {
     }
 
     private String revocationReason(UUID sessionId) {
-        return jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        return jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId)
                 .query(String.class)
                 .single();

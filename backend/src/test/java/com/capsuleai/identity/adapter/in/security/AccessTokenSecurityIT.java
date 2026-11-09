@@ -138,7 +138,7 @@ class AccessTokenSecurityIT extends IdentityIntegrationTestSupport {
         getProtectedProbe(tokens.accessToken()).andExpect(status().isOk());
 
         // Shorten the stored session to one second and move past it.
-        jdbc.sql("UPDATE identity_session SET expires_at = established_at + INTERVAL '1 second'").update();
+        jdbc.sql("UPDATE identity.identity_session SET expires_at = established_at + INTERVAL '1 second'").update();
         clock.advance(Duration.ofSeconds(1));
 
         // The JWT alone is still valid for ~15 minutes, but persistent authority says no.

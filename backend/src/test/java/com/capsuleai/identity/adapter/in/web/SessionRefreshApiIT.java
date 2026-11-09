@@ -39,7 +39,7 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
         getProtectedProbe(renewed.accessToken())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(login.accountId().toString()));
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @Test
@@ -58,7 +58,7 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
         assertThat(isConsumed(login.refreshToken())).isTrue();
         assertThat(isConsumed(renewed.refreshToken())).isFalse();
         assertThat(jdbc.sql("""
-                        SELECT count(*) FROM identity_refresh_token
+                        SELECT count(*) FROM identity.identity_refresh_token
                         WHERE session_id = :id AND consumed_at IS NULL
                         """)
                 .param("id", sessionId).query(Long.class).single()).isOne();
@@ -109,7 +109,7 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
         getProtectedProbe(lastRenewal.accessToken()).andExpect(status().isUnauthorized());
-        assertThat(countRows("identity_account")).isOne();
+        assertThat(countRows("identity.identity_account")).isOne();
     }
 
     @Test
@@ -136,7 +136,7 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
         // The expired access token alone still cannot log out, and that 401 revokes nothing ...
         mockMvc.perform(post(LOGOUT).header(HttpHeaders.AUTHORIZATION, "Bearer " + deviceA.accessToken()))
                 .andExpect(status().isUnauthorized());
-        assertThat(jdbc.sql("SELECT revoked_at IS NULL FROM identity_session WHERE id = :id")
+        assertThat(jdbc.sql("SELECT revoked_at IS NULL FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionA).query(Boolean.class).single()).isTrue();
 
         // ... the final flow renews first and then logs out with the new access token.
@@ -180,7 +180,7 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_session WHERE revoked_at IS NOT NULL")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revoked_at IS NOT NULL")
                 .query(Long.class).single()).isZero();
     }
 
@@ -213,14 +213,14 @@ class SessionRefreshApiIT extends IdentityIntegrationTestSupport {
     }
 
     private boolean isConsumed(String refreshToken) {
-        return jdbc.sql("SELECT consumed_at IS NOT NULL FROM identity_refresh_token WHERE token_hash = :hash")
+        return jdbc.sql("SELECT consumed_at IS NOT NULL FROM identity.identity_refresh_token WHERE token_hash = :hash")
                 .param("hash", RefreshTokenHash.of(refreshToken).value())
                 .query(Boolean.class)
                 .single();
     }
 
     private String revocationReason(UUID sessionId) {
-        return jdbc.sql("SELECT revocation_reason FROM identity_session WHERE id = :id")
+        return jdbc.sql("SELECT revocation_reason FROM identity.identity_session WHERE id = :id")
                 .param("id", sessionId)
                 .query(String.class)
                 .single();

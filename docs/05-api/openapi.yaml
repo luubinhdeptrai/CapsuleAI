@@ -1,16 +1,21 @@
 openapi: 3.1.0
 
 info:
-  title: CapsuleAI Identity API
-  version: 0.4.0
+  title: CapsuleAI API
+  version: 0.8.0
   description: |
-    CapsuleAI Sprint 1 — Secure Account Access (Backend Only).
+    CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
+    (Backend Only).
 
     Covers:
       - US-AUTH-001: Register an account
       - US-AUTH-002: Log in to a private account
       - US-AUTH-004: Log out of the current session
       - US-AUTH-003: Resume access through refresh-token rotation
+      - US-AUTH-005: Recover account access through email
+      - US-GAR-001: Add an owned garment manually
+      - US-WAR-001: Browse my current wardrobe
+      - US-WAR-002: Inspect an owned garment
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -23,13 +28,34 @@ info:
         and never accepted twice.
       - Reuse of a consumed refresh token revokes its session.
       - Logout revokes only the current session.
+      - An accepted password reset revokes every active session
+        of the account.
 
-    Registration, login, and refresh are public endpoints.
-    Logout requires a valid bearer access token.
+    Registration, login, refresh and the three password-reset
+    operations are public endpoints. Logout requires a valid
+    bearer access token.
+
+    A 401 means the presented credential is not acceptable.
+    A 503 means a required dependency (PostgreSQL) could not
+    be reached: the credential was not found invalid and the
+    outcome is not confirmed. Neither ever returns private data.
+
+    Browser clients on another origin, such as the Swagger
+    Editor, can call the API only from origins the server is
+    configured to allow (see "Browser access (CORS)" in the
+    backend README). CORS does not replace authentication.
+
+    Wardrobe operations act only on the authenticated account's
+    own garments. Every garment has exactly the 13 approved
+    properties; controlled values are codes whose approved labels
+    are listed in the vocabulary schemas. Recommendation
+    eligibility is not evaluated in this release, and no garment
+    image is stored.
 
     This specification does not introduce endpoints for
-    password reset, session listing, all-device logout,
-    wardrobe data, or user profiles.
+    session listing, all-device logout, garment editing or
+    removal, garment images, search, filtering or user
+    profiles.
 
 servers:
   - url: http://localhost:8080
@@ -38,6 +64,8 @@ servers:
 tags:
   - name: Identity
     description: Account registration and authentication lifecycle
+  - name: Wardrobe
+    description: The authenticated user's own confirmed garments
 
 # Every endpoint requires bearer authentication unless it
 # explicitly overrides this requirement with security: [].
@@ -45,7 +73,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/v1/auth/register:
+  /api/v1/auth/registrations:
     post:
       tags:
         - Identity
@@ -54,7 +82,9 @@ paths:
       description: |
         US-AUTH-001.
 
-        Creates an account using an email address and password.
+        Creates an account using an email address, a password
+        and a matching password confirmation (FR-AUTH-001,
+        FR-AUTH-012).
 
         Email identity is normalized by trimming surrounding
         whitespace and applying case-insensitive comparison.
@@ -64,15 +94,15 @@ paths:
         Passwords must contain between 12 and 128 Unicode
         code points. The password value is preserved exactly:
         it is not trimmed, lowercased, or Unicode-normalized.
+        The confirmation must equal the password exactly.
 
         A display name is optional.
 
+        Every invalid field is reported in one 400 response;
+        nothing is stored when any field is rejected.
+
         Registration does not automatically create a login
         session or issue access and refresh tokens.
-
-        Contract confirmation needed:
-        Verify RegistrationResponse and the duplicate-email
-        error code against the US-AUTH-001 guide.
 
       security: []
 
@@ -82,19 +112,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RegisterRequest"
+              $ref: "#/components/schemas/RegistrationRequest"
             examples:
               withDisplayName:
                 summary: Registration with display name
                 value:
                   email: " Person@Example.com "
                   password: "correct horse battery staple"
+                  confirmPassword: "correct horse battery staple"
                   displayName: "Person"
               withoutDisplayName:
                 summary: Registration without optional display name
                 value:
                   email: "person@example.com"
                   password: "correct horse battery staple"
+                  confirmPassword: "correct horse battery staple"
 
       responses:
         "201":
@@ -180,6 +212,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
               example:
+                tokenType: "Bearer"
                 accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
                 accessToken: "eyJhbGciOiJIUzI1NiJ9.example.signature"
                 accessTokenExpiresAt: "2026-11-03T10:15:00Z"
@@ -330,6 +363,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TokenResponse"
               example:
+                tokenType: "Bearer"
                 accountId: "a61b2b35-8b7e-4c51-93d1-51d81a4d82e2"
                 accessToken: "eyJhbGciOiJIUzI1NiJ9.newExample.signature"
                 accessTokenExpiresAt: "2026-11-03T10:30:00Z"
@@ -340,12 +374,485 @@ paths:
           $ref: "#/components/responses/BadRequest"
 
         "401":
+          $ref: "#/components/responses/RenewalRejected"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/password-reset/request:
+    post:
+      tags:
+        - Identity
+      operationId: requestPasswordReset
+      summary: Request password-reset instructions by email
+      description: |
+        US-AUTH-005 (FR-AUTH-003, FR-AUTH-018, FR-AUTH-019, SI-003).
+
+        Requests are limited per normalized email address and per
+        client address in fixed windows. Over a limit the answer
+        is 429 RATE_LIMITED, identical for registered and
+        unregistered addresses. A successful request is paced to a
+        minimum response time whether or not instructions were
+        issued. 202 means the request was accepted, not that an
+        email was delivered. The emailed link is the configured
+        HTTPS App/Universal Link with the secret in the fragment
+        (#token=...).
+
+        For a registered email, issues a new single-use reset
+        interaction valid for 30 minutes and emails its link.
+        Issuing replaces every earlier unused interaction of
+        that account. For an unregistered email nothing is
+        issued or sent.
+
+        The response is identical in both cases and never says
+        whether an account exists or that a password changed.
+        Email delivery happens after the response; a delivery
+        failure does not change the response. Nothing about the
+        password or the sessions changes.
+
+        Email is compared case-insensitively after trimming
+        surrounding whitespace. A bearer Authorization header is
+        ignored.
+
+      security: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+            example:
+              email: "person@example.com"
+
+      responses:
+        "202":
+          description: |
+            The request was accepted. Instructions were sent if an
+            account exists for the email.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordResetRequestedResponse"
+              example:
+                code: "PASSWORD_RESET_REQUESTED"
+                detail: "If an account exists for this email, password-reset instructions have been sent."
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/password-reset/check:
+    post:
+      tags:
+        - Identity
+      operationId: checkPasswordReset
+      summary: Check that an opened reset link is still usable
+      description: |
+        US-AUTH-005 AC-06/AC-08.
+
+        Lets the client decide whether to show the new-password
+        form after the user opens an emailed link. It changes
+        nothing: opening does not extend, consume or replace the
+        interaction, and completion checks validity again.
+
+      security: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetCheckRequest"
+            example:
+              token: "Zk3v9ExampleResetSecretFromTheEmailLink"
+
+      responses:
+        "204":
+          description: The interaction is usable now.
+
+        "400":
+          description: |
+            VALIDATION_FAILED when the token is missing, or
+            PASSWORD_RESET_INVALID when the interaction is unknown,
+            expired, already used or replaced.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                linkNoLongerUsable:
+                  $ref: "#/components/examples/PasswordResetInvalid"
+
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/auth/password-reset/complete:
+    post:
+      tags:
+        - Identity
+      operationId: completePasswordReset
+      summary: Set a new password with a reset link
+      description: |
+        US-AUTH-005 (FR-AUTH-004, FR-AUTH-015, FR-AUTH-017,
+        BRULE-AUTH-005).
+
+        In one transaction: sets the exact new password,
+        consumes the interaction and revokes every active login
+        session of the account. Their access and refresh tokens
+        stop working at once. The user must then log in with
+        the new password; no tokens are returned.
+
+        The interaction is checked again at submission. A
+        policy-breaking password is rejected without consuming
+        the interaction, so the user can correct it.
+
+        If the response is lost, submitting the same link again
+        returns PASSWORD_RESET_INVALID when the first submission
+        succeeded; logging in with the new password confirms it.
+
+      security: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetCompletionRequest"
+            example:
+              token: "Zk3v9ExampleResetSecretFromTheEmailLink"
+              newPassword: "a brand new passphrase"
+
+      responses:
+        "204":
+          description: |
+            The password was changed, the interaction consumed and
+            every session revoked. Log in with the new password.
+
+        "400":
+          description: |
+            VALIDATION_FAILED for a missing token or a new password
+            that breaks the policy (the interaction stays usable),
+            or PASSWORD_RESET_INVALID when the interaction is
+            unknown, expired, already used or replaced. Nothing
+            was changed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                passwordTooShort:
+                  summary: New password breaks the policy
+                  value:
+                    title: "Bad Request"
+                    status: 400
+                    detail: "Some submitted values are missing or invalid. Correct them and submit again."
+                    instance: "/api/v1/auth/password-reset/complete"
+                    code: "VALIDATION_FAILED"
+                    fieldErrors:
+                      - field: "newPassword"
+                        code: "TOO_SHORT"
+                linkNoLongerUsable:
+                  $ref: "#/components/examples/PasswordResetInvalid"
+
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments:
+    get:
+      tags:
+        - Wardrobe
+      operationId: browseWardrobe
+      summary: List the current wardrobe
+      description: |
+        US-WAR-001 (FR-WAR-001, FR-WAR-008, BRULE-HIST-002).
+
+        Returns one page of the authenticated account's current
+        confirmed garments, newest first (created time, then id,
+        both descending). Each summary identifies the
+        garment through Category, Color and, when supplied,
+        Subtype and Brand; a minimum-only garment is listed like
+        any other. No image is stored in this release, so clients
+        show a category/color placeholder. Removed garments, other
+        accounts' garments and unconfirmed drafts never appear.
+
+        Pages (OPEN-S2-10): omit cursor for the first page. When
+        nextCursor is a string, send it back unchanged as cursor
+        to load the following page; null means this is the last
+        page. The cursor is opaque: do not build, parse or store
+        it beyond the current browsing session. A garment added
+        while paging appears when the overview is loaded again
+        from the first page; a removed garment disappears; no
+        current garment is repeated or skipped.
+
+        200 with an empty first page means the wardrobe is
+        genuinely empty. A 400, 401 or 503 is never an empty
+        wardrobe. Browsing changes nothing. There is no sorting
+        option, filter or search in this release.
+
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Garments per page, from 1 to 100. Default 20.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          required: false
+          description: |
+            The nextCursor of the previous page, unchanged. An
+            altered or unknown value is rejected with 400; it
+            never restarts or ends the overview silently.
+          schema:
+            type: string
+            maxLength: 200
+            pattern: "^[A-Za-z0-9_-]+$"
+
+      responses:
+        "200":
+          description: The current wardrobe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WardrobeOverview"
+              examples:
+                populated:
+                  summary: A first page (limit=2) with more garments to follow
+                  value:
+                    garments:
+                      - id: "4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69"
+                        category: "TOPS"
+                        subtype: "T_SHIRTS"
+                        color: "NAVY"
+                        brand: "Uniqlo"
+                        recommendationEligibility: "NOT_EVALUATED"
+                        createdAt: "2026-11-05T09:31:00.123456Z"
+                      - id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+                        category: "SHOES"
+                        subtype: null
+                        color: "BLACK"
+                        brand: null
+                        recommendationEligibility: "NOT_EVALUATED"
+                        createdAt: "2026-11-05T09:30:00.123456Z"
+                    nextCursor: "djF8MjAyNi0xMS0wNVQwOTozMDowMC4xMjM0NTZafDlhOGI3YzZkLTVlNGYtNGEzYi04YzJkLTFlMGY5YThiN2M2ZA"
+                empty:
+                  summary: A genuinely empty wardrobe
+                  value:
+                    garments: []
+                    nextCursor: null
+
+        "400":
+          $ref: "#/components/responses/PageRequestRejected"
+
+        "401":
           $ref: "#/components/responses/Unauthorized"
 
         "503":
           $ref: "#/components/responses/Unavailable"
 
+    post:
+      tags:
+        - Wardrobe
+      operationId: addGarment
+      summary: Add one explicitly confirmed garment manually
+      description: |
+        US-GAR-001 (FR-AI-003/008/010, FR-GAR-001–013, BRULE-GAR-001–006/010).
+
+        Saves one garment for the authenticated account when the
+        user explicitly confirmed (confirmed: true) a supported
+        Category and one dominant Color. Every other property is
+        optional; an image or AI analysis is never required.
+
+        Supplied values must be codes of the approved vocabularies
+        and apply to the category: Fit, Neckline and Sleeve Length
+        only for TOPS; Length from the TOPS or PANTS list only for
+        that category; Silhouette only for PANTS. An invalid or
+        inapplicable value is reported in fieldErrors for
+        correction or clearing; nothing is replaced, discarded or
+        saved. Material and Style are arrays: zero, one or several
+        approved codes, and a repeated code collapses into one.
+
+        Brand, when supplied, is kept exactly as entered (at most
+        100 Unicode code points); a blank Brand means none. Price,
+        when supplied, is the amount originally paid as a decimal
+        string plus an ISO 4217 currency, both together; 0 is a
+        valid Price, a missing Price is unknown, and the amount is
+        never converted or rounded.
+
+        The Idempotency-Key header names the logical addition.
+        Repeating the same addition (same key and values), for
+        example after a lost response, returns 200 with the garment
+        that was already saved; it never creates a second one. A
+        new key is a new addition, so identical-looking garments
+        can be added separately. Reusing a key with different
+        values is rejected with 422.
+
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentCreationRequest"
+            examples:
+              fullTop:
+                summary: A Top with every applicable property
+                value:
+                  confirmed: true
+                  category: "TOPS"
+                  subtype: "T_SHIRTS"
+                  color: "NAVY"
+                  materials:
+                    - "COTTON"
+                    - "SPANDEX_ELASTANE"
+                  pattern: "STRIPED"
+                  styles:
+                    - "CASUAL"
+                    - "MINIMALIST"
+                  fit: "REGULAR"
+                  neckline: "ROUND"
+                  sleeveLength: "SHORT_SLEEVE"
+                  length: "HIP"
+                  brand: "Uniqlo"
+                  price:
+                    amount: "299000"
+                    currency: "VND"
+              minimum:
+                summary: The confirmed Saveable minimum
+                value:
+                  confirmed: true
+                  category: "SHOES"
+                  color: "BLACK"
+
+      responses:
+        "201":
+          description: The garment was created by this request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+              example:
+                id: "4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69"
+                category: "SHOES"
+                subtype: null
+                color: "BLACK"
+                materials: []
+                pattern: null
+                styles: []
+                fit: null
+                neckline: null
+                sleeveLength: null
+                length: null
+                silhouette: null
+                brand: null
+                price: null
+                provenance: "USER_ENTERED"
+                recommendationEligibility: "NOT_EVALUATED"
+                recordedUse:
+                  availability: "UNAVAILABLE"
+                createdAt: "2026-11-05T09:30:00.123456Z"
+
+        "200":
+          description: |
+            The same logical addition was already accepted; this is
+            that garment. Nothing new was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "400":
+          $ref: "#/components/responses/GarmentRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "422":
+          $ref: "#/components/responses/IdempotencyKeyReused"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments/{garmentId}:
+    get:
+      tags:
+        - Wardrobe
+      operationId: inspectGarment
+      summary: Inspect one owned garment
+      description: |
+        US-WAR-002 (FR-WAR-001/002, FR-GAR-004–006, BRULE-HIST-001/002).
+
+        Returns every accepted property of one current garment of
+        the authenticated account. Absent optional values stay
+        null; nothing is filled in. Recommendation eligibility is
+        NOT_EVALUATED, and recorded use is UNAVAILABLE because no
+        Wear capability exists yet: that is not zero uses.
+
+        404 GARMENT_NOT_FOUND is the same for an unknown id, a
+        malformed id and another account's garment. 410
+        GARMENT_NO_LONGER_CURRENT means the account's own garment
+        left the current wardrobe. Inspecting changes nothing.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview.
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        "200":
+          description: The garment with every accepted property.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/GarmentNotFound"
+
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
 components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        A UUID the client generates once per intended garment
+        addition and repeats unchanged on every retry of it.
+      schema:
+        type: string
+        format: uuid
+      example: "6f1c2a8e-9b3d-4e5f-a1b2-c3d4e5f60718"
+
   securitySchemes:
     bearerAuth:
       type: http
@@ -370,16 +877,18 @@ components:
         protected request.
 
   schemas:
-    RegisterRequest:
+    RegistrationRequest:
       type: object
       description: |
         Registration input for US-AUTH-001.
 
         Email is normalized before identity comparison.
-        Password is preserved exactly as supplied.
+        Password and confirmation are preserved exactly
+        as supplied.
       required:
         - email
         - password
+        - confirmPassword
       properties:
         email:
           type: string
@@ -411,26 +920,40 @@ components:
           examples:
             - "correct horse battery staple"
 
-        displayName:
+        confirmPassword:
           type: string
+          format: password
+          writeOnly: true
           description: |
-            Optional display name.
+            Repetition of the password (FR-AUTH-001,
+            FR-AUTH-012).
 
-            Confirm any additional display-name validation
-            constraints against the US-AUTH-001 guide.
+            Missing or empty is REQUIRED; any difference from
+            password, including spaces or letter case, is
+            MISMATCH. Never returned by the API.
+          examples:
+            - "correct horse battery staple"
+
+        displayName:
+          type:
+            - string
+            - "null"
+          maxLength: 100
+          description: |
+            Optional display name of at most 100 Unicode
+            code points, stored exactly as supplied.
+
+            Omitted, null or blank means no display name.
           examples:
             - "Person"
 
     RegistrationResponse:
       type: object
-      description: |
-        Account created by registration.
-
-        The exact response field set should be checked
-        against US-AUTH-001 before treating this schema
-        as the final implementation contract.
+      description: Account created by registration.
       required:
         - accountId
+        - email
+        - displayName
       properties:
         accountId:
           type: string
@@ -445,7 +968,7 @@ components:
           type:
             - string
             - "null"
-          description: Optional display name, if returned.
+          description: The stored display name, or null when none was given.
 
     LoginRequest:
       type: object
@@ -513,12 +1036,18 @@ components:
         sessionExpiresAt is the original absolute session
         expiry and does not move forward during rotation.
       required:
+        - tokenType
         - accountId
         - accessToken
         - accessTokenExpiresAt
         - refreshToken
         - sessionExpiresAt
       properties:
+        tokenType:
+          type: string
+          const: Bearer
+          description: Authorization scheme for the access token.
+
         accountId:
           type: string
           format: uuid
@@ -563,22 +1092,891 @@ components:
             At this instant the session becomes unusable.
             Refresh operations never extend this value.
 
-    FieldError:
+    PasswordResetRequest:
+      type: object
+      description: Email of the account to recover.
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          description: |
+            Compared case-insensitively after trimming
+            surrounding whitespace; provider aliases are not
+            merged. A missing or malformed value is rejected
+            with 400 regardless of account existence.
+
+    PasswordResetRequestedResponse:
       type: object
       description: |
-        A validation failure associated with a request field.
+        The single response to every accepted Forgot Password
+        request, whether or not an account exists.
+      required:
+        - code
+        - detail
+      properties:
+        code:
+          type: string
+          const: PASSWORD_RESET_REQUESTED
+        detail:
+          type: string
 
-        Verify the exact JSON property names against the
-        existing IdentityApiExceptionHandler.
+    PasswordResetCheckRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          minLength: 1
+          writeOnly: true
+          description: The reset secret from the emailed link fragment.
+
+    PasswordResetCompletionRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          minLength: 1
+          writeOnly: true
+          description: The reset secret from the emailed link fragment.
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+          description: |
+            12–128 Unicode characters, kept exactly as entered:
+            no trimming, normalization or character-class rules.
+
+    GarmentCreationRequest:
+      type: object
+      description: |
+        A manual garment entry. Omit an optional property, or send
+        null, when it was not supplied; blank strings count as not
+        supplied. There is no owner field: the owner is the
+        authenticated account.
+      required:
+        - confirmed
+        - category
+        - color
+      properties:
+        confirmed:
+          type: boolean
+          description: Must be true. false or missing creates nothing.
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        materials:
+          type: array
+          description: Zero or more Materials; repeated values collapse into one.
+          items:
+            $ref: "#/components/schemas/GarmentMaterialCode"
+        pattern:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPatternCode"
+            - type: "null"
+        styles:
+          type: array
+          description: Zero or more Styles; repeated values collapse into one.
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
+        fit:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentFitCode"
+            - type: "null"
+        neckline:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentNecklineCode"
+            - type: "null"
+        sleeveLength:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSleeveLengthCode"
+            - type: "null"
+        length:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentLengthCode"
+            - type: "null"
+        silhouette:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSilhouetteCode"
+            - type: "null"
+        brand:
+          type: [string, "null"]
+          maxLength: 100
+          description: |
+            Kept exactly as entered, including case, accents and
+            spaces; at most 100 Unicode code points; free text, not
+            a catalogue. Blank means not supplied.
+        price:
+          anyOf:
+            - $ref: "#/components/schemas/Price"
+            - type: "null"
+
+    Price:
+      type: object
+      description: |
+        The user-reported amount originally paid. Never a market,
+        resale or retailer value; never converted.
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: string
+          pattern: "^(0|[1-9][0-9]{0,11})(\\.[0-9]+)?$"
+          description: |
+            Exact non-negative decimal string, at most 12 integer
+            digits and no more decimals than the currency's ISO
+            4217 minor unit (VND 0, USD 2). Never rounded.
+          examples:
+            - "299000"
+            - "12.50"
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: Upper-case ISO 4217 code of a real currency.
+          examples:
+            - "VND"
+
+    Garment:
+      type: object
+      description: |
+        One garment owned by the authenticated account, with every
+        accepted value. Every field is always present: a property
+        that was not supplied, or does not apply to the category,
+        is null, and no Material or Style is []. Codes are those of the
+        vocabulary schemas.
+      required:
+        - id
+        - category
+        - subtype
+        - color
+        - materials
+        - pattern
+        - styles
+        - fit
+        - neckline
+        - sleeveLength
+        - length
+        - silhouette
+        - brand
+        - price
+        - provenance
+        - recommendationEligibility
+        - recordedUse
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        materials:
+          type: array
+          description: Distinct Materials in catalogue order.
+          items:
+            $ref: "#/components/schemas/GarmentMaterialCode"
+        pattern:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPatternCode"
+            - type: "null"
+        styles:
+          type: array
+          description: Distinct Styles in catalogue order.
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
+        fit:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentFitCode"
+            - type: "null"
+        neckline:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentNecklineCode"
+            - type: "null"
+        sleeveLength:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSleeveLengthCode"
+            - type: "null"
+        length:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentLengthCode"
+            - type: "null"
+        silhouette:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSilhouetteCode"
+            - type: "null"
+        brand:
+          type: [string, "null"]
+        price:
+          anyOf:
+            - $ref: "#/components/schemas/Price"
+            - type: "null"
+        provenance:
+          type: string
+          const: USER_ENTERED
+          description: Every accepted value was entered and confirmed by the user.
+        recommendationEligibility:
+          type: string
+          const: NOT_EVALUATED
+          description: |
+            No recommendation-eligibility policy is approved yet. A
+            garment is never called ready, unsuitable or ineligible.
+        recordedUse:
+          $ref: "#/components/schemas/RecordedUse"
+        createdAt:
+          type: string
+          format: date-time
+
+    RecordedUse:
+      type: object
+      description: |
+        Whether reported-use (Wear Event) evidence is available.
+        UNAVAILABLE means no evidence can be shown: it is not zero
+        uses, not "never worn" and carries no last-worn date.
+      required:
+        - availability
+      properties:
+        availability:
+          type: string
+          const: UNAVAILABLE
+
+    WardrobeOverview:
+      type: object
+      description: One page of the current wardrobe, newest first.
+      required:
+        - garments
+        - nextCursor
+      properties:
+        garments:
+          type: array
+          maxItems: 100
+          description: |
+            Current garments, newest first; [] on the first page
+            only when the wardrobe is empty.
+          items:
+            $ref: "#/components/schemas/GarmentSummary"
+        nextCursor:
+          type: [string, "null"]
+          description: |
+            Opaque position after the last garment of this page.
+            Send it as cursor to load the next page; null on the
+            last page.
+
+    GarmentSummary:
+      type: object
+      description: |
+        Enough to recognize and select a garment. Subtype and
+        Brand are null when not supplied. Detail returns every
+        accepted property.
+      required:
+        - id
+        - category
+        - subtype
+        - color
+        - brand
+        - recommendationEligibility
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        brand:
+          type: [string, "null"]
+        recommendationEligibility:
+          type: string
+          const: NOT_EVALUATED
+        createdAt:
+          type: string
+          format: date-time
+
+    GarmentCategoryCode:
+      type: string
+      description: |
+        One of the eight approved categories.
+      oneOf:
+        - const: TOPS
+          title: "Tops"
+        - const: DRESSES_JUMPSUITS
+          title: "Dresses/Jumpsuits"
+        - const: PANTS
+          title: "Pants"
+        - const: SKIRTS
+          title: "Skirts"
+        - const: OUTERWEAR
+          title: "Outerwear"
+        - const: SHOES
+          title: "Shoes"
+        - const: BAGS
+          title: "Bags"
+        - const: HEADWEAR
+          title: "Headwear"
+
+    GarmentSubtypeCode:
+      type: string
+      description: |
+        Optional; must belong to the garment's category (84 approved values).
+      oneOf:
+        - const: T_SHIRTS
+          title: "T-shirts"
+        - const: LONG_SLEEVE_T_SHIRTS
+          title: "Long Sleeve T-shirts"
+        - const: SLEEVELESS_T_SHIRTS
+          title: "Sleeveless T-shirts"
+        - const: POLO_SHIRTS
+          title: "Polo Shirts"
+        - const: TANKS_AND_CAMIS
+          title: "Tanks & Camis"
+        - const: CROP_TOPS
+          title: "Crop Tops"
+        - const: BLOUSES
+          title: "Blouses"
+        - const: SHIRTS
+          title: "Shirts"
+        - const: SWEATSHIRTS
+          title: "Sweatshirts"
+        - const: HOODIES
+          title: "Hoodies"
+        - const: SWEATERS
+          title: "Sweaters"
+        - const: SWEATER_VESTS
+          title: "Sweater Vests"
+        - const: SPORTS_TOPS
+          title: "Sports Tops"
+        - const: BODYSUITS
+          title: "Bodysuits"
+        - const: DAY_DRESS
+          title: "Day Dress"
+        - const: T_SHIRT_DRESS
+          title: "T-Shirt Dress"
+        - const: SHIRT_DRESS
+          title: "Shirt Dress"
+        - const: SWEATSHIRT_DRESS
+          title: "Sweatshirt Dress"
+        - const: SWEATER_DRESS
+          title: "Sweater Dress"
+        - const: JACKET_DRESS
+          title: "Jacket Dress"
+        - const: SUSPENDER_DRESS
+          title: "Suspender Dress"
+        - const: JUMPSUIT
+          title: "Jumpsuit"
+        - const: PARTY_DRESS
+          title: "Party Dress"
+        - const: MINI_DRESS
+          title: "Mini Dress"
+        - const: JEANS
+          title: "Jeans"
+        - const: TROUSERS
+          title: "Trousers"
+        - const: DRESS_PANTS
+          title: "Dress Pants"
+        - const: TRACK_PANTS
+          title: "Track Pants"
+        - const: LEGGINGS
+          title: "Leggings"
+        - const: SHORTS
+          title: "Shorts"
+        - const: MINI_SKIRTS
+          title: "Mini Skirts"
+        - const: MIDI_SKIRTS
+          title: "Midi Skirts"
+        - const: MAXI_SKIRTS
+          title: "Maxi Skirts"
+        - const: COATS
+          title: "Coats"
+        - const: TRENCH_COATS
+          title: "Trench Coats"
+        - const: FUR_COATS
+          title: "Fur Coats"
+        - const: SHEARLING_COATS
+          title: "Shearling Coats"
+        - const: BLAZERS
+          title: "Blazers"
+        - const: JACKETS
+          title: "Jackets"
+        - const: BLOUSONS
+          title: "Blousons"
+        - const: VARSITY_JACKETS
+          title: "Varsity Jackets"
+        - const: TRUCKER_JACKETS
+          title: "Trucker Jackets"
+        - const: BIKER_JACKETS
+          title: "Biker Jackets"
+        - const: CARDIGANS
+          title: "Cardigans"
+        - const: ZIP_UP_HOODIES
+          title: "Zip Up Hoodies"
+        - const: FIELD_JACKETS
+          title: "Field Jackets"
+        - const: SPORT_JACKETS
+          title: "Sport Jackets"
+        - const: FLEECE_JACKETS
+          title: "Fleece Jackets"
+        - const: PARKAS
+          title: "Parkas"
+        - const: DOWN_JACKETS
+          title: "Down Jackets"
+        - const: PUFFER_JACKETS
+          title: "Puffer Jackets"
+        - const: VESTS
+          title: "Vests"
+        - const: SNEAKERS
+          title: "Sneakers"
+        - const: SLIP_ONS
+          title: "Slip Ons"
+        - const: SPORTS_SHOES
+          title: "Sports Shoes"
+        - const: HIKING_SHOES
+          title: "Hiking Shoes"
+        - const: BOOTS
+          title: "Boots"
+        - const: COMBAT_BOOTS
+          title: "Combat Boots"
+        - const: UGG_BOOTS
+          title: "Ugg Boots"
+        - const: LOAFERS_AND_LOAFER_MULES
+          title: "Loafers & Loafer Mules"
+        - const: BOAT_SHOES_AND_MOCCASINS
+          title: "Boat Shoes & Moccasins"
+        - const: FLAT_SHOES
+          title: "Flat Shoes"
+        - const: HEELS
+          title: "Heels"
+        - const: SANDALS
+          title: "Sandals"
+        - const: SANDAL_HEELS
+          title: "Sandal Heels"
+        - const: SLIDES
+          title: "Slides"
+        - const: MULE_HEELS
+          title: "Mule Heels"
+        - const: TOTE
+          title: "Tote"
+        - const: SHOULDER
+          title: "Shoulder"
+        - const: CROSSBODY
+          title: "Crossbody"
+        - const: WAIST
+          title: "Waist"
+        - const: CANVAS
+          title: "Canvas"
+        - const: BACKPACKS
+          title: "Backpacks"
+        - const: DUFFEL
+          title: "Duffel"
+        - const: CLUTCH
+          title: "Clutch"
+        - const: BRIEFCASES
+          title: "Briefcases"
+        - const: DRAWSTRING
+          title: "Drawstring"
+        - const: SUITCASES
+          title: "Suitcases"
+        - const: CAP
+          title: "Cap"
+        - const: HATS
+          title: "Hats"
+        - const: BEANIES
+          title: "Beanies"
+        - const: BERETS
+          title: "Berets"
+        - const: FEDORAS
+          title: "Fedoras"
+        - const: SUN_HATS
+          title: "Sun Hats"
+
+    GarmentColorCode:
+      type: string
+      description: |
+        Exactly one dominant Color; COLORFUL for multicolored.
+      oneOf:
+        - const: WHITE
+          title: "White"
+        - const: IVORY
+          title: "Ivory"
+        - const: BEIGE
+          title: "Beige"
+        - const: LIGHT_GRAY
+          title: "Light-Gray"
+        - const: DARK_GRAY
+          title: "Dark-Gray"
+        - const: BLACK
+          title: "Black"
+        - const: LIGHT_YELLOW
+          title: "Light-Yellow"
+        - const: YELLOW
+          title: "Yellow"
+        - const: TURMERIC
+          title: "Turmeric"
+        - const: ORANGE
+          title: "Orange"
+        - const: CORAL
+          title: "Coral"
+        - const: RED
+          title: "Red"
+        - const: PINK
+          title: "Pink"
+        - const: HOT_PINK
+          title: "Hot-Pink"
+        - const: LIGHT_GREEN
+          title: "Light-Green"
+        - const: GREEN
+          title: "Green"
+        - const: OLIVE
+          title: "Olive"
+        - const: DARK_OLIVE
+          title: "Dark-Olive"
+        - const: TEAL
+          title: "Teal"
+        - const: KHAKI
+          title: "Khaki"
+        - const: CYAN
+          title: "Cyan"
+        - const: SKY_BLUE
+          title: "Sky-Blue"
+        - const: BLUE
+          title: "Blue"
+        - const: NAVY
+          title: "Navy"
+        - const: LAVENDER
+          title: "Lavender"
+        - const: PURPLE
+          title: "Purple"
+        - const: BURGUNDY
+          title: "Burgundy"
+        - const: CAMEL
+          title: "Camel"
+        - const: BROWN
+          title: "Brown"
+        - const: DARK_BROWN
+          title: "Dark-Brown"
+        - const: MAGENTA
+          title: "Magenta"
+        - const: GOLD
+          title: "Gold"
+        - const: SILVER
+          title: "Silver"
+        - const: COLORFUL
+          title: "Colorful"
+
+    GarmentMaterialCode:
+      type: string
+      description: |
+        One approved Material.
+      oneOf:
+        - const: COTTON
+          title: "Cotton"
+        - const: POLYESTER
+          title: "Polyester"
+        - const: NYLON
+          title: "Nylon"
+        - const: DENIM
+          title: "Denim"
+        - const: LEATHER
+          title: "Leather"
+        - const: WOOL
+          title: "Wool"
+        - const: SPANDEX_ELASTANE
+          title: "Spandex (elastane)"
+        - const: LINEN
+          title: "Linen"
+        - const: ACRYLIC
+          title: "Acrylic"
+        - const: SILK
+          title: "Silk"
+        - const: RAYON
+          title: "Rayon"
+        - const: VISCOSE
+          title: "Viscose"
+        - const: TWEED
+          title: "Tweed"
+        - const: VELVET
+          title: "Velvet"
+        - const: CHIFFON
+          title: "Chiffon"
+        - const: SUEDE
+          title: "Suede"
+        - const: CORDUROY
+          title: "Corduroy"
+        - const: LACE
+          title: "Lace"
+        - const: FUR
+          title: "Fur"
+        - const: DOWN
+          title: "Down"
+        - const: LYOCELL
+          title: "Lyocell"
+        - const: METAL
+          title: "Metal"
+        - const: CUPRO
+          title: "Cupro"
+        - const: CASHMERE
+          title: "Cashmere"
+        - const: MOHAIR
+          title: "Mohair"
+        - const: ANGORA
+          title: "Angora"
+        - const: ALPACA
+          title: "Alpaca"
+        - const: OTHER_MATERIALS
+          title: "Other Materials"
+
+    GarmentPatternCode:
+      type: string
+      description: |
+        One optional Pattern.
+      oneOf:
+        - const: SOLID
+          title: "Solid"
+        - const: STRIPED
+          title: "Striped"
+        - const: GRAPHIC
+          title: "Graphic"
+        - const: DOTTED
+          title: "Dotted"
+        - const: ANIMAL
+          title: "Animal"
+        - const: FLORAL
+          title: "Floral"
+        - const: TROPICAL
+          title: "Tropical"
+        - const: PAISLEY
+          title: "Paisley"
+        - const: ARGYLE
+          title: "Argyle"
+        - const: CAMO
+          title: "Camo"
+        - const: COLOR_BLOCK
+          title: "Color-Block"
+        - const: REPEATED
+          title: "Repeated"
+        - const: CHECKERBOARD
+          title: "Checkerboard"
+        - const: PLAID
+          title: "Plaid"
+        - const: GINGHAM
+          title: "Gingham"
+        - const: HOUNDSTOOTH
+          title: "Houndstooth"
+        - const: HERRINGBONE
+          title: "Herringbone"
+        - const: CHEVRON
+          title: "Chevron"
+        - const: TWEED
+          title: "Tweed"
+        - const: ABSTRACT
+          title: "Abstract"
+        - const: TIE_DYE
+          title: "Tie Dye"
+        - const: GEOMETRIC
+          title: "Geometric"
+        - const: LACE
+          title: "Lace"
+        - const: OTHER_PATTERNS
+          title: "Other Patterns"
+
+    GarmentStyleCode:
+      type: string
+      description: |
+        One approved named Style; a garment has zero, one or
+        several distinct Styles (Etc is not a value).
+      oneOf:
+        - const: COMFORTABLE
+          title: "Comfortable"
+        - const: CASUAL
+          title: "Casual"
+        - const: BUSINESS_CASUAL
+          title: "Business Casual"
+        - const: FORMAL
+          title: "Formal"
+        - const: MODERN
+          title: "Modern"
+        - const: CLASSIC
+          title: "Classic"
+        - const: MINIMALIST
+          title: "Minimalist"
+        - const: BOHEMIAN
+          title: "Bohemian"
+        - const: LUXURY
+          title: "Luxury"
+        - const: SPORTY
+          title: "Sporty"
+        - const: ATHLEISURE
+          title: "Athleisure"
+        - const: TRENDY
+          title: "Trendy"
+        - const: KIDCORE
+          title: "Kidcore"
+        - const: ARTISTIC
+          title: "Artistic"
+        - const: DRESSY
+          title: "Dressy"
+        - const: FEMININE
+          title: "Feminine"
+        - const: STREET
+          title: "Street"
+
+    GarmentFitCode:
+      type: string
+      description: |
+        TOPS only.
+      oneOf:
+        - const: SLIM
+          title: "Slim"
+        - const: REGULAR
+          title: "Regular"
+        - const: LOOSE
+          title: "Loose"
+        - const: OVERSIZED
+          title: "Oversized"
+
+    GarmentNecklineCode:
+      type: string
+      description: |
+        TOPS only.
+      oneOf:
+        - const: ROUND
+          title: "Round"
+        - const: SCOOP_U
+          title: "Scoop (U)"
+        - const: BOAT
+          title: "Boat"
+        - const: V_NECK
+          title: "V-Neck"
+        - const: DEEP_V
+          title: "Deep-V"
+        - const: SQUARE
+          title: "Square"
+        - const: SURPLICE
+          title: "Surplice"
+        - const: SHIRT_COLLAR
+          title: "Shirt Collar"
+        - const: STANDUP_COLLAR
+          title: "Standup-Collar"
+        - const: WIDE_COLLAR
+          title: "Wide-Collar"
+        - const: MOCKNECK
+          title: "Mockneck"
+        - const: TURTLENECK
+          title: "Turtleneck"
+        - const: STRAPLESS
+          title: "Strapless"
+        - const: THICK_STRAP
+          title: "Thick-Strap"
+        - const: THIN_STRAP
+          title: "Thin-Strap"
+        - const: SWEETHEART
+          title: "Sweetheart"
+        - const: OFF_THE_SHOULDER
+          title: "Off-The-Shoulder"
+        - const: ASYMMETRIC
+          title: "Asymmetric"
+        - const: HALTER
+          title: "Halter"
+        - const: ILLUSION
+          title: "Illusion"
+        - const: KEYHOLE
+          title: "Keyhole"
+        - const: SUIT_COLLAR
+          title: "Suit-Collar"
+        - const: OTHER
+          title: "Other"
+
+    GarmentSleeveLengthCode:
+      type: string
+      description: |
+        TOPS only.
+      oneOf:
+        - const: SLEEVELESS
+          title: "Sleeveless"
+        - const: CAP_SLEEVE
+          title: "Cap Sleeve"
+        - const: SHORT_SLEEVE
+          title: "Short Sleeve"
+        - const: THREE_QUARTER_SLEEVE
+          title: "3/4 Sleeve"
+        - const: LONG_SLEEVE
+          title: "Long Sleeve"
+
+    GarmentLengthCode:
+      type: string
+      description: |
+        CROPPED, WAIST, HIP, KNEE for TOPS; SHORT, LONG for PANTS.
+      oneOf:
+        - const: CROPPED
+          title: "Cropped"
+        - const: WAIST
+          title: "Waist"
+        - const: HIP
+          title: "Hip"
+        - const: KNEE
+          title: "Knee"
+        - const: SHORT
+          title: "Short"
+        - const: LONG
+          title: "Long"
+
+    GarmentSilhouetteCode:
+      type: string
+      description: |
+        PANTS only.
+      oneOf:
+        - const: FLARE
+          title: "Flare"
+        - const: SLIM
+          title: "Slim"
+        - const: TAPERED
+          title: "Tapered"
+        - const: BAGGY
+          title: "Baggy"
+        - const: SKINNY
+          title: "Skinny"
+        - const: BOOTCUT
+          title: "Bootcut"
+        - const: WIDE_LEG
+          title: "Wide-leg"
+
+    FieldError:
+      type: object
+      description: A validation failure associated with a request field.
       required:
         - field
         - code
       properties:
         field:
           type: string
-          description: Name of the invalid request field.
+          description: |
+            Name of the invalid request field, a position such as
+            materials[1], styles[0] or price.amount, the
+            Idempotency-Key header, or the limit or cursor query
+            parameter.
           examples:
             - "email"
+            - "price.amount"
 
         code:
           type: string
@@ -586,23 +1984,35 @@ components:
             Stable validation reason identifier.
 
             REQUIRED is used for missing required values.
-            Other validation identifiers must match the
-            application's ValueProblem enum.
-          examples:
-            - "REQUIRED"
+          enum:
+            - REQUIRED
+            - INVALID_FORMAT
+            - TOO_SHORT
+            - TOO_LONG
+            - INVALID_CHARACTERS
+            - MISMATCH
+            - NOT_CONFIRMED
+            - UNSUPPORTED_VALUE
+            - NOT_IN_CATEGORY
+            - NOT_APPLICABLE
+            - INCOMPLETE_PRICE
+            - INVALID_AMOUNT
+            - TOO_MANY_DECIMALS
+            - UNSUPPORTED_CURRENCY
+            - OUT_OF_RANGE
 
     Problem:
       type: object
       description: |
-        CapsuleAI error response based on Problem Details.
+        CapsuleAI error response based on RFC 9457 Problem
+        Details. Errors use application/problem+json.
 
-        Errors use application/problem+json.
+        Clients branch on the stable code, not on detail.
 
         Authentication and infrastructure errors must not
         expose passwords, tokens, SQL, exception messages,
         connection strings, or internal system details.
       required:
-        - type
         - title
         - status
         - detail
@@ -610,9 +2020,22 @@ components:
       properties:
         type:
           type: string
-          description: Problem type URI.
+          description: |
+            Problem type URI. Present as about:blank on
+            responses from the security layer; omitted on
+            responses from an endpoint, which RFC 9457 also
+            defines as about:blank.
           examples:
             - "about:blank"
+
+        instance:
+          type: string
+          description: |
+            Path of the request. Present on responses from
+            an endpoint; absent on responses from the
+            security layer.
+          examples:
+            - "/api/v1/auth/registrations"
 
         title:
           type: string
@@ -638,6 +2061,10 @@ components:
             - "MALFORMED_REQUEST"
             - "INVALID_CREDENTIALS"
             - "AUTHENTICATION_REQUIRED"
+            - "PASSWORD_RESET_INVALID"
+            - "IDEMPOTENCY_KEY_REUSED"
+            - "GARMENT_NOT_FOUND"
+            - "GARMENT_NO_LONGER_CURRENT"
             - "TEMPORARILY_UNAVAILABLE"
 
         fieldErrors:
@@ -648,11 +2075,135 @@ components:
           items:
             $ref: "#/components/schemas/FieldError"
 
+  examples:
+    PasswordResetInvalid:
+      summary: Reset link unknown, expired, used or replaced
+      value:
+        title: "Bad Request"
+        status: 400
+        detail: "This password-reset link can no longer be used. If you just set a new password, log in with it; otherwise request a new link."
+        instance: "/api/v1/auth/password-reset/complete"
+        code: "PASSWORD_RESET_INVALID"
+
   responses:
+    RateLimited:
+      description: |
+        Too many password-reset requests for this email address, or
+        too many requests, link checks or completions from this
+        client, in the current window (FR-AUTH-019). The same body
+        is returned for every limit and for registered and
+        unregistered addresses; nothing was sent or changed.
+      headers:
+        Retry-After:
+          description: Seconds until the current window ends.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Too Many Requests"
+            status: 429
+            detail: "Too many password-reset attempts. Wait a little and try again."
+            instance: "/api/v1/auth/password-reset/request"
+            code: "RATE_LIMITED"
+
+    GarmentRejected:
+      description: |
+        The entry was not saved. VALIDATION_FAILED lists every
+        missing, unconfirmed, unsupported or inapplicable value so
+        the client can keep the draft and correct or clear them;
+        MALFORMED_REQUEST means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            inapplicableDetail:
+              summary: A Tops-only detail on Shoes
+              value:
+                title: "Bad Request"
+                status: 400
+                detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+                instance: "/api/v1/wardrobe/garments"
+                code: "VALIDATION_FAILED"
+                fieldErrors:
+                  - field: "fit"
+                    code: "NOT_APPLICABLE"
+
+    GarmentNotFound:
+      description: |
+        The authenticated account has no garment with this id. The
+        same answer is given for another account's garment.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This garment is not in your wardrobe. Return to your wardrobe to choose another one."
+            instance: "/api/v1/wardrobe/garments/9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+            code: "GARMENT_NOT_FOUND"
+
+    GarmentNoLongerCurrent:
+      description: |
+        The account's garment is no longer in the current wardrobe;
+        refresh the overview.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Gone"
+            status: 410
+            detail: "This garment is no longer in your current wardrobe. Refresh your wardrobe to see what you own now."
+            instance: "/api/v1/wardrobe/garments/9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+            code: "GARMENT_NO_LONGER_CURRENT"
+
+    PageRequestRejected:
+      description: |
+        The limit is not an integer from 1 to 100, or the cursor
+        is not a nextCursor this API issued (INVALID_FORMAT). No
+        garment was read; load the wardrobe again from the first
+        page.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "This page of the wardrobe cannot be loaded. Load the wardrobe again from the first page."
+            instance: "/api/v1/wardrobe/garments"
+            code: "VALIDATION_FAILED"
+            fieldErrors:
+              - field: "cursor"
+                code: "INVALID_FORMAT"
+
+    IdempotencyKeyReused:
+      description: |
+        The Idempotency-Key was already used for a garment with
+        different values. Nothing was saved; use a new key for a
+        new garment.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Unprocessable Content"
+            status: 422
+            detail: "This Idempotency-Key was already used for a different garment. Use a new key for a new garment; nothing was saved."
+            instance: "/api/v1/wardrobe/garments"
+            code: "IDEMPOTENCY_KEY_REUSED"
+
     BadRequest:
       description: |
         Request validation failed or the JSON request
-        could not be parsed.
+        could not be parsed. Every invalid field is listed;
+        nothing was stored or changed.
       content:
         application/problem+json:
           schema:
@@ -661,22 +2212,22 @@ components:
             missingRequiredField:
               summary: Missing required field
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request contains invalid fields."
+                detail: "Some submitted values are missing or invalid. Correct them and submit again."
+                instance: "/api/v1/auth/registrations"
                 code: "VALIDATION_FAILED"
                 fieldErrors:
-                  - field: "email"
+                  - field: "confirmPassword"
                     code: "REQUIRED"
 
             missingRefreshToken:
               summary: Missing refresh token
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request contains invalid fields."
+                detail: "Some submitted values are missing or invalid. Correct them and submit again."
+                instance: "/api/v1/auth/refresh"
                 code: "VALIDATION_FAILED"
                 fieldErrors:
                   - field: "refreshToken"
@@ -685,27 +2236,25 @@ components:
             malformedJson:
               summary: Malformed JSON
               value:
-                type: "about:blank"
                 title: "Bad Request"
                 status: 400
-                detail: "The request body could not be read."
+                detail: "The request body is missing or is not valid JSON."
+                instance: "/api/v1/auth/registrations"
                 code: "MALFORMED_REQUEST"
 
     EmailConflict:
       description: |
         The normalized email is already registered.
-
-        Confirm the exact application error code against
-        the US-AUTH-001 implementation guide.
+        Nothing was changed.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
             title: "Conflict"
             status: 409
-            detail: "An account with this email already exists."
+            detail: "An account already exists for this email. Log in, or use Forgot Password to recover access."
+            instance: "/api/v1/auth/registrations"
             code: "EMAIL_ALREADY_REGISTERED"
 
     InvalidCredentials:
@@ -719,39 +2268,31 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
             title: "Unauthorized"
             status: 401
-            detail: "Invalid email or password."
+            detail: "The email or password is incorrect. Check them and try again, or use Forgot Password."
+            instance: "/api/v1/auth/login"
             code: "INVALID_CREDENTIALS"
 
     Unauthorized:
       description: |
-        Authentication is required.
+        The bearer access token cannot authorize this
+        protected request: it is missing, malformed, signed
+        with another key, from another issuer, expired, or
+        its login session is revoked, expired or unknown.
 
-        For protected endpoints this can mean a missing,
-        invalid, expired, or revoked bearer access token.
-
-        For refresh it can mean an unknown or consumed
-        refresh token, or an unusable session.
-
-        A consumed refresh token may trigger revocation
-        of its session before this response is returned.
+        Returned by the security layer before the endpoint
+        runs, so nothing was changed.
       headers:
         WWW-Authenticate:
           description: |
-            Bearer authentication challenge on protected
-            endpoints.
-
-            May be "Bearer" when no token was provided,
-            or contain an invalid_token error when the
-            bearer token was rejected.
-
-            The public refresh endpoint does not require
-            this header.
+            Bearer authentication challenge (RFC 6750).
+            Starts with "Bearer"; contains
+            error="invalid_token" when a presented token was
+            rejected, and may carry further standard parameters.
           schema:
             type: string
-          example: "Bearer"
+          example: 'Bearer error="invalid_token"'
       content:
         application/problem+json:
           schema:
@@ -763,26 +2304,62 @@ components:
             detail: "Authentication is required. Log in again to continue."
             code: "AUTHENTICATION_REQUIRED"
 
-    Unavailable:
+    RenewalRejected:
       description: |
-        Authentication or session authority could not
-        be completed because a required dependency,
-        such as PostgreSQL, is unavailable.
+        The refresh token cannot renew access: it is unknown,
+        already consumed, or its session is revoked or
+        expired. The client must log in again.
 
-        The operation is not reported as successful.
-
-        For a protected request, access is denied without
-        misrepresenting the outage as invalid credentials.
-
-        No internal database or infrastructure details
-        are disclosed.
+        A consumed refresh token presented while its session
+        was still usable revokes that session before this
+        response is returned. No WWW-Authenticate challenge
+        is sent, because the credential is the request body.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           example:
-            type: "about:blank"
-            title: "Service Unavailable"
-            status: 503
-            detail: "Your access could not be verified right now. Nothing was changed. Try again shortly."
-            code: "TEMPORARILY_UNAVAILABLE"
+            title: "Unauthorized"
+            status: 401
+            detail: "Your session can no longer be renewed. Log in again to continue."
+            instance: "/api/v1/auth/refresh"
+            code: "AUTHENTICATION_REQUIRED"
+
+    Unavailable:
+      description: |
+        A required dependency, PostgreSQL, could not be
+        reached. The request is not reported as successful,
+        the presented credential was not found invalid, and
+        no private data or internal detail is disclosed.
+        No WWW-Authenticate challenge is sent.
+
+        accessNotVerified: on a protected endpoint, the
+        security layer could not check session authority and
+        denied access before the endpoint ran (fail closed).
+
+        outcomeNotConfirmed: the database failed while the
+        endpoint processed the request. The client should
+        check the result or retry; for logout it must treat
+        the session as not confirmed revoked.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            accessNotVerified:
+              summary: Session authority could not be checked
+              value:
+                type: "about:blank"
+                title: "Service Unavailable"
+                status: 503
+                detail: "Your access could not be verified right now. Nothing was changed. Try again shortly."
+                code: "TEMPORARILY_UNAVAILABLE"
+
+            outcomeNotConfirmed:
+              summary: Database failed during the operation
+              value:
+                title: "Service Unavailable"
+                status: 503
+                detail: "The request could not be completed and its outcome is not confirmed. Check the result or retry."
+                instance: "/api/v1/auth/login"
+                code: "TEMPORARILY_UNAVAILABLE"

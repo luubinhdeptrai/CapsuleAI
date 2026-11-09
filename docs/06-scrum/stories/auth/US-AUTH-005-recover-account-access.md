@@ -162,11 +162,20 @@ Forgot Password, account-safe initiation, purpose-minimal email delivery, valid 
 
 **Then** recovery actions and states remain operable and understandable through accessible names/states; messages keep requested, delivered, unconfirmed and completed recovery distinct without disclosing account existence.
 
+### AC-17 — Limit excessive recovery attempts
+
+**Given** many recovery requests arrive for the same email address, or many recovery requests, link checks or completions arrive from the same client, within a short period
+
+**When** a configured limit is exceeded
+
+**Then** CapsuleAI declines further attempts for the rest of that period with the same response whether or not the address is registered, sends no further instructions, changes no credential, and tells the user when to try again. Valid earlier instructions keep their own validity. *(Added 2026-11-07, Product Owner decision OPEN-S2-04; FR-AUTH-019.)*
+
 ## 6. Business Rules and Constraints
 
 - BRULE-AUTH-002–BRULE-AUTH-005 preserve email identity, exact password policy, 30-minute/single-use/replacement validity, initiation privacy and successful-reset effects.
 - Replacement occurs on successful new issuance; password change, interaction consumption and all-account Refresh Session revocation occur only on accepted reset completion.
-- A small approved password denylist may apply; no provider or new recovery method is selected. The initial interface and guidance are Vietnamese on Android 10+ and iOS 15+; this specification is English. Story actions and states retain meaningful accessible names, roles and labels beyond color, operability at text scaling up to 200%, and the SRS primary touch-target criteria (approximately 48 dp on Android / 44 pt on iOS). Private information is used only for necessary authorized product purposes; MVP personal data is excluded from AI training/improvement and unrestricted sharing.
+- No password denylist applies in Sprint 2: the Product Owner deferred it on 2026-11-07 (OPEN-S2-06), and the Sprint 1 password policy applies unchanged to registration and reset. No new recovery method is selected.
+- *2026-11-07 Product Owner decisions:* production instructions link to a configurable verified HTTPS address opened through Android App Links / iOS Universal Links, with the secret only in the URL fragment; a private custom scheme is for local development only (FR-AUTH-020). The approved Vietnamese email states that the link works once and expires after 30 minutes, and that a recipient who did not ask may ignore it. Consumed, replaced and expired interactions are deleted 30 days after they end (DATA-AUTH-006). A completed reset revokes the account's active sessions and leaves earlier revocations as recorded. Release requires a real email provider with sender-domain, SPF/DKIM/DMARC and TLS configuration and actual delivery evidence; Mailpit evidence is not production evidence. The initial interface and guidance are Vietnamese on Android 10+ and iOS 15+; this specification is English. Story actions and states retain meaningful accessible names, roles and labels beyond color, operability at text scaling up to 200%, and the SRS primary touch-target criteria (approximately 48 dp on Android / 44 pt on iOS). Private information is used only for necessary authorized product purposes; MVP personal data is excluded from AI training/improvement and unrestricted sharing.
 
 ## 7. Dependencies
 
@@ -196,6 +205,8 @@ Ordinary account creation/login/renewal/logout belong to PBI-004. This story add
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), selected-story evidence rather than foundation smoke tests alone. |
 
 ## 10. Open Refinement Notes
+
+**2026-11-07 Product Owner decisions.** OPEN-S2-02 (HTTPS App/Universal Links), OPEN-S2-03 (approved email wording), OPEN-S2-04 (rate limits, AC-17), OPEN-S2-05 (truthful 503, timing hardening and documented residual risk), OPEN-S2-06 (denylist deferred), OPEN-S2-07 (30-day retention), OPEN-S2-09 (provider-neutral SMTP; real delivery evidence before Done) and X-2 (active sessions only) are final. See the [decision implementation notes](../../sprints/sprint-02/decision-implementation-notes.md). Story status is unchanged.
 
 **2026-10-21 refinement draft.** Retain one end-to-end recovery story; an initiation-only slice would not restore access. AC-05 clarifies the existing protected-use consequence of revoked sessions, including unexpired tokens. Email delivery and opening/return feasibility remain unverified in this implementation (Q-03); Developers must also review lifecycle/concurrency testability and whether the story is selectable as written (Q-05), with shared mobile/privacy evidence in Q-02/Q-04. This requires enough feasibility evidence, not a finalized provider contract or reset design before Planning.
 

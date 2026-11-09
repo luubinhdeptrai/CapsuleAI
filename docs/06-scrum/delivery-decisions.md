@@ -1,5 +1,9 @@
 # CapsuleAI — Delivery Decisions
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
+**Final scope clarification — 2026-11-05:** All 13 applicable creation/validation/persistence properties are now in US-GAR-001/PBI-006, with complete detail retrieval in US-WAR-002/PBI-007 and identifiable collection summaries in US-WAR-001. PBI-008 retains later editing only. Every source-listed vocabulary is approved; engine eligibility/composition policy is deferred for all categories and never blocks saving/browsing/detail. Existing story identities, parent PBIs, global order and four-story Sprint 2 selection remain.
+
 ## 1. Document Control
 
 | Field | Value |

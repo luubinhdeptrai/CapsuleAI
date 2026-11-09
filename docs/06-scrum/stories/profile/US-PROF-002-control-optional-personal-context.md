@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-PROF-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-010](../../product-backlog.md#pbi-010--set-and-revise-preferences-through-progressive-onboarding) |
@@ -14,6 +14,7 @@
 | Theme | Personalization & Context |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Actionable Wardrobe Needs |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Updated category count only; inclusive optional-context behavior unchanged. |
 
 ## 1. Story
 
@@ -47,7 +48,7 @@ After accepted removal, the information is represented as absent and stops affec
 
 ### AC-04 — Keep influence soft
 
-With or without this context, all four supported garment categories remain eligible under the same garment/validity rules. Body/gender cannot override hard validity, owned wardrobe or explicit preferences.
+With or without this context, all eight supported garment categories remain eligible under the same garment/validity rules. Body/gender cannot override hard validity, owned wardrobe or explicit preferences.
 
 ### AC-05 — Handle canceled or uncertain revision
 

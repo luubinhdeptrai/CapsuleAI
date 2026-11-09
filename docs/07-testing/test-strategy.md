@@ -1,5 +1,7 @@
 # CapsuleAI — Test Strategy
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -16,6 +18,8 @@
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-20 | Established the verification approach from current requirements, stories, quality obligations and selected architecture. No implementation, infrastructure configuration or executed verification is included. |
+
+**2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
 ## 2. Purpose and Workflow Position
 
@@ -66,14 +70,14 @@ Run real domain policies without Spring, database, HTTP, external providers or D
 
 | Rule Area | Direct Verification Focus | Authority |
 | --- | --- | --- |
-| Garment truth and readiness | Confirmed category/color is Saveable without image/AI; required unknown information prevents only the evaluation needing it; layering/bulk are conditional; confidence never substitutes for confirmation. | BRULE-GAR-001–008 |
-| Outfit validity and identity | Exact supported composition, eligible owned constituents, layering, bulk equality, environmental bands/fallback, severe-pattern/noise count, and permutation-invariant identity. Strong personalization cannot admit an invalid outfit. | BRULE-OUT-001–009 |
+| Garment truth, properties and unevaluated eligibility | Confirmed Category/one Color saves without image/AI; every applicable optional property is supported/preserved, all source lists/applicability apply, Material is a distinct collection, and no ready/ineligible assertion is fabricated. | BRULE-GAR-001–010; source catalogue |
+| Future outfit validity and identity | Former fixed-role/removed-property predicates are superseded. Validate identity and owner boundaries; engine compatibility tests require a future approved policy and cannot reintroduce removed fields. | BRULE-OUT-001–009, superseded status respected |
 | Shuffle | Only the selected slot changes; other identities/context stay fixed; when no alternative exists, retain selection; no inferred Like/Dislike/Wear. | BRULE-OUT-010 |
 | Feedback and Wear | Effective outfit-targeted feedback, reported Wear strength, retry versus new intention, one outfit/original-day ranking increment, survivor-anchor recalculation and elapsed-time aging. History count remains distinct from ranking normalization. | BRULE-PERS-001–006, BRULE-WEAR-001–006, BRULE-HIST-001–003 |
-| Coverage and gaps | Positive-priority weighting, sufficient ready roles, zero versus insufficient information, mapped-occasion deduplication and capability gaps supported by evidence. | BRULE-COV-001–006, BRULE-GAP-001/002 |
+| Coverage and gaps | Positive-priority weighting, sufficient evidence required by a future evaluation policy, zero versus insufficient information, mapped-occasion deduplication and capability gaps supported by evidence. | BRULE-COV-001–006, BRULE-GAP-001/002 |
 | Wardrobe Multiplier | Complete same-basis unique-set difference; candidate-bearing previews; Exact/Evaluated Zero/Incomplete/Unavailable/Outdated; no ownership or Wear from hypothetical evaluation. | BRULE-MULT-001–009, BRULE-SHOP-002 |
 
-Reuse the controlled fixtures in [Business Rules Sections 14–15](../03-requirements/business-rules.md): weighted Coverage 50, complete 41→58 sets giving +17, equal bulk, permutation identity, and survivor/aging boundaries. Formula-only fixtures do not prove enumeration: add small explicit garment/outfit sets with independently known members. Vary one relevant predicate while keeping others valid; do not accidentally test rejection for the wrong reason. For ranking, use controlled alternatives and equal conditions to verify the required influence; avoid asserting a universal exact ranking order unsupported by the rules.
+Reuse current Business Rules Sections 14–15: minimum/full/partial properties, owner access, accepted-action retry and future arithmetic/identity/time fixtures. Superseded composition/removed-property examples are historical and have no active test obligation. Future Coverage/Multiplier arithmetic uses explicit independently supplied valid-set fixtures only after an engine policy is approved; arithmetic alone proves no compatibility.
 
 ## 7. Application / Use Case Testing
 
@@ -81,7 +85,7 @@ Instantiate the real application use case with real domain behavior and fake/moc
 
 Derive cases from the [Use Cases](../03-requirements/use-cases/), relevant [Activities](../03-requirements/activity-diagrams/) and selected Story AC. Check the returned outcome and state/effects: correct owner, explicit confirmation, accepted versus rejected/pending/uncertain work, relevant retry review, and independent optional effects. Check an interaction when it is part of the behavior, such as no AI/media request for imageless manual creation or no mutation after denied authorization. Avoid verifying every internal call.
 
-For example, US-GAR-001 needs imageless confirmation, retained Saveable-but-unready information, cancellation, known failure and uncertain-save handling. Fake dependencies can expose those branches. Real PostgreSQL acceptance/retry tests and integrated mobile confirmation are separate evidence. For Wear and intelligence, test orchestration through published owners, coherent survivor effects, shared evaluation policy, complete same-basis inputs and truthful changed-basis outcomes. Optional measurement failure must not reverse accepted business work (ADD Sections 9.2/9.7/9.9).
+For example, US-GAR-001 needs imageless confirmation, retained Saveable information whose recommendation eligibility is not evaluated, cancellation, known failure and uncertain-save handling. Fake dependencies can expose those branches. Real PostgreSQL acceptance/retry tests and integrated mobile confirmation are separate evidence. For Wear and intelligence, test orchestration through published owners, coherent survivor effects, shared evaluation policy, complete same-basis inputs and truthful changed-basis outcomes. Optional measurement failure must not reverse accepted business work (ADD Sections 9.2/9.7/9.9).
 
 ## 8. Integration and PostgreSQL Testing
 
@@ -176,7 +180,7 @@ Keep four evidence types separate; none substitutes for another.
 | --- | --- |
 | Backend software correctness | Backend/QA verify contract parsing, bounded complete-result handling, unsupported values, missing evidence, failure/manual continuity, confidence/provenance distinction and no authoritative save before confirmation. Controlled outputs cover default 0.60/0.85 confidence boundaries and guards against unjustified High Confidence. |
 | Real core/Python integration | Backend/AI verify the agreed versioned contract and actual preview-plus-proposal exchange, including safe late output after user confirmation/correction. Python has no independent confirmed-state/database authority. |
-| Recognition quality | AI/QA execute the locked SRS Section 8.1.1 benchmark and retain dataset/label/model/version evidence. At least 200 qualified images, at least 50 in each supported category; category accuracy at least 90% overall and 85% per category; dominant-color accuracy at least 90% overall, reported separately. Two independent annotators should label, with adjudication; no training/tuning on the corpus after lock. These floors are not extended to every rich attribute. |
+| Recognition quality | AI/QA execute the locked SRS Section 8.1.1 benchmark and retain dataset/label/model/version evidence. At least 400 qualified images, at least 50 in each of the eight supported categories; category accuracy at least 90% overall and 85% per category; dominant-color accuracy at least 90% overall, reported separately. Two independent annotators should label, with adjudication; no training/tuning on the corpus after lock. These floors are not extended to every rich attribute. |
 | Preview usability and processing time | Criterion-based preview review follows SRS Section 3.4.1 (identifiable garment, preserved major regions, non-obstructive background, sufficient review information), without an invented preview percentage. Actual full-operation timing follows Section 19; Java tests returning canned predictions cannot prove model quality, preview usability or real processing latency. |
 
 All proposals, including High Confidence, require user confirmation; unknown attributes remain unknown and later AI output cannot overwrite accepted values. Synthetic or appropriately approved nonpersonal images support software tests. The locked evaluation corpus has its separate controlled purpose and isolation; personal wardrobe images, profiles, feedback, corrections and Wear Events must not enter MVP AI training/improvement. Sources: AI-REQ-001–014, NFR-PRIV-002, QA-TEST-01 and ADD Section 9.5.
@@ -188,7 +192,7 @@ Keep a small stable set of integrated journeys as delivered capabilities become 
 | Candidate Journey, Not Sprint Selection | Critical Outcome | Existing Interaction Sources |
 | --- | --- | --- |
 | Private access and returning use | Register/login, renew, logout, account switch and recover without exposing the wrong account or losing accepted information. Controlled email supports recovery; security permutations remain in lower layers. | UC-001–004; AD-004; US-AUTH-001–005 |
-| Trustworthy wardrobe creation/inspection | Confirm an imageless manual entry, browse and inspect its accepted profile/readiness. Later assisted entry adds correction/manual fallback and late-output protection. | UC-007/008; AD-007; US-GAR-001, US-WAR-001/002 |
+| Trustworthy wardrobe creation/inspection | Confirm an imageless manual entry, browse and inspect its accepted accepted profile / unevaluated eligibility. Later assisted entry adds correction/manual fallback and late-output protection. | UC-007/008; AD-007; US-GAR-001, US-WAR-001/002 |
 | Use owned clothing and report wear | Receive valid choices, Shuffle one slot, report Wear, then correct/remove one report with coherent history and personalization meaning. | UC-011/012/014–017; AD-011/012/014/016/017 |
 | Understand and evaluate improvement | View contextual Coverage/Gaps, evaluate a candidate, inspect hypothetical new outfits and optionally return from external navigation without creating ownership/Wear. Include a truthful non-exact outcome. | UC-019–023; AD-019–022 |
 
@@ -196,12 +200,14 @@ These are candidate coverage groups, not a requirement to combine everything int
 
 ## 14. Test Data, Time and Isolation
 
+Plan catalogue-driven coverage for all 13 applicable properties and every approved value: 84 category-valid Subtypes, 34 single dominant Colors, 28 Materials with zero/one/multiple/duplicate selections, 24 single optional Patterns, 17 named Styles with Etc rejected, and every Tops/Pants-specific detail. Verify supplied invalid/inapplicable input, optional omissions, exact accepted-value persistence/reread, Brand text, decimal Price/currency, missing rather than zero, no image/default inference, ownership and safe retries. Detail returns all applicable accepted properties; summaries remain identifiable without every detail field. Eligibility is not evaluated, with no readiness gate or ready/unsuitable/ineligible inference. These are planned verification obligations, not executed product tests.
+
 Use small explicit fixtures with stable identities and readable builders/factories where repetition warrants them. Each test creates its own state and obtains its expected result from requirements. Factories should expose relevant values rather than hide scenario-critical defaults. Use synthetic accounts, local delivery destinations, disposable secrets and approved nonpersonal media; no production database exports or real-user wardrobes in ordinary test runs.
 
 | Fixture Concern | Required Control |
 | --- | --- |
 | Ownership/security | At least two synthetic accounts and separate sessions allow owner/other-user/unauthenticated and per-session/account-wide effects to be distinguished. Assertions include forbidden disclosure/mutation. |
-| Garment/evaluation states | Saveable-but-unready, removed/historical, current owned and hypothetical candidates; valid/invalid layered outfits; no, one, two and sufficient distinct options; zero versus missing/incomplete/unavailable/outdated evidence. |
+| Garment/evaluation states | Saveable with recommendation eligibility not evaluated, removed/historical, current owned and hypothetical candidates; valid/invalid layered outfits; no, one, two and sufficient distinct options; zero versus missing/incomplete/unavailable/outdated evidence. |
 | Clock and expiry | Supply a controllable clock at policy boundaries. Fix evaluation instants and test just before/at/after access, session, reset, weather, commercial and retention boundaries; never wait days in real time. |
 | Event time | Preserve original event-local date/timezone for history/grouping; calculate age/recency from absolute instants and completed 24-hour periods. Include travel, same-original-day correction, future/cross-day rejection, latest-survivor changes and 30/31, 60/61, 90/91-day decay boundaries. Do not invent an overlooked-garment age anchor. |
 | Repetition and randomness | Distinguish repeated delivery of one logical intention from a new explicit report on the same outfit/day. Use fixed/random seeds with failure reporting when sampling is useful; permutation or duplicate inputs must not inflate unique outfits. |

@@ -1,4 +1,6 @@
 @startuml
+' Final property-model decision: no current readiness algorithm or category-role mapping.
+' Future evaluation branches require approved engine policy; no removed fields are required.
 ' Source Use Case: UC-022 — Evaluate Candidate Garment
 ' Primary Specification: ../use-cases/UC-022-evaluate-candidate-garment.md
 ' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
@@ -41,9 +43,9 @@ else (Unavailable)
     stop
 endif
 |CapsuleAI|
-if (Required credible inputs/readiness sufficient?) then (Yes)
+if (Approved policy and credible evaluation evidence available?) then (Yes)
 else (Insufficient)
-    :Show Incomplete; explain missing inputs/readiness;
+    :Show Incomplete; explain missing policy or evaluation evidence;
     :Withhold current exact count and new-outfit previews;
     |User|
     :Revise inputs through existing goals; request reevaluation;

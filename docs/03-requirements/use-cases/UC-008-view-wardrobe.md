@@ -1,5 +1,7 @@
 # UC-008 — View Wardrobe
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -10,14 +12,15 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.2 |
+| Version | 0.4 |
 | Status | Baseline Draft |
+| Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 
 ## 2. Goal
 
-Browse and find current owned garments, inspect their confirmed details/readiness and understand available reported-use information without changing wardrobe ownership.
+Browse and find current owned garments, inspect their confirmed details and unevaluated recommendation eligibility and understand available reported-use information without changing wardrobe ownership.
 
 ## 3. Stakeholders and Interests
 
@@ -40,7 +43,7 @@ The User opens the wardrobe or requests garment search/detail.
 3. The User browses or enters descriptor search and category/color filter conditions.
 4. CapsuleAI shows active conditions and the matching current garments.
 5. The User selects a garment to inspect.
-6. CapsuleAI presents its confirmed profile, available image/provenance/uncertainty, applicable readiness guidance and supported recorded-use information.
+6. CapsuleAI presents all available applicable accepted properties from the source catalogue, including multiple distinct Materials, one dominant Color, category-specific details, Brand and original purchase Price with currency; available image/provenance remain separate. Missing optional values are not fabricated and eligibility is not evaluated. Collection summaries need only sufficient identifying information, not the complete detail payload.
 7. The User returns to browsing or chooses a separate supported maintenance/insight action.
 
 ## 7. Alternative Flows
@@ -66,12 +69,19 @@ At Main Step 2:
 1. CapsuleAI explains the confirmed empty state and offers Add Garment.
 2. The User may start UC-007 or leave the wardrobe without a fixed garment-quota requirement.
 
-### A4 — Imageless, unready or no-recorded-use entry
+### A4 — Imageless, minimum-only or no-recorded-use entry
 
 At Main Step 6:
 
-1. CapsuleAI keeps the entry identifiable without an image, explains missing applicable readiness fields and labels missing reports as no recorded use.
+1. CapsuleAI keeps the entry identifiable without an image, explains missing eligibility under a future approved policy fields and labels missing reports as no recorded use.
 2. The User can inspect/enrich the garment without an inference that it has never been physically worn.
+
+### A5 — Large wardrobe
+
+At Main Step 2 (PO decision 2026-11-07, FR-WAR-001):
+
+1. CapsuleAI presents the first page of current garments, newest first, and indicates whether more are available.
+2. The User asks for more; CapsuleAI continues after the last presented garment without repeating or omitting garments that remain current. Garments added after browsing began appear when the User starts again from the first page.
 
 ## 8. Exception / Failure Flows
 
@@ -99,7 +109,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - Displayed inventory/details match the available current confirmed wardrobe and visible search/filter conditions.
-- Readiness and recorded-use limitations are understandable, and no item is added/edited/removed by viewing.
+- Unevaluated eligibility and recorded-use limitations are understandable, and no item is added/edited/removed by viewing.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -116,7 +126,8 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-001` | Confirmed garment values govern displayed current information. |
-| `BRULE-GAR-003` | Show applicable readiness without hiding Saveable but unready entries. |
+| `BRULE-GAR-010` | Optional Brand and purchase Price; supplied values, missing information, currency and confirmed authority. |
+| `BRULE-GAR-003` | Show that recommendation eligibility is not evaluated, without hiding any saveable entry or labelling it ready or unready. |
 | `BRULE-HIST-001` | Usage indicators are reported evidence, not verified physical behavior. |
 | `BRULE-HIST-002` | Historical removed snapshots do not enter current inventory. |
 
@@ -126,7 +137,7 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-03` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-WAR-001`, `FEAT-WAR-003`, `FEAT-GAR-001`, `FEAT-ANL-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-WAR-001`, `FR-WAR-002`, `FR-WAR-007`, `FR-WAR-008`, `FR-GAR-004`, `FR-ANL-004`, `FR-AUTH-008` |
+| [Software Requirements — Functional](../SRS.md) | `FR-WAR-001`, `FR-WAR-002`, `FR-WAR-007`, `FR-WAR-008`, `FR-GAR-004`, `FR-ANL-004`, `FR-AUTH-008`; `FR-GAR-001`, `FR-GAR-002`, `FR-GAR-012`, `FR-GAR-013` |
 | [Software Requirements — Data](../SRS.md) | `DATA-GAR-001`, `DATA-GAR-004`, `DATA-GAR-005`, `DATA-HIST-002`, `DATA-HIST-001`, `DATA-RET-002` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-001`, `UI-003`, `UI-004`, `UI-008`, `COM-001`, `COM-002` |
@@ -137,10 +148,13 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
-- Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
-- Search/filtering is embedded in View Wardrobe rather than a new use case. Supported descriptor search and category/color filters have visible conditions and reset.
-- No image, no recorded use, missing readiness, loading and unavailable data remain distinct meanings.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
+The [property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns every vocabulary label; all applicable properties belong to Sprint 2 manual creation and detail. Metadata/provenance/media are separate. Price is the original amount paid with decimal amount and explicit currency; Brand is text. No future AI output silently overwrites accepted values.
+
+- No image, no recorded use, unevaluated eligibility, loading and unavailable data remain distinct meanings.
 - Viewing is confined to the current authorized wardrobe. Historical references retain only necessary meaning and do not expose indefinitely retained original removed-garment images.
 
 ## 14. Related Use Cases
@@ -155,10 +169,12 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction.
+PRD OPQ-012 defers readiness/composition to engine development; OPQ-013 (Brand/Price validation) and OPQ-014 are resolved, and OPQ-016–018 (multiple Styles, Tanks & Camis, paged overview) were decided on 2026-11-07. Earlier issue review below predates this revision.
+
+The earlier review recorded no Use Case-specific blocker. The current revision must resolve applicable optional-field validation before dependent implementation; unresolved recommendation policy does not prevent minimum saving or inspection.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-008-view-wardrobe.puml)
+Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this textual specification
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram retains the actor/goal boundary; the textual specification and linked existing Activity Diagram, where present, define workflow behavior. This revision creates no replacement focused diagram.

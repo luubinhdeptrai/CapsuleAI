@@ -1,12 +1,14 @@
 # US-GAR-002 — Correct and enrich authoritative garment information
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-002 |
-| Version | 0.1 |
+| Version | 0.3 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-008](../../product-backlog.md#pbi-008--correct-and-enrich-garment-information-with-readiness-guidance) |
@@ -14,6 +16,7 @@
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Trustworthy Wardrobe Understanding |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Product revision | 2026-11-05: Synchronized approved garment taxonomy and optional-property authority; no new Sprint selection or AI implementation. |
 
 ## 1. Story
 
@@ -25,7 +28,11 @@ Keep garment knowledge trustworthy and help users supply the information needed 
 
 ## 3. Scope
 
-Supported descriptor review during entry and later edit; explicit acceptance, rule-specific readiness guidance, preserved user authority and affected-advice currentness.
+Use all applicable properties and complete approved vocabularies from the [source authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
+All applicable property input is already included in Sprint 2 manual creation; this story retains only its separate future editing, photo or AI-assisted outcome. Future suggestions require explicit acceptance and cannot overwrite confirmed values; Price never comes from appearance. Metadata/media are separate, not extra properties.
 
 ## 4. Preconditions
 
@@ -35,23 +42,25 @@ Supported descriptor review during entry and later edit; explicit acceptance, ru
 
 ### AC-01 — Review bounded information
 
-Present accepted/proposed/unknown information distinctly and allow the supported subtype, layering, bulk, fit, silhouette, color/palette, pattern/noise, climate, style/occasion and material information defined in SRS Section 4.10 to be reviewed and corrected.
+Present accepted/proposed/missing information distinctly and support all applicable approved properties for correction or clearing, using the complete source lists: Category, Subtype, one Color, distinct Materials, Pattern, Style, category-specific details, Brand and purchase Price.
+
+The optional-property and classification rules in Section 3 apply to this accepted outcome, including preservation of valid supplied values and correction/clearing of invalid category/subtype or incomplete Price pairs.
 
 ### AC-02 — Apply supported consistency
 
-Reject unsupported values or inconsistent revisions without replacing accepted data. Bulk and Visual Noise use 1–5 bounds; SOLID implies NONE density. OTHER/UNKNOWN is accepted only where the source vocabulary defines it.
+Reject unsupported or inapplicable values without changing accepted information. Use the complete source lists, require one approved Color, preserve distinct Materials, and never silently substitute a value or accept Etc as Style.
 
-### AC-03 — Keep saving and readiness separate
+### AC-03 — Preserve saving validity and unevaluated eligibility
 
-Confirmed Primary Category and Dominant Color remain the saveable minimum. Readiness needs common pattern/climate information and applicable TOP/OUTERWEAR layering, with bulk only for the layered checks requiring it. Missing required information blocks only the relevant evaluation; optional descriptors are not universal save/readiness gates.
+Confirmed Category and one Color remain the saving minimum. Other applicable values are optional. An accepted edit can revise or clear optional values and revalidate category-specific applicability without executing a readiness gate, claiming suitability or reintroducing removed properties.
 
 ### AC-04 — Preserve uncertainty
 
-Unknown descriptors stay unknown unless justified evidence supports derivation. Material can be corrected or left unknown without a verified composition/durability claim; derivation cannot silently replace user-confirmed values.
+Unknown properties stay absent unless the user explicitly supplies/accepts supported information; no automatic cross-property derivation is approved. Material can be corrected or left unknown without a verified composition/durability claim; derivation cannot silently replace user-confirmed values.
 
 ### AC-05 — Confirm or cancel
 
-Explicit confirmation establishes the revised authoritative profile and readiness. Cancellation or a known rejected/failed edit retains the prior accepted profile; later AI output cannot silently overwrite confirmed corrections.
+Explicit confirmation establishes the revised authoritative profile; recommendation eligibility remains not evaluated. Cancellation or a known rejected/failed edit retains the prior accepted profile; later AI output cannot silently overwrite confirmed corrections.
 
 ### AC-06 — Refresh dependent meaning
 
@@ -92,6 +101,8 @@ Minimum-only creation is [US-GAR-001](../garment/US-GAR-001-add-garment-manually
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
 
 ## 10. Open Refinement Notes
+
+PRD OPQ-015 resolves property/vocabulary scope and eligibility deferral. OPQ-013 retains genuine validation details; optional absence never authorizes fabricated values or eligibility claims.
 
 No new behavior decision is required by the current sources. Supported controls, contracts and concurrent-edit mechanics remain selected-story JIT detail; Developers still assess delivery feasibility and size.
 

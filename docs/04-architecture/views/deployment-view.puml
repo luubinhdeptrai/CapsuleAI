@@ -1,4 +1,6 @@
 @startuml
+' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
+' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Deployment View
 ' Version: 0.1; Status: Baseline Draft; Date: 2026-10-11
 ' Primary Sources: ADD v0.1.2, Selected Architecture Decisions v0.1.3 (ADA-001-018 Selected),
@@ -143,5 +145,9 @@ legend bottom
   AI image transfer/access and media delivery mechanics remain open; Core governs private access.
   Shared-resource failure/contention risks need evidence; no timing, capacity or recovery pass claimed.
   Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Final property model: exactly 13 source-approved properties; all applicable
+  creation/persistence/detail fields belong to selected Sprint 2 work.
+  Future composition/compatibility/eligibility policy is deferred.
+  No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
 @enduml

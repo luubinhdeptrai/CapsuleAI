@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, sprint_02]
 
 permissions:
   contents: read
@@ -41,8 +41,15 @@ jobs:
         run: |
           $required = @{
             'surefire-reports/TEST-com.capsuleai.foundation.HarnessSmokeTest.xml' = 2
-            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.architecture.ArchitectureDependencyTest.xml' = 14
+            'surefire-reports/TEST-com.capsuleai.architecture.PersistenceOwnershipSqlTest.xml' = 14
+            'failsafe-reports/TEST-com.capsuleai.architecture.DatabaseSchemaOwnershipIT.xml' = 5
             'failsafe-reports/TEST-com.capsuleai.foundation.DatabaseSmokeIT.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.AccountSchemaIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.SessionSchemaIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.SessionRevocationSchemaIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.RefreshTokenRotationSchemaIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.IdentitySchemaRelocationIT.xml' = 5
             'surefire-reports/TEST-com.capsuleai.identity.application.RegisterAccountServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.RegistrationApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRegistrationIT.xml' = 1
@@ -54,7 +61,54 @@ jobs:
             'surefire-reports/TEST-com.capsuleai.identity.application.RefreshSessionServiceTest.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.SessionRefreshApiIT.xml' = 1
             'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentRefreshIT.xml' = 1
-            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAwareJwtAuthenticationConverterTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityApiExceptionHandlerTest.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.SessionAuthorityOutageIT.xml' = 11
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.IdentityOpenApiContractIT.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.identity.configuration.CorsPropertiesTest.xml' = 23
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.security.CorsSecurityIT.xml' = 26
+            'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.identity.domain.PasswordResetTokenHashTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.application.RequestPasswordResetServiceTest.xml' = 13
+            'surefire-reports/TEST-com.capsuleai.identity.application.CheckPasswordResetServiceTest.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.identity.application.CompletePasswordResetServiceTest.xml' = 14
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.email.AsyncPasswordResetInstructionSenderTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderTest.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.identity.configuration.PasswordResetPropertiesTest.xml' = 10
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetApiIT.xml' = 15
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetSchemaIT.xml' = 7
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.email.SmtpPasswordResetInstructionSenderIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.identity.application.ConcurrentPasswordResetIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetFailureIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetLoginRaceIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.identity.application.PasswordResetAttemptGuardTest.xml' = 6
+            'surefire-reports/TEST-com.capsuleai.identity.application.PurgeEndedPasswordResetsServiceTest.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.out.timing.MinimumResponseTimePacingTest.xml' = 3
+            'surefire-reports/TEST-com.capsuleai.identity.adapter.in.scheduling.PasswordResetCleanupJobTest.xml' = 1
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.JdbcPasswordResetAttemptLimiterIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.out.persistence.PasswordResetCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.identity.adapter.in.web.PasswordResetRateLimitIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.identity.application.PasswordResetTimingIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.ApprovedGarmentVocabularyTest.xml' = 14
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentProfileTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.BrandTest.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.PurchasePriceTest.xml' = 29
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentEntryValidatorTest.xml' = 117
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.AddGarmentServiceTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentCreationFingerprintTest.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentSchemaIT.xml' = 12
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepositoryIT.xml' = 9
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.AddGarmentApiIT.xml' = 22
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeFailureIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentCreationIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.BrowseWardrobeServiceTest.xml' = 6
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeCursorTest.xml' = 15
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobePageRequestTest.xml' = 20
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.BrowseWardrobeApiIT.xml' = 15
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.CurrentWardrobePageIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.InspectGarmentServiceTest.xml' = 7
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentDetailApiIT.xml' = 17
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.WardrobeAccessAfterPasswordResetIT.xml' = 1
           }
 
           foreach ($entry in $required.GetEnumerator()) {

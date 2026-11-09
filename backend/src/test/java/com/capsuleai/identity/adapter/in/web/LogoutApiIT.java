@@ -28,7 +28,7 @@ class LogoutApiIT extends IdentityIntegrationTestSupport {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
         Map<String, Object> row = jdbc.sql("""
-                        SELECT revoked_at, revocation_reason FROM identity_session WHERE id = :id
+                        SELECT revoked_at, revocation_reason FROM identity.identity_session WHERE id = :id
                         """)
                 .param("id", sessionId)
                 .query()
@@ -49,7 +49,7 @@ class LogoutApiIT extends IdentityIntegrationTestSupport {
         getProtectedProbe(deviceB.accessToken())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(deviceB.accountId().toString()));
-        assertThat(jdbc.sql("SELECT count(*) FROM identity_session WHERE revoked_at IS NULL")
+        assertThat(jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revoked_at IS NULL")
                 .query(Long.class).single()).isOne();
     }
 
@@ -78,11 +78,11 @@ class LogoutApiIT extends IdentityIntegrationTestSupport {
     @Test
     void logoutKeepsTheAccountAndAllowsLoggingInAgain() throws Exception {
         IssuedTokens first = registerAndLogIn("keep@example.com");
-        Map<String, Object> accountBefore = jdbc.sql("SELECT * FROM identity_account").query().singleRow();
+        Map<String, Object> accountBefore = jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow();
 
         logOut(first.accessToken()).andExpect(status().isNoContent());
 
-        assertThat(jdbc.sql("SELECT * FROM identity_account").query().singleRow()).isEqualTo(accountBefore);
+        assertThat(jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow()).isEqualTo(accountBefore);
         IssuedTokens again = logIn("keep@example.com", PASSWORD);
         assertThat(again.accountId()).isEqualTo(first.accountId());
         getProtectedProbe(again.accessToken()).andExpect(status().isOk());
@@ -117,7 +117,7 @@ class LogoutApiIT extends IdentityIntegrationTestSupport {
     }
 
     private long countRevokedSessions() {
-        return jdbc.sql("SELECT count(*) FROM identity_session WHERE revoked_at IS NOT NULL")
+        return jdbc.sql("SELECT count(*) FROM identity.identity_session WHERE revoked_at IS NOT NULL")
                 .query(Long.class)
                 .single();
     }

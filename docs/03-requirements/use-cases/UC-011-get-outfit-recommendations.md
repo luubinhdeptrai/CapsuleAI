@@ -1,5 +1,7 @@
 # UC-011 — Get Outfit Recommendations
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Use Case Summary
 
 | Field | Value |
@@ -10,8 +12,9 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
+| Product revision | 2026-11-05: Clarified category versus retained outfit roles following approved taxonomy expansion; existing validity and calculation rules preserved. |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 
@@ -79,7 +82,7 @@ At Main Step 6:
 
 At Main Step 3:
 
-1. CapsuleAI explains the missing applicable ready roles/attributes or assessment context rather than asserting a completed count.
+1. CapsuleAI explains the missing applicable evidence required by a future evaluation policy/attributes or assessment context rather than asserting a completed count.
 2. The User can enrich confirmed garments, add items or adjust available context; accepted wardrobe information remains intact and no fixed onboarding quota is imposed.
 
 ### E2 — Weather unavailable or stale
@@ -130,13 +133,13 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-GAR-003` | Only applicable ready confirmed inputs enter current recommendations. |
-| `BRULE-OUT-001` | An outfit has exactly one TOP, BOTTOM and FOOTWEAR, with zero or one OUTERWEAR. |
+| `BRULE-OUT-001` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-002` | Exclude removed, unowned and hypothetical items from daily advice. |
-| `BRULE-OUT-003` | Apply compatible known layering roles when relevant. |
-| `BRULE-OUT-004` | Enforce the applicable outer/inner bulk relationship. |
-| `BRULE-OUT-005` | Use the established environmental suitability policy when context is available. |
+| `BRULE-OUT-003` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
+| `BRULE-OUT-004` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
+| `BRULE-OUT-005` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-006` | Missing weather permits disclosed reduced-context advice where remaining validity is defensible. |
-| `BRULE-OUT-007` | Apply the severe-pattern/visual-noise limit rather than a blanket patterned-item ban. |
+| `BRULE-OUT-007` | Superseded policy ID retained for traceability; no active composition or removed-property rule. |
 | `BRULE-OUT-008` | Hard validity precedes all soft preferences. |
 | `BRULE-OUT-009` | Garment-identity sets define distinct choices; show actual available counts. |
 | `BRULE-PROF-001` | Optional body/gender influence is soft and does not prohibit categories. |
@@ -161,6 +164,8 @@ The following references constrain this interaction; detailed policy remains in 
 
 ## 13. Special Requirements / Constraints
 
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - The first complete recommendation result targets p95 <3 seconds from accepted request with required context available and exactly 100 confirmed garments (NFR-PERF-002). SRS Sections 2.3/12.3 define reference devices/network, 5 warm-ups and ≥100 measured runs with legitimate slow runs retained. Eligible inputs cannot be omitted; 20-user functional integrity is separate from this p95 workload.
 - An exact garment-identity set is one outfit regardless of ordering. Soft personalization need not visibly change the result when no useful valid alternative exists.
@@ -183,13 +188,13 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction.
+The retained separated-garment template remains established. PRD OPQ-012 must be resolved before treating Dresses/Jumpsuits, Bags or Headwear as supported outfit compositions; this does not restrict their wardrobe creation or inspection.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-011-get-outfit-recommendations.puml)
+Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this textual specification
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram retains the actor/goal boundary; the textual specification and linked existing Activity Diagram, where present, define workflow behavior. This revision creates no replacement focused diagram.
 
 ## 17. Activity Diagram
 

@@ -1,19 +1,22 @@
 # CapsuleAI — Software Requirements Specification
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Introduction
 
 | Field | Value |
 |---|---|
 | Document | CapsuleAI — Software Requirements Specification |
-| Version / Status | 0.3 / Baseline Draft |
-| Last Updated | 2026-10-06 |
+| Version / Status | 0.5 / Baseline Draft |
+| Last Updated | 2026-11-05 |
 | Primary Owner | Requirements Engineer / Business Analyst / System Analyst |
 | Decision Authority | Product Owner, with Engineering and QA review |
-| Business Baseline | [BRD v0.3](../01-business/BRD.md) |
-| Product Baseline | [PRD v0.2](../02-product/PRD.md) |
+| Business Baseline | [BRD v0.5](../01-business/BRD.md) |
+| Product Baseline | [PRD v0.4](../02-product/PRD.md) |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Authoritative Location | `docs/03-requirements/SRS.md` |
 | Development Model | Scrum / Agile |
+| Previous product revision (superseded where conflicting) | 2026-11-05: Approved eight-category taxonomy and optional Brand/purchase Price; FR-GAR-012/013 added, all existing IDs retained. Open category-readiness and validation policies: PRD Section 34.1. |
 
 | Version | Date | Revision |
 |---|---|---|
@@ -21,6 +24,9 @@
 | 0.2 | 2026-10-05 | Defined acceptance targets, access/recovery policy, confidence/readiness vocabularies, outfit validity, personalization, Wear Event time/identity, Coverage formulas and Multiplier exactness/freshness. Preserved upstream scope and stable existing requirement IDs. |
 | 0.2.1 | 2026-10-05 | Standardized normative terminology and made FR-AUTH-018 mandatory while preserving other requirement meanings and scope. |
 | 0.3 | 2026-10-06 | Defined privacy/retention, external-information freshness and credibility, reference operating/test conditions, and usability/accessibility acceptance; normalized current requirements while preserving established scope and stable IDs. |
+| 0.4 | 2026-11-05 | Approved eight-category taxonomy, optional Brand/purchase Price and open readiness/validation follow-ups; added FR-GAR-012/013 with traceability, preserving all prior requirement IDs. |
+| 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
+| 0.6 | 2026-11-07 | Product Owner decisions: multiple Styles (FR-GAR-009, DATA-GAR-002), Brand/Price validation (FR-GAR-012/013, Section 3.5.2), paged overview (FR-WAR-001), recovery abuse protection (FR-AUTH-019), recovery link (FR-AUTH-020), reset-record retention (DATA-AUTH-006); obsolete SOLID-density verification removed. Existing IDs retained. |
 
 ### 1.1 Purpose
 
@@ -32,7 +38,7 @@ The BRD and PRD provide the business and product sources of truth. Sections 3–
 
 The initial system supports a Vietnamese mobile experience on Android and iOS: private account access; progressive context setup; assisted/manual wardrobe creation; confirmed garment intelligence; wardrobe management; validity-first personalized outfits; feedback and multiple user-reported Wear Events; utilization and contextual coverage; capability-based gaps; and candidate utility with hypothetical previews and optional external shopping.
 
-The initial categories are TOP, BOTTOM, OUTERWEAR, and FOOTWEAR. Consumer web/desktop, extra garment categories, social/guest access, native commerce, automatic wear/purchase verification, advanced learned ranking as a prerequisite, social/community, AR/3D/video ingestion, and guaranteed offline operation are excluded. Additional interface languages are future-only.
+The supported primary categories are TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. Consumer web/desktop, extra garment categories, social/guest access, native commerce, automatic wear/purchase verification, advanced learned ranking as a prerequisite, social/community, AR/3D/video ingestion, and guaranteed offline operation are excluded. Additional interface languages are future-only.
 
 ### 1.3 Document Conventions
 
@@ -74,7 +80,7 @@ The chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. It is a rel
 | Reference | Use |
 |---|---|
 | [BRD](../01-business/BRD.md), especially Sections 13–24 and 27 | Business meaning, scope, validation directions, trust, and resolved business questions. |
-| [PRD](../02-product/PRD.md), especially Sections 8–26 and 33–37 | Journeys, 22 features, acceptance criteria, states, and ten resolved product decisions. |
+| [PRD](../02-product/PRD.md), especially Sections 8–26 and 33–37 | Journeys, 22 features, acceptance criteria, states, the original ten resolved product decisions, and the later approved taxonomy/property revision with open follow-ups in Section 34.1. |
 | [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 8–11 and 39–41 | SRS ownership, next artifacts, traceability, and change propagation. |
 | Food Delivery SRS — structural reference | Introduction, feature sequences, logical information, interfaces, quality, localization, and glossary discipline only. The reference source is not included in this checkout; no domain, technology, legal claim, or numerical target is copied. |
 | [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), [Project Proposal](../../Initial%20files/DA%202%20Proposal.md), and [Official Project Outline](../../Initial%20files/%C4%90%E1%BB%80%20C%C6%AF%C6%A0NG%20%C4%90%E1%BB%92%20%C3%81N%202_%20H%E1%BB%86%20TH%E1%BB%90NG%20QU%E1%BA%A2N%20L%C3%9D%20V%C3%80%20G%E1%BB%A2I%20%C3%9D%20PH%E1%BB%90I%20%C4%90%E1%BB%92%20TH%C3%94NG%20MINH.md) | Historical context only where consistent with current baselines. |
@@ -108,10 +114,10 @@ Performance reference conditions are modern mid-range Android hardware with at l
 | Constraint | Required Boundary / Source |
 |---|---|
 | Platform and locale | Android/iOS; Vietnamese MVP UI and English documentation; localization-ready domain meaning (BR-023; OPQ-002). |
-| Taxonomy | Four primary categories and unchanged bounded PRD subtypes/styles/occasions; additional descriptor values are specified in Section 4.10, with no new primary category. |
-| Authority and completeness | Confirmed category/dominant color permit saving; manual creation needs no image. Bounded descriptors and applicable common/layering/bulk readiness are defined in Sections 3.5.1/4.10 (OPQ-004/OPQ-005). |
+| Taxonomy | Exactly 13 source-owned properties, eight categories and complete approved vocabularies; category applicability and optionality are mandatory. |
+| Authority and completeness | Confirmed supported Category and Color permit image-independent saving; all other applicable properties are optional; eligibility is not evaluated (Sections 3.5.1/4.10). |
 | Authentication | 15-minute JWT Access Token; maximum 30-day Refresh Session; rotation/reuse detection, session-scoped logout and account-wide reset revocation; 12–128-character untransformed passwords; normalized unique email; single-use 30-minute recovery (OPQ-008). |
-| Recommendation and learning | Slot/layer/bulk/environment/severe-pattern checks precede soft ranking. Base evidence +1/−2/+2 uses the 90-day decay window and same-outfit/day Wear normalization; recency penalties stay soft (BR-009–BR-012). |
+| Recommendation and learning | Engine composition/compatibility/eligibility policy is deferred; validity-before-ranking remains an intent. Existing +1/−2/+2 evidence, aging and recency are separate from garment-property policy. |
 | Wear and history | Multiple intentional events per local day; logical-action duplicate protection; absolute timestamp and original local/timezone context; no-future/same-original-day correction; individual removal and removed-garment snapshots (OPQ-006/OPQ-007). |
 | Coverage and utility | One Personalized Everyday Capsule uses the specified priority weights, need mapping, formula, and sufficient-data gate; multiplier is the same-context/rule-version unique-valid set difference with five exactness/freshness states (BR-014–BR-017). |
 | Commerce | Required candidate utility and credible optional commercial information; external navigation only; no transaction workflow (BR-018–BR-020, BR-024). |
@@ -189,6 +195,8 @@ The following rules define authentication, session renewal, password handling, a
 | FR-AUTH-014 | The system shall revoke the affected login session and require authentication again when a previously rotated Refresh Token is reused. | MVP | FEAT-AUTH-001; BR-021 | T: rotated-token replay; affected session revoked. |
 | FR-AUTH-015 | The system shall accept policy-valid passwords of 12–128 characters including letters, numbers, symbols, spaces, and Unicode without mandatory character-class mixtures or silent trimming, normalization, or transformation. | MVP | FEAT-AUTH-001; BR-021 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
 | FR-AUTH-016 | The system shall map each normalized email to at most one account, trimming surrounding whitespace and comparing case-insensitively; duplicate registration shall offer sign-in/recovery guidance without creating another account or applying provider-specific alias rules. | MVP | FEAT-AUTH-001; BR-021 | T: duplicate case/space variants and distinct provider-alias strings. |
+| FR-AUTH-019 | The system shall limit Forgot Password initiation per normalized email address and per client network address, and password-reset interaction checking and completion per client network address, within configurable time windows. Registered and unregistered addresses shall receive identical limited outcomes, and the email delivery queue is not a substitute for these limits. | MVP | FEAT-AUTH-001; BR-021 | T: per-address and per-client limits, window boundary, registered/unregistered equivalence, concurrent attempts. |
+| FR-AUTH-020 | Password-reset instructions shall link to a configurable verified HTTPS address (Android App Links / iOS Universal Links) in production, carrying the reset secret only in the URL fragment; a private custom URL scheme is permitted only for local development. | MVP | FEAT-AUTH-001; BR-021 | T/I: link construction and configuration validation; mobile link verification and fallback are client/operational evidence. |
 | FR-AUTH-017 | The system shall limit each password-reset interaction to 30 minutes and one successful use, rejecting expired or already-used interactions without changing credentials. | MVP | FEAT-AUTH-001; BR-021 | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
 | FR-AUTH-018 | The system shall invalidate any earlier unused password-reset interaction for the account when a new password-reset interaction is successfully issued. | MVP | FEAT-AUTH-001; BR-021 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
 
@@ -227,7 +235,7 @@ JRN-02 starts from Add Garment. Before confirmation, image/proposal work is a dr
 |---|---|
 | Capture/select image | Show selected input, processing, and any usable preview/proposals. |
 | Review/correct or choose manual entry | Retain user authority; permit manual saving without AI success or an image. |
-| Confirm category and dominant color | Create the authoritative owned entry and show readiness guidance. |
+| Confirm category and dominant color | Create the authoritative owned entry and show guidance that eligibility is not evaluated. |
 | Cancel or processing fails | Do not create a confirmed item; allow appropriate replacement/retry/manual continuation. |
 
 #### 3.4.1 Image Input and Preview Criteria
@@ -261,35 +269,38 @@ Section 8.1 specifies the locked benchmark/accuracy protocol. NFR-PERF-001 measu
 
 ### 3.5 Garment Intelligence
 
-Garment intelligence uses bounded descriptor vocabularies, confidence criteria, and readiness checks. Optional rich fields are not universal save/readiness gates. AI-REQ-004–AI-REQ-007 and AI-REQ-012/AI-REQ-013 specify confidence/provenance behavior.
+The [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns complete vocabularies and applicability. Exactly 13 fashion properties are supported; all applicable properties enter selected Sprint 2 implementation scope.
 
-#### 3.5.1 Garment Readiness Criteria
+#### 3.5.1 Saving and Deferred Recommendation Eligibility
 
-A garment is Saveable when the user confirms its Primary Category and Dominant Color; manual saving requires no image. Recommendation readiness additionally requires the information needed for the applicable compatibility checks below.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-| Garment / Use | Required Compatibility Information |
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+
+The old readiness predicates are superseded. Retained superseded/deferred IDs establish no implementation obligation for removed fields. Optional absence is separate from invalid supplied input, failed persistence and lost authorization.
+
 |---|---|
-| All primary categories | Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability. |
-| TOP and OUTERWEAR | Applicable Layering Level in addition to the common fields. |
-| Layered compatibility where bulk matters | Applicable Bulk Index; unavailable/UNKNOWN required information cannot pass that decision. |
-| Strongly recommended | Subtype, including the defined OTHER/UNKNOWN fallback; not a universal readiness blocker. |
-| Not universally required | Material, Silhouette, Secondary Colors, exact HEX/HSL display, Fit, Style Tags and Occasion Tags. |
-
-Justified derived information can satisfy an applicable requirement without inventing a field or overwriting user authority. A required field that is UNKNOWN/unavailable prevents readiness for decisions needing it, while an entry meeting the saveable minimum remains owned/saveable. Bulk is conditional on layered compatibility, so it is not a universal save or readiness gate.
-
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-GAR-001 | The system shall support primary classification limited to TOP, BOTTOM, OUTERWEAR, and FOOTWEAR. | MVP | FEAT-GAR-001; BR-003 | T: defined categories only. |
-| FR-GAR-002 | The system shall offer the unchanged bounded category subtypes plus the descriptor vocabularies in Section 4.10, permitting OTHER/UNKNOWN where defined without blocking otherwise saveable entries. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-003, BR-002 | T: defined vocabularies and subtype fallback saving. |
-| FR-GAR-003 | The system shall accept saving when the user has confirmed Primary Category and Dominant Color without requiring the remaining rich descriptors. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: minimum-only profile. |
-| FR-GAR-004 | The system shall distinguish saveable ownership from rule-specific readiness, keeping unknown required compatibility fields ineligible for the decisions requiring them while retaining saveable entries. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
-| FR-GAR-005 | The system shall require Primary Category, Dominant Color, Pattern Type and Climate/Season Suitability for every category's readiness, applicable Layering Level for TOP/OUTERWEAR, and Bulk Index when layered compatibility requires it, using only justified derivation and no fabricated fields. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
-| FR-GAR-006 | The system shall treat Subtype as strongly recommended and Fit/Material/Silhouette/Secondary Colors/precise HEX-HSL display/Style Tags/Occasion Tags as non-universal readiness requirements; Bulk Index is required only for applicable layered compatibility. | MVP | FEAT-GAR-001; BR-003 | T: omitted optional fields versus required applicable bulk. |
-| FR-GAR-007 | The system shall provide review/correction of bounded Layering Level, Bulk Index and Fit and optional silhouette descriptors using Section 4.10 meanings. | MVP | FEAT-GAR-001; BR-003 | T/I: every layer/fit value and 1–5 bulk bounds. |
-| FR-GAR-008 | The system shall provide review/correction of dominant color family, secondary color, Color Temperature and Palette Role using the bounded vocabulary, with optional conceptual HEX/HSL support. | MVP | FEAT-GAR-001; BR-003 | T/I: all color-family/temperature/role values and unknown handling. |
-| FR-GAR-009 | The system shall provide review/correction of bounded Pattern Type/Density/Visual Noise and climate/occasion/style associations, applying SOLID → NONE and the Vietnam-first environmental taxonomy. | MVP | FEAT-GAR-001; BR-003 | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
-| FR-GAR-010 | The system shall permit uncertain material information to be corrected or left unknown without claiming verified composition or durability. | MVP | FEAT-GAR-001; BR-003 | T: uncertain material case. |
+| FR-GAR-001 | The system shall support primary classification limited to TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. | MVP | FEAT-GAR-001; BR-003 | T: defined categories only. |
+| FR-GAR-002 | The system shall support every approved category-specific Subtype in the source authority, validate parent association and allow omission without invented fallback values or silent replacement. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-003, BR-002 | T: defined vocabularies and subtype fallback saving. |
+| FR-GAR-003 | The system shall accept a garment with a supported Category, one supported dominant Color and explicit user confirmation, without requiring any other property, image, successful AI analysis or recommendation-eligibility gate. | MVP | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: minimum-only profile. |
+| FR-GAR-004 | The system shall distinguish valid saved ownership from recommendation eligibility that has not been evaluated, without labeling a garment ready, invalid, unsuitable or ineligible because a future policy is undefined or optional information is absent. | MVP | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | T/I: valid saving, optional absence and unevaluated eligibility without invalid/unsuitable/ineligible claims. |
+| FR-GAR-005 | **Superseded — no active obligation.** The previous compatibility-field readiness prerequisites are removed by the final 13-property decision. Retain this ID for references; future engine eligibility requires approved policy and cannot reintroduce removed fields. | Superseded | FEAT-GAR-001, FEAT-OUT-001; BR-003, BR-009 | I: history only; no active readiness test. |
+| FR-GAR-006 | The system shall keep all properties except Category and Color optional for saving, enforce category applicability on supplied values and preserve valid accepted optional information without fabricating missing values. | MVP | FEAT-GAR-001; BR-003 | T: every optional omission and supplied-value/applicability case. |
+| FR-GAR-007 | The system shall support optional Fit, Neckline and Sleeve Length only for Tops, category-specific Length only for Tops/Pants, and Silhouette only for Pants, using exact approved lists and correcting or clearing inapplicable supplied fields. | MVP | FEAT-GAR-001; BR-003 | T/I: every approved category-specific detail/value and inapplicable input. |
+| FR-GAR-008 | The system shall require exactly one dominant Color from the complete approved list, including Colorful, without secondary-color or coordinate extensions. | MVP | FEAT-GAR-001; BR-003 | T: all approved single Colors; no extra color property. |
+| FR-GAR-009 | The system shall support one optional Pattern and zero, one or multiple distinct approved Style values per garment using complete source lists, without duplicate semantic Style selections, accepting Etc, arbitrary additions or deriving unsupported compatibility descriptors. | MVP | FEAT-GAR-001; BR-003 | T: every approved optional Pattern/Style; multiple and repeated Style selections; Etc and arbitrary values rejected. |
+| FR-GAR-010 | The system shall support zero, one or multiple distinct approved Material values per garment, avoiding duplicate semantic selections and fabricated percentages, proportions or verified-composition claims. | MVP | FEAT-GAR-001; BR-003 | T: uncertain material case. |
 | FR-GAR-011 | The system shall make user-confirmed/corrected/entered values authoritative and prevent later automated output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002 | T: analysis after correction. |
+| FR-GAR-012 | The system shall support optional user-entered Brand text of at most 100 Unicode code points for every supported garment category, treat a blank value as unspecified, preserve accepted nonblank text exactly (no trimming, case change, accent removal or whitespace normalization) for inspection and future editing, and keep unavailable or unaccepted suggested Brand distinct from confirmed information without a fixed brand enum or silent automated overwrite. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/blank/present Brand across eight categories, length boundary, exact value fidelity and late-proposal protection. |
+| FR-GAR-013 | The system shall support optional user-reported purchase Price for every supported garment category as an exact decimal monetary amount with an explicit valid upper-case ISO 4217 currency code when supplied, preserve it for inspection and future editing, and allow omission without save/readiness failure. Zero is a valid known amount distinct from a missing Price; negative amounts, more than 12 integer digits and more fractional digits than the currency's minor unit are rejected, never rounded. It shall not fabricate Price from appearance, infer currency from location, use floating-point monetary calculations, convert currencies or silently overwrite confirmed Price. | MVP | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002; BR-002, BR-003, BR-005 | T: absent/present amount-and-currency, zero, negative, precision per currency, partial-pair correction, decimal fidelity and non-fabrication; Section 3.5.2 / PRD OPQ-013 (resolved). |
+
+#### 3.5.2 Optional Brand and Purchase Price
+
+Brand is optional user-entered text across all categories, without an enum/catalogue. Price is the optional amount originally paid: decimal amount plus explicit ISO 4217 currency, supplied together or cleared. Unknown Price is not zero; no appearance/location inference, floating-point monetary representation or currency conversion is permitted. Preserve confirmed values through the authorized addition and its safe-retry outcome. No AI output silently replaces them.
+
+Approved validation (PRD OPQ-013, resolved 2026-11-07): Brand has at most 100 Unicode code points; a blank Brand means unspecified; accepted nonblank Brand text is preserved exactly, without trimming, case change, accent removal or whitespace normalization. A Price of zero is a valid known amount and differs from a missing Price; negative amounts are invalid; an amount has at most 12 integer digits and no more fractional digits than its currency's ISO 4217 minor unit, and excess precision is rejected rather than rounded; the currency is a valid upper-case ISO 4217 code. Style accepts zero, one or several distinct approved values (PRD OPQ-016). DATA-INT-001/004 and privacy/ownership continue to apply.
 
 ### 3.6 Wardrobe Management
 
@@ -297,8 +308,8 @@ JRN-03 operates on the current owned wardrobe; historical information remains di
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-WAR-001 | The system shall present the current confirmed wardrobe and identifiable garment details, including manually saved entries without images. | MVP | FEAT-WAR-001; BR-005 | T: browse and imageless detail. |
-| FR-WAR-002 | The system shall show applicable garment readiness and recorded-use information without equating no recorded use with proven nonuse. | MVP | FEAT-WAR-001, FEAT-ANL-001; BR-005, BR-006 | I: readiness and usage labels. |
+| FR-WAR-001 | The system shall present identifiable current confirmed garments across all eight categories, page by page in a stable newest-first order with explicit continuation that neither omits nor repeats garments remaining current, and retrieve all available applicable accepted properties in detail, including multiple Materials and Styles and optional Brand/Price, without requiring an image or every detail field in collection summaries. | MVP | FEAT-WAR-001; BR-005 | T: browse, pagination and imageless detail. |
+| FR-WAR-002 | The system shall truthfully communicate that recommendation eligibility has not been evaluated and distinguish absent optional information from invalid/unavailable data; supported recorded-use information shall not equate no recorded use with proven nonuse. | MVP | FEAT-WAR-001, FEAT-ANL-001; BR-005, BR-006 | I: readiness and usage labels. |
 | FR-WAR-003 | The system shall allow explicit confirmation/cancellation of supported garment-profile edits. | MVP | FEAT-WAR-002; BR-002, BR-005 | T: edit/confirm/cancel. |
 | FR-WAR-004 | The system shall allow deliberate confirmation/cancellation of garment removal from active ownership. | MVP | FEAT-WAR-002; BR-005 | T: remove/confirm/cancel. |
 | FR-WAR-005 | The system shall immediately exclude a removed garment from active ownership and current recommendation/coverage/multiplier inputs, retaining only minimal understandable historical snapshots and physically deleting its original image/nonessential removed personal data within 30 days. | MVP | FEAT-WAR-002; BR-005 | T/I: immediate current exclusion, minimal historical fields and deletion within 30 days. |
@@ -319,36 +330,16 @@ JRN-04 requires sufficient applicable confirmed wardrobe/context information, no
 
 #### 3.7.1 Outfit Validity Rules
 
-An outfit is valid for MVP recommendation only when the applicable rules below are satisfied. Composition is necessary but not sufficient: eligible garments must also satisfy applicable readiness, layering, bulk, environmental, and severe-pattern rules.
+**Deferred policy.** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
 
-| Dimension | Required Validity |
-|---|---|
-| Composition | Exactly 1 TOP + 1 BOTTOM + 1 FOOTWEAR, with 0 or 1 OUTERWEAR; no unsupported category or additional slot item. |
-| Current daily eligibility | Confirmed, active, owned and Recommendation-Ready for applicable rules; hypothetical candidates are excluded. |
-| Layered roles | With OUTERWEAR, the inner TOP has BASE/MID and the outer garment has OUTER/SHELL where applicable. |
-| Applicable bulk | `outerwear.bulkIndex >= innerTop.bulkIndex` when bulk applies to both; missing required bulk fails readiness rather than being invented. |
-| Environmental compatibility | Confirmed suitability supports the active band when available environmental context is used for hard filtering. |
-| Missing environment | Skip unavailable environmental hard filtering where appropriate, retain other validity checks and explain missing context; missing weather alone does not reject all outfits. |
-| Severe pattern/noise | Among TOP/BOTTOM/OUTERWEAR, at most one garment has Visual Noise ≥4 **or** Pattern Density HIGH. A garment meeting both still counts as one severe item. FOOTWEAR is outside this specific conflict count. |
-
-| Active Environmental Band | Temperature |
-|---|---|
-| HOT | ≥30°C |
-| WARM | ≥24°C and <30°C |
-| MILD | ≥18°C and <24°C |
-| COOL | ≥12°C and <18°C |
-| COLD | <12°C |
-
-Environmental suitability uses HOT/WARM/MILD/COOL/COLD/ALL_SEASON/UNKNOWN rather than a mandatory calendar-season taxonomy. ALL_SEASON expresses suitability across environmental bands; UNKNOWN cannot establish a required compatibility claim. Current weather must satisfy Section 3.3's timestamp/freshness and bounded refresh conditions.
-
-Moderate patterns may coexist and are considered through soft ranking. Color harmony, declared style, current occasion, Like/Dislike, Wear/history, recency, diversity and optional body/gender are soft factors. Gender/body/stereotypes cannot become hard category restrictions. These rules apply equally to Shuffle's resulting outfit and to valid hypothetical combinations; candidate ownership remains hypothetical.
+Authorization, confirmed ownership, identity uniqueness, validity before ranking and truthful result states remain product goals. Numerical fixtures elsewhere require an explicitly supplied future approved evaluation policy; they do not establish current compatibility.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-OUT-001 | The system shall use only confirmed, active, owned garments that satisfy applicable readiness for current daily recommendations, excluding removed items and hypothetical candidates. | MVP | FEAT-OUT-001; BR-007 | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
+| FR-OUT-001 | The system shall use only authorized confirmed active owned garments for current daily advice, excluding removed inventory and hypothetical candidates; eligibility/composition policy is deferred under Section 3.7.1 and shall not be inferred from saving. | MVP | FEAT-OUT-001; BR-007 | T/A: ownership/confirmation / unevaluated eligibility/candidate eligibility fixtures. |
 | FR-OUT-002 | The system shall evaluate available environmental/season context, current occasion, declared style, and relevant personalization context. | MVP | FEAT-OUT-001; BR-007, BR-010 | T/A: context variation. |
 | FR-OUT-003 | The system shall exclude combinations that fail applicable hard validity constraints before personalized ranking. | MVP | FEAT-OUT-001; BR-009 | A: invalid high-preference fixture. |
-| FR-OUT-004 | The system shall enforce exactly one TOP, one BOTTOM and one FOOTWEAR with zero or one OUTERWEAR, plus the applicable layering/bulk/environment/severe-pattern validity policies in Section 3.7.1 before ranking. | MVP | FEAT-OUT-001; BR-007, BR-009 | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
+| FR-OUT-004 | **Deferred policy — legacy ID retained.** Previous fixed composition, category-to-role mappings and removed-property compatibility rules are superseded. Define and approve composition/compatibility during recommendation-engine development; this entry supplies no current eligibility predicate or replacement algorithm. | Deferred policy | FEAT-OUT-001; BR-007, BR-009 | Deferred: history only; future composition/compatibility approval required. |
 | FR-OUT-005 | The system shall rank valid candidates through soft color harmony, style, current occasion, Like/Dislike, Wear/history, recency/diversity and optional body/gender, never using body/gender/stereotypes as hard category restrictions. | MVP | FEAT-OUT-001; BR-007, BR-009, BR-010, BR-011, BR-012 | A: preference differences among valid sets; no identity-based category rejection. |
 | FR-OUT-006 | The system shall present at least three distinct valid outfits when that many exist under the current wardrobe/context. | MVP | FEAT-OUT-001; BR-008 | T/A: three-valid fixture. |
 | FR-OUT-007 | The system shall count a reordered combination of the same garment identities as the same outfit rather than a distinct option. | MVP | FEAT-OUT-001; BR-008 | A: reordered duplicates. |
@@ -378,7 +369,7 @@ Only the selected item slot changes; the remaining garment identities and assess
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-OUT-014 | The system shall replace only the user-selected garment slot during a successful Shuffle action. | MVP | FEAT-OUT-003; BR-008 | T: fixed other identities. |
-| FR-OUT-015 | The system shall offer a selected-slot replacement only when the resulting outfit satisfies Section 3.7.1 validity with unchanged other garment identities and assessment context. | MVP | FEAT-OUT-003; BR-007, BR-009 | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
+| FR-OUT-015 | The system shall preserve unchanged constituent identities and request context during selected-item Shuffle, and shall claim a compatible replacement only under a future approved engine policy; Section 3.7.1 currently defers that policy. | MVP | FEAT-OUT-003; BR-007, BR-009 | Future approved-policy replacement cases; no old property predicates. |
 | FR-OUT-016 | The system shall retain the current selection and explain the limitation when no compatible alternative exists. | MVP | FEAT-OUT-003; BR-008, BR-022 | T: no-alternative fixture. |
 | FR-OUT-017 | The system shall avoid recording Like, Dislike, or a Wear Event solely because Shuffle was used. | MVP | FEAT-OUT-003; BR-008 | T: interaction isolation. |
 
@@ -461,7 +452,7 @@ All legitimate Wear Events remain separate in history. For ranking, the same exa
 | Exact outfit reported worn within the last 2 days | Strong diversity penalty. |
 | Exact outfit reported worn 3–7 days ago | Mild diversity penalty. |
 | Exact outfit last reported worn >7 days ago | No recency penalty. |
-| Ready garment with no recorded wear for ≥14 days | May receive a small soft utilization/diversity boost. |
+| Garment with future approved eligibility and no recorded wear for ≥14 days | May receive a small soft utilization/diversity boost. |
 
 Strong/mild penalties remain ranking effects and never invalidate an outfit. The optional overlooked-item boost cannot override hard validity, strong explicit negative feedback or current context relevance. No additional numeric ranking weights or mandatory learned model are specified.
 
@@ -526,7 +517,7 @@ Per-need presentation: 0 valid outfits → 0%; 1 → approximately 33%; 2 → ap
 
 `CoverageScore = 100 × Σ(PriorityWeight × NeedCoverage) / Σ(PriorityWeight)`
 
-Only needs with weight >0 participate in the denominator. A numeric score requires at least one positive-weight need and at least one Recommendation-Ready TOP, BOTTOM and FOOTWEAR. OUTERWEAR is additionally required only where the evaluated need/environment requires it. Failure of these gates produces insufficient-information/incomplete assessment, not a false 0%.
+Only positive-weight needs participate in the denominator. Numeric Coverage also requires completed evaluation under a future approved composition, compatibility and sufficient-evidence policy. The old ready-role gate is superseded; none of the eight categories is automatically mapped into it. Without the required policy/evidence, report an unevaluated/incomplete assessment, not 0% or an unsupported gap. The existing priorities and Coverage formula remain future product requirements.
 
 A relevant need with NeedCoverage <1 (below 100% displayed coverage) may prompt gap analysis; the system identifies an underserved capability/bottleneck before evaluating a specific garment. Sufficiently described but incompatible garments can yield defensible zero coverage; incompletely digitized information cannot be mislabeled as evaluated zero. This score measures contextual wardrobe coverage rather than universal wardrobe completeness.
 
@@ -535,7 +526,7 @@ A relevant need with NeedCoverage <1 (below 100% displayed coverage) may prompt 
 | FR-ANL-008 | The system shall evaluate the Personalized Everyday Capsule's relevant needs through the Section 3.14.1 occasion mapping and valid-distinct-outfit rules rather than a universal checklist. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010 | A: six need mappings and unique outfit counts per need. |
 | FR-ANL-009 | The system shall identify active need priorities, mapped occasions, style, environmental context and current confirmed/eligible wardrobe used in coverage. | MVP | FEAT-ANL-002; BR-014, BR-022 | I/A: visible assessment basis and disabled priority-zero needs. |
 | FR-ANL-010 | The system shall use only positive priorities as weights in the CoverageScore denominator so changing need priorities can change the same wardrobe's contextual score. | MVP | FEAT-ANL-002, FEAT-PROF-001; BR-014, BR-010 | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
-| FR-ANL-011 | The system shall show numeric CoverageScore only when Section 3.14.1 sufficient-data conditions hold and calculate it as 100 × Σ(PriorityWeight × NeedCoverage) / Σ(PriorityWeight). | MVP | FEAT-ANL-002; BR-014, BR-022 | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
+| FR-ANL-011 | The system shall show numeric CoverageScore only when Section 3.14.1 sufficient-data conditions hold and calculate it as 100 × Σ(PriorityWeight × NeedCoverage) / Σ(PriorityWeight). | MVP | FEAT-ANL-002; BR-014, BR-022 | A/T: exact weighted fixtures; absent positive needs or approved policy/evidence suppress the number. |
 | FR-ANL-012 | The system shall calculate NeedCoverage as min(ValidDistinctOutfitsForNeed / 3, 1), presenting covered/underserved need evidence and its mapped context. | MVP | FEAT-ANL-002; BR-014, BR-022 | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
 | FR-ANL-013 | The system shall exclude removed garments from current coverage. | MVP | FEAT-ANL-002; BR-014 | A: post-removal baseline. |
 | FR-ANL-014 | The system shall reevaluate or mark coverage outdated after relevant wardrobe, needs, context or applicable validity-rule changes. | MVP | FEAT-ANL-002; BR-014, BR-022 | T: changed priority, garment attributes and applicable rule version. |
@@ -584,7 +575,7 @@ W is the current confirmed active wardrobe; O produces unique valid outfit sets 
 | Unavailable | The evaluation capability cannot operate; suppress exact +N and do not substitute zero. |
 | Outdated | Relevant inputs/rules changed since evaluation; a prior result cannot be current until reevaluated. |
 
-Exact evaluation requires sufficient candidate readiness; applicable readiness for all owned garments used in relevant combinations; required relevant context; completed current and expanded evaluation; completed uniqueness/deduplication; and the same context, validity rules, relevant rule version and garment-identity uniqueness semantics for both sets. These conditions also govern Evaluated Zero.
+Exact evaluation requires approved engine policy and sufficient evidence for candidate and owned combinations under that policy; required relevant context; completed current and expanded evaluation; completed uniqueness/deduplication; and the same context, validity rules, relevant rule version and garment-identity uniqueness semantics for both sets. These conditions also govern Evaluated Zero. Composition/compatibility and sufficient-evidence policy are deferred; saving or optional absence alone cannot establish or deny eligibility.
 
 Garment-identity sets define canonical outfit uniqueness; permutation creates no additional combination. Failures, timeouts, missing information and unavailable evaluation do not establish +0 or a complete exact count.
 
@@ -592,10 +583,10 @@ Changes to active wardrobe composition, confirmed garment attributes, candidate 
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-MULT-001 | The system shall evaluate a sufficiently described hypothetical candidate against the current confirmed active wardrobe, using only applicable ready owned garments in counted combinations and excluding removed inventory. | MVP | FEAT-MULT-001; BR-015, BR-016 | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
+| FR-MULT-001 | The system shall evaluate a sufficiently described hypothetical candidate against the current confirmed active wardrobe, using only applicable owned garments evaluated under a future approved policy in counted combinations and excluding removed inventory. | MVP | FEAT-MULT-001; BR-015, BR-016 | A: candidate/future owned-combination evidence, removed baseline and hypothetical ownership. |
 | FR-MULT-002 | The system shall compare current and expanded valid outfit sets under the same context, validity/business-rule version and identity-based uniqueness semantics. | MVP | FEAT-MULT-001; BR-009, BR-016 | A: matched context/rule-version versus mismatched comparison. |
 | FR-MULT-003 | The system shall calculate WardrobeMultiplier(candidate) as the cardinality of O(W ∪ {candidate}) − O(W), using garment-identity sets so existing or permuted combinations do not inflate new valid outfits. | MVP | FEAT-MULT-001; BR-016 | A: exact set-difference fixtures and identity permutations. |
-| FR-MULT-004 | The system shall show an exact +N New Outfits only when Section 3.16.1 completeness/readiness/context/version/deduplication conditions hold, explaining the evaluated baseline and count. | MVP | FEAT-MULT-001; BR-016, BR-022 | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
+| FR-MULT-004 | The system shall show an exact +N New Outfits only when Section 3.16.1 approved-policy/completion/context/version/deduplication conditions hold, explaining the evaluated baseline and count. | MVP | FEAT-MULT-001; BR-016, BR-022 | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
 | FR-MULT-005 | The system shall provide newly enabled hypothetical previews for an exact completed evaluation, visibly identifying the unowned candidate and associating previews with the same evaluated context/rule basis. | MVP | FEAT-MULT-001; BR-017 | T/I: newly enabled candidate previews; stale/incomplete previews not current exact evidence. |
 | FR-MULT-006 | The system shall leave candidate ownership and wear history unchanged by evaluation or preview viewing. | MVP | FEAT-MULT-001; BR-015, BR-017 | T: no ingestion/wear side effect. |
 | FR-MULT-007 | The system shall distinguish Exact, Evaluated Zero, Incomplete, Unavailable and Outdated, showing +0 only for a fully completed exact evaluation with no newly enabled outfits and suppressing exact +N for non-exact states. | MVP | FEAT-MULT-001; BR-016, BR-022 | T/A: all five states; failures/timeouts/missing data never become zero. |
@@ -647,7 +638,7 @@ These requirements specify information meaning/ownership, not tables, storage ty
 | Domain | Logical Information |
 |---|---|
 | Access and context | User Account, Personalization Profile, request context, Refresh Sessions and single-use reset validity; logical policy information, not session-store design. |
-| Current wardrobe | Wardrobe, active/removed Garment, confirmed Garment Profile, and applicable images/proposals/readiness. |
+| Current wardrobe | Wardrobe, active/removed Garment, confirmed Garment Profile, and applicable images/proposals and unevaluated eligibility. |
 | Advice and behavior | Outfit, Outfit Recommendation, Feedback, Wear Event, and Wear History. |
 | Wardrobe intelligence | Coverage Assessment, Wardrobe Gap, Candidate Garment, Multiplier Assessment, and Shopping Recommendation. |
 | Measurement | Distinguishable exposures, accepted actions/corrections/removals, failures, and qualified metric evidence. |
@@ -660,17 +651,18 @@ These requirements specify information meaning/ownership, not tables, storage ty
 | DATA-AUTH-002 | The system shall represent Email through the normalized account identity defined in Section 3.1.1 and Display Name as optional, preserving one account per identity without provider-specific alias transformations. | MVP | FEAT-AUTH-001; BR-021 | T: uniqueness across email case/whitespace variants; optional Display Name. |
 | DATA-AUTH-003 | The system shall retain the user's current declared styles/common priorities and distinguish them from request-specific occasion. | MVP | FEAT-PROF-001; BR-010 | T/I: independent context values. |
 | DATA-AUTH-004 | The system shall represent omitted/removed body/gender as absent current context rather than inferred replacements. | MVP | FEAT-PROF-001; BR-012, BR-021 | T/I: removed optional values. |
+| DATA-AUTH-006 | The system shall delete a consumed, replaced or expired password-reset interaction 30 days after it became terminal (its consumption, replacement or expiry time) and shall never delete a currently usable interaction. | MVP | FEAT-AUTH-001; BR-021 | T: retention boundary, active-interaction preservation, concurrent cleanup. |
 | DATA-AUTH-005 | The system shall represent separate login sessions with account association, maximum lifetime, current/consumed refresh validity and revocation state, and reset interactions with account association, expiry and single-use validity, sufficient to enforce Section 3.1.1. | MVP | FEAT-AUTH-001; BR-021 | T/I: independent sessions, rotated-token reuse, current/all-session revocation, reset expiry/use. |
 
 ### 4.3 Garment & Wardrobe Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-GAR-001 | The system shall associate each current garment/profile with its owning user's wardrobe and confirmed primary category/dominant color. | MVP | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005 | T/I: owner and saveable minimum. |
-| DATA-GAR-002 | The system shall represent Section 4.10 garment descriptors with bounded values/scales, SOLID → NONE density, environmental rather than calendar-season primary taxonomy, and applicable unknown/optional states. | MVP | FEAT-GAR-001; BR-003 | I/T: descriptor sets, scales, SOLID density and non-mandatory rich information. |
+| DATA-GAR-001 | The system shall associate each current garment and accepted profile with its authorized owner, supported Category and one confirmed approved Color, preserving confirmation and active ownership separately from future evaluation. | MVP | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005 | T/I: owner and saveable minimum. |
+| DATA-GAR-002 | The system shall preserve exactly the 13 source-approved fashion properties and applicability, including optional multiple distinct Materials and Styles, one dominant Color, category-specific fields, Brand text and decimal purchase Price with explicit ISO 4217 currency; absent values and necessary metadata shall remain distinct. | MVP | FEAT-GAR-001; BR-003 | I/T: every approved value, distinct Material and Style sets, category applicability and non-mandatory rich information. |
 | DATA-GAR-003 | The system shall associate proposals with evidence-based confidence/provenance under Section 8.1 separately from authoritative user values, without treating numeric confidence as confirmation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: default thresholds, evidence guards, calibration and confirmation. |
 | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
-| DATA-GAR-005 | The system shall represent active ownership, removed state and applicable readiness separately, retaining saveable entries with UNKNOWN/unavailable required compatibility fields. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: conditional layering/bulk readiness and retained minimum-only entries. |
+| DATA-GAR-005 | The system shall represent active/removed ownership independently from missing optional properties and unevaluated recommendation eligibility, without requiring a readiness flag, NOT_EVALUATED enum, compatibility field or physical schema prescribed by this SRS. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: ownership and unevaluated eligibility remain distinct; no property gate. |
 
 ### 4.4 Outfit & Recommendation Data
 
@@ -695,8 +687,8 @@ These requirements specify information meaning/ownership, not tables, storage ty
 |---|---|---|---|---|
 | DATA-ANL-001 | The system shall associate coverage with mapped needs, 0/1/2/3 priorities, sufficient-data state, relevant context/rule basis, valid distinct outfit counts, per-need ratios and the weighted score/limitations. | MVP | FEAT-ANL-002; BR-014, BR-022 | I/A: formula inputs/results and sufficient-versus-incomplete state. |
 | DATA-ANL-002 | The system shall associate each proposed gap with a relevant positive-weight underserved need, its capability/bottleneck evidence and candidate characteristics rather than a mandatory product name. | MVP | FEAT-GAP-001; BR-015, BR-022 | I/A: <100% need evidence and capability-before-candidate linkage. |
-| DATA-ANL-003 | The system shall represent the hypothetical candidate separately from owned garments with required identity/visual/category/subtype/gap/attributes, applicable readiness and evidence from explicit user-provided information or an identifiable configured credible source; external commercial values retain source and retrieval/last-checked time. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-018, BR-020 | I/T: credible candidate provenance, qualified optional values/time and hypothetical status. |
-| DATA-ANL-004 | The system shall associate multiplier state/count/previews with candidate, wardrobe/context, relevant rule version, readiness/completion/deduplication evidence and input/rule-based freshness. | MVP | FEAT-MULT-001; BR-016, BR-017, BR-022 | A/I: five states and exact-result evidence; no arbitrary TTL. |
+| DATA-ANL-003 | The system shall represent the hypothetical candidate separately from owned garments with required identity/visual/category/subtype/gap/attributes, eligibility under a future approved policy and evidence from explicit user-provided information or an identifiable configured credible source; external commercial values retain source and retrieval/last-checked time. | MVP | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-018, BR-020 | I/T: credible candidate provenance, qualified optional values/time and hypothetical status. |
+| DATA-ANL-004 | The system shall associate multiplier state/count/previews with candidate, wardrobe/context, relevant rule version, approved-policy/completion/deduplication evidence and input/rule-based freshness. | MVP | FEAT-MULT-001; BR-016, BR-017, BR-022 | A/I: five states and exact-result evidence; no arbitrary TTL. |
 
 ### 4.7 Data Integrity
 
@@ -724,59 +716,37 @@ These requirements specify information meaning/ownership, not tables, storage ty
 
 The 30-day removal-deletion and 90-day user-linked measurement limits are MVP product policies. Necessary minimal historical snapshots may remain; original removed-garment images and nonessential personal data may not be retained indefinitely for history. Physical deletion/aggregation mechanisms remain downstream design choices. No self-service account-deletion/export feature, statutory retention rule or legal certification is introduced.
 
-### 4.10 Logical Data Dictionary
+### 4.10 Controlled Vocabularies and Descriptor Scales
 
-| Object / Information | Logical Meaning / Necessary Relationships |
+The [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) is normative for all 13 properties, applicability and complete vocabulary labels. Its Section 3 contains all 84 Subtypes, 34 Colors, 28 Materials, 24 Patterns, 17 named Styles and every category-specific detail choice. Exactly ten Dresses/Jumpsuits identifiers remain approved. Do not maintain a reduced competing list or invent additional subtype identifiers.
+
+| # | Property | Applicability | Required for Saving | Meaning / Value Authority |
+|---|---|---|---|---|
+| 1 | Category | All categories | Yes | One of eight category codes. |
+| 2 | Subtype | All categories | No | Optional category-valid selection from the complete approved list. |
+| 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
+| 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
+| 5 | Pattern | All categories | No | One optional approved Pattern. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
+| 7 | Fit | Tops | No | Optional approved Fit. |
+| 8 | Neckline | Tops | No | Optional approved Neckline. |
+| 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
+| 10 | Length | Tops and Pants | No | Category-specific approved Length values. |
+| 11 | Silhouette | Pants | No | Optional approved Silhouette. |
+| 12 | Brand | All categories | No | Optional user-entered text; no enum/catalogue. |
+| 13 | Price | All categories | No | Optional amount originally paid: decimal amount and explicit ISO 4217 currency. |
+
+Profile Style preferences and Occasion/request context are separate from garment Style; they do not add garment properties:
+
+| Context Vocabulary | Existing Values |
 |---|---|
-| User Account | Private access identity and authorized relationship to personal wardrobe/profile/history; Email/password recovery and optional Display Name. |
-| Personalization Profile | Current style/common need priorities, optional body/gender, and selected location/context; current request occasion remains separate. |
-| Wardrobe | Current confirmed active owned garments; differs from historical snapshots. |
-| Garment | Individually distinguishable owned item, supported primary category, authoritative profile, active/removed state, and readiness. |
-| Garment Profile | Confirmed category/dominant color plus bounded pattern/density/noise, layering/bulk/fit, climate suitability/color family/temperature/palette role and supported optional silhouette/material/secondary coordinates/style/occasion information; readiness applies conditional required fields. |
-| Outfit | Constituent garment identities assessed in context; reordering identities creates no new combination. |
-| Outfit Recommendation | A proposed valid owned outfit with context and relevant reasons, distinct from a past report or hypothetical preview. |
-| Feedback | Current +1/−2 outfit-targeted preference, revision state and applicable evidence time for aging; persists until user action and never implies reported wear. |
-| Wear Event | Report for a logical Wear intention, with absolute timestamp, event timezone/offset and original local date/time plus available occasion/context; bounded event-specific correction/removal and separate ranking normalization. |
-| Wear History | Time-aware view of accepted reports and meaningful snapshots, including multiple events per day; incomplete logging is disclosed. |
-| Coverage Assessment | Positive-priority mapped capsule needs, valid distinct outfit counts/Need Coverage, weighted score and sufficient/incomplete context state for one Personalized Everyday Capsule. |
-| Wardrobe Gap | Evidence-supported underserved capability related to coverage, not a compulsory named product. |
-| Candidate Garment | Hypothetical potential addition with relevant characteristics; is not owned before separate confirmation. |
-| Multiplier Assessment | Same-context/rule-version unique-valid set comparison with Exact/Evaluated Zero/Incomplete/Unavailable/Outdated meaning, completeness evidence and appropriate hypothetical previews. |
-| Shopping Recommendation | Candidate/gap/utility/reason/previews and credible optional commercial details; external commerce boundary. |
-| Provenance / uncertainty | How information was established versus uncertainty of a proposal; confirmation establishes authority without proving physical material composition. |
-| Refresh Session | Account-associated separate login context, maximum lifetime, refresh consumption/revocation state and access-renewal meaning under Section 3.1.1; no physical storage structure. |
-
-The category/subtype/style/occasion values below mirror PRD Sections 11.3 and 13.2. Additional descriptors use the bounded values in the second table. Further vocabulary changes require approval and source traceability.
-
-| Vocabulary | Initial Values |
-|---|---|
-| Primary Category | `TOP`, `BOTTOM`, `OUTERWEAR`, `FOOTWEAR` |
-| Style | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
-| Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
-| TOP Subtype | `T_SHIRT`, `SHIRT`, `POLO`, `BLOUSE`, `SWEATER`, `HOODIE`, `TANK_TOP`, `OTHER`, `UNKNOWN` |
-| BOTTOM Subtype | `JEANS`, `TROUSERS`, `CHINOS`, `SHORTS`, `SKIRT`, `LEGGINGS`, `OTHER`, `UNKNOWN` |
-| OUTERWEAR Subtype | `JACKET`, `BLAZER`, `COAT`, `CARDIGAN`, `OVERSHIRT`, `OTHER`, `UNKNOWN` |
-| FOOTWEAR Subtype | `SNEAKERS`, `LOAFERS`, `DRESS_SHOES`, `BOOTS`, `SANDALS`, `FLATS`, `HEELS`, `OTHER`, `UNKNOWN` |
+| Profile Style preference | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
+| Request Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
 | Capsule Need Dimensions | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
-| AI Confidence | High Confidence; Needs Review; Uncertain. |
-| Provenance | AI Suggested; User Confirmed; User Corrected; User Entered. |
+| AI Confidence (metadata) | High Confidence; Needs Review; Uncertain. |
+| Attribute Provenance (metadata) | AI Suggested; User Confirmed; User Corrected; User Entered. |
 
-OTHER/UNKNOWN does not introduce a primary category. Common need dimensions and request occasion codes have different purposes; the resolved mapping is in Section 3.14.1.
-
-| Additional Descriptor | Values / Scale |
-|---|---|
-| Pattern Type | `SOLID`, `STRIPE`, `PLAID`, `FLORAL`, `GRAPHIC`, `POLKA_DOT`, `ABSTRACT`, `ANIMAL_PRINT`, `OTHER`, `UNKNOWN` |
-| Pattern Density | `NONE`, `LOW`, `MEDIUM`, `HIGH`; SOLID → NONE. |
-| Visual Noise | 1 Very Low; 2 Low; 3 Medium; 4 High; 5 Very High. |
-| Layering Level | `BASE`, `MID`, `OUTER`, `SHELL`, `NOT_APPLICABLE`, `UNKNOWN` |
-| Bulk Index | 1 Very Light; 2 Light; 3 Medium; 4 Bulky; 5 Very Bulky. |
-| Fit | `SLIM`, `REGULAR`, `RELAXED`, `OVERSIZED`, `UNKNOWN` |
-| Climate / Environmental Suitability | `HOT`, `WARM`, `MILD`, `COOL`, `COLD`, `ALL_SEASON`, `UNKNOWN`; this is the primary MVP interpretation of Climate/Season Suitability. |
-| Dominant Color Family | `BLACK`, `WHITE`, `GRAY`, `BEIGE`, `BROWN`, `RED`, `ORANGE`, `YELLOW`, `GREEN`, `BLUE`, `PURPLE`, `PINK`, `MULTICOLOR`, `OTHER`, `UNKNOWN` |
-| Color Temperature | `WARM`, `COOL`, `NEUTRAL`, `UNKNOWN` |
-| Palette Role | `ANCHOR`, `ACCENT`, `UNKNOWN` |
-
-Unknown/unavailable information remains distinct from an actual scale value. Descriptor support does not make every field mandatory to save. TOP/OUTERWEAR layering and applicable layered Bulk Index are readiness checks only under Section 3.5.1.
+Unknown optional information is absent, not an extra enum value. Etc is explanatory, not accepted as Style. Real fallback labels remain only where listed. Technical metadata and optional media are outside the 13 properties; no automatic cross-property inference or extra readiness field is selected.
 
 ## 5. External Interface Requirements
 
@@ -789,7 +759,7 @@ These requirements preserve navigation responsibilities and semantic states; the
 | UI-001 | The system shall make Today, Wardrobe, Insights, and Profile responsibilities reachable with Add Garment and applicable detail/return paths. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-PROF-001; BR-005, BR-007, BR-010 | D: navigation through JRN-01–JRN-07. |
 | UI-002 | The system shall present the progressive onboarding flow with optional context and non-blocking first-garment guidance. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-012, BR-021, BR-023 | D: onboarding skip/return. |
 | UI-003 | The system shall distinguish loading, empty, no-match, pending, confirmed and failed states plus Exact/Evaluated Zero/Incomplete/Unavailable/Outdated multiplier states where applicable. | MVP | FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001; BR-005, BR-016, BR-022 | T/I: generic state inventory and five multiplier result states. |
-| UI-004 | The system shall display garment identity/category/color, readiness guidance, and available image without hiding imageless manual entries. | MVP | FEAT-WAR-001, FEAT-GAR-001; BR-005, BR-003 | I: cards and minimum-only detail. |
+| UI-004 | The system shall display garment identity/category/color, guidance that eligibility is not evaluated, and available image without hiding imageless manual entries. | MVP | FEAT-WAR-001, FEAT-GAR-001; BR-005, BR-003 | I: cards and minimum-only detail. |
 | UI-005 | The system shall display High Confidence, Needs Review and Uncertain through understandable Vietnamese semantic labels under the Section 8.1 mapping, retaining confirmation authority and avoiding primary raw-score presentation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | I/T: threshold boundaries, evidence guards and localized field guidance. |
 | UI-006 | The system shall require explicit confirmation for an authoritative garment entry and expose correction/manual controls. | MVP | FEAT-AI-002; BR-002 | D: proposal to corrected confirmation. |
 | UI-007 | The system shall show Wear Events with original local date/time and event-specific inspect/correct/remove controls governed by the no-future/same-original-day correction bounds. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021 | D/T: multiple-event lifecycle and invalid correction guidance. |
@@ -842,7 +812,7 @@ Faster valid completion is acceptable.
 |---|---|---|---|---|
 | NFR-SEC-001 | The system shall permit zero successful unauthorized cross-user wardrobe/image accesses in the agreed validation scenarios. | MVP | FEAT-AUTH-001, FEAT-WAR-001; BR-021 | T: two-account and unauthenticated attempts; MET-Q06. |
 | NFR-SEC-002 | The system shall prevent account switch or logout from exposing the preceding user's protected content, enforcing current-session logout isolation and all-Refresh-Session revocation after successful password reset. | MVP | FEAT-AUTH-001; BR-021 | T: two sessions/accounts; current logout versus account-wide reset. |
-| NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review and known/unknown email response comparison. |
+| NFR-SEC-003 | The system shall protect credential/token/recovery secrets from unauthorized output/measurement disclosure and preserve account-existence-safe Forgot Password responses. | MVP | FEAT-AUTH-001, FEAT-MET-001; BR-021 | I/T: secret-output review, known/unknown email response comparison, measured registered/unregistered timing and documented residual enumeration risk; true service unavailability remains a truthful 503. |
 
 ### 6.3 Privacy
 
@@ -871,7 +841,7 @@ No production uptime percentage is required for the MVP. NFR-REL-003 defines a �
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-USE-001 | The system shall make Vietnamese setup/confirmation/readiness/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
+| NFR-USE-001 | The system shall make Vietnamese setup/confirmation / unevaluated eligibility/results/recovery understandable and validate the six core task groups with at least 5 representative users across personas where practical, targeting ≥80% unaided completion for each evaluated task, zero unresolved Critical usability blockers for acceptance and average SUS ≥68 as a validation aid. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-WAR-001, FEAT-OUT-001; BR-002, BR-005, BR-022, BR-023 | D/A: six groups, ≥5 users total, per-task unaided rates, blocker review and average SUS; Section 12.4. |
 | NFR-USE-002 | The system shall evaluate preview usability by identifiable garment, preserved major regions, non-obstructive remaining background and sufficient correction/confirmation information, independently of recognition accuracy and without an invented preview percentage. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002, BR-022 | D/A: each usable-preview criterion, acceptable background and manual fallback. |
 
 ### 6.7 Accessibility
@@ -880,7 +850,7 @@ These are requirement-level interpretations of BRD stakeholder usability/accessi
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-ACC-001 | The system shall communicate meaningful confidence, readiness, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
+| NFR-ACC-001 | The system shall communicate meaningful confidence, unevaluated eligibility, unavailable/outdated, hypothetical, and removed states with understandable labels rather than relying solely on color or a garment image. | MVP | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001, FEAT-MULT-001, FEAT-ANL-001; BR-003, BR-005, BR-006, BR-022 | I/D: labels remain meaningful without color/image cues. |
 | NFR-ACC-002 | The system shall support meaningful accessible names/roles/states, operable core journeys and accessible primary actions at text scaling up to 200%, with approximately 48 dp Android/44 pt iOS minimum primary-control touch targets; applicable core journeys shall be validated with TalkBack and VoiceOver. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-OUT-001, FEAT-PERS-002; BR-002, BR-011, BR-022, BR-023 | D/I: both screen readers, accessible semantics, 200% text scaling, target sizes and outcome meaning; Section 12.4; no certification claim. |
 
 ### 6.8 Maintainability
@@ -955,9 +925,9 @@ Independent recognition validation uses the locked benchmark below. Section 3.4.
 
 | Benchmark Element | Acceptance Criteria |
 |---|---|
-| Locked set | ≥200 qualified images; TOP ≥50, BOTTOM ≥50, OUTERWEAR ≥50, FOOTWEAR ≥50. |
+| Locked set | ≥400 qualified images; ≥50 each for TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. The existing per-category minimum is unchanged; eight groups imply 400 total. |
 | Category ground truth | Human-labeled supported Primary Category. |
-| Color ground truth | Controlled dominant-color-family labels from Section 4.10. |
+| Color ground truth | Controlled approved source-Color labels from Section 4.10. |
 | Labeling protocol | Two independent human annotators should label the benchmark; disagreement is resolved through adjudication. |
 | Evaluation isolation | The locked set is not used for model training/tuning after lock. |
 | Category accuracy | ≥90% overall; each primary-category group's recognition accuracy ≥85%. |
@@ -977,11 +947,11 @@ These targets do not automatically apply to every rich attribute. Dataset/label 
 | AI-REQ-007 | The system shall make the user's confirmed, corrected, or entered-and-confirmed values authoritative while preventing later AI output from silently replacing them. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002 | T: confirmation and subsequent analysis. |
 | AI-REQ-008 | The system shall preserve unknown/missing attribute states instead of fabricating category details, colors, materials, or optional context to complete a profile. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: partial/unsupported information. |
 | AI-REQ-009 | The system shall qualify material predictions/claims when uncertain rather than present inferred composition as verified physical fact. | MVP | FEAT-GAR-001; BR-003, BR-022 | I: unknown and qualified material. |
-| AI-REQ-010 | The system shall achieve ≥90% overall primary-category recognition accuracy and ≥85% accuracy within each TOP/BOTTOM/OUTERWEAR/FOOTWEAR benchmark group on the locked qualified-image set in Section 8.1. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: overall category result and four per-category floors; locked benchmark. |
-| AI-REQ-011 | The system shall achieve ≥90% overall dominant-color recognition accuracy against controlled color-family ground truth on the same locked qualified-image benchmark, measured separately from category/preview quality. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: independent color-family accuracy report; adjudicated labels. |
+| AI-REQ-010 | The system shall achieve ≥90% overall primary-category recognition accuracy and ≥85% accuracy within each of the eight primary-category benchmark groups on the locked qualified-image set in Section 8.1. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: overall category result and eight per-category floors; locked benchmark. |
+| AI-REQ-011 | The system shall achieve at least 90% overall dominant-Color recognition accuracy against the complete approved source-Color vocabulary on the same locked qualified-image benchmark, separately from category/preview quality; an earlier coarse-family benchmark does not establish this result. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A: independent approved Color accuracy report; adjudicated labels. |
 | AI-REQ-012 | The system shall identify an attribute marked Needs Review and prompt the user to check its proposed value while retaining review/correction control. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: Needs Review field guidance. |
 | AI-REQ-013 | The system shall explain that an Uncertain attribute could not be identified confidently and offer correction/manual information rather than imply a confirmed prediction. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003, BR-004 | T/I: Uncertain field continuation. |
-| AI-REQ-014 | The system shall support recognition validation against a locked set of at least 200 qualified images, including at least 50 per primary category, and exclude the locked evaluation set from model training/tuning. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A/I: benchmark manifest/counts, qualification, label adjudication and training/tuning exclusion evidence. |
+| AI-REQ-014 | The system shall support recognition validation against a locked set of at least 400 qualified images, including at least 50 per primary category, and exclude the locked evaluation set from model training/tuning. | MVP | FEAT-AI-001, FEAT-GAR-001, FEAT-MET-001; BR-001, BR-003, BR-019 | A/I: benchmark manifest/counts, qualification, label adjudication and training/tuning exclusion evidence. |
 
 The ≥90% category/color targets are separate from rich-attribute expectations and preview criteria. The tables above define qualification, ground truth, locked-set minimum/balance, and accuracy floors; reference operating configuration is defined in Sections 2.3/12.3. Verification distinguishes user-authority integrity from prediction accuracy.
 
@@ -1037,7 +1007,7 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
 | ERR-GAR-001 | Save attempted without the saveable minimum. | The system shall explain missing confirmed Primary Category or Dominant Color and retain the draft for correction rather than save it as an authoritative garment. | User supplies/changes the missing information; existing garments remain unchanged. | FEAT-AI-002, FEAT-GAR-001; BR-002, BR-003 | T: each minimum value missing. |
-| ERR-GAR-002 | Saved garment lacks recommendation-ready information. | The system shall retain a minimum-confirmed saveable garment while explaining required UNKNOWN/unavailable pattern/climate/layering/bulk fields and excluding only decisions requiring those missing fields. | User can enrich the profile; no fabricated descriptor or invalid outfit. | FEAT-GAR-001, FEAT-WAR-001, FEAT-OUT-001; BR-003, BR-005, BR-007, BR-009 | T: category-specific and layered readiness cases. |
+| ERR-GAR-002 | Recommendation eligibility has not been evaluated. | The system shall disclose the unevaluated state without calling the garment invalid, unsuitable or ineligible; the previous missing-compatibility-field error is superseded. | Retain accepted information and ordinary wardrobe access; no enrichment gate. | FEAT-GAR-001, FEAT-WAR-001; BR-003, BR-005, BR-022 | T/I: no unsupported eligibility claim or save/browse/detail gate. |
 
 ### 9.4 Environmental Context
 
@@ -1049,7 +1019,7 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-OUT-001 | Insufficient applicable information for useful advice. | The system shall explain insufficient applicable ready garments/context under Sections 3.5.1/3.7.1 and useful corrections/additions without a fixed onboarding quota. | Wardrobe/manual setup remains available; accepted inventory is not erased. | FEAT-OUT-001, FEAT-GAR-001; BR-007, BR-009, BR-022 | T: no ready role, unknown required field and conditional layering/bulk failure. |
+| ERR-OUT-001 | Engine evaluation policy or evidence unavailable. | The system shall explain unevaluated/incomplete advice without implying invalid or unsuitable garments, a fixed missing role, completed zero or a fabricated product gap. | Retain wardrobe access; future policy work is not a Sprint 2 enrichment gate. | FEAT-OUT-001; BR-007, BR-022 | T/I: future policy deferral and honest unavailable/unevaluated result. |
 | ERR-OUT-002 | Fewer than three distinct valid outfits exist. | The system shall show the actual one, two, or zero distinct valid outfits with a limitation/no-valid-outfit explanation rather than padding with duplicates or invalid combinations. | User may revise context or wardrobe; no fake third option or fabricated wardrobe gap. | FEAT-OUT-001; BR-007, BR-008, BR-009, BR-022 | T/A: known two/one/zero valid sets. |
 | ERR-OUT-003 | No compatible same-context slot replacement. | The system shall retain the fixed outfit and explain no replacement when no owned candidate satisfies the same slot/context and full validity rules. | Other garments remain fixed; no Dislike or Wear Event is inferred. | FEAT-OUT-003; BR-007, BR-008, BR-009, BR-022 | T: no valid same-slot substitute; incompatible/high-noise replacements rejected. |
 
@@ -1064,14 +1034,14 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-ANL-001 | Coverage lacks positive-priority/required ready-role data, or multiplier inputs/completion/capability cannot support an exact result. | The system shall show incomplete/insufficient coverage or gap assessment when sufficient-data conditions fail and distinguish Incomplete/Unavailable multiplier evaluation from exact zero, without fabricated scores or purchase needs. | Improve required context/readiness or retry available evaluation; numeric 0% and +0 require adequate completed assessments. | FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001; BR-014, BR-015, BR-016, BR-022 | T/A: no positive need; missing ready role; incomplete/unavailable versus full exact zero. |
+| ERR-ANL-001 | Coverage lacks positive-priority needs, approved evaluation policy or complete evidence, or Multiplier cannot support exact evaluation. | The system shall show incomplete/insufficient coverage or gap assessment when sufficient-data conditions fail and distinguish Incomplete/Unavailable multiplier evaluation from exact zero, without fabricated scores or purchase needs. | Improve required context/readiness or retry available evaluation; numeric 0% and +0 require adequate completed assessments. | FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001; BR-014, BR-015, BR-016, BR-022 | T/A: no positive need; missing ready role; incomplete/unavailable versus full exact zero. |
 | ERR-ANL-002 | Prior advice/assessment no longer matches current relevant inputs or rules. | The system shall reevaluate affected assessments or mark them Outdated after relevant wardrobe/profile/context/candidate or validity-rule changes, withholding current exact multiplier status until reevaluation. | Historical results remain identifiable; prior counts/previews are not current exact evidence. Weather evidence follows FR-WEATHER-003's 30-minute currentness and 2-second assessment-delay boundary. | FEAT-OUT-001, FEAT-ANL-002, FEAT-MULT-001; BR-007, BR-014, BR-016, BR-022 | T: changes to all relevant input/rule triggers and context/version mismatch. |
 
 ### 9.8 Candidate Information and Shopping Destinations
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-SHOP-001 | Candidate unavailable, insufficient, or unhelpful. | The system shall explain unavailable/insufficient candidate information through the applicable Incomplete or Unavailable evaluation state without inventing attributes, exact counts or current previews. | Wardrobe/gap/context work can continue; no forced purchase path. | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-016, BR-017, BR-018, BR-022 | T: candidate missing readiness fields versus unavailable capability. |
+| ERR-SHOP-001 | Candidate unavailable, insufficient, or unhelpful. | The system shall explain unavailable/insufficient candidate information through the applicable Incomplete or Unavailable evaluation state without inventing attributes, exact counts or current previews. | Wardrobe/gap/context work can continue; no forced purchase path. | FEAT-SHOP-001, FEAT-MULT-001; BR-015, BR-016, BR-017, BR-018, BR-022 | T: candidate unevaluated eligibility fields versus unavailable capability. |
 | ERR-SHOP-002 | Optional commercial data unavailable or uncertain. | The system shall omit/qualify unsupported optional commercial values while retaining otherwise valid utility; price/availability older than 24 hours must be refreshed, clearly stale/last checked, or omitted rather than presented as guaranteed current information. | Usable +N/reasons/previews remain accessible when supported; no invented claim. | FEAT-SHOP-001; BR-018, BR-020, BR-022 | I/T: source/time, 24-hour and older data, qualification/omission with valid count/previews retained. |
 | ERR-SHOP-003 | External shopping navigation cannot proceed. | The system shall explain known absent/unavailable external navigation and retain otherwise valid candidate/gap/multiplier/reasons/previews where available without claiming opening/purchase succeeded, changing utility to +0, invalidating the candidate or creating ownership/transaction state. | User may continue core use/retry where appropriate; retailer operations are outside system control. | FEAT-SHOP-002, FEAT-SHOP-001; BR-018, BR-022, BR-024 | T: failed/absent destination with otherwise valid utility, no side effects and usable core continuation. |
 
@@ -1114,6 +1084,8 @@ These audits establish specification coverage; implementation and successful ver
 | FR-AUTH-015 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: 11/12/128/129-character inputs; spaces/Unicode; no required class mixture. |
 | FR-AUTH-016 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: duplicate case/space variants and distinct provider-alias strings. |
 | FR-AUTH-017 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: valid, expiry-boundary, used-interaction and repeated-reset cases. |
+| FR-AUTH-019 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: recovery rate limits per address and per client; registered/unregistered equivalence. |
+| FR-AUTH-020 | FEAT-AUTH-001 | BR-021 | CAP-01 | T/I: HTTPS link contract; development-only custom scheme. |
 | FR-AUTH-018 | FEAT-AUTH-001 | BR-021 | CAP-01 | T: successfully issue a new password-reset interaction; verify all earlier unused interactions for the account are rejected and the new interaction remains usable. |
 | FR-PROF-001 | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 | BR-010, BR-012, BR-013, BR-023 | CAP-01, CAP-05, CAP-06, CAP-07 | D: first-use journey. |
 | FR-PROF-002 | FEAT-PROF-001 | BR-010 | CAP-01, CAP-06 | T: every defined style choice. |
@@ -1143,26 +1115,28 @@ These audits establish specification coverage; implementation and successful ver
 | FR-GAR-001 | FEAT-GAR-001 | BR-003 | CAP-04 | T: defined categories only. |
 | FR-GAR-002 | FEAT-GAR-001, FEAT-AI-002 | BR-003, BR-002 | CAP-02, CAP-03, CAP-04 | T: defined vocabularies and subtype fallback saving. |
 | FR-GAR-003 | FEAT-AI-002, FEAT-GAR-001 | BR-002, BR-003 | CAP-02, CAP-03, CAP-04 | T: minimum-only profile. |
-| FR-GAR-004 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | T/A: UNKNOWN versus known required fields; saveable/ready separation. |
-| FR-GAR-005 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | T/A: per-category readiness; unknown fields; layering/bulk applicability. |
-| FR-GAR-006 | FEAT-GAR-001 | BR-003 | CAP-04 | T: omitted optional fields versus required applicable bulk. |
-| FR-GAR-007 | FEAT-GAR-001 | BR-003 | CAP-04 | T/I: every layer/fit value and 1–5 bulk bounds. |
-| FR-GAR-008 | FEAT-GAR-001 | BR-003 | CAP-04 | T/I: all color-family/temperature/role values and unknown handling. |
-| FR-GAR-009 | FEAT-GAR-001 | BR-003 | CAP-04 | T: SOLID/NONE; noise 1–5; climate values; preserved style/occasion codes. |
+| FR-GAR-004 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | T/I: valid saving, optional absence and unevaluated eligibility without invalid/unsuitable/ineligible claims. |
+| FR-GAR-005 | FEAT-GAR-001, FEAT-OUT-001 | BR-003, BR-009 | CAP-04, CAP-05, CAP-06 | Superseded: history only; no active readiness verification. |
+| FR-GAR-006 | FEAT-GAR-001 | BR-003 | CAP-04 | T: every optional omission and supplied-value/applicability case. |
+| FR-GAR-007 | FEAT-GAR-001 | BR-003 | CAP-04 | T/I: every approved category-specific detail/value and inapplicable input. |
+| FR-GAR-008 | FEAT-GAR-001 | BR-003 | CAP-04 | T: all approved single Colors; no extra color property. |
+| FR-GAR-009 | FEAT-GAR-001 | BR-003 | CAP-04 | T: every approved optional Pattern/Style; multiple and repeated Styles; Etc and arbitrary values rejected. |
 | FR-GAR-010 | FEAT-GAR-001 | BR-003 | CAP-04 | T: uncertain material case. |
 | FR-GAR-011 | FEAT-GAR-001, FEAT-AI-002 | BR-002 | CAP-02, CAP-03, CAP-04 | T: analysis after correction. |
-| FR-WAR-001 | FEAT-WAR-001 | BR-005 | CAP-03, CAP-07 | T: browse and imageless detail. |
-| FR-WAR-002 | FEAT-WAR-001, FEAT-ANL-001 | BR-005, BR-006 | CAP-03, CAP-06, CAP-07 | I: readiness and usage labels. |
+| FR-GAR-012 | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002 | BR-002, BR-003, BR-005 | CAP-02, CAP-03, CAP-04 | T: optional Brand, fidelity, authority and inspection. |
+| FR-GAR-013 | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002 | BR-002, BR-003, BR-005 | CAP-02, CAP-03, CAP-04 | T: optional decimal/currency Price, pair validation, inspection and non-fabrication. |
+| FR-WAR-001 | FEAT-WAR-001 | BR-005 | CAP-03, CAP-07 | T: browse, pagination and imageless detail. |
+| FR-WAR-002 | FEAT-WAR-001, FEAT-ANL-001 | BR-005, BR-006 | CAP-03, CAP-06, CAP-07 | I: unevaluated eligibility and truthful use labels. |
 | FR-WAR-003 | FEAT-WAR-002 | BR-002, BR-005 | CAP-03, CAP-04 | T: edit/confirm/cancel. |
 | FR-WAR-004 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T: remove/confirm/cancel. |
 | FR-WAR-005 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T/I: immediate current exclusion, minimal historical fields and deletion within 30 days. |
 | FR-WAR-006 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T: affected assessment state. |
 | FR-WAR-007 | FEAT-WAR-003 | BR-005 | CAP-03 | T: match, filter, clear. |
 | FR-WAR-008 | FEAT-WAR-001, FEAT-WAR-003 | BR-005 | CAP-03, CAP-07 | T: empty/no-match/failure states. |
-| FR-OUT-001 | FEAT-OUT-001 | BR-007 | CAP-05, CAP-06 | T/A: ownership/confirmation/readiness/candidate eligibility fixtures. |
+| FR-OUT-001 | FEAT-OUT-001 | BR-007 | CAP-05, CAP-06 | T/A: ownership/confirmation / unevaluated eligibility/candidate eligibility fixtures. |
 | FR-OUT-002 | FEAT-OUT-001 | BR-007, BR-010 | CAP-05, CAP-06 | T/A: context variation. |
 | FR-OUT-003 | FEAT-OUT-001 | BR-009 | CAP-05, CAP-06 | A: invalid high-preference fixture. |
-| FR-OUT-004 | FEAT-OUT-001 | BR-007, BR-009 | CAP-05, CAP-06 | A: allowed 3/4-item composition; invalid slots/layers/bulk/pattern boundaries. |
+| FR-OUT-004 | FEAT-OUT-001 | BR-007, BR-009 | CAP-05, CAP-06 | Deferred: history only; future composition/compatibility approval required. |
 | FR-OUT-005 | FEAT-OUT-001 | BR-007, BR-009, BR-010, BR-011, BR-012 | CAP-05, CAP-06 | A: preference differences among valid sets; no identity-based category rejection. |
 | FR-OUT-006 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | T/A: three-valid fixture. |
 | FR-OUT-007 | FEAT-OUT-001 | BR-008 | CAP-05, CAP-06 | A: reordered duplicates. |
@@ -1173,7 +1147,7 @@ These audits establish specification coverage; implementation and successful ver
 | FR-OUT-012 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | I: unavailable-context reasoning. |
 | FR-OUT-013 | FEAT-OUT-002 | BR-022 | CAP-04, CAP-05 | T/I: three presentation contexts. |
 | FR-OUT-014 | FEAT-OUT-003 | BR-008 | CAP-05 | T: fixed other identities. |
-| FR-OUT-015 | FEAT-OUT-003 | BR-007, BR-009 | CAP-05 | A: fixed-slot replacements at layer/bulk/environment/pattern limits. |
+| FR-OUT-015 | FEAT-OUT-003 | BR-007, BR-009 | CAP-05 | Future approved-policy replacement cases; no old property predicates. |
 | FR-OUT-016 | FEAT-OUT-003 | BR-008, BR-022 | CAP-05 | T: no-alternative fixture. |
 | FR-OUT-017 | FEAT-OUT-003 | BR-008 | CAP-05 | T: interaction isolation. |
 | FR-PERS-001 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: exact target, Like +1 and age-dependent influence. |
@@ -1211,7 +1185,7 @@ These audits establish specification coverage; implementation and successful ver
 | FR-ANL-008 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | A: six need mappings and unique outfit counts per need. |
 | FR-ANL-009 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | I/A: visible assessment basis and disabled priority-zero needs. |
 | FR-ANL-010 | FEAT-ANL-002, FEAT-PROF-001 | BR-014, BR-010 | CAP-01, CAP-06, CAP-07, CAP-08 | A: weights 0/1/2/3; zero excluded; controlled weighted comparison. |
-| FR-ANL-011 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | A/T: exact weighted fixtures; no-active-need/missing-ready-role cases suppress number. |
+| FR-ANL-011 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | A/T: exact weighted fixtures; absent positive needs or approved policy/evidence suppress the number. |
 | FR-ANL-012 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | A: 0/1/2/3/4 valid outfits yield 0%/≈33%/≈67%/100%/100%. |
 | FR-ANL-013 | FEAT-ANL-002 | BR-014 | CAP-07, CAP-08 | A: post-removal baseline. |
 | FR-ANL-014 | FEAT-ANL-002 | BR-014, BR-022 | CAP-07, CAP-08 | T: changed priority, garment attributes and applicable rule version. |
@@ -1221,7 +1195,7 @@ These audits establish specification coverage; implementation and successful ver
 | FR-GAP-003 | FEAT-GAP-001 | BR-015 | CAP-07, CAP-08 | D: gap to utility evaluation. |
 | FR-GAP-004 | FEAT-GAP-001 | BR-014, BR-022, BR-024 | CAP-07, CAP-08 | T: no-gap, incomplete and valid-zero distinction. |
 | FR-GAP-005 | FEAT-GAP-001 | BR-024 | CAP-07, CAP-08 | D: commerce-independent path. |
-| FR-MULT-001 | FEAT-MULT-001 | BR-015, BR-016 | CAP-08, CAP-09 | A: candidate/owned readiness, removed baseline and hypothetical ownership. |
+| FR-MULT-001 | FEAT-MULT-001 | BR-015, BR-016 | CAP-08, CAP-09 | A: candidate/future owned-combination evidence, removed baseline and hypothetical ownership. |
 | FR-MULT-002 | FEAT-MULT-001 | BR-009, BR-016 | CAP-08, CAP-09 | A: matched context/rule-version versus mismatched comparison. |
 | FR-MULT-003 | FEAT-MULT-001 | BR-016 | CAP-08, CAP-09 | A: exact set-difference fixtures and identity permutations. |
 | FR-MULT-004 | FEAT-MULT-001 | BR-016, BR-022 | CAP-08, CAP-09 | T/A: complete 41→58 gives +17; fail each exact-result prerequisite. |
@@ -1265,7 +1239,7 @@ All 22 MVP features remain covered. Functional coverage is exhaustive; supportin
 | FEAT-PROF-002 — Location/environmental context | FR-PROF-001; FR-WEATHER-001–FR-WEATHER-005 | SI-002, HW-003, NFR-PRIV-001, NFR-INT-001, ERR-WEATHER-001 | Covered — MVP |
 | FEAT-AI-001 — Image entry and preview | FR-AI-001–FR-AI-002, FR-AI-004–FR-AI-006, FR-AI-009, FR-AI-011–FR-AI-012; FR-MET-001, FR-MET-004 | DATA-GAR-004, SI-001, HW-001, NFR-PERF-001, NFR-REL-001 | Covered — MVP |
 | FEAT-AI-002 — Confirmation/manual entry | FR-AI-003, FR-AI-007–FR-AI-010, FR-AI-012; FR-GAR-002–FR-GAR-003, FR-GAR-011 | DATA-GAR-003, DATA-INT-001, UI-005, SI-001, HW-001 | Covered — MVP |
-| FEAT-GAR-001 — Rich garment intelligence | FR-GAR-001–FR-GAR-011 | DATA-GAR-001, DATA-INT-001, UI-004, NFR-ACC-001, NFR-MNT-001 | Covered — MVP |
+| FEAT-GAR-001 — Rich garment intelligence | FR-GAR-001–FR-GAR-013 | DATA-GAR-001, DATA-INT-001, UI-004, NFR-ACC-001, NFR-MNT-001 | Covered — MVP |
 | FEAT-WAR-001 — Wardrobe overview/detail | FR-WAR-001–FR-WAR-002, FR-WAR-008 | DATA-GAR-001, UI-001, NFR-SEC-001, NFR-AVL-001, NFR-USE-001 | Covered — MVP |
 | FEAT-WAR-002 — Edit/remove garments | FR-WAR-003–FR-WAR-006 | DATA-GAR-005, DATA-INT-002, DATA-RET-002 | Covered — MVP |
 | FEAT-WAR-003 — Search/filter | FR-WAR-007–FR-WAR-008 | See defining FR rows. | Covered — MVP |
@@ -1291,7 +1265,7 @@ BR-001–BR-024 remain accounted for. Conditional BR-020 information depends on 
 |---|---|---|
 | BR-001 | FR-AI-001–FR-AI-002, FR-AI-004–FR-AI-006, FR-AI-009, FR-AI-011–FR-AI-012; FR-MET-001, FR-MET-004 | Covered — direct software behavior. |
 | BR-002 | FR-AI-007–FR-AI-009; FR-GAR-002–FR-GAR-003, FR-GAR-011; FR-WAR-003 | Covered — direct software behavior. |
-| BR-003 | FR-AI-006; FR-GAR-001–FR-GAR-010 | Covered — direct software behavior. |
+| BR-003 | FR-AI-006; FR-GAR-001–FR-GAR-010, FR-GAR-012–FR-GAR-013 | Covered — direct software behavior. |
 | BR-004 | FR-AI-003, FR-AI-012 | Covered — direct software behavior. |
 | BR-005 | FR-AI-008, FR-AI-010; FR-WAR-001–FR-WAR-008 | Covered — direct software behavior. |
 | BR-006 | FR-WAR-002; FR-WEAR-001, FR-WEAR-004, FR-WEAR-006–FR-WEAR-008, FR-WEAR-010, FR-WEAR-012; FR-PERS-009; FR-ANL-001–FR-ANL-007; FR-MET-004 | Covered — direct software behavior. |
@@ -1331,7 +1305,7 @@ Capabilities retain BRD identity and current PRD feature links; feature coverage
 | CAP-09 — Wardrobe Multiplier | FEAT-MULT-001, FEAT-SHOP-001, FEAT-MET-001 | Covered |
 | CAP-10 — Strategic Shopping | FEAT-SHOP-001, FEAT-SHOP-002, FEAT-MET-001 | Covered |
 
-Coverage totals: **147 functional requirements; 22/22 features; 24/24 business requirements; 10/10 capabilities**. The SRS contains 260 requirement IDs: 256 preserved existing IDs and four additional requirements. BG-01–BG-04 retain the BRD mappings; verification remains planned evidence.
+Coverage totals: **149 retained functional identifiers, including superseded/deferred entries; 22/22 features; 24/24 business requirements; 10/10 capabilities**. The SRS contains 262 requirement IDs: all 260 prior IDs preserved and FR-GAR-012/013 added. BG-01–BG-04 retain the BRD mappings; verification remains planned evidence.
 
 ## 11. Glossary
 
@@ -1343,12 +1317,12 @@ Coverage totals: **147 functional requirements; 22/22 features; 24/24 business r
 | User Entered | Provenance of manually supplied information; the entry becomes authoritative through confirmation. |
 | High Confidence / Needs Review / Uncertain | User-facing prediction-confidence meanings; localized labels do not change these semantics. Confidence does not replace confirmation. |
 | Garment | Individually distinguishable clothing item in one supported primary category; active ownership differs from removed historical representation. |
-| Garment Profile | Authoritative user-confirmed category/color plus bounded classification, pattern/noise, layering/bulk/fit, environmental and color descriptors, optional rich information, and applicable provenance/uncertainty. |
+| Garment Profile | Accepted applicable values from exactly the 13-property source catalogue; Category and one Color are required, Material is an optional distinct-value collection, and metadata/images remain separate. Eligibility is not evaluated. |
 | Saveable Garment | Entry with user-confirmed Primary Category and Dominant Color; neither an image nor every rich attribute is mandatory. |
-| Recommendation-Ready Garment | Entry with known/justifiably derived required category/color/pattern/climate information, applicable TOP/OUTERWEAR layering and conditional layered bulk under Section 3.5.1. UNKNOWN required fields do not satisfy the affected decision; saving remains separate. |
+| Recommendation-Ready Garment | Superseded current-state term. The current phase reports eligibility as not evaluated; future engine policy defines eligibility. |
 | Outfit | Combination of identified garments evaluated under a context. Reordering the same identities does not create another unique outfit. |
 | Outfit Recommendation | Valid outfit proposed from current owned garments with relevant context and understandable reasons. |
-| Hard Validity Constraint | Prerequisite in Section 3.7.1: exact slot composition, active confirmed ownership/readiness, applicable layer/bulk/environment suitability and severe pattern/noise limits; enforced before ranking. |
+| Hard Validity Constraint | A future approved engine constraint applied before ranking. Current authorization/ownership/identity remain defined; no fixed composition or removed-property predicate is active. |
 | Soft Personalized Ranking | Preference-based ordering of already-valid candidates; it cannot convert an invalid outfit into a valid one. |
 | Current Occasion | Occasion for a particular recommendation request, drawn from the defined occasion vocabulary. |
 | Common Occasion Needs | Ongoing clothing needs/priorities informing the Personalized Everyday Capsule; distinct from current request occasion. |
@@ -1368,12 +1342,12 @@ Coverage totals: **147 functional requirements; 22/22 features; 24/24 business r
 | Refresh Session | A login-session authorization context with maximum 30-day lifetime and rotating Refresh Token; independent devices may have separate sessions. Reuse revokes the affected session; password reset revokes all account Refresh Sessions. |
 | Logical Wear Action | One explicit intention to report a wearing instance, unchanged by retry/delivery/reprocessing. A new explicit initiation is a new action. |
 | Environmental Band | Active temperature category: HOT ≥30°C; WARM 24–<30°C; MILD 18–<24°C; COOL 12–<18°C; COLD <12°C. Missing weather is disclosed and handled through remaining validity. |
-| Visual Noise | The 1–5 visual-complexity scale; ≥4 or HIGH density makes a TOP/BOTTOM/OUTERWEAR item severe for the at-most-one conflict count. |
+| Visual Noise | Superseded garment attribute; not part of the approved model or an active compatibility rule. |
 | Need Coverage | Ratio min(ValidDistinctOutfitsForNeed / 3, 1), displayed as a percentage for a mapped relevant capsule need. |
 | Coverage Score | Synonym for the Wardrobe Coverage Score: 100 × priority-weighted sum of Need Coverage divided by total positive priority weight. |
-| Exact Multiplier | Completed current same-context/rule-version comparison satisfying all readiness/context/deduplication prerequisites; may show exact +N. |
+| Exact Multiplier | Completed current same-context/rule-version comparison satisfying all approved-policy/context/completion/deduplication prerequisites; may show exact +N. |
 | Evaluated Zero | Complete exact evaluation with an empty newly enabled outfit set; only this establishes +0 New Outfits. |
-| Incomplete Multiplier | Required attributes/owned readiness or reliable full evaluation are insufficient; no exact +N. |
+| Incomplete Multiplier | Required attributes/future owned-combination evidence or reliable full evaluation are insufficient; no exact +N. |
 | Unavailable Multiplier | Evaluation capability cannot operate; no exact +N or false +0. |
 | Outdated Multiplier | Relevant inputs/rules changed after assessment; reevaluation is required for current exact presentation, without an arbitrary TTL. |
 | Purpose-Limited Personal Data | Private user information used only as necessary for functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; no MVP AI training/improvement. |
@@ -1438,7 +1412,7 @@ Reference hardware/network conditions define reproducible acceptance evidence; t
 | Screen readers | Validate applicable core journeys with Android TalkBack and iOS VoiceOver. | NFR-ACC-002 |
 | Interactive semantics | Meaningful accessible names, roles and states for applicable core interactive elements. | NFR-ACC-002 |
 | Text scaling | Core journeys remain operable and primary actions accessible at scaling up to 200%. | NFR-ACC-002 |
-| State meaning | Confidence, readiness, Incomplete/Unavailable/Outdated, Removed from wardrobe and hypothetical states have understandable labels beyond color alone. | NFR-ACC-001 |
+| State meaning | Confidence, unevaluated eligibility, Incomplete/Unavailable/Outdated, Removed from wardrobe and hypothetical states have understandable labels beyond color alone. | NFR-ACC-001 |
 | Primary touch targets | Platform-appropriate minimum targets approximately 48 dp on Android and 44 pt on iOS. | NFR-ACC-002 |
 
 These are MVP validation criteria, not WCAG, Android/iOS accessibility or legal-compliance certification. Detailed test plans and quality-attribute scenarios remain separate downstream artifacts.
@@ -1449,7 +1423,7 @@ This v0.3 Baseline Draft is ready for synchronized requirements review when Prod
 
 - All 22 MVP features, BR-001–BR-024 and CAP-01–CAP-10 remain source-linked; all existing requirement IDs retain their identity.
 - Image qualification, locked benchmark/accuracy floors, confidence/authority, unchanged timing boundaries and reference measurement conditions are explicit.
-- Access/session/password/email/recovery policy, garment readiness and hard-validity-before-soft-ranking remain consistent.
+- Access/session/password/email/recovery policy, unevaluated garment eligibility and future approved validity-before-ranking remain consistent.
 - Logical Wear identity, intentional repeats, original event-local history, completed elapsed-time aging and survivor-group anchors remain deterministic after accepted correction/removal.
 - Coverage/gap sufficiency and formulas, and all five Multiplier states/unique-valid set comparisons, preserve the existing domain meaning.
 - Purpose-limited private data use, no MVP personal-data training, minimal external exchange, 30-day removed-data deletion and 90-day user-linked measurement limits reach relevant requirements/rules/use cases.

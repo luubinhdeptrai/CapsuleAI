@@ -1,4 +1,6 @@
 @startuml
+' Final property-model decision: no current readiness algorithm or category-role mapping.
+' Future evaluation branches require approved engine policy; no removed fields are required.
 ' Source Use Case: UC-019 — View Wardrobe Coverage
 ' Primary Specification: ../use-cases/UC-019-view-wardrobe-coverage.md
 ' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
@@ -68,11 +70,12 @@ mapped occasions, style and available environment;
             :Keep any prior Outdated status distinct;
         endif
     else (Insufficient)
-        :Explain missing priorities, ready roles or required inputs;
+        :Explain missing priorities, approved policy or evaluation evidence;
         :Show Insufficient Information; withhold numeric 0%;
         note right
-          Numeric score needs a positive priority and ready
-          TOP, BOTTOM and FOOTWEAR; OUTERWEAR only if required.
+          Numeric score needs positive priorities and complete
+          evidence under a future approved engine policy.
+          No old fixed roles or property-readiness predicates.
         end note
     endif
     |User|
@@ -82,4 +85,8 @@ repeat while (Request again after revision/recovery?) is (Yes) not (No)
 :Finish with stated current or limited assessment outcome;
 stop
 
+note right
+  Category is not a fixed outfit role.
+  Composition and compatibility policy is deferred for all categories.
+end note
 @enduml

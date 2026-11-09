@@ -1,5 +1,6 @@
 package com.capsuleai.identity.adapter.out.security;
 
+import com.capsuleai.identity.adapter.jwt.JwtClaimNames;
 import com.capsuleai.identity.application.ports.AccessTokenIssuer;
 import java.time.Instant;
 import java.util.Objects;
@@ -12,9 +13,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
 /** Signs HS256 access tokens naming the account ({@code sub}) and login session ({@code sid}). */
 public final class JwtAccessTokenIssuer implements AccessTokenIssuer {
-
-    /** Claim carrying the login-session id. Read back by the security adapter. */
-    public static final String SESSION_ID_CLAIM = "sid";
 
     private final JwtEncoder encoder;
     private final String issuer;
@@ -32,7 +30,7 @@ public final class JwtAccessTokenIssuer implements AccessTokenIssuer {
                 .subject(accountId.toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
-                .claim(SESSION_ID_CLAIM, sessionId.toString())
+                .claim(JwtClaimNames.SESSION_ID, sessionId.toString())
                 .build();
         return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }

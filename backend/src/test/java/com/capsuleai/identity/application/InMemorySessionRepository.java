@@ -43,6 +43,19 @@ final class InMemorySessionRepository implements SessionRepository {
     }
 
     @Override
+    public synchronized int revokeAllActiveForAccount(UUID accountId, RevocationReason reason, Instant revokedAt) {
+        int revoked = 0;
+        for (LoginSession session : List.copyOf(sessionsById.values())) {
+            if (session.belongsTo(accountId) && session.isUsableAt(revokedAt)) {
+                sessionsById.put(session.id(), new LoginSession(session.id(), session.accountId(),
+                        session.establishedAt(), session.expiresAt(), revokedAt, reason));
+                revoked++;
+            }
+        }
+        return revoked;
+    }
+
+    @Override
     public synchronized Optional<LockedRefreshCredential> lockByRefreshToken(RefreshTokenHash hash) {
         RefreshToken token = tokensByHash.get(hash);
         if (token == null) {

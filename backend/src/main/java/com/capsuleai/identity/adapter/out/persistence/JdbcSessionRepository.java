@@ -25,7 +25,7 @@ public final class JdbcSessionRepository implements SessionRepository {
     @Override
     public void create(LoginSession session, RefreshTokenHash firstRefreshToken) {
         jdbc.sql("""
-                        INSERT INTO identity_session (id, account_id, established_at, expires_at)
+                        INSERT INTO identity.identity_session (id, account_id, established_at, expires_at)
                         VALUES (:id, :accountId, :establishedAt, :expiresAt)
                         """)
                 .param("id", session.id())
@@ -40,7 +40,7 @@ public final class JdbcSessionRepository implements SessionRepository {
     public Optional<LoginSession> findById(UUID sessionId) {
         return jdbc.sql("""
                         SELECT id, account_id, established_at, expires_at, revoked_at, revocation_reason
-                        FROM identity_session
+                        FROM identity.identity_session
                         WHERE id = :id
                         """)
                 .param("id", sessionId)
@@ -51,7 +51,7 @@ public final class JdbcSessionRepository implements SessionRepository {
     @Override
     public boolean revoke(UUID sessionId, UUID accountId, RevocationReason reason, Instant revokedAt) {
         int updated = jdbc.sql("""
-                        UPDATE identity_session
+                        UPDATE identity.identity_session
                         SET revoked_at = :revokedAt, revocation_reason = :reason
                         WHERE id = :id AND account_id = :accountId AND revoked_at IS NULL
                         """)
@@ -64,6 +64,19 @@ public final class JdbcSessionRepository implements SessionRepository {
     }
 
     @Override
+    public int revokeAllActiveForAccount(UUID accountId, RevocationReason reason, Instant revokedAt) {
+        return jdbc.sql("""
+                        UPDATE identity.identity_session
+                        SET revoked_at = :revokedAt, revocation_reason = :reason
+                        WHERE account_id = :accountId AND revoked_at IS NULL AND expires_at > :revokedAt
+                        """)
+                .param("revokedAt", JdbcTime.toDatabase(revokedAt))
+                .param("reason", reason.name())
+                .param("accountId", accountId)
+                .update();
+    }
+
+    @Override
     public Optional<LockedRefreshCredential> lockByRefreshToken(RefreshTokenHash hash) {
         return jdbc.sql("""
                         SELECT t.id          AS token_id,
@@ -71,8 +84,8 @@ public final class JdbcSessionRepository implements SessionRepository {
                                t.consumed_at AS token_consumed_at,
                                s.id, s.account_id, s.established_at, s.expires_at,
                                s.revoked_at, s.revocation_reason
-                        FROM identity_refresh_token t
-                        JOIN identity_session s ON s.id = t.session_id
+                        FROM identity.identity_refresh_token t
+                        JOIN identity.identity_session s ON s.id = t.session_id
                         WHERE t.token_hash = :tokenHash
                         FOR UPDATE OF t, s
                         """)
@@ -90,7 +103,7 @@ public final class JdbcSessionRepository implements SessionRepository {
     @Override
     public void consumeRefreshToken(UUID refreshTokenId, Instant consumedAt) {
         int updated = jdbc.sql("""
-                        UPDATE identity_refresh_token
+                        UPDATE identity.identity_refresh_token
                         SET consumed_at = :consumedAt
                         WHERE id = :id AND consumed_at IS NULL
                         """)
@@ -110,7 +123,7 @@ public final class JdbcSessionRepository implements SessionRepository {
 
     private void insertRefreshToken(UUID sessionId, RefreshTokenHash tokenHash, Instant issuedAt) {
         jdbc.sql("""
-                        INSERT INTO identity_refresh_token (id, session_id, token_hash, issued_at)
+                        INSERT INTO identity.identity_refresh_token (id, session_id, token_hash, issued_at)
                         VALUES (:id, :sessionId, :tokenHash, :issuedAt)
                         """)
                 .param("id", UUID.randomUUID())

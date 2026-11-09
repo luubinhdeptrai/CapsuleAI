@@ -1,8 +1,12 @@
 @startuml
+' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
+' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Data View
-' Version: 0.1; Status: Baseline Draft; Presentation refactor: 2026-10-11.
+' Version: 0.3; Status: Baseline Draft; Product-property synchronization: 2026-11-05.
+' 2026-11-06: physical ownership note for the Product Owner-approved refinement AR-01-AR-08
+' (selected-architecture-decisions.md Section 8). Logical concepts and owners are unchanged.
 ' Purpose: Simple logical data ownership overview; concepts are NOT physical tables.
-' Primary Sources: SRS v0.3; Business Rules v0.1.2; ADD v0.1.4;
+' Primary Sources: SRS v0.4; Business Rules v0.2; ADD v0.1.4;
 ' Selected Architecture Decisions v0.1.5 (ADA-001-018 unchanged);
 ' accepted Logical, Implementation and Deployment Views v0.1.
 ' Process: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 4.3/24/40/42/46.
@@ -12,7 +16,7 @@
 ' Identity retains distinct account/session/reset authority (ADD 9.1; SRS 3.1.1).
 ' Profile includes declared needs/preferences and selected location; request/environment inputs
 ' remain distinct (SRS 3.2/3.3; Logical View's Personal Context and UC-006 authority).
-' Garment includes its confirmed profile; readiness remains derived Wardrobe policy, not ownership
+' Garment includes its confirmed profile; eligibility is not evaluated and is separate from ownership
 ' or a second garment (DATA-GAR-001-005; BRULE-GAR-001-003; ADD 9.5).
 ' Advice and utilization/effective evidence are separate derived meanings under the same owner
 ' (SRS 3.7-3.13; ADD 9.2/9.7); Feedback never implies Wear.
@@ -33,7 +37,7 @@
 ' unresolved detailed design (ADD 9.2-9.9); no shared action/work entity or new decision is selected.
 ' Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
 
-title CapsuleAI - Data Ownership Overview\nData View v0.1 | Baseline Draft
+title CapsuleAI - Data Ownership Overview\nData View v0.2 | Baseline Draft
 allowmixing
 top to bottom direction
 hide empty members
@@ -67,7 +71,7 @@ package "Personal Context" as Context #F0FDFA {
 }
 
 package "Wardrobe" as Wardrobe #F0FDF4 {
-    class "Garment\nConfirmed profile" as Garment #DCFCE7
+    class "Garment\nConfirmed profile\n13 approved fashion properties" as Garment #DCFCE7
     class "AI Proposal / Review Draft\nPython output; unconfirmed" as Draft #E2E8F0
     class "Media Reference" as MediaReference #DCFCE7
     Draft --> Garment : user confirmation / correction
@@ -126,6 +130,17 @@ Media -[hidden]down-> DB
 
 note as Boundaries
   All owners retain necessary state in ONE PostgreSQL.
+  AR-01-AR-04: each owner has its own schema - identity, personal_context, wardrobe,
+  outfit_advice_and_use, wardrobe_intelligence, product_measurement; tables <schema>_<name>.
+  No cross-owner join, table access, view or foreign key; owner ids are plain values.
+  Implemented today: identity schema (Flyway V6); others are created by their first story.
+  Garment: 13 source-approved properties across eight categories.
+  Category + one Color + confirmation save; other applicable values optional.
+  Material is a distinct-value collection; category details follow source applicability.
+  Optional Price = user-reported decimal purchase amount + ISO 4217 currency.
+  Preserve every accepted value; eligibility is not evaluated.
+  All engine composition/compatibility policy is deferred (PRD OPQ-015).
+  These are logical properties, not implemented columns or endpoints.
   Derived / input information does not imply permanent storage.
   Hypothetical previews create no ownership, purchase or Wear.
   History preserves past meaning, never current ownership.
@@ -138,5 +153,9 @@ legend bottom
   |<#DCFCE7> Authoritative |<#FEF3C7> Derived / evaluated |<#EDE9FE> Hypothetical |
   |<#DBEAFE> History / reference / input |<#E2E8F0> Unconfirmed / external evidence / resource |<#FCE7F3> Measurement |
   Boxes represent logical information concepts, not database tables.
+  Final property model: exactly 13 source-approved properties; all applicable
+  creation/persistence/detail fields belong to selected Sprint 2 work.
+  Future composition/compatibility/eligibility policy is deferred.
+  No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
 @enduml

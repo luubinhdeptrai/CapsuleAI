@@ -1,5 +1,9 @@
 # CapsuleAI — Focused Backlog Refinement Review
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
+**Final scope clarification — 2026-11-05:** All 13 applicable creation/validation/persistence properties are now in US-GAR-001/PBI-006, with complete detail retrieval in US-WAR-002/PBI-007 and identifiable collection summaries in US-WAR-001. PBI-008 retains later editing only. Every source-listed vocabulary is approved; engine eligibility/composition policy is deferred for all categories and never blocks saving/browsing/detail. Existing story identities, parent PBIs, global order and four-story Sprint 2 selection remain.
+
 ## 1. Refinement Overview
 
 | Field | Value |
@@ -55,7 +59,7 @@ The purpose is to prepare understandable, feasible candidates for future plannin
 | US-AUTH-005 | PBI-005 | Request-only work would not recover access; the existing story coherently includes validity/replacement, completion and return to login. | AC-05 makes revoked-session protected denial explicit; add existing authorization/disclosure/error and authority traces. | Delivery/opening feasibility Q-03; complexity/evidence Q-05; shared Q-02/Q-04. |
 | US-GAR-001 | PBI-006 | Confirmation, minimum input, cancellation, denied access and uncertain save belong to one usable creation outcome. | AC-12 explicitly bounds repeated delivery/retry to one logical addition; add DATA-INT-001/004 and authorization/privacy traces. | Mobile acceptance/inspection and integrity evidence; Developers' sizing: Q-02/Q-04/Q-05. |
 | US-WAR-001 | PBI-007 | Empty/populated value is coherent; loading/unavailable/unauthorized are already distinct from empty. | Preserve AC; add explicit security/privacy/transport/accessibility and completion/evidence trace; clarify fixture/handoff discussion. | Supported-client and cross-account evidence, sizing: Q-02/Q-04/Q-05. |
-| US-WAR-002 | PBI-007 | Accepted profile/readiness inspection remains useful without Wear reporting or rich fields; existing AC-06/07 correctly qualify use evidence. | Preserve AC; strengthen security/privacy/transport/accessibility and evidence trace; retain conditional use-information boundary. | Supported-client, current-ownership and return-path evidence, sizing: Q-02/Q-04/Q-05. |
+| US-WAR-002 | PBI-007 | Accepted accepted profile / unevaluated eligibility inspection remains useful without Wear reporting or rich fields; existing AC-06/07 correctly qualify use evidence. | Preserve AC; strengthen security/privacy/transport/accessibility and evidence trace; retain conditional use-information boundary. | Supported-client, current-ownership and return-path evidence, sizing: Q-02/Q-04/Q-05. |
 
 ## 4. Detailed Findings
 
@@ -102,7 +106,7 @@ Five existing criteria were clarified without adding or renumbering AC:
 
 Each story's Section 9 now links the existing DoD/Test Strategy and applicable missing transport, ownership/privacy or accessible-state references. These were obligations already expressed in source requirements and story behavior; they do not defer protection to PBI-041 or accessibility to PBI-036. The registration/login/browse/detail stories retain existing cancellation, invalid, empty/unavailable or uncertain-state criteria as applicable; no extra criteria were invented to enlarge those stories.
 
-For later verification, use normalized-email/password boundary examples, two synthetic accounts and separate sessions, controlled expiry instants, imageless minimum-only/unready garments and interrupted-action examples. Real session/persistence/security integration is necessary where mocks cannot establish the source obligation. Device/Vietnamese evidence applies to delivered interactions; future AI/performance/full-loop campaigns remain with their owning capabilities and triggered DoD criteria.
+For later verification, use normalized-email/password boundary examples, two synthetic accounts and separate sessions, controlled expiry instants, imageless minimum-only garments and interrupted-action examples. Real session/persistence/security integration is necessary where mocks cannot establish the source obligation. Device/Vietnamese evidence applies to delivered interactions; future AI/performance/full-loop campaigns remain with their owning capabilities and triggered DoD criteria.
 
 ### 4.5 INVEST diagnostic and unresolved source matters
 

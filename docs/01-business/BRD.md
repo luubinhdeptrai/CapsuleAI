@@ -1,23 +1,26 @@
 # CapsuleAI — Business Requirements Document
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
 | Document Name | CapsuleAI — Business Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.3 |
+| Version | 0.6 |
 | Status | Baseline Draft |
-| Last Updated | 2026-10-05 |
+| Last Updated | 2026-11-05 |
 | Primary Owner / Role | Business Analyst / Product; accountable to the Product Owner |
 | Approval Authority | Product Owner / Product Decision Authority |
 | Reviewers / Stakeholders | Founding / Product Team, end-user representatives, UX/Product Design, Tech Lead, AI/ML Engineering, QA/Testing |
 | Development Model | Scrum / Agile; artifacts maintained in the repository |
 | Authoritative Location | `docs/01-business/BRD.md` |
+| Product revision | 2026-11-05: final 13-property/source-vocabulary approval; all applicable properties included in Sprint 2; removed attributes and old eligibility/composition predicates superseded with IDs retained. |
 
 ### 1.1 Purpose and Authority
 
-This BRD establishes the business intent, users, value, capabilities, and initial scope of CapsuleAI. It is the business source of truth for downstream product and requirements work once accepted. The approved decisions in the BRD creation request established the v0.1 business baseline. The v0.2 revision added business visualizations; this v0.3 revision resolves the capsule-needs and interface-language decisions and clarifies user-reported wear activity. Core positioning, scope, and stable business IDs are preserved; the draft status records that document review and acceptance have not yet occurred.
+This BRD establishes the business intent, users, value, capabilities, and initial scope of CapsuleAI. It is the business source of truth for downstream product and requirements work once accepted. The approved decisions in the BRD creation request established the v0.1 business baseline. The v0.2 revision added business visualizations; the v0.3 revision resolved the capsule-needs and interface-language decisions and clarified user-reported wear activity. The v0.4 revision adopts the later approved taxonomy/property change. Core positioning, unrelated scope, and stable business IDs are preserved; the draft status records that document review and acceptance have not yet occurred.
 
 The [Scrum development workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), especially Sections 6, 39–41, 46, and 49, governs artifact ownership, order, traceability, and change propagation. Product behavior belongs in the PRD; testable software requirements in the SRS; domain invariants in Business Rules; architecture drivers and design in ASR/ADD. This BRD does not replace those artifacts.
 
@@ -27,18 +30,20 @@ The [Scrum development workflow](../../Initial%20files/CapsuleAI_Scrum_Developme
 |---|---|---|
 | SRC-01 | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) | Process authority; artifact boundaries, ownership, and traceability. |
 | SRC-02 | User-approved BRD creation request, October 5, 2026 | Highest authority for the business decisions consolidated in this document and its Baseline Decision Summary. |
-| SRC-03 | [Existing Product Requirements Document](../../Product%20Requirements%20Document_%20CapsuleAI.md) | Detailed product context and existing journeys, subject to SRC-02 and later explicit project decisions. |
+| SRC-03 | Existing Product Requirements Document (historical source; not present in this checkout) | Detailed product context and existing journeys, subject to SRC-02 and later explicit project decisions. |
 | SRC-04 | [CapsuleAI Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md) | Consolidated source context; Section 15 contains explicit later decisions. Suggested mappings and priority interpretations are not additional business commitments. |
 | SRC-05 | [DA 2 Proposal](../../Initial%20files/DA%202%20Proposal.md) | Earlier problem, persona, and value-proposition material. |
 | SRC-06 | [Official Project Outline](../../Initial%20files/%C4%90%E1%BB%80%20C%C6%AF%C6%A0NG%20%C4%90%E1%BB%92%20%C3%81N%202_%20H%E1%BB%86%20TH%E1%BB%90NG%20QU%E1%BA%A2N%20L%C3%9D%20V%C3%80%20G%E1%BB%A2I%20%C3%9D%20PH%E1%BB%90I%20%C4%90%E1%BB%92%20TH%C3%94NG%20MINH.md) | Earlier account, wardrobe, contextual styling, and gap-analysis context. |
-| SRC-07 | [Business Analysis notes](../../Business%20Analysis.docx) | Exploratory commercial and marketing notes; not approved MVP scope. |
-| SRC-08 | [Food Delivery BRD reference](../../docs%20tham%20kh%E1%BA%A3o/BRD_FoodDelivery.md) | Documentation-quality reference for context, conceptual objects, and business processes; no CapsuleAI domain authority. |
+| SRC-07 | Business Analysis notes (historical source; not present in this checkout) | Exploratory commercial and marketing notes; not approved MVP scope. |
+| SRC-08 | Food Delivery BRD reference (historical source; not present in this checkout) | Documentation-quality reference for context, conceptual objects, and business processes; no CapsuleAI domain authority. |
 | SRC-09 | User-approved BRD visual enhancement request, October 5, 2026 | Mermaid presentation policy and visual revision scope; preserves approved business decisions. |
 | SRC-10 | User-approved product-decision synchronization request, October 5, 2026 | Resolves the personalized everyday capsule-needs approach, Vietnamese initial UI, and multiple user-reported wear events. Detailed product decisions are maintained in the [normalized PRD](../02-product/PRD.md). |
+| SRC-11 | User-approved eight-category/property request and explicit purchase-price/currency approval, recorded November 5, 2026 | Supersedes earlier category scope and adds optional Brand/Price. Product details and open follow-ups are in PRD Sections 13/34.1. |
+| SRC-12 | Final Product Owner 13-property/vocabulary and Sprint 2 decision, 2026-11-05; [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) | All listed values approved; obsolete properties/readiness rules superseded; all applicable properties in selected Sprint 2 stories. |
 
-The repository provides Markdown versions of the proposal, outline, and PRD referenced by DOCX name in earlier documents. These versions and the available Business Analysis DOCX were reviewed. The README identifies the product only; no separate architecture reference documents were present. SRC-08 was reviewed for visual organization and supporting explanations only; its domain requirements are not transferred to CapsuleAI.
+The repository provides Markdown versions of the proposal, outline, and PRD referenced by DOCX name in earlier documents. These versions and the then-available Business Analysis DOCX were reviewed during baseline authoring. Some historical sources are no longer present, as marked above. At baseline authoring, the README identified the product only and no separate architecture reference documents were present; current architecture artifacts are maintained separately. SRC-08 was reviewed for visual organization and supporting explanations only; its domain requirements are not transferred to CapsuleAI.
 
-Conflicts are resolved in this order: SRC-02 and the later approved business clarifications in SRC-10; other later explicit CapsuleAI decisions; the most detailed internally consistent product specification; earlier proposals. The Baseline Decision Summary records the resulting decisions. In particular, active behavioral personalization, the richer garment profile, inclusive optional profile fields, and the contextual Wardrobe Coverage Score supersede narrower earlier descriptions. The 90% recognition and 3–5 second processing targets also match SRC-04 Sections 15.2–15.3. Earlier growth projections and exploratory marketing ideas are not baseline commitments. Legacy competitor observations are not treated as verified current market evidence.
+Conflicts are resolved in this order: SRC-02 and the later approved business clarifications in SRC-10/SRC-11; other later explicit CapsuleAI decisions; the most detailed internally consistent product specification; earlier proposals. The Baseline Decision Summary records the resulting decisions. In particular, active behavioral personalization, the richer garment profile, inclusive optional profile fields, and the contextual Wardrobe Coverage Score supersede narrower earlier descriptions. The 90% recognition and 3–5 second processing targets also match SRC-04 Sections 15.2–15.3. Earlier growth projections and exploratory marketing ideas are not baseline commitments. Legacy competitor observations are not treated as verified current market evidence.
 
 Stable IDs in this BRD identify business intent. Subsequent artifacts must reference them rather than recreate competing business baselines. Accepted changes retain IDs and propagate to affected artifacts through repository review.
 
@@ -49,6 +54,9 @@ Stable IDs in this BRD identify business intent. Subsequent artifacts must refer
 | 0.1 | 2026-10-05 | Initial business baseline draft. |
 | 0.2 | 2026-10-05 | Added business value loop, system context, conceptual domain model, and business process diagrams; no intentional change to approved business scope or stable IDs. |
 | 0.3 | 2026-10-05 | Resolved capsule-needs and initial-interface-language business questions and synchronized wear-history semantics; no change to core product positioning, scope, or stable IDs. |
+| 0.4 | 2026-11-05 | Approved eight-category wardrobe taxonomy and optional Brand/purchase Price; existing goals and business IDs preserved, product-policy follow-ups explicit. |
+| 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
+| 0.6 | 2026-11-07 | Product Owner decision: Style is a set of zero or more distinct approved values, like Material (property table synchronized with the garment-property authority); no change to business scope or IDs. |
 
 ### 1.4 Business Visualization Policy
 
@@ -99,7 +107,7 @@ The longer-term direction is a trusted wardrobe companion that improves as users
 | Pillar | Value Delivered | Connection to the Value Loop |
 |---|---|---|
 | AI Digital Closet | Reduce entry effort and create a reliable wardrobe representation through assisted understanding and user confirmation. | Confirmed garment intelligence provides the foundation for styling and analysis. |
-| Context-Aware Styling | Reduce daily decision effort and reveal useful combinations of owned garments. | Context and feedback make subsequent advice more relevant and expose utilization patterns. |
+| Context-Aware Styling | Future owned-wardrobe advice with relevant context and personalization, under an explicitly approved engine policy; property-based eligibility is deferred. |
 | Wardrobe Intelligence & Strategic Shopping | Explain unmet clothing needs and assess candidate purchases by incremental outfit utility. | Coverage, gaps, and simulated expansion support deliberate wardrobe improvement. |
 
 The differentiation is the connection between reliable garment data, daily recommendations, behavioral feedback, and marginal purchase utility. A recommendation is evaluated against the user's wardrobe and needs rather than presented as a generic product promotion. Wardrobe improvement can result from rediscovering existing clothing; a purchase is optional.
@@ -258,7 +266,7 @@ A Garment is an owned wardrobe item; a Candidate Garment is a possible addition 
 | User | A person receiving CapsuleAI advice and controlling their wardrobe information and preferences. | Owns a Wardrobe, maintains a Personalization Profile, receives recommendations, provides Feedback, and records Wear History. |
 | Personalization Profile | Declared preferences and optional personal context used to make advice relevant. | Belongs to the User and informs styling and the needs assessed through Wardrobe Coverage; it does not impose gender/body restrictions. |
 | Wardrobe | The user's current digital representation of clothing they own. | Contains Garments and provides the baseline for outfit advice, coverage, gaps, and candidate utility. |
-| Garment | An owned clothing item within the initial categories. | Belongs to a Wardrobe, has a Garment Profile, and participates in Outfits. |
+| Garment | An owned wardrobe item within the eight supported categories. | Belongs to a Wardrobe, has a Garment Profile, and participates in Outfits. |
 | Garment Profile | The authoritative user-confirmed description of a garment, supported by confidence-aware AI predictions or manual entry. | Describes a Garment and supports compatibility, context, coverage, and utilization understanding. |
 | Outfit | A meaningful combination of clothing assessed for compatibility and context. | Daily outfits combine owned Garments; hypothetical previews may also include a Candidate Garment. |
 | Outfit Recommendation | Advice proposing a valid outfit for the user's current context, ordered by personalized relevance. | Proposes an Outfit to a User and can receive Feedback or a recorded wear selection. |
@@ -289,26 +297,33 @@ A Garment is an owned wardrobe item; a Candidate Garment is a possible addition 
 
 ### 13.2 Garment Intelligence and User Authority
 
-The official direction is a rich structured garment profile. The following terms describe business information needs, not a prescribed data schema.
+The current approved garment profile has exactly 13 fashion properties, with values and applicability owned by the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This replaces the earlier richer descriptor model; optional supporting media and technical metadata remain separate.
 
-| Dimension | Required Concepts | Business Significance |
-|---|---|---|
-| Classification | `primaryCategory`, `subType` | Understand garment role and useful distinctions within the four initial categories. |
-| Layering & Shape | `layeringLevel`, `bulkIndex`, `fit`, `silhouette` | Assess compatible layering and outfit shape. |
-| Color Profile | `dominantColor`, `secondaryColors`, `HEX`, `HSL`, `colorTemperature`, `paletteRole` | Represent color beyond a single label and support explainable harmony. |
-| Pattern Profile | `patternType`, `patternDensity`, `visualNoise` | Distinguish pattern character and visual conflicts. |
-| Contextual Attributes | `seasonSuitability`, `occasionTags`, `styleTags` | Relate clothing to environmental and personal needs. |
-| Material | `material`, `materialConfidence` | Support contextual understanding while making uncertainty visible and correctable. |
+| # | Property | Applicability | Required for Saving | Meaning / Value Authority |
+|---|---|---|---|---|
+| 1 | Category | All categories | Yes | One of eight category codes. |
+| 2 | Subtype | All categories | No | Optional category-valid selection from the complete approved list. |
+| 3 | Color | All categories | Yes | Exactly one dominant Color; Colorful is supported. |
+| 4 | Material | All categories | No | Zero, one or multiple approved materials; no semantic duplicates or invented percentages. |
+| 5 | Pattern | All categories | No | One optional approved Pattern. |
+| 6 | Style | All categories | No | Optional set of zero, one or more distinct approved Style values (repeated selections do not repeat a value); Etc is explanatory, never a value. |
+| 7 | Fit | Tops | No | Optional approved Fit. |
+| 8 | Neckline | Tops | No | Optional approved Neckline. |
+| 9 | Sleeve Length | Tops | No | Optional approved Sleeve Length. |
+| 10 | Length | Tops and Pants | No | Category-specific approved Length values. |
+| 11 | Silhouette | Pants | No | Optional approved Silhouette. |
+| 12 | Brand | All categories | No | Optional user-entered text; no enum/catalogue. |
+| 13 | Price | All categories | No | Optional amount originally paid: decimal amount and explicit ISO 4217 currency. |
 
 **AI Prediction → User Review → User Confirmation / Correction → Canonical Garment Profile**
 
 The final user-confirmed profile is the authoritative wardrobe representation. Attribute provenance must conceptually distinguish AI prediction, user confirmation, user correction, and user entry; confidence and prediction source remain meaningful. Material predictions may be uncertain. Supporting these concepts does not imply equally reliable automatic recognition for every attribute. User correction data offers a future improvement opportunity subject to privacy commitments.
 
-Exact taxonomies, scales, inference methods, and storage structures belong in later artifacts.
+Exact approved vocabulary labels are maintained in the property authority. Future inference methods and storage realization remain downstream; recommendation eligibility is deferred to engine development.
 
 ### 13.3 Recommendation and Feedback Meaning
 
-Hard deterministic constraints eliminate invalid outfits, including incompatible required slots, layering, weather/season suitability, physically invalid combinations, and strong pattern conflicts. Soft personalized scoring ranks valid alternatives using color harmony, style, occasion, wear history, explicit feedback, recency, diversity, and optional body-profile preferences where applicable.
+The business intent remains validity before personalized ranking. Composition, compatibility and sufficient-evidence policy are deferred to recommendation-engine development; the old fixed roles and removed-property rules are superseded. User-profile style, request occasion/weather and behavioral evidence remain relevant context without creating garment properties.
 
 Style and occasion actively inform the initial recommendations. **Wear This Today** is a strong positive behavioral signal; **Like** is explicit positive feedback; **Dislike** is explicit negative feedback. Wear history can support long-term preferences, utilization, diversity, and short-term recency considerations. These signals influence the product experience in the MVP rather than only appear in a history display. Wear This Today records distinct user-reported wear events; multiple events may occur within a day, including separate intentional uses of the same outfit. Wear history supports utilization and lightweight personalization, while accidental or artificial repetition must not disproportionately distort advice. Recorded wear is not automatic proof of physical wear.
 
@@ -329,9 +344,11 @@ The hybrid approach can initially use explicit rules and lightweight scoring. Ad
 
 An illustrative wardrobe with 41 valid outfits that supports 58 after adding white sneakers has a Wardrobe Multiplier of **+17 New Outfits**. This is an example, not observed product performance.
 
-Valid outfits are meaningful combinations assessed against slot and layering compatibility, season/weather, color harmony, pattern/noise, occasion, style, and an applicable compatibility threshold. Reordering the same garment identities does not create another outfit. Current and expanded wardrobes must be compared under a consistent assessment context; candidate previews remain hypothetical until the user adds an owned garment. The multiplier is a count of additional possibilities, not a guarantee of wear, fit, durability, savings, or purchase satisfaction. Calculation rules belong in Business Rules and later requirements/design artifacts.
+Valid outfits require future approved composition/compatibility policy. No current property model or saved garment proves validity; unique garment-identity sets and consistent assessment context retain their business meaning for future Coverage and Multiplier.
 
 ## 14. Business Process Flows
+
+These business flows illustrate future product intent and preserve the value loop. They do not approve a composition or compatibility algorithm; recommendation eligibility is not evaluated in Sprint 2, and no removed garment property is required by a diagram.
 
 These business visualizations explain how the approved capabilities create value across the user journey. They show decisions and outcomes at BRD level; detailed rules, acceptance criteria, and formal activity specifications remain downstream.
 
@@ -444,7 +461,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 |---|---|---|---|---|
 | BR-001 | Users must be able to create a digital representation of owned clothing with minimal manual effort through AI-assisted garment understanding. | Reduce setup friction and time to value. | Must | BG-01 |
 | BR-002 | Users must retain final authority over garment information through review, confirmation, correction, and manual entry, with prediction confidence and provenance distinguished conceptually. | Reliable advice depends on trusted wardrobe information. | Must | BG-01, BG-02, BG-03, BG-04 |
-| BR-003 | Wardrobe understanding must support the full garment-intelligence direction in Section 13.2, including uncertain, user-correctable material information. | Styling and utility assessment need richer context than basic tags. | Must | BG-01, BG-02, BG-03, BG-04 |
+| BR-003 | Wardrobe understanding must support exactly the 13 approved properties and category applicability in Section 13.2, including optional multiple Materials, Brand and original purchase Price with explicit currency, without an image or recommendation gate. | Styling and utility assessment need richer context than basic tags. | Must | BG-01, BG-02, BG-03, BG-04 |
 | BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually. | Preserve value when automation is unavailable or inaccurate. | Must | BG-01 |
 | BR-005 | Users must be able to maintain, browse, search, and filter an accurate current wardrobe, including adding, changing, and removing garments. | Decisions must reflect accessible, current possessions. | Must | BG-01, BG-02, BG-03 |
 | BR-006 | Users must be able to understand recorded garment use and discover overlooked clothing and combinations. | Encourage greater value from items already owned. | Must | BG-03 |
@@ -453,7 +470,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 
 | ID | Requirement | Business Rationale | Priority | Related Goals |
 |---|---|---|---|---|
-| BR-007 | Daily outfit advice must use owned garments and consider weather/season, style, occasion, color, pattern, and layering suitability. | Reduce decision effort through relevant advice. | Must | BG-02, BG-03 |
+| BR-007 | Daily outfit advice must use confirmed owned garments and relevant request weather/occasion, declared preferences and approved garment information. Actual composition/compatibility policy is deferred; removed properties are not hidden requirements. | Reduce decision effort through relevant advice. | Must | BG-02, BG-03 |
 | BR-008 | Users must receive several distinct valid options, targeting at least three when compatible wardrobe data permits, and be able to replace an individual item while retaining other choices. | Provide practical choice and control without starting over. | Must | BG-02, BG-03 |
 | BR-009 | Recommendations must distinguish invalid combinations from the personalized ranking of valid outfits. | Prevent attractive scores from overriding incompatibility and support consistent utility assessment. | Must | BG-02, BG-03, BG-04 |
 | BR-010 | Declared style preferences and selected occasion must actively influence initial advice and relevant wardrobe analysis. | Serve the user's actual clothing needs. | Must | BG-02, BG-03, BG-04 |
@@ -491,19 +508,19 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 | Account & Personalization | Registration/login; personal profile; actively used style preferences and occasion; optional editable gender/body profile; location/weather context with manual location selection. |
 | AI Digital Closet | Capture or select garment images; background removal; attribute extraction; confidence-aware predictions; user review/confirmation/correction; manual creation when AI is unavailable. |
 | Wardrobe Management & Intelligence | Garment creation, viewing, updating, and deletion; browsing/search/filtering; the structured garment-intelligence direction in Section 13.2; recorded wear/utilization information. |
-| Context-Aware Styling | Owned-wardrobe advice using weather, season, style, occasion, color, pattern, and layering; validity constraints and personalized ranking; several valid options when data permits. |
+| Context-Aware Styling | Future owned-wardrobe advice with relevant context and personalization, under an explicitly approved engine policy; property-based eligibility is deferred. |
 | Interaction & Learning | Shuffle Item; Wear This Today; Like/Dislike; outfit history; lightweight behavioral personalization with recency and diversity considerations. |
 | Wardrobe Intelligence | Explainable Wardrobe Coverage Score; Gap Analysis; candidate staple evaluation; Wardrobe Multiplier; hypothetical outfit preview. |
 | Strategic Shopping | Recommendation cards; gap and utility explanations; optional external shopping links; recommendation-view and external-link interaction tracking with future affiliate compatibility. |
 
-The initial recommendation categories are **Top, Bottom, Outerwear, and Footwear**. Exact subtypes and context taxonomies are deferred. Support for the richer profile does not establish unsupported recognition targets for all attributes.
+The supported wardrobe categories are **Tops, Dresses/Jumpsuits, Pants, Skirts, Outerwear, Shoes, Bags, and Headwear**. The garment-property authority defines their canonical codes and every approved category-specific optional subtype, including exactly ten Dresses/Jumpsuits choices. Recommendation composition/compatibility and eligibility for all categories are deferred to engine development; wardrobe support alone does not establish compatibility. Support for the richer profile does not establish unsupported recognition targets for all attributes.
 
 ### 16.2 Out of Scope
 
 - AR virtual try-on, 3D avatars or clothing simulation, and real-time video garment recognition.
 - A complete social network/community.
 - Native shopping carts, checkout, payment processing or gateways, order management, shipping/logistics, seller management, or a complete marketplace.
-- One Piece, Accessories, Bags, and Headwear in the initial recommendation engine, including complex items such as jewelry, watches, scarves, and hair accessories.
+- Additional primary categories beyond the eight approved categories, including jewelry, watches, scarves and hair accessories. New Dresses/Jumpsuits, Bags and Headwear outfit compositions require the open PRD policy decisions; their wardrobe creation and inspection are supported.
 - Consumer web and desktop applications as initial required platforms.
 - Sophisticated learned ranking or advanced personalization models as MVP obligations.
 
@@ -588,7 +605,7 @@ The following are unvalidated assumptions, not confirmed market facts.
 | ID | Constraint | Business Implication |
 |---|---|---|
 | CON-001 | Initial delivery is mobile-first on Android and iOS, with Vietnam-first validation and a Vietnamese interface. | Prioritize the initial smartphone experience while retaining localization and expansion compatibility; multi-language UI is not required for MVP. |
-| CON-002 | Initial recommendations cover Top, Bottom, Outerwear, and Footwear. | Validate within these categories; preserve room for later taxonomy growth. |
+| CON-002 | Exactly the eight categories and 13 source-approved properties govern current wardrobes. | All applicable properties are in Sprint 2; future composition/compatibility and eligibility are deferred without hidden property gates. |
 | CON-003 | Shopping occurs externally; native commerce is excluded. | Product value and MVP completion cannot depend on checkout or transaction fulfillment. |
 | CON-004 | User-confirmed garment information takes precedence over uncertain predictions. | AI assists the wardrobe representation and does not remove user authority. |
 | CON-005 | Body shape, gender, and device location permission are optional; personal information remains protected. | Participation and useful advice must not require intrusive or restrictive profiling. |
@@ -645,7 +662,7 @@ The following are possibilities for later evaluation, not additions to MVP scope
 
 | Opportunity | Potential Business Value | Boundary |
 |---|---|---|
-| Richer taxonomy, One Piece, Accessories, Bags, and Headwear | Support more complete clothing decisions. | Extend categories only after product and compatibility needs are validated. |
+| Taxonomy beyond the eight approved categories and broader outfit compositions | Support more complete wardrobe decisions. | Validate additional scope and resolve category-specific compatibility before claiming new supported compositions. |
 | Advanced ML ranking and personalization models | Improve relevance as sufficient trustworthy feedback becomes available. | No sophisticated learned model required initially. |
 | Retailer integrations and affiliate partnerships | Improve candidate information, external destinations, and referral evidence. | No existing integration, contract, native commerce, or retailer dependency assumed. |
 | Subscriptions / premium insights | Explore payment for sustained wardrobe intelligence. | Packaging, willingness to pay, and commercial terms require later validation. |
@@ -666,7 +683,7 @@ The matrix connects business goals to the requirements that support them and the
 
 ## 27. Resolved Business Decisions
 
-The business questions below are resolved by SRC-10. No new open business question was identified during synchronization; document review and acceptance remain separate from decision resolution.
+The business questions below are resolved by SRC-10. Later taxonomy-related product questions are recorded in PRD Section 34.1; document review and acceptance remain separate from decision resolution.
 
 | ID | Resolved Business Decision | Status | Business Effect |
 |---|---|---|---|
@@ -677,7 +694,7 @@ Product decisions OPQ-001–OPQ-010 are resolved in the [PRD's Resolved Product 
 
 ## 28. Approval / Exit Criteria
 
-BRD v0.3 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
+BRD v0.5 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
 
 - The user problems, product vision, three connected pillars, and expected value are clear.
 - Decision stakeholders, end users, and supporting roles are identified.
@@ -698,8 +715,8 @@ Acceptance is recorded through repository review and an appropriate document-sta
 | Value model | AI Digital Closet → Context-Aware Styling → Wardrobe Intelligence & Strategic Shopping, connected by user feedback. | SRC-02; Section 6 |
 | Market and platform | Vietnam-first, expansion-ready; mobile-first on Android and iOS; Vietnamese initial UI with later localization possible. | SRC-02, SRC-10; Section 10 |
 | Personas | Indecisive Professional is primary; Fashion-Conscious Minimalist and Smart Shopper are secondary behavioral archetypes. | SRC-02; Section 11 |
-| Initial categories | Top, Bottom, Outerwear, Footwear; richer categories are deferred. | SRC-02; Section 16 |
-| Garment intelligence | Rich classification, layering/shape, color, pattern, context, and confidence-aware material concepts. | SRC-02; Section 13.2 |
+| Initial categories | Tops, Dresses/Jumpsuits, Pants, Skirts, Outerwear, Shoes, Bags, and Headwear; recommendation-policy expansion remains explicit. | SRC-11; Sections 13.2/16; PRD Section 13.2 |
+| Garment intelligence | Exactly the source-owned 13-property model, category applicability, one dominant Color, optional multiple Materials and confirmation authority. | SRC-12; Section 13.2 |
 | Wardrobe authority | User-confirmed/corrected information is canonical; AI uncertainty and manual entry remain meaningful. | SRC-02; BR-002–BR-004 |
 | Recommendation strategy | Hard validity constraints plus soft personalized ranking; no sophisticated ML requirement. | SRC-02; Section 13.3 |
 | Active feedback and context | Wear This Today records user-reported wear events, including multiple intentional events within a day; Like/Dislike and history actively inform lightweight personalization. | SRC-02, SRC-10; BR-010–BR-011 |

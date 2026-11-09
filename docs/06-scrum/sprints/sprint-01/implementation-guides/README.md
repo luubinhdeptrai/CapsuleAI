@@ -8,6 +8,9 @@
 | Prepared | 2026-10-29 |
 | Status | Reference package. The Java, SQL, YAML and test code in these guides was **written, not compiled or run**. Treat compile errors or failing tests as normal feedback, and ask for targeted guide revisions. |
 
+> **Post-sprint architecture correction (2026-11-06).** These guides describe Sprint 1 as it was built: the Identity tables were created without a schema name, in Flyway's default schema. The Product Owner has since approved architecture refinement AR-01–AR-08 (one PostgreSQL schema per persistence owner; see [selected architecture decisions §8](../../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas)). The forward migration `V6__move_identity_tables_into_identity_schema.sql` moved `identity_account`, `identity_session` and `identity_refresh_token` into the `identity` schema, and all Identity SQL in the repository is now written as `identity.<table>`. V2–V5 below are unchanged and must never be edited. Where this package shows unqualified SQL, the current code uses the qualified form. [Backend conventions §2](../../../../engineering/backend-conventions.md#2-each-persistence-owner-has-its-own-postgresql-schema) states the rule for new work.
+
+
 **Reading order:** this README → [Shared Architecture](shared-architecture.md) → the current story guide. You should not need to read the whole SRS, PRD or architecture set first; every guide links to the exact source sections it relies on.
 
 ---

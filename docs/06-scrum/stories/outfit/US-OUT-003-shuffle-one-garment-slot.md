@@ -1,5 +1,7 @@
 # US-OUT-003 — Shuffle one garment slot while keeping other choices
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## Document Control
 
 | Field | Value |
@@ -39,7 +41,7 @@ When a different eligible owned replacement exists, only that selected slot chan
 
 ### AC-02 — Preserve full validity
 
-The resulting outfit satisfies all applicable composition/readiness/layering/bulk/environment/severe-pattern constraints. Preference ranking cannot admit an incompatible replacement or change another slot to manufacture success.
+A replacement can be claimed compatible only under a future approved engine policy; the previous property-based predicates are superseded. Preserve other constituent identities and request context without inventing removed fields.
 
 ### AC-03 — Explain no alternative
 

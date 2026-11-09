@@ -1,5 +1,7 @@
 # CapsuleAI — Architecture Decision Analysis
 
+**Current property-model revision — 2026-11-05:** The Product Owner approved exactly 13 garment properties and every explicitly listed vocabulary in the [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md). This supersedes earlier research-only vocabulary status, removed garment attributes, fixed composition assumptions and property-based readiness gates. All applicable properties are included in the selected Sprint 2 garment stories. Recommendation eligibility is not evaluated; engine composition/compatibility policy is deferred. Stable IDs below remain traceable; superseded policies are not active implementation or acceptance obligations.
+
 ## 1. Document Control
 
 | Field | Value |
@@ -8,7 +10,7 @@
 | Version | 0.2.7 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
-| Last Updated | 2026-10-20 |
+| Last Updated | 2026-11-05 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
@@ -25,6 +27,8 @@
 | 0.2.5 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.6 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.7 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+
+**2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
 ## 2. Purpose
 
@@ -59,8 +63,8 @@ The current workflow was read first, followed by the complete relevant repositor
 | [All 12 Activity Diagrams](../03-requirements/activity-diagrams/) | AD-004/006/007/011/012/014/016/017/019/020/021/022 visualize the normative UC behavior; they do not add requirements. |
 | [Product Goal](../06-scrum/product-goal.md); [Product Backlog](../06-scrum/product-backlog.md); [all eight stories and index](../06-scrum/stories/README.md) | Whole 41-PBI horizon and concrete near-term AC; existing order/refinement boundaries are preserved. |
 | [DoD](../06-scrum/definition-of-done.md), Sections 4–6; [Delivery Decisions](../06-scrum/delivery-decisions.md), DD-001–006 | Integrated conditional evidence, source synchronization and preparation/handoff; no Sprint commitment. |
-| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline under Initial files and [Business Analysis.docx](../../Business%20Analysis.docx) at the repository root | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
-| [Quality-attribute learning reference](../../T%C3%A0i%20li%E1%BB%87u%20tham%20kh%E1%BA%A3o%20cho%20Architecture/14-Thu%E1%BB%99c-t%C3%ADnh-ch%E1%BA%A5t-l%C6%B0%E1%BB%A3ng.md), ASR_FoodDelivery.md and ADD_FoodDelivery.md in the same reference directory | Methodology and artifact-boundary/structure reference only. No Food Delivery stack, event architecture or deployment decision is adopted. |
+| [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), proposal/official outline under Initial files and Business Analysis.docx (historical source; not present in this checkout) at the repository root | Historical/exploratory context. Their technology preferences, commercial/reward ideas and old thresholds do not establish current scope or constraints. |
+| Quality-attribute learning reference (historical source; not present in this checkout), ASR_FoodDelivery.md and ADD_FoodDelivery.md in the same reference directory | Methodology and artifact-boundary/structure reference only. No Food Delivery stack, event architecture or deployment decision is adopted. |
 
 Existing technical capability claims retain their **2026-10-08** Context7/official-documentation checks. The v0.2 expansion checked Spring event/transaction behavior and PostgreSQL schemas/privileges through Context7 on **2026-10-10**, and consulted primary Clean Architecture/DDD explanations linked in ADA-015/018. These references explain capabilities and concepts; CapsuleAI-specific judgments derive from current ASRs and requirements. They do not create product requirements, prove benchmark results, or select versions/providers.
 
@@ -1098,7 +1102,7 @@ Security and Reliability — Critical; Testability, Performance, Conceptual Inte
 
 #### Relevant Constraints
 
-NFR-TEST-001–003, NFR-SUP-001/002, NFR-SEC-003, AI-REQ-010/011/014 and FR-MET-006/007; SRS Sections 3.4.1/8.1.1/12.3. Locked qualified corpus ≥200 images, ≥50 per category; category ≥90% overall/≥85% each, color ≥90% separately; preview review has no percentage target.
+NFR-TEST-001–003, NFR-SUP-001/002, NFR-SEC-003, AI-REQ-010/011/014 and FR-MET-006/007; SRS Sections 3.4.1/8.1.1/12.3. Locked qualified corpus ≥400 images, ≥50 per each of the eight categories; category ≥90% overall/≥85% each, color ≥90% separately; preview review has no percentage target.
 
 #### Evaluation Criteria
 
@@ -1157,7 +1161,7 @@ How should each business module organize its internals so domain rules and appli
 
 #### Why This Decision Is Needed Now
 
-**Important Before ADD.** The shared validity, authority and evidence obligations need a dependency direction before the Implementation View can establish module internals. ASR-CON-001 and ASR-TEST-001 justify isolation; they do not mandate a textbook layering scheme or make every folder a Critical architectural choice. A bounded deferral must preserve inward dependencies and private internals as explicit open design constraints, with Architect/Backend ownership and resolution before the dependent Implementation View.
+**Important Before ADD.** The shared future evaluation-policy, authority and evidence obligations need a dependency direction before the Implementation View can establish module internals. ASR-CON-001 and ASR-TEST-001 justify isolation; they do not mandate a textbook layering scheme or make every folder a Critical architectural choice. A bounded deferral must preserve inward dependencies and private internals as explicit open design constraints, with Architect/Backend ownership and resolution before the dependent Implementation View.
 
 #### Related ASRs
 
@@ -1538,7 +1542,7 @@ These v0.2 analytical interactions and conditional evolution possibilities remai
 | ADA-010 ↔ ADA-009/011/014 | Accepted corrections/removals and current evaluation basis govern derived reuse. Benchmark optimization cannot replace full Multiplier evidence with displayed daily choices or a cached prior count. |
 | ADA-006 ↔ ADA-005/007/014 | Boundaries must retain truthful dependency outcomes, minimal disclosure, authorized private media and inspectable complete timing. A provider adapter cannot excuse a bearer-access or lifecycle mismatch. |
 | ADA-013 ↔ ADA-014 and all Critical decisions | Recovery evidence needs durable accepted state and repeatable operation. Minimal deployment is conditional on actual resources; monitoring tools alone do not prove resilience. |
-| All choices ↔ ASR-USE-001 | Backend outcomes must retain confidence/provenance, Saveable/readiness, uncertain mutation and non-exact assessment meaning. Mobile accessibility/usability remains integrated work, not a framework side effect. |
+| All choices ↔ ASR-USE-001 | Backend outcomes must retain confidence/provenance, saved ownership / unevaluated eligibility, uncertain mutation and non-exact assessment meaning. Mobile accessibility/usability remains integrated work, not a framework side effect. |
 
 If the human overrides an option, evaluate these dependent recommendations rather than mixing incompatible assumptions. No individual High-confidence recommendation makes the whole set selected.
 

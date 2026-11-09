@@ -29,7 +29,7 @@ Explicit current-time report, logical-intention identity, accepted event acknowl
 
 ## 4. Preconditions
 
-- An authorized outfit is identified; current ownership/readiness/validity is checked when a new report is accepted.
+- An authorized outfit is identified; current ownership and future evaluated validity is checked when a new report is accepted.
 
 ## 5. Acceptance Criteria
 

@@ -35,7 +35,7 @@ Complete same-basis baseline/expanded valid-set comparison, exact incremental co
 
 ### AC-01 — Identify the hypothetical basis
 
-Identify current confirmed active owned W, the unowned candidate, applicable readiness and relevant context/rule basis; exclude removed inventory from current inputs. Candidate descriptors require supported source evidence, not invented attributes.
+Identify current confirmed active owned W, the unowned candidate, eligibility under a future approved policy and relevant context/rule basis; exclude removed inventory from current inputs. Candidate descriptors require supported source evidence, not invented attributes.
 
 ### AC-02 — Compare complete consistent sets
 
@@ -47,7 +47,7 @@ Wardrobe Multiplier is the number of combinations in O(W plus candidate) that ar
 
 ### AC-04 — Show exact only with evidence
 
-Exact +N requires sufficient credible candidate/applicable owned readiness, required context and complete matched evaluations/uniqueness. Explain the evaluated baseline and count without claiming future wear, savings, purchase satisfaction or guaranteed commercial value.
+Exact +N requires sufficient credible candidate/applicable future owned-combination evidence, required context and complete matched evaluations/uniqueness. Explain the evaluated baseline and count without claiming future wear, savings, purchase satisfaction or guaranteed commercial value.
 
 ### AC-05 — Reserve zero for completed comparison
 

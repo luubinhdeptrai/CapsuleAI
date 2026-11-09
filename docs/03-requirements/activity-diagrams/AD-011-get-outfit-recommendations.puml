@@ -1,4 +1,6 @@
 @startuml
+' Final property-model decision: no current readiness algorithm or category-role mapping.
+' Future evaluation branches require approved engine policy; no removed fields are required.
 ' Source Use Case: UC-011 — Get Outfit Recommendations
 ' Primary Specification: ../use-cases/UC-011-get-outfit-recommendations.md
 ' Supporting Authorities: ../SRS.md (v0.3); ../business-rules.md (v0.1.2)
@@ -35,15 +37,15 @@ repeat
         note right
           Weather currentness <=30 minutes.
           Acquisition delay <=2 seconds.
-          Skip only unavailable environmental filtering.
-          Preserve all remaining hard validity.
+          Disclose missing actual weather context.
+          Future engine policy governs defensible evaluation.
         end note
     endif
-    :Identify confirmed, active, owned garments
-ready for applicable checks;
-    if (Remaining information supports assessment?) then (Yes)
+    :Identify confirmed, active, owned garments;
+:Require a future approved engine policy before evaluation;
+    if (Approved engine policy and evidence available?) then (Yes)
     else (Insufficient)
-        :Explain missing ready roles/attributes or context;
+        :Explain unevaluated policy or missing assessment evidence;
         :Withhold a completed zero-choice claim;
         |User|
         :Revise existing inputs and request again when useful;
@@ -51,8 +53,7 @@ ready for applicable checks;
     endif
     |CapsuleAI|
     :Form candidate combinations from eligible owned garments;
-    :Apply structural, layering, bulk, pattern
-and available environmental hard validity;
+    :Apply only future approved compatibility policy;
     :Determine distinct valid outfit set;
     if (Evaluation/result available?) then (Yes)
     else (Unavailable)

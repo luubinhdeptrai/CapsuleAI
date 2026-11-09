@@ -51,7 +51,7 @@ A loaded wardrobe with no matches shows a change/reset path, while a genuinely e
 
 ### AC-05 — Inspect real results
 
-Matching imageless or incomplete entries remain identifiable, with the established garment-detail/return path and source readiness meaning preserved.
+Matching imageless or incomplete entries remain identifiable, with the established garment-detail/return path and unevaluated-eligibility meaning preserved.
 
 ### AC-06 — Recover without mutation
 

@@ -1,8 +1,10 @@
 package com.capsuleai.identity.application;
 
+import com.capsuleai.identity.application.ports.PasswordHasher;
 import com.capsuleai.identity.domain.Account;
 import com.capsuleai.identity.domain.EmailAddress;
 import com.capsuleai.identity.domain.LoginSession;
+import com.capsuleai.identity.domain.PasswordHash;
 import com.capsuleai.identity.domain.RefreshTokenHash;
 import com.capsuleai.identity.domain.ValueProblem;
 import com.capsuleai.identity.support.MutableClock;
@@ -139,6 +141,31 @@ class LogInServiceTest {
 
         assertThat(service.logIn(new LogInCommand("minimal@example.com", PASSWORD)).accountId())
                 .isEqualTo(account.id());
+    }
+
+    /** US-AUTH-005: a reset that replaces the credential after verification must win. */
+    @Test
+    void credentialReplacedBetweenVerificationAndSessionCreationGrantsNoSession() {
+        Account account = registered("reset-race@example.com", PASSWORD);
+        PasswordHasher resetDuringVerification = new PasswordHasher() {
+            @Override
+            public PasswordHash hash(String rawPassword) {
+                return hasher.hash(rawPassword);
+            }
+
+            @Override
+            public boolean matches(String rawPassword, PasswordHash storedHash) {
+                boolean matched = hasher.matches(rawPassword, storedHash);
+                accounts.replacePasswordHash(account.id(), hasher.hash("the password set by reset"));
+                return matched;
+            }
+        };
+        LogInService racingLogin = new LogInService(
+                accounts, resetDuringVerification, sessions, refreshTokens, accessTokens, transactions, clock);
+
+        assertThatThrownBy(() -> racingLogin.logIn(new LogInCommand("reset-race@example.com", PASSWORD)))
+                .isInstanceOf(InvalidCredentialsException.class);
+        assertThat(sessions.all()).isEmpty();
     }
 
     private Account registered(String email, String password) {

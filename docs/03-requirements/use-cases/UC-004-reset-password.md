@@ -104,6 +104,13 @@ At Main Step 7:
 1. CapsuleAI distinguishes known failure from an outcome that cannot yet be confirmed; neither is labeled completed.
 2. The User reviews the result or restarts recovery safely. A consumed interaction cannot be used for a second password change.
 
+### E6 — Too many recovery attempts
+
+At any step that requests, checks or completes recovery (PO decision 2026-11-07, FR-AUTH-019):
+
+1. CapsuleAI declines further attempts from the same email address or client for a limited period, with the same response whether or not the address is registered.
+2. The User may try again after the period; earlier valid instructions remain governed by their own validity.
+
 ## 9. Success Postconditions
 
 - The accepted new password is authoritative; the reset interaction cannot be successfully reused.

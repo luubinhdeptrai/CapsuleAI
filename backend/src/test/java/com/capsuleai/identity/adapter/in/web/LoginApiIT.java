@@ -56,9 +56,9 @@ class LoginApiIT extends IdentityIntegrationTestSupport {
     void storesSessionAuthorityAndOnlyAHashOfTheRefreshToken() throws Exception {
         IssuedTokens tokens = registerAndLogIn("hash@example.com");
 
-        Map<String, Object> session = jdbc.sql("SELECT account_id FROM identity_session").query().singleRow();
+        Map<String, Object> session = jdbc.sql("SELECT account_id FROM identity.identity_session").query().singleRow();
         assertThat(session.get("account_id")).isEqualTo(tokens.accountId());
-        String storedHash = jdbc.sql("SELECT token_hash FROM identity_refresh_token").query(String.class).single();
+        String storedHash = jdbc.sql("SELECT token_hash FROM identity.identity_refresh_token").query(String.class).single();
         assertThat(storedHash)
                 .isEqualTo(RefreshTokenHash.of(tokens.refreshToken()).value())
                 .isNotEqualTo(tokens.refreshToken());
@@ -79,7 +79,7 @@ class LoginApiIT extends IdentityIntegrationTestSupport {
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
         }
-        assertThat(countRows("identity_session")).isOne();
+        assertThat(countRows("identity.identity_session")).isOne();
     }
 
     @Test
@@ -96,7 +96,7 @@ class LoginApiIT extends IdentityIntegrationTestSupport {
 
         assertThat(JsonPath.<String>read(wrongPassword, "$.code")).isEqualTo("INVALID_CREDENTIALS");
         assertThat(wrongPassword).isEqualTo(unknownEmail);
-        assertThat(countRows("identity_session")).isZero();
+        assertThat(countRows("identity.identity_session")).isZero();
     }
 
     @Test
@@ -111,13 +111,13 @@ class LoginApiIT extends IdentityIntegrationTestSupport {
     @Test
     void loginAttemptsDoNotChangeTheAccount() throws Exception {
         registerAccount("stable@example.com", PASSWORD);
-        Map<String, Object> before = jdbc.sql("SELECT * FROM identity_account").query().singleRow();
+        Map<String, Object> before = jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow();
 
         postJson(LOGIN, Map.of("email", "stable@example.com", "password", "wrong password 123"))
                 .andExpect(status().isUnauthorized());
         logIn("stable@example.com", PASSWORD);
 
-        assertThat(jdbc.sql("SELECT * FROM identity_account").query().singleRow()).isEqualTo(before);
+        assertThat(jdbc.sql("SELECT * FROM identity.identity_account").query().singleRow()).isEqualTo(before);
     }
 
     @Test
