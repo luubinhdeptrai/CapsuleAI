@@ -136,10 +136,10 @@ The following references constrain this interaction; detailed policy remains in 
 ## 13. Special Requirements / Constraints
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
-- Feedback state may persist after its ranking influence expires; aging is not deletion or clearing.
+- Feedback state persists until changed or cleared; storage is not deletion.
 - Feedback measurement distinguishes accepted changes from mere views or failed actions; measurement failure does not reverse accepted feedback.
 
-- Feedback supports private personalization without MVP personal-data model training. User-linked engagement measurement is deleted or aggregated/de-identified within 90 days; its expiry differs from effective feedback-state/ranking semantics.
+- Feedback supports private personalization without MVP personal-data model training. User-linked engagement measurement is deleted or aggregated/de-identified within 90 days.
 
 ## 14. Related Use Cases
 

@@ -1344,7 +1344,7 @@ The following are excluded from initial product acceptance:
 - Required retailer contracts, live retailer inventory synchronization, or mandatory affiliate participation.
 - Advanced learned recommendation models as a delivery prerequisite.
 - Outfit-inspiration community limits (not a complete social network): MVP feed supports Like, Follow creator, outfit sharing, Edit-as-duplicate, Save look, and Try-On only. Excluded: comments, messaging, and public wardrobe sharing (sharing an entire wardrobe).
-- Personalized selfie avatar, AR/3D clothing simulation, and real-time video ingestion. Generic-model try-on preview is in scope per founder override 2026-11-09.
+- Personalized selfie avatar, AR/3D clothing simulation, and real-time video ingestion. Generic-model try-on preview is in scope; personal avatar creation is a future opportunity.
 - Automatic verification of wear, purchases, savings, or sustainability outcomes.
 - Mandatory body/gender profiling, category restrictions based on those attributes, or mandatory device-location permission.
 - Guaranteed full offline operation, new calendar/planning workflows, or unapproved promotional/reward experiments.
@@ -1360,8 +1360,8 @@ Some exclusions are candidate future opportunities; others are scope guardrails.
 | Retailer integrations / affiliate partnerships | Better candidate information and optional destinations/referral evidence. | Approved commercial/privacy model and feasible partner arrangements. |
 | Subscription / premium insights | Evaluate packaging for sustained wardrobe intelligence. | Validated willingness to pay and an approved business decision. |
 | Social/community experiences | Outfit-inspiration feed. | MVP includes Like, Follow creator, outfit sharing, Edit-as-duplicate, Save, Try-On (no comments, no messaging, no wardrobe sharing). Full social graph pending separate assessment. |
-| Generic-model try-on preview | In MVP scope per founder override 2026-11-09. | Personal avatar, AR/3D remain deferred pending separate approval. |
-| Internal catalog search + bulk import | In MVP scope per founder override 2026-11-09. | Catalog curation/source and batch limits require refinement. |
+| Generic-model try-on preview | In MVP scope. | Personal avatar, AR/3D remain deferred pending separate approval. |
+| Internal catalog search + bulk import | In MVP scope. | Catalog curation/source and batch limits require refinement. |
 | More markets / localization | Adapt climate, occasion, language, and catalog context. | Market-specific validation and approved release scope. |
 
 These possibilities have no MVP feature acceptance criteria or committed delivery dates.

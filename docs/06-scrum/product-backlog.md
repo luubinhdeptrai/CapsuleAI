@@ -607,7 +607,7 @@ BR-005; CAP-03; JRN-03, FEAT-WAR-003; FR-WAR-007, FR-WAR-008; UC-008.
 
 **Refinement Notes**
 
-Keep search and filtering together as discovery inside View Wardrobe. Founder override 2026-11-09: internal catalog search and add-to-closet are in MVP scope; full catalog sourcing/limits require refinement in new PBIs. Do not add new garment categories.
+Keep search and filtering together as discovery inside View Wardrobe. Internal catalog search and add-to-closet are in MVP scope; full catalog sourcing/limits require refinement in new PBIs. Do not add new garment categories.
 
 ### PBI-016 — Remove a garment while preserving minimal historical meaning
 
@@ -1055,7 +1055,7 @@ BR-015, BR-018, BR-020, BR-024; CAP-08, CAP-10; JRN-06, JRN-07, FEAT-SHOP-001; F
 
 **Refinement Notes**
 
-Candidate descriptors need explicit user evidence or an identifiable configured credible source. Founder override 2026-11-09: internal catalog search, bulk import, and generic-model try-on are in scope and require new PBIs; refine available candidate/source examples and honest absence without prescribing a supplier. PBI-030 provides evaluation; unavailable utility must be disclosed until it exists.
+Candidate descriptors need explicit user evidence or an identifiable configured credible source. Internal catalog search, bulk import, and generic-model try-on are in scope and require new PBIs; refine available candidate/source examples and honest absence without prescribing a supplier. PBI-030 provides evaluation; unavailable utility must be disclosed until it exists.
 
 ### PBI-030 — Evaluate candidate Wardrobe Multiplier with honest result states
 

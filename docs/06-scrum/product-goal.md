@@ -44,11 +44,11 @@ Explicit Like/Dislike feedback and user-reported Wear Events inform lightweight 
 
 ## 6. Goal Boundaries
 
-- The current horizon is a mobile-first wardrobe-intelligence MVP for Vietnam, centered on the user's owned wardrobe plus read-only community feed browse, with existing privacy and user-control protections.
+- The current horizon is a mobile-first wardrobe-intelligence MVP for Vietnam, centered on the user's owned wardrobe plus outfit-inspiration feed, with existing privacy and user-control protections.
 - AI assists wardrobe understanding; user-confirmed or corrected information remains authoritative, and manual entry preserves continuity.
-- Outfit recommendations and wardrobe insights explain their basis and limitations, disclosing insufficient evidence without fabricated certainty. Like/Wear are stored as events for the matching engine's own rules; no fixed +1/+2/−2 weights or decay apply.
+- Outfit recommendations and wardrobe insights explain their basis and limitations, disclosing insufficient evidence without fabricated certainty. Like/Wear are stored as events for the matching engine's own rules; no fixed weights or decay apply.
 - Strategic Shopping remains advisory, with optional external navigation plus internal catalog search and add-to-closet. Core wardrobe value is independent of purchases, shopping links, retailer contracts, and affiliates; native commerce is outside this goal.
-- Founder override 2026-11-09, corrected 2026-11-09: outfit-inspiration feed (Like / Follow creator / outfit sharing / Edit-as-duplicate / Save / Try-On; no comments, no messaging, no wardrobe sharing), single-thread AI chat stylist (chat suggestions support Dislike), generic-model try-on preview, internal catalog search, and bulk import are in scope. Dislike appears on AI-generated targets only (Today + chat), never on community posts. Personal avatar, AR/3D, comments, messaging, and wardrobe sharing remain outside.
+- MVP includes outfit-inspiration feed (Like / Follow creator / outfit sharing / Edit-as-duplicate / Save / Try-On; no comments, no messaging, no wardrobe sharing), single-thread AI chat stylist (chat suggestions support Dislike), generic-model try-on preview, internal catalog search, and bulk import. Dislike appears on AI-generated targets only (Today + chat), never on community posts. Personal avatar, AR/3D, comments, messaging, and wardrobe sharing remain outside.
 
 ## 7. Evidence of Progress
 
