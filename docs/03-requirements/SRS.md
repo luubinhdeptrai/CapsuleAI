@@ -117,7 +117,7 @@ Performance reference conditions are modern mid-range Android hardware with at l
 | Taxonomy | Exactly 13 source-owned properties, eight categories and complete approved vocabularies; category applicability and optionality are mandatory. |
 | Authority and completeness | Confirmed supported Category and Color permit image-independent saving; all other applicable properties are optional; eligibility is not evaluated (Sections 3.5.1/4.10). |
 | Authentication | 15-minute JWT Access Token; maximum 30-day Refresh Session; rotation/reuse detection, session-scoped logout and account-wide reset revocation; 12–128-character untransformed passwords; normalized unique email; single-use 30-minute recovery (OPQ-008). |
-| Recommendation and learning | Engine composition/compatibility/eligibility policy is deferred; validity-before-ranking remains an intent. Existing +1/−2/+2 evidence, aging and recency are separate from garment-property policy. |
+| Recommendation and learning | Engine composition/compatibility/eligibility policy is deferred; validity-before-ranking remains an intent. Like/Dislike/Wear are stored events with no fixed weights, aging, or recency; engine consumes them under its own rules. |
 | Wear and history | Multiple intentional events per local day; logical-action duplicate protection; absolute timestamp and original local/timezone context; no-future/same-original-day correction; individual removal and removed-garment snapshots (OPQ-006/OPQ-007). |
 | Coverage and utility | One Personalized Everyday Capsule uses the specified priority weights, need mapping, formula, and sufficient-data gate; multiplier is the same-context/rule-version unique-valid set difference with five exactness/freshness states (BR-014–BR-017). |
 | Commerce | Required candidate utility and credible optional commercial information; external navigation only; no transaction workflow (BR-018–BR-020, BR-024). |
@@ -380,9 +380,9 @@ Preference feedback is not reported wear and is reversible as specified by FEAT-
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| FR-PERS-001 | The system shall record Like as current positive feedback on the identified recommendation/exact outfit combination with conceptual base contribution +1, subject to Section 3.12.1 aging. | MVP | FEAT-PERS-001; BR-011 | T/A: exact target, Like +1 and age-dependent influence. |
-| FR-PERS-002 | The system shall record Dislike as current negative evidence for the identified recommendation/exact outfit combination with conceptual base contribution −2, without a permanent ban on its garments/categories. | MVP | FEAT-PERS-001; BR-011 | T/A: Dislike −2; no automatic per-garment/category ban. |
-| FR-PERS-003 | The system shall keep Like/Dislike state until changed, cleared, or superseded through user action and prevent simultaneously effective contradictory feedback for the same target. | MVP | FEAT-PERS-001; BR-011, BR-021 | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
+| FR-PERS-001 | The system shall record Like as current positive preference state on the identified outfit/post target (AI-generated or community), with no fixed numeric contribution; stored for engine use and history. | MVP | FEAT-PERS-001; BR-011 | T: exact target, persisted Like state; no weight/decay. |
+| FR-PERS-002 | The system shall record Dislike as current negative preference state for AI-generated targets only (Today strip + chat suggestions; never community posts), without a permanent ban on its garments/categories and with no fixed numeric contribution. | MVP | FEAT-PERS-001; BR-011 | T: AI-only Dislike; no automatic per-garment/category ban; no weight/decay. |
+| FR-PERS-003 | The system shall keep Like/Dislike state until changed, cleared, or superseded through user action and prevent simultaneously effective contradictory feedback for the same target. | MVP | FEAT-PERS-001; BR-011, BR-021 | T: persisted state, revise/clear; no fixed influence. |
 | FR-PERS-004 | The system shall distinguish accepted feedback from an unsuccessful recording attempt. | MVP | FEAT-PERS-001; BR-011 | T: failed versus recorded signal. |
 | FR-PERS-005 | The system shall avoid creating Wear Events from Like, Dislike, recommendation views, or other preference-only interactions. | MVP | FEAT-PERS-001; BR-011 | T: history unchanged. |
 
@@ -403,7 +403,7 @@ One logical Wear action is one explicit intention to report a wearing instance. 
 
 Each event preserves absolute timestamp, associated timezone or UTC offset, original local date/time and user-reported meaning, with available occasion/context. Default event time is the accepted current time of the action. Device-timezone changes during later travel do not automatically re-date history.
 
-The user can correct applicable outfit, occasion/context and local event time. A corrected time must not be future and must remain in the event's original local calendar day. Accepted corrections stay associated with the original event-local context; invalid corrections leave the prior accepted event unchanged. Individual removal affects effective history/utilization/recency/signals without deleting Outfit/Garments or unrelated events.
+The user can correct applicable outfit, occasion/context and local event time. A corrected time must not be future and must remain in the event's original local calendar day. Accepted corrections stay associated with the original event-local context; invalid corrections leave the prior accepted event unchanged. Individual removal affects stored history/utilization without deleting Outfit/Garments or unrelated events.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
@@ -413,59 +413,37 @@ The user can correct applicable outfit, occasion/context and local event time. A
 | FR-WEAR-004 | The system shall associate each event with outfit, absolute timestamp, event-associated timezone or UTC offset, original local date/time and user-reported nature, preserving that original event-local context after travel. | MVP | FEAT-PERS-002; BR-006, BR-011 | T/I: absolute/local correspondence and later timezone change. |
 | FR-WEAR-005 | The system shall retain recommendation context and occasion with an event when available without fabricating absent context. | MVP | FEAT-PERS-002; BR-011, BR-022 | T: available/missing context. |
 | FR-WEAR-006 | The system shall allow correction of an individual event's applicable outfit, occasion/context and local time, rejecting a future corrected time or one outside its original local calendar day. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: outfit/context correction; future/cross-day rejection in original timezone. |
-| FR-WEAR-007 | The system shall allow removal of an individual Wear Event, immediately excluding it from effective history/utilization/recency/personalization while preserving unrelated events and physically deleting applicable personal event data within 30 days. | MVP | FEAT-PERS-002; BR-006, BR-021 | T/I: immediate effective exclusion, surviving group recalculation and physical deletion by the 30-day deadline. |
+| FR-WEAR-007 | The system shall allow removal of an individual Wear Event, immediately excluding it from stored history/utilization while preserving unrelated events and physically deleting applicable personal event data within 30 days. | MVP | FEAT-PERS-002; BR-006, BR-021 | T/I: immediate stored-history exclusion and physical deletion by the 30-day deadline. |
 | FR-WEAR-008 | The system shall preserve the underlying Outfit and Garments when a Wear Event is removed. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: underlying objects remain. |
 | FR-WEAR-009 | The system shall treat retry, repeated delivery or reprocessing of one logical Wear action as the same event, while treating a new explicit user initiation as a separate event even for the same outfit/day. | MVP | FEAT-PERS-002; BR-011 | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
-| FR-WEAR-010 | The system shall reflect accepted creation/correction/removal in effective history/utilization/recency and normalized, age-weighted behavioral evidence without deleting other legitimate reports. | MVP | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003; BR-006, BR-011 | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
+| FR-WEAR-010 | The system shall reflect accepted creation/correction/removal in stored history/utilization without deleting other legitimate reports. | MVP | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003; BR-006, BR-011 | T/A: corrected outfit/time and removal change stored history appropriately. |
 | FR-WEAR-011 | The system shall avoid interpreting any event or repeated reporting as verified physical wear or as permission to bypass outfit validity. | MVP | FEAT-PERS-002, FEAT-PERS-003; BR-011, BR-009 | T/A: invalid/hypothetical attempts. |
 | FR-WEAR-012 | The system shall allow cancellation of a pending Wear Event correction/removal without applying that requested change. | MVP | FEAT-PERS-002; BR-006, BR-021 | T: cancel correction/removal; original event remains. |
 
-### 3.12 Behavioral Personalization
+### 3.12 Behavioral Evidence
 
-The MVP uses explicit preferences and lightweight behavioral signals to rank already-valid outfit candidates. Advanced learned ranking is not required.
+The MVP stores explicit preferences and reported wear as events for history and for the matching engine's own rules. Advanced learned ranking is not required.
 
-#### 3.12.1 Behavioral Personalization Rules
+#### 3.12.1 Behavioral Evidence Storage
 
-The following rules define behavioral contributions, aging, normalization, and recency for lightweight rule/score-based personalization. They specify ranking effects without defining a complete ranking algorithm; Business Rules will formalize reusable rules and examples. Hard validity always precedes all contributions/penalties.
+Like, Dislike, and Wear Events are stored as user-expressed events for history and for the matching engine's own rules. No fixed contribution, influence band, normalization increment, or recency/diversity penalty applies as a requirement. Hard validity always precedes any engine preference.
 
-| Evidence | Conceptual Base Contribution |
-|---|---|
-| Like on the identified recommendation/exact outfit combination | +1 |
-| Dislike on that target | −2 |
-| Wear-based preference increment | +2 |
+Like/Dislike state remains until changed, cleared or superseded through user action. History may retain older events while the account is active and the information is necessary, subject to Section 4.9's removal/retention boundaries. Dislike targets the AI-generated outfit only and does not automatically ban any constituent garment.
 
-| Behavioral Evidence Age | Ranking Influence |
-|---|---|
-| 0–30 days | 100% |
-| 31–60 days | 50% |
-| 61–90 days | 25% |
-| >90 days | 0% |
+All legitimate Wear Events remain separate in history. Same-outfit/same-day reports form one history group for display/counting only.
 
-Behavioral age and elapsed-day recency use completed elapsed 24-hour periods between absolute instants: CompletedElapsedDays = floor((EvaluationInstant − EvidenceAnchorInstant) / 24 hours). Original event-local date/time determines history and same-day grouping; a device timezone change does not change elapsed age. For each exact-outfit/original-local-day Wear group, the anchor is the latest surviving accepted event's currently accepted absolute timestamp. Accepted correction/removal recalculates affected group membership, anchors, aging and recency; no survivors means no group Wear contribution.
-
-The behavioral window is the most recent 90 days. Like/Dislike state remains until changed, cleared or superseded through user action; aging its ranking influence does not automatically clear that state. History may retain older events while the account is active and the information is necessary, subject to Section 4.9's removal/retention boundaries. Dislike targets the outfit and does not automatically ban every constituent garment.
-
-All legitimate Wear Events remain separate in history. For ranking, the same exact outfit within the same event-local calendar day supplies at most one Wear-based preference increment, before applicable time decay. This normalization does not deduplicate separate intentional actions or collapse different outfits/days.
-
-| Recency / Diversity Situation | Soft Ranking Effect |
-|---|---|
-| Exact outfit reported worn within the last 2 days | Strong diversity penalty. |
-| Exact outfit reported worn 3–7 days ago | Mild diversity penalty. |
-| Exact outfit last reported worn >7 days ago | No recency penalty. |
-| Garment with future approved eligibility and no recorded wear for ≥14 days | May receive a small soft utilization/diversity boost. |
-
-Strong/mild penalties remain ranking effects and never invalidate an outfit. The optional overlooked-item boost cannot override hard validity, strong explicit negative feedback or current context relevance. No additional numeric ranking weights or mandatory learned model are specified.
+No additional numeric ranking weights or mandatory learned model are specified.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-PERS-006 | The system shall apply declared style and current occasion to relevant initial advice even without behavioral history. | MVP | FEAT-PERS-003, FEAT-PROF-001; BR-010 | A: no-history preference fixture. |
-| FR-PERS-007 | The system shall apply the +1 Like/−2 Dislike base contributions and 90-day time-decay policy in Section 3.12.1 to effective outfit-targeted evidence, preserving feedback state until user revision. | MVP | FEAT-PERS-003, FEAT-PERS-001; BR-011 | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
-| FR-PERS-008 | The system shall use a Wear-based preference increment of +2 before decay, stronger than Like's +1 under controlled conditions, subject to exact-outfit/day normalization. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: equal-age +2 versus +1; normalized intentional repeats. |
-| FR-PERS-009 | The system shall apply strong soft exact-outfit diversity penalty within the last 2 days, mild penalty at 3–7 days and none beyond 7 days, permitting a small 14-day-overlooked ready-garment boost only within Section 3.12.1 limits. | MVP | FEAT-PERS-003, FEAT-ANL-001; BR-011, BR-006 | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
+| FR-PERS-007 | The system shall preserve Like/Dislike preference state until user revision/clearing, storing events with no fixed weight or decay; the matching engine consumes them under its own rules. | MVP | FEAT-PERS-003, FEAT-PERS-001; BR-011 | A: persisted state; no weight/decay requirement. |
+| FR-PERS-008 | The system shall store user-reported Wear Events as history with no fixed preference increment or strength comparison; the matching engine consumes them under its own rules. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: stored events; no fixed increment requirement. |
+| FR-PERS-009 | The system shall not apply any required recency penalty or overlooked-item boost; any such handling is engine-owned. | MVP | FEAT-PERS-003, FEAT-ANL-001; BR-011, BR-006 | A: no required penalty/boost. |
 | FR-PERS-010 | The system shall use optional body context only softly and avoid category restrictions or prerequisite eligibility based on body/gender. | MVP | FEAT-PERS-003, FEAT-PROF-001; BR-012 | T/A: optional context and eligibility. |
 | FR-PERS-011 | The system shall keep validity dominant over every preference signal and avoid requiring a changed result when no useful valid alternative exists. | MVP | FEAT-PERS-003, FEAT-OUT-001; BR-009, BR-011 | A: constrained/no-alternative fixture. |
-| FR-PERS-012 | The system shall limit multiple same-exact-outfit Wear Events in one event-local calendar day to at most one Wear-based preference increment and apply the 0–30/31–60/61–90/>90-day behavioral influence policy while retaining legitimate event history. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
-| FR-PERS-013 | The system shall recompute effective evidence after feedback/event/context revision or removal, applying decay/normalization without treating expired influence as deleted history or automatically cleared feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012 | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
+| FR-PERS-012 | The system shall retain all legitimate Wear Events as separate history records and group same-exact-outfit/same-local-day reports for display/counting only, with no business-rule increment cap or decay. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: separate history; grouping for display only. |
+| FR-PERS-013 | The system shall update stored preference/history state after feedback/event/context revision or removal without applying decay/normalization and without deleting unrelated history or automatically clearing feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012 | T/A: clear/revise/remove; unrelated history intact. |
 
 ### 3.13 Wardrobe Utilization & History
 
@@ -475,11 +453,11 @@ History is user-reported and time-aware; preserved historical garments are not c
 |---|---|---|---|---|
 | FR-ANL-001 | The system shall present events using their original event-local date/time and available context rather than automatically re-dating them when the current device timezone changes. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006 | T/I: original-local history after travel; accepted in-day correction. |
 | FR-ANL-002 | The system shall display multiple same-day events separately, including intentional repeated outfit uses. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011 | T: multiple-event history. |
-| FR-ANL-003 | The system shall derive reported garment-use frequency/recency and overlooked-item/variety indicators from accepted events, preserving distinct history beyond the 90-day ranking window subject to retention policy. | MVP | FEAT-ANL-001; BR-006, BR-011 | A: all legitimate reports versus normalized/expired ranking evidence. |
+| FR-ANL-003 | The system shall derive reported garment-use frequency/recency and overlooked-item/variety indicators from accepted events, preserving distinct history subject to retention policy. | MVP | FEAT-ANL-001; BR-006, BR-011 | A: all legitimate reports preserved. |
 | FR-ANL-004 | The system shall explain incomplete logging and label no recorded use without claiming that the garment was never physically worn. | MVP | FEAT-ANL-001; BR-006, BR-022 | I: logging limitations. |
 | FR-ANL-005 | The system shall show a no-Wear-Events state without invented usage/diversity statistics. | MVP | FEAT-ANL-001; BR-006, BR-022 | T: empty history. |
 | FR-ANL-006 | The system shall preserve understandable historical outfit/garment snapshots and label a garment removed from active ownership as Removed from wardrobe. | MVP | FEAT-ANL-001; BR-006, BR-022 | T/I: history after garment removal. |
-| FR-ANL-007 | The system shall update event-specific history/utilization and relevant normalized ranking evidence after valid correction/removal, preserving unrelated records and original event-local context. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011 | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
+| FR-ANL-007 | The system shall update event-specific history/utilization after valid correction/removal, preserving unrelated records and original event-local context. | MVP | FEAT-ANL-001, FEAT-PERS-002; BR-006, BR-011 | T/A: correction/removal with another same-outfit/day event and historical snapshots. |
 
 ### 3.14 Wardrobe Coverage Score
 
@@ -624,7 +602,7 @@ This specifies conceptual measurable outcomes, not an analytics schema/vendor or
 | FR-MET-002 | The system shall distinguish Wear Event creation, correction, and removal as separate measurement meanings. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/I: event lifecycle evidence. |
 | FR-MET-003 | The system shall make coverage/gap/candidate/previews views and external-link attempts/openings distinguishable without interpreting them as sales. | MVP | FEAT-MET-001, FEAT-SHOP-002; BR-019 | T/I: exposure versus navigation. |
 | FR-MET-004 | The system shall support recognition/preview validation and processing/recommendation timing evidence under 's locked benchmark, timing boundaries and p95 targets, alongside manual continuity/utilization/repeat-use measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001; BR-019, BR-001, BR-007, BR-006 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
-| FR-MET-005 | The system shall avoid inflation from one logical Wear action's retries, distinguishing intentional event counts from normalized same-outfit/day ranking evidence. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/A: two intentional history events versus one preference increment; retry counted once. |
+| FR-MET-005 | The system shall avoid inflation from one logical Wear action's retries, distinguishing intentional event counts from retries. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/A: distinct intentional history events; retry counted once. |
 | FR-MET-006 | The system shall minimize user-linked measurement content, avoid requiring raw private images or sensitive profile detail for ordinary engagement metrics, and delete or aggregate/de-identify user-linked engagement/measurement information within 90 days so older information is no longer maintained as user-linked personal behavior. | MVP | FEAT-MET-001; BR-021 | I/T: metric contents and 90-day retention boundary; no residual user-linked information in aggregates. |
 | FR-MET-007 | The system shall preserve an otherwise usable core action when measurement is unavailable without falsely changing its success/failure state. | MVP | FEAT-MET-001; BR-019 | T: measurement dependency failure. |
 
@@ -676,10 +654,10 @@ These requirements specify information meaning/ownership, not tables, storage ty
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-WEAR-001 | The system shall associate current outfit-targeted Like/Dislike state and applicable action-time information with the correct user/combination, sufficient to preserve state and apply the contribution/decay rules in Section 3.12.1. | MVP | FEAT-PERS-001; BR-011, BR-021 | T/I: target, user revision, age and persistent feedback versus expired influence. |
+| DATA-WEAR-001 | The system shall associate current outfit-targeted Like/Dislike state and applicable action-time information with the correct user/combination, sufficient to preserve state for history and engine use. | MVP | FEAT-PERS-001; BR-011, BR-021 | T/I: target, user revision, and persistent feedback state. |
 | DATA-WEAR-002 | The system shall represent each intentional Wear Event with outfit, absolute timestamp, associated timezone or UTC offset, original local date/time context, available occasion/context, user-reported meaning and applicable corrected information. | MVP | FEAT-PERS-002; BR-006, BR-011 | I/T: time information and valid same-original-day correction. |
-| DATA-WEAR-003 | The system shall distinguish logical-action identity from exact-outfit/local-day grouping, preserving separate intentional events while deduplicating one action and normalizing only its applicable ranking contribution. | MVP | FEAT-PERS-002; BR-011 | T/A: retries versus explicit repeats; two history records, one day preference increment. |
-| DATA-WEAR-004 | The system shall reflect valid event corrections/removals in effective history and normalized/age-weighted signals without deleting underlying Outfit/Garments or unrelated events. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011 | T/A: surviving reports and recalculated contribution after removal/correction. |
+| DATA-WEAR-003 | The system shall distinguish logical-action identity from exact-outfit/local-day grouping, preserving separate intentional events while deduplicating one action. | MVP | FEAT-PERS-002; BR-011 | T/A: retries versus explicit repeats; separate history records. |
+| DATA-WEAR-004 | The system shall reflect valid event corrections/removals in stored history without deleting underlying Outfit/Garments or unrelated events. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011 | T/A: surviving reports preserved after removal/correction. |
 
 ### 4.6 Coverage / Gap / Candidate Evaluation Data
 
@@ -703,15 +681,15 @@ These requirements specify information meaning/ownership, not tables, storage ty
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-HIST-001 | The system shall retain the minimal meaningful past event/outfit/garment snapshot and original event-local time context needed to understand history after garment removal, travel or ranking expiry, without indefinitely retaining original removed-garment images or nonessential removed personal data. | MVP | FEAT-ANL-001; BR-006 | T/I: minimal snapshot, >90-day retained history, original timezone and removed-image/nonessential-data deletion within 30 days. |
+| DATA-HIST-001 | The system shall retain the minimal meaningful past event/outfit/garment snapshot and original event-local time context needed to understand history after garment removal or travel, without indefinitely retaining original removed-garment images or nonessential removed personal data. | MVP | FEAT-ANL-001; BR-006 | T/I: minimal snapshot, original timezone and removed-image/nonessential-data deletion within 30 days. |
 | DATA-HIST-002 | The system shall identify removed garments in historical presentation as Removed from wardrobe without treating the snapshot as an active item. | MVP | FEAT-ANL-001; BR-006, BR-022 | I/A: removed snapshot. |
 
 ### 4.9 Retention / Deletion
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-RET-001 | The system shall immediately remove an accepted removed event from effective history/utilization/recency/signals, preserve underlying Outfits/Garments and unrelated events, recalculate surviving outfit/day evidence, and physically delete applicable personal event data within 30 days. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021 | T/A/I: individual removal, survivor anchor/effects and deletion deadline. |
-| DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary; ranking expiry alone does not erase history, while a removed garment's original image and nonessential personal data are physically deleted within 30 days. | MVP | FEAT-WAR-002, FEAT-ANL-001; BR-005, BR-006 | T/I: retained necessary active/minimal history versus removed images/nonessential data; ranking influence and retention have separate boundaries. |
+| DATA-RET-001 | The system shall immediately remove an accepted removed event from stored history/utilization, preserve underlying Outfits/Garments and unrelated events, and physically delete applicable personal event data within 30 days. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-021 | T/A/I: individual removal and deletion deadline. |
+| DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary, while a removed garment's original image and nonessential personal data are physically deleted within 30 days. | MVP | FEAT-WAR-002, FEAT-ANL-001; BR-005, BR-006 | T/I: retained necessary active/minimal history versus removed images/nonessential data. |
 | DATA-RET-003 | The system shall retain user-linked engagement/measurement information for no more than 90 days, then delete it or aggregate/de-identify it so it is no longer maintained as user-linked personal behavioral information. | MVP | FEAT-MET-001; BR-019, BR-021 | I/T: before/at 90-day deadline and older information; retained aggregates are no longer user-linked. |
 
 The 30-day removal-deletion and 90-day user-linked measurement limits are MVP product policies. Necessary minimal historical snapshots may remain; original removed-garment images and nonessential personal data may not be retained indefinitely for history. Physical deletion/aggregation mechanisms remain downstream design choices. No self-service account-deletion/export feature, statutory retention rule or legal certification is introduced.
@@ -965,11 +943,11 @@ These are the normative explanation requirements. Explanations must correspond t
 
 FR-AUTH-008, DATA-AUTH-001, COM-001/COM-003, NFR-SEC-001–NFR-SEC-003, and NFR-PRIV-001/NFR-PRIV-002 establish private access, protected exchange, clear purposes, and control. FR-PROF-005–FR-PROF-007 and HW-003 preserve optional context. FR-MET-006 limits engagement evidence; DATA-RET-* preserves settled effective-removal/history semantics.
 
-Personal data is processed only for necessary product, personalization, history/utilization, validation/measurement, security and operational purposes. MVP personal data is not used for AI training/improvement; future use requires separate explicit opt-in and an approved product/privacy change. Private access excludes public wardrobes, user-to-user sharing, unrestricted third-party sharing and sale of personal data. External dependencies receive only purpose-minimal information: selected weather location, email/necessary recovery-delivery information, or explicitly chosen shopping navigation. Section 4.9 defines active/minimal history retention, 30-day removed-data deletion and 90-day user-linked measurement retention. Optional fields and permissions cannot become undisclosed access gates.
+Personal data is processed only for necessary product, feed sharing, personalization, history/utilization, validation/measurement, security and operational purposes. MVP personal data is not used for AI training/improvement; future use requires separate explicit opt-in and an approved product/privacy change. Private access excludes public wardrobes (entire-wardrobe sharing), unrestricted third-party sharing and sale of personal data; allowed sharing is limited to outfit posts, Like, Follow creator, and explicitly chosen shopping navigation. External dependencies receive only purpose-minimal information: selected weather location, email/necessary recovery-delivery information, or explicitly chosen shopping navigation. Section 4.9 defines active/minimal history retention, 30-day removed-data deletion and 90-day user-linked measurement retention. Optional fields and permissions cannot become undisclosed access gates.
 
 ### 8.4 Auditability / Provenance Requirements
 
-DATA-GAR-003, DATA-INT-001, and AI-REQ-006/AI-REQ-007 make suggestion versus authoritative information verifiable. DATA-WEAR-002–DATA-WEAR-004, DATA-HIST-001/DATA-HIST-002, and FR-MET-002/FR-MET-005 distinguish logical actions, original event-local timestamps, bounded corrections/removals, historical snapshots and duplicate processing. History counts remain distinct from same-outfit/day ranking normalization.
+DATA-GAR-003, DATA-INT-001, and AI-REQ-006/AI-REQ-007 make suggestion versus authoritative information verifiable. DATA-WEAR-002–DATA-WEAR-004, DATA-HIST-001/DATA-HIST-002, and FR-MET-002/FR-MET-005 distinguish logical actions, original event-local timestamps, bounded corrections/removals, historical snapshots and duplicate processing. History counts remain distinct records.
 
 This does not require an immutable audit store, indefinite retention, an administrator console, or a particular event architecture. The observable accepted state and its meaning are the requirement.
 
@@ -1027,8 +1005,8 @@ These requirements specify recoverable outcomes, not exception types or infrastr
 
 | ID | Failure Condition | Required System Behavior | Continuation / State Protection | Source | Verification |
 |---|---|---|---|---|---|
-| ERR-WEAR-001 | Duplicate processing of one reporting action. | The system shall deduplicate retry/delivery/reprocessing of the same logical Wear action without collapsing a new explicit same-outfit/same-day intention or confusing ranking normalization with event deletion. | One event per logical action; distinct intentional reports remain in history, with at most one Wear preference increment per exact outfit/event-local day. | FEAT-PERS-002; BR-011 | T: logical-action retries versus new explicit repeat and daily contribution cap. |
-| ERR-WEAR-002 | Event mutation fails/is uncertain, or corrected time is future/outside the original local day. | The system shall reject future or cross-original-day time corrections and distinguish failed/pending event mutations from accepted changes without deleting Outfit/Garments or unrelated events. | Invalid corrections leave the accepted event unchanged; uncertain outcomes require review/safe retry. Valid corrections/removals update effective history/signals. | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-021, BR-022 | T: future/cross-day corrections, interrupted mutation, original event retained. |
+| ERR-WEAR-001 | Duplicate processing of one reporting action. | The system shall deduplicate retry/delivery/reprocessing of the same logical Wear action without collapsing a new explicit same-outfit/same-day intention. | One event per logical action; distinct intentional reports remain in history. | FEAT-PERS-002; BR-011 | T: logical-action retries versus new explicit repeat. |
+| ERR-WEAR-002 | Event mutation fails/is uncertain, or corrected time is future/outside the original local day. | The system shall reject future or cross-original-day time corrections and distinguish failed/pending event mutations from accepted changes without deleting Outfit/Garments or unrelated events. | Invalid corrections leave the accepted event unchanged; uncertain outcomes require review/safe retry. Valid corrections/removals update stored history. | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-021, BR-022 | T: future/cross-day corrections, interrupted mutation, original event retained. |
 
 ### 9.7 Assessment Integrity
 
@@ -1150,9 +1128,9 @@ These audits establish specification coverage; implementation and successful ver
 | FR-OUT-015 | FEAT-OUT-003 | BR-007, BR-009 | CAP-05 | Future approved-policy replacement cases; no old property predicates. |
 | FR-OUT-016 | FEAT-OUT-003 | BR-008, BR-022 | CAP-05 | T: no-alternative fixture. |
 | FR-OUT-017 | FEAT-OUT-003 | BR-008 | CAP-05 | T: interaction isolation. |
-| FR-PERS-001 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: exact target, Like +1 and age-dependent influence. |
-| FR-PERS-002 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: Dislike −2; no automatic per-garment/category ban. |
-| FR-PERS-003 | FEAT-PERS-001 | BR-011, BR-021 | CAP-06 | T: persisted state beyond 90 days, revise/clear; ranking aging separate. |
+| FR-PERS-001 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: exact target, persisted Like state; no fixed influence. |
+| FR-PERS-002 | FEAT-PERS-001 | BR-011 | CAP-06 | T/A: AI-only Dislike; no automatic per-garment/category ban. |
+| FR-PERS-003 | FEAT-PERS-001 | BR-011, BR-021 | CAP-06 | T: persisted state, revise/clear; no fixed influence. |
 | FR-PERS-004 | FEAT-PERS-001 | BR-011 | CAP-06 | T: failed versus recorded signal. |
 | FR-PERS-005 | FEAT-PERS-001 | BR-011 | CAP-06 | T: history unchanged. |
 | FR-WEAR-001 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T: new explicit initiation versus retries; accepted-action default time. |
@@ -1168,16 +1146,16 @@ These audits establish specification coverage; implementation and successful ver
 | FR-WEAR-011 | FEAT-PERS-002, FEAT-PERS-003 | BR-011, BR-009 | CAP-05, CAP-06, CAP-07 | T/A: invalid/hypothetical attempts. |
 | FR-WEAR-012 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: cancel correction/removal; original event remains. |
 | FR-PERS-006 | FEAT-PERS-003, FEAT-PROF-001 | BR-010 | CAP-01, CAP-05, CAP-06 | A: no-history preference fixture. |
-| FR-PERS-007 | FEAT-PERS-003, FEAT-PERS-001 | BR-011 | CAP-05, CAP-06 | A: weights and 30/31/60/61/90/91-day aging; persisted state. |
-| FR-PERS-008 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: equal-age +2 versus +1; normalized intentional repeats. |
-| FR-PERS-009 | FEAT-PERS-003, FEAT-ANL-001 | BR-011, BR-006 | CAP-05, CAP-06, CAP-07 | A: 2/3/7/8-day recency boundaries; optional ≥14-day boost safeguards. |
+| FR-PERS-007 | FEAT-PERS-003, FEAT-PERS-001 | BR-011 | CAP-05, CAP-06 | A: persisted state; no fixed weight/decay. |
+| FR-PERS-008 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: stored events; distinct history preserved. |
+| FR-PERS-009 | FEAT-PERS-003, FEAT-ANL-001 | BR-011, BR-006 | CAP-05, CAP-06, CAP-07 | A: no required recency penalty/boost. |
 | FR-PERS-010 | FEAT-PERS-003, FEAT-PROF-001 | BR-012 | CAP-01, CAP-05, CAP-06 | T/A: optional context and eligibility. |
 | FR-PERS-011 | FEAT-PERS-003, FEAT-OUT-001 | BR-009, BR-011 | CAP-05, CAP-06 | A: constrained/no-alternative fixture. |
-| FR-PERS-012 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: normalized outfit/day versus distinct outfits/days; 100%/50%/25%/0% decay. |
-| FR-PERS-013 | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002 | BR-011, BR-012 | CAP-05, CAP-06, CAP-07 | T/A: clear/revise/remove; surviving same-day events; >90-day state retained. |
+| FR-PERS-012 | FEAT-PERS-003, FEAT-PERS-002 | BR-011 | CAP-05, CAP-06, CAP-07 | A: separate history; grouping for display only. |
+| FR-PERS-013 | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002 | BR-011, BR-012 | CAP-05, CAP-06, CAP-07 | T/A: clear/revise/remove; unrelated history intact. |
 | FR-ANL-001 | FEAT-ANL-001, FEAT-PERS-002 | BR-006 | CAP-06, CAP-07 | T/I: original-local history after travel; accepted in-day correction. |
 | FR-ANL-002 | FEAT-ANL-001, FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T: multiple-event history. |
-| FR-ANL-003 | FEAT-ANL-001 | BR-006, BR-011 | CAP-06, CAP-07 | A: all legitimate reports versus normalized/expired ranking evidence. |
+| FR-ANL-003 | FEAT-ANL-001 | BR-006, BR-011 | CAP-06, CAP-07 | A: all legitimate reports preserved as distinct history. |
 | FR-ANL-004 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | I: logging limitations. |
 | FR-ANL-005 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | T: empty history. |
 | FR-ANL-006 | FEAT-ANL-001 | BR-006, BR-022 | CAP-06, CAP-07 | T/I: history after garment removal. |
@@ -1326,10 +1304,10 @@ Coverage totals: **149 retained functional identifiers, including superseded/def
 | Soft Personalized Ranking | Preference-based ordering of already-valid candidates; it cannot convert an invalid outfit into a valid one. |
 | Current Occasion | Occasion for a particular recommendation request, drawn from the defined occasion vocabulary. |
 | Common Occasion Needs | Ongoing clothing needs/priorities informing the Personalized Everyday Capsule; distinct from current request occasion. |
-| Feedback | Current outfit-targeted Like (+1) or Dislike (−2) state until changed/cleared/superseded, with age-weighted ranking influence under the 90-day policy; not a Wear Event or automatic garment ban. |
+| Feedback | Current outfit-targeted Like or Dislike state until changed/cleared/superseded; stored for history and engine use, not a Wear Event or automatic garment ban. Dislike is AI-generated targets only. |
 | Wear Event | One logical intentional wearing report with outfit, absolute timestamp, event timezone/offset and original local date/time, plus available context. Separate explicit repeats can coexist; correction stays non-future/in the original local day. |
-| Wear History | Distinct accepted reports and historical snapshots in original event-local context, unaffected by later device timezone or expiry of ranking influence, subject to retention policy. Logging remains user-reported/incomplete. |
-| Accidental Duplicate | Retry/delivery/reprocessing of the same logical Wear intention; it does not create another event. User+outfit+date alone does not identify duplicates, and preference normalization is separate. |
+| Wear History | Distinct accepted reports and historical snapshots in original event-local context, unaffected by later device timezone, subject to retention policy. Logging remains user-reported/incomplete. |
+| Accidental Duplicate | Retry/delivery/reprocessing of the same logical Wear intention; it does not create another event. User+outfit+date alone does not identify duplicates. |
 | Removed from wardrobe | Historical indication that the garment is no longer current owned inventory; it is excluded from new/current calculations. |
 | Personalized Everyday Capsule | One contextual model informed by common need priorities, style, climate/context, and current confirmed wardrobe. |
 | Wardrobe Coverage Score | Weighted percentage from Section 3.14.1, using positive priorities and per-need ratios only after sufficient ready wardrobe/context information; contextual, not universal completeness. |
@@ -1362,15 +1340,15 @@ Coverage totals: **149 retained functional identifiers, including superseded/def
 
 | Boundary | Required evidence | Requirements |
 |---|---|---|
-| Necessary private processing | Authorized data is used only for necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; originating omission/correction/removal/permission controls work. No public wardrobe, user-to-user sharing, unrestricted third-party sharing or sale. | FR-AUTH-008, NFR-PRIV-001 |
+| Necessary private processing | Authorized data is used only for necessary functionality, feed sharing, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; originating omission/correction/removal/permission controls work. No public wardrobe (entire-wardrobe sharing), unrestricted third-party sharing or sale. Allowed sharing is limited to outfit posts, Like, Follow creator, and explicitly chosen shopping navigation. | FR-AUTH-008, NFR-PRIV-001 |
 | Personal data and model training | Wardrobe images, profiles, Wear Events, feedback and corrections do not enter MVP AI training/improvement. Any future use needs separate explicit opt-in and an approved product/privacy change. | NFR-PRIV-002 |
 | Purpose-minimal external exchange | Weather receives required selected location only; recovery delivery receives email and necessary delivery information; shopping receives explicitly chosen navigation without unrelated wardrobe/profile/history disclosure. | SI-002, SI-003, COM-003 |
 | Removed garment | Immediate current ownership/recommendation/Coverage/Multiplier exclusion; only a necessary understandable historical snapshot remains. Original image and nonessential removed-garment personal data are physically deleted within 30 days. | FR-WAR-005, DATA-HIST-001, DATA-RET-002 |
-| Removed Wear Event | Immediate effective history/utilization/recency/personalization exclusion, survivor evidence recalculation and physical deletion of applicable personal event data within 30 days; unrelated reports/Outfits/Garments remain. | FR-WEAR-007, DATA-RET-001 |
+| Removed Wear Event | Immediate stored history/utilization exclusion and physical deletion of applicable personal event data within 30 days; unrelated reports/Outfits/Garments remain. | FR-WEAR-007, DATA-RET-001 |
 | User-linked measurement | Ordinary engagement metrics do not require raw images/sensitive profiles; user-linked engagement/measurement data is deleted or aggregated/de-identified within 90 days, with older retained information no longer user-linked. | FR-MET-006, DATA-RET-003 |
 | Product boundary | No Delete Account goal is added. Product retention limits do not constitute legal certification or statutory-compliance evidence. | Sections 1.2 and 8.5 |
 
-The 90-day ranking-influence window and the 90-day user-linked measurement limit have different purposes. Retained necessary Wear history and effective Like/Dislike state are functional product information, not engagement-metric storage; ranking expiry alone does not delete/clear them. This distinction does not permit indefinite user-linked measurement copies. Accepted event removal still takes immediate effect and applies its 30-day physical-deletion deadline.
+Retained necessary Wear history and Like/Dislike state are functional product information, not engagement-metric storage. This distinction does not permit indefinite user-linked measurement copies. Accepted event removal still takes immediate effect and applies its 30-day physical-deletion deadline.
 
 ### 12.2 External-Information Acceptance
 

@@ -127,6 +127,18 @@ QA, ASR and ADA drafts exist; [Selected Architecture Decisions](../04-architectu
 
 **Backend Developer Impact:** Read ADA/Selected Architecture Decisions, ADD and the four views as the existing baseline. Contribute next to the project-wide Test Strategy and Engineering Baseline when authorized, then feasibility/readiness in refinement and initial planning. Design only necessary implementation detail for Stories actually selected into the Sprint, during execution; keep automated tests, implementation, contracts and review/CI together. Product ordering and Story/AC scope remain with their existing owners; no provider, schema, API, estimate or Sprint selection is made here.
 
+### DD-007 — MVP scope: outfit-inspiration feed, chat, try-on, catalog, bulk, and store-only feedback
+
+**Status:** Active
+
+**Decision:** MVP scope includes: (a) outfit-inspiration feed with Like, Follow creator, outfit sharing, Edit-as-duplicate (copy to own outfit view as editable draft), Save look, generic-model Try-On — no comments, no messaging, no wardrobe sharing; (b) single-thread AI chat stylist with outfit/item cards and photo-attach routing, chat suggestions support Dislike; (c) generic-model try-on preview, no personal avatar in MVP; (d) internal catalog search + add-to-closet and bulk import (select → queue → review & save). Dislike is AI-generated targets only (Today + chat), never community posts. Like/Wear are stored events with no fixed weights, no decay, no required recency/diversity penalty; the matching engine consumes them under its own rules.
+
+**Reason:** Home feed is an outfit-inspiration place with Like/Follow/outfit sharing (not a complete social network and not wardrobe sharing); chat, generic try-on, catalog search, and bulk import are core MVP flows alongside store-only feedback.
+
+**Authoritative Basis:** BRD §16; PRD §27–§28; SRS §3.10/§3.12; Business Rules BRULE-PERS-001–006; UC-013; Product Goal §6; backlog PBI-015/PBI-029 notes.
+
+**Backend Developer Impact:** Persist Like/Dislike/Wear events with timestamps for engine use with no fixed weights, decay bands, or recency penalties. Treat feed/chat/try-on/catalog/bulk as pending new UC/US/PBI refinement — no API, schema, or Sprint commitment is made here. New feed/chat/try-on/catalog/bulk requirements need separate UC, Activity, SRS, architecture, and backlog items before Sprint selection.
+
 ## 5. Superseded Decisions
 
 None currently.
@@ -139,4 +151,4 @@ None currently.
 
 ## 7. Status
 
-**Version 0.1.9 — Baseline Draft.** Six Active entries, no Superseded entries. DD-006/current navigation follows the 2026-10-20 workflow revision; all 18 architecture selections and DD-001–005 remain unchanged. Active means applicable guidance, not formal artifact approval. No product requirement, story/PBI boundary, order, estimate or Sprint assignment changes.
+**Version 0.1.9 — Baseline Draft.** Seven Active entries, no Superseded entries.

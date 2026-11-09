@@ -53,8 +53,8 @@ Identifiers use `BRULE-<family>-<three digits>`. Families are AUTH, PROF, GAR, O
 - **Unknown / unavailable** is absence of usable evidence, not a numeric zero or a fabricated compatibility value. UNKNOWN is an explicit vocabulary value only where defined.
 - **Current** denotes the active assessment basis. Historical snapshots and hypothetical candidates do not establish current ownership.
 - Decision tables use **Yes**, **No**, and **—** (irrelevant to that row). Required predicates must be established from authoritative or justified information; an unestablished required check cannot be treated as a successful check.
-- **CompletedElapsedDays** counts fully elapsed 24-hour periods between the absolute EvaluationInstant and the applicable EvidenceAnchorInstant, as defined in BRULE-PERS-003. Original event-local calendar dates govern Wear grouping/history; absolute timestamps govern behavioral age and elapsed-day recency. Device timezone changes do not alter elapsed age.
-- Examples are controlled fixtures, not universal wardrobe targets or product claims. Temporal examples use completed elapsed days and the latest surviving accepted Wear Event anchor for a normalized group.
+- Original event-local calendar dates govern Wear grouping/history; absolute timestamps govern stored event order. Device timezone changes do not re-date history.
+- Examples are controlled fixtures, not universal wardrobe targets or product claims.
 - Source columns identify specification coverage, not implemented behavior or passed verification. Local rule sources and the consolidated traceability matrix must stay synchronized.
 
 ### 1.6 Rule Precedence
@@ -388,85 +388,57 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 ### BRULE-PERS-001 — Effective Outfit-Targeted Feedback
 
-**Rule:** Like has conceptual base contribution +1 and Dislike −2 on the identified recommendation/exact outfit combination. Contradictory feedback is not simultaneously effective for one user's target. State persists until changed, cleared, or superseded by user action; aging influence does not clear it. Dislike does not permanently ban constituent garments/categories. Preference actions and views do not create Wear Events.
+**Rule:** Like and Dislike are stored as user-expressed preference state on the identified outfit/post target with no fixed numeric contribution. Like is available on AI-generated targets (Today strip, chat suggestions) and community posts; Dislike is available on AI-generated targets only (Today + chat suggestions), never on community posts. Contradictory feedback is not simultaneously effective for one user's target. State persists until changed, cleared, or superseded by user action. Dislike does not permanently ban constituent garments/categories and does not by itself change validity. Preference actions and views do not create Wear Events. No fixed contribution, aging band, or decay applies; the matching engine consumes stored events under its own rules.
 
-**Applies To:** feedback recording/revision and future valid ranking.
+**Applies To:** feedback recording/revision and event storage for engine use.
 
 **Source:** FR-PERS-001, FR-PERS-002, FR-PERS-003, FR-PERS-005, DATA-WEAR-001.
 
 ### 7.2 Wear-Based Evidence
 
-### BRULE-PERS-002 — Wear Preference Strength
+### BRULE-PERS-002 — Wear Event Storage
 
-**Rule:** An effective user-reported Wear contribution has base increment +2 before time decay, stronger than Like +1 under otherwise equal controlled conditions. Wear evidence is subject to the outfit/day cap in BRULE-PERS-005. It is not verified physical wear and cannot bypass hard validity.
+**Rule:** An accepted user-reported Wear Event is stored as a historical event with its outfit, timestamp, and context. It is not verified physical wear and cannot bypass hard validity. No fixed increment, strength comparison, outfit/day cap increment, or time decay applies in business rules; the matching engine consumes stored Wear events under its own rules. Duplicate/intentional-repeat identity and history preservation remain governed by BRULE-WEAR-001/002.
 
-**Applies To:** behavioral personalization from accepted Wear Events.
+**Applies To:** Wear Event storage for engine use and history.
 
 **Source:** FR-PERS-008, FR-WEAR-011, FR-PERS-011.
 
 ### 7.3 Evidence Aging
 
-### BRULE-PERS-003 — Ninety-Day Ranking Influence
+### BRULE-PERS-003 — Evidence Aging
 
-**Rule:** Behavioral evidence age is measured in completed elapsed 24-hour periods:
+**Rule:** No business-rule aging band or decay applies to Like/Dislike/Wear influence. Feedback state persists until user revision/clearing; history retention follows BRULE-WEAR-005 and BRULE-HIST-003. The matching engine defines any recency handling under its own rules.
 
-`CompletedElapsedDays = floor((EvaluationInstant - EvidenceAnchorInstant) / 24 hours)`
-
-EvaluationInstant is the absolute instant of personalization/evidence evaluation. EvidenceAnchorInstant is the applicable absolute evidence timestamp: the existing action-time information for effective Like/Dislike evidence, or the latest surviving accepted Wear Event timestamp for a normalized group under BRULE-PERS-005. Calculate age from absolute instants, never from current device calendar dates, displayed local-date differences, or the user's current timezone after travel. At the same EvaluationInstant, changing timezone cannot make existing evidence older or newer.
-
-The most recent 90-day behavioral ranking window uses these completed-day bands:
-
-| Behavioral Evidence Age (CompletedElapsedDays) | Ranking Influence |
-|---|---|
-| 0–30 days | 100% |
-| 31–60 days | 50% |
-| 61–90 days | 25% |
-| >90 days | 0% |
-
-For example, 30 days 23 hours 59 minutes elapsed is 30 completed days with 100% influence; exactly 31 days is 31 completed days with 50%; exactly 61 days gives 25%; exactly 91 days gives 0%. Apply aging to effective contributions without deleting historical events or automatically clearing Like/Dislike state. Necessary history may remain while the account is active and needed; effective removal and physical-data/measurement limits follow BRULE-WEAR-005 and BRULE-HIST-003.
-
-**Applies To:** feedback and normalized Wear evidence used in ranking.
+**Applies To:** event timestamp storage; no business-rule ranking decay.
 
 **Source:** FR-PERS-007, FR-PERS-012, DATA-WEAR-001, DATA-RET-002.
 
 ### 7.4 Recency and Diversity
 
-### BRULE-PERS-004 — Soft Recency and Overlooked-Garment Adjustment
+### BRULE-PERS-004 — Recency and Diversity
 
-**Rule:** Exact-outfit recency uses LatestEffectiveWearInstant, the absolute timestamp of the latest effective accepted Wear Event for that exact outfit, across its surviving normalization groups:
+**Rule:** No business-rule recency penalty or overlooked-garment boost applies. The matching engine consumes stored Like/Dislike/Wear events under its own rules; hard validity always precedes any engine preference.
 
-`CompletedElapsedDays = floor((EvaluationInstant - LatestEffectiveWearInstant) / 24 hours)`
-
-Apply the existing recency and optional overlooked-garment boundaries using completed elapsed days:
-
-| Recency / Diversity Situation | Ranking Effect |
-|---|---|
-| Exact-outfit recency of 0–2 completed elapsed days | Strong soft diversity penalty. |
-| Exact-outfit recency of 3–7 completed elapsed days | Mild soft diversity penalty. |
-| Exact-outfit recency of >7 completed elapsed days | No recency penalty. |
-| Recommendation-Garment with future approved eligibility and no recorded wear for ≥14 completed elapsed days | May receive a small soft utilization/diversity boost. |
-
-The ≥14-day boundary uses the existing applicable evidence anchor. If the sources/evidence do not establish that anchor, do not invent a start date or treat garment creation as an assumed origin. This elapsed-day interpretation introduces no new garment-lifecycle event. Penalties never invalidate an outfit. The optional boost cannot override hard validity, strong explicit negative feedback, or current context relevance. No extra numerical penalty/boost magnitude is specified.
-
-**Applies To:** personalized ordering and recorded-utilization diversity.
+**Applies To:** event storage; no business-rule ordering effect.
 
 **Source:** FR-PERS-009, FR-PERS-011, FR-ANL-003.
 
 ### 7.5 Evidence Normalization
 
-### BRULE-PERS-005 — Exact-Outfit / Event-Local-Day Wear Cap
+### BRULE-PERS-005 — Exact-Outfit / Event-Local-Day Grouping
 
-**Rule:** For the same user, exact outfit identity, and original event-local calendar date, surviving accepted Wear Events form one normalization group and supply at most one Wear-based preference increment (+2) before time decay. Grouping is independent of elapsed-time aging: its EvidenceAnchorInstant is the absolute timestamp of the latest surviving accepted Wear Event in that group, using each event's currently accepted timestamp after any valid correction. This is a ranking normalization boundary, not event identity; separate explicit reports remain separate historical events, and different outfits/dates are not collapsed. If no accepted event survives, the group's Wear contribution no longer exists.
+**Rule:** For the same user, exact outfit identity, and original event-local calendar date, surviving accepted Wear Events form one history group for display/counting. No preference increment, cap, or decay applies. Grouping is not event identity; separate explicit reports remain separate historical events, and different outfits/dates are not collapsed.
 
-**Applies To:** Wear-based ranking and prevention of repetition inflation.
+**Applies To:** Wear history grouping only.
 
 **Source:** FR-PERS-012, DATA-OUT-001, DATA-WEAR-003, ERR-WEAR-001.
 
-### BRULE-PERS-006 — Recalculation of Effective Evidence
+### BRULE-PERS-006 — Recalculation of Stored Evidence
 
-**Rule:** Accepted feedback revision/clearing, Wear correction/removal, or relevant context revision changes effective evidence. Reapply current feedback state and surviving events. For each affected outfit/original-local-date group, recompute the latest surviving accepted absolute Wear timestamp, then recalculate its completed elapsed-day age and applicable decay. Recalculate exact-outfit recency from its latest effective accepted Wear Event. A valid timestamp or outfit correction may change a group's membership or anchor; removing its latest event moves the anchor to the latest remaining event. If none survives, remove that group's Wear contribution. Unrelated history remains unchanged; historical event count and normalized ranking evidence remain different quantities.
+**Rule:** Accepted feedback revision/clearing, Wear correction/removal, or relevant context revision changes stored state. Reapply current feedback state and surviving events. For each affected outfit/original-local-date group, update the latest surviving accepted absolute Wear timestamp; no age/decay recalculation applies. A valid timestamp or outfit correction may change a group's membership or anchor; removing its latest event moves the anchor to the latest remaining event. Unrelated history remains unchanged.
 
-**Applies To:** feedback/event revision, utilization and subsequent recommendations.
+**Applies To:** feedback/event revision and history.
 
 **Source:** FR-PERS-013, FR-WEAR-010, FR-ANL-007, DATA-WEAR-004, DATA-RET-001.
 
@@ -516,7 +488,7 @@ The ≥14-day boundary uses the existing applicable evidence anchor. If the sour
 
 ### BRULE-WEAR-005 — Individual Event Removal
 
-**Rule:** Accepted removal immediately excludes the specific report from effective history, utilization, recency and personalization. Applicable personal event data must be physically deleted within 30 days. The underlying Outfit, Garments and unrelated Wear Events remain. Canceling or known failure before acceptance does not apply removal; uncertainty is not presented as acceptance. Recompute the surviving group's latest accepted absolute anchor and age/recency; no survivors means no group Wear contribution, as defined in BRULE-PERS-006.
+**Rule:** Accepted removal immediately excludes the specific report from stored history and utilization. Applicable personal event data must be physically deleted within 30 days. The underlying Outfit, Garments and unrelated Wear Events remain. Canceling or known failure before acceptance does not apply removal; uncertainty is not presented as acceptance.
 
 **Applies To:** event-specific removal and canceled mutations.
 
@@ -526,7 +498,7 @@ The ≥14-day boundary uses the existing applicable evidence anchor. If the sour
 
 ### BRULE-WEAR-006 — Accepted Report Effects
 
-**Rule:** Accepted creation/correction/removal updates applicable history, utilization, recency, and normalized aged evidence for the affected report/combination. Recompute surviving outfit/day contributions and their latest accepted absolute anchors, then completed elapsed-day age, decay, and exact-outfit recency under BRULE-PERS-006, without changing unrelated events. Record meanings distinguish creation, correction, and removal; retries must not inflate accepted event counts.
+**Rule:** Accepted creation/correction/removal updates applicable stored history and utilization for the affected report. Record meanings distinguish creation, correction, and removal; retries must not inflate accepted event counts.
 
 **Applies To:** history, personalization and interaction measurement.
 
@@ -536,7 +508,7 @@ The ≥14-day boundary uses the existing applicable evidence anchor. If the sour
 
 ### BRULE-HIST-001 — Recorded Use Is Reported Evidence
 
-**Rule:** Use frequency, recency, variety, and overlooked-item information derives from accepted effective Wear Events. Legitimate same-day reports remain separately understandable even when ranking normalizes them. No recorded use does not prove physical nonuse; incomplete logging and no-events states must not produce fabricated statistics.
+**Rule:** Use frequency, recency, variety, and overlooked-item information derives from accepted Wear Events. Legitimate same-day reports remain separately understandable. No recorded use does not prove physical nonuse; incomplete logging and no-events states must not produce fabricated statistics.
 
 **Applies To:** wardrobe use/history and relevant personalization.
 
@@ -550,9 +522,9 @@ The ≥14-day boundary uses the existing applicable evidence anchor. If the sour
 
 **Source:** FR-ANL-001, FR-ANL-006, FR-WAR-005, DATA-HIST-001, DATA-HIST-002, DATA-RET-002.
 
-### BRULE-HIST-003 — Ranking Horizon Is Not Retention
+### BRULE-HIST-003 — Retention Boundaries
 
-**Rule:** Events older than the 90-day behavioral ranking window may remain necessary meaningful history while the account is active; zero ranking influence is not deletion. Garment removal preserves only minimal understandable historical records and applies BRULE-GAR-009's 30-day removed-image/nonessential-data deletion. Accepted individual event removal applies BRULE-WEAR-005's immediate effective exclusion and 30-day applicable personal-data deletion.
+**Rule:** Accepted Wear history may remain necessary meaningful history while the account is active, subject to retention policy. Garment removal preserves only minimal understandable historical records and applies BRULE-GAR-009's 30-day removed-image/nonessential-data deletion. Accepted individual event removal applies BRULE-WEAR-005's immediate stored-history exclusion and 30-day applicable personal-data deletion.
 
 User-linked engagement/measurement information has a separate maximum retention of 90 days; then delete or aggregate/de-identify it so it is no longer maintained as user-linked personal behavior. Ordinary engagement metrics do not require raw private images/sensitive profiles. This measurement boundary neither deletes necessary unremoved Wear history/functional feedback state nor extends removed-data deletion deadlines; it does not permit indefinite user-linked measurement copies.
 
@@ -844,38 +816,27 @@ No fixed TTL or output from incomplete work may replace the evidence predicates.
 
 **Rules:** BRULE-MULT-001–BRULE-MULT-009, BRULE-SHOP-001.
 
-### 14.5 Logical Wear Actions and Effective Ranking
+### 14.5 Logical Wear Actions and Stored History
 
-These outcomes assume accepted actions unless a row states otherwise. Each original-event-local-date group contributes at most one +2 increment before aging. Its age anchor is the latest surviving accepted Wear Event's absolute timestamp; correction/removal recomputes that anchor, completed elapsed-day age, and applicable decay/recency.
+These outcomes assume accepted actions unless a row states otherwise. Same-outfit/same-day reports form one history group for display/counting only; separate explicit reports remain separate historical events.
 
-| Situation | Effective History / State | Wear Preference Consequence |
+| Situation | Stored History / State | History Consequence |
 |---|---|---|
-| New explicit valid Wear action | One new report | Eligible for the outfit/day increment; anchor on the latest surviving accepted absolute timestamp |
-| Retry/reprocessing of the same logical action | No additional report | No additional increment |
-| New explicit same-outfit report in the same original local day | Separate legitimate report | Still at most one +2 increment; use the latest surviving accepted timestamp for aging |
-| Different exact outfit or original local day | Separate report and group | Its own applicable increment before decay |
-| Remove one of multiple surviving same-outfit/day reports | Only that report removed from effective history | Recompute the latest surviving absolute anchor and age; surviving group can still contribute once |
-| Valid accepted timestamp correction | The existing report retains its original local calendar day; no extra report | Recompute the group's latest surviving absolute anchor and applicable decay/recency |
-| Remove the final report for that outfit/day | No surviving effective report in that group | That group's Wear contribution is removed |
-| Like/Dislike, Shuffle, preview or external navigation | No Wear report solely from that action | No Wear increment solely from that action |
-| Invalid, failed, or canceled report mutation | Last accepted state preserved | No unaccepted mutation treated as effective |
+| New explicit valid Wear action | One new report | One new stored event |
+| Retry/reprocessing of the same logical action | No additional report | No additional event |
+| New explicit same-outfit report in the same original local day | Separate legitimate report | Separate stored event in the same history group |
+| Different exact outfit or original local day | Separate report and group | Separate stored event and group |
+| Remove one of multiple surviving same-outfit/day reports | Only that report removed from stored history | Remaining reports in the group remain |
+| Valid accepted timestamp correction | The existing report retains its original local calendar day; no extra report | Stored event updated; group membership may change |
+| Remove the final report for that outfit/day | No surviving report in that group | Group has no surviving events |
+| Like/Dislike, Shuffle, preview or external navigation | No Wear report solely from that action | No Wear event solely from that action |
+| Invalid, failed, or canceled report mutation | Last accepted state preserved | No unaccepted mutation treated as stored |
 
 **Rules:** BRULE-PERS-001, BRULE-PERS-005, BRULE-PERS-006, BRULE-WEAR-001–BRULE-WEAR-006.
 
-### 14.6 Isolated Evidence Aging Boundaries
+### 14.6 Stored Evidence Timestamps
 
-Evidence age means completed elapsed 24-hour periods calculated from absolute EvaluationInstant and EvidenceAnchorInstant under BRULE-PERS-003. For a controlled single effective contribution, the table gives its base contribution after the unchanged SRS influence percentage; it is not a complete ranking score. A normalized Wear contribution uses the latest surviving accepted event anchor.
-
-| Evidence Age (CompletedElapsedDays) | Influence | Like +1 | Dislike −2 | One Wear Increment +2 |
-|---|---|---|---|---|
-| 30 days | 100% | +1 | −2 | +2 |
-| 31 days | 50% | +0.5 | −1 | +1 |
-| 60 days | 50% | +0.5 | −1 | +1 |
-| 61 days | 25% | +0.25 | −0.5 | +0.5 |
-| 90 days | 25% | +0.25 | −0.5 | +0.5 |
-| 91 days | 0% | 0 | 0 | 0 |
-
-Zero influence at 91 completed elapsed days does not clear feedback state or delete retained history.
+Stored Like/Dislike/Wear events carry action-time information for history and engine use. No business-rule aging band, decay, or recency penalty applies. The matching engine defines any recency handling under its own rules.
 
 **Rules:** BRULE-PERS-001–BRULE-PERS-003, BRULE-PERS-005, BRULE-HIST-003.
 
@@ -885,7 +846,7 @@ Zero influence at 91 completed elapsed days does not clear feedback state or del
 |---|---|---|
 | Personal garment/profile/feedback/event data supports functionality | Use only for necessary private product purposes; no MVP AI training/improvement or unrestricted external sharing. | BRULE-AUTH-001, BRULE-AUTH-007 |
 | Garment removal accepted | Immediately exclude current ownership/advice; retain only necessary minimal history, with original image/nonessential removed data physically deleted within 30 days. | BRULE-GAR-009, BRULE-HIST-002 |
-| Event removal accepted | Immediate effective exclusion, surviving-group recalculation and applicable personal-data deletion within 30 days; other objects/reports remain. | BRULE-WEAR-005, BRULE-PERS-006 |
+| Event removal accepted | Immediate stored-history exclusion and applicable personal-data deletion within 30 days; other objects/reports remain. | BRULE-WEAR-005, BRULE-PERS-006 |
 | User-linked measurement reaches retention limit | Delete or aggregate/de-identify within 90 days; no older user-linked personal behavior remains in measurement. | BRULE-HIST-003 |
 | Weather age ≤30 minutes and available within bounded wait | Usable current environmental evidence; enforce applicable environmental validity. | BRULE-PROF-003, BRULE-OUT-005 |
 | Weather older than 30 minutes / usable refresh absent by 2 seconds | Attempt refresh; if no usable current result by the boundary, use disclosed reduced context and all remaining hard rules. | BRULE-PROF-003, BRULE-OUT-006 |
@@ -908,23 +869,23 @@ Fixtures specify the relevant facts only; other applicable validity predicates a
 | B07 — Evaluated zero versus absent policy | Positive need, but engine policy/evidence unavailable | No numeric Coverage or fabricated gap; future completed evaluation may establish zero independently | BRULE-COV-003–005 |
 | B08 — No active need | All six common priorities are 0 | No positive denominator; no numeric CoverageScore or fabricated purchase gap | BRULE-COV-002, BRULE-COV-005, BRULE-GAP-002 |
 | B09 — Weighted formula | Formula-only inputs: Everyday weight 3 with 1 valid outfit; Work weight 1 with ≥3; all other weights 0 | Need ratios 1/3 and 1; CoverageScore = 50. Zero-priority needs contribute nothing | BRULE-COV-002–BRULE-COV-004 |
-| B10 — Intentional same-day repeat | Two new accepted intentions for the same valid exact outfit on one original event-local day | Two historical reports; at most one +2 Wear increment before decay, not +4 | BRULE-WEAR-001, BRULE-WEAR-002, BRULE-PERS-005 |
-| B11 — Retry | One accepted Wear action delivered/reprocessed again | Still one event; no inflated accepted-event metric or additional Wear increment | BRULE-WEAR-002, BRULE-WEAR-006 |
-| B12 — Travel | Event originally reported at 23:50 in UTC+07:00; later device timezone changes to UTC+10:00, with the same absolute EvaluationInstant | Preserve the absolute timestamp and original local day/time; neither historical grouping nor elapsed evidence age/recency changes solely because of the device timezone | BRULE-WEAR-003, BRULE-HIST-002, BRULE-PERS-003–BRULE-PERS-004 |
-| B13 — Correction limits / anchor | Attempt a next-original-day or future-time correction. Valid variant: same-group events at 08:00 and 20:00 in one original timezone; correct 20:00 to 10:00 within the original day and not in the future | Invalid attempt leaves accepted state unchanged. Valid variant keeps two reports; latest absolute group anchor becomes the corrected 10:00 event, with age/decay/recency recalculated | BRULE-WEAR-004, BRULE-WEAR-006, BRULE-PERS-005–BRULE-PERS-006 |
-| B14 — Removal with survivor | Remove the latest of two same-outfit/day reports, then the last surviving report | First removal retains the single increment and moves its absolute anchor to the survivor; recalculate age/decay/recency. Last removal eliminates the group's contribution. Underlying Outfit/Garments and unrelated reports remain | BRULE-WEAR-005, BRULE-PERS-005–BRULE-PERS-006 |
+| B10 — Intentional same-day repeat | Two new accepted intentions for the same valid exact outfit on one original event-local day | Two historical reports in one history group | BRULE-WEAR-001, BRULE-WEAR-002, BRULE-PERS-005 |
+| B11 — Retry | One accepted Wear action delivered/reprocessed again | Still one event; no inflated accepted-event metric | BRULE-WEAR-002, BRULE-WEAR-006 |
+| B12 — Travel | Event originally reported at 23:50 in UTC+07:00; later device timezone changes to UTC+10:00 | Preserve the absolute timestamp and original local day/time; historical grouping is unaffected by the device timezone | BRULE-WEAR-003, BRULE-HIST-002 |
+| B13 — Correction limits / anchor | Attempt a next-original-day or future-time correction. Valid variant: same-group events at 08:00 and 20:00 in one original timezone; correct 20:00 to 10:00 within the original day and not in the future | Invalid attempt leaves accepted state unchanged. Valid variant keeps two reports in the same group | BRULE-WEAR-004, BRULE-WEAR-006, BRULE-PERS-005–BRULE-PERS-006 |
+| B14 — Removal with survivor | Remove the latest of two same-outfit/day reports, then the last surviving report | First removal leaves one surviving report in the group. Last removal leaves no surviving events in the group. Underlying Outfit/Garments and unrelated reports remain | BRULE-WEAR-005, BRULE-PERS-005–BRULE-PERS-006 |
 | B15 — Removed garment in history | A garment referenced by old reports is removed from active wardrobe | History remains understandable as Removed from wardrobe; new current advice/Coverage/Multiplier exclude it and affected assessments refresh or become outdated | BRULE-GAR-009, BRULE-HIST-002, BRULE-COV-006, BRULE-MULT-008 |
 | B16 — Complete Multiplier | Complete shared-basis sets contain 41 current and 58 expanded unique valid outfits, including all current ones. Variant has identical current/expanded sets | First gives +17 New Outfits with candidate-bearing previews; completed empty difference gives Evaluated Zero and +0 | BRULE-MULT-002–BRULE-MULT-005 |
 | B17 — Non-exact Multiplier | Missing required future candidate-evaluation evidence; unavailable evaluation capability; or changed relevant wardrobe after a prior exact result | Respectively Incomplete, Unavailable, or prior result Outdated; none supports current exact +N or a fabricated +0; no arbitrary TTL restores exactness | BRULE-MULT-006–BRULE-MULT-009 |
 | B18 — Confidence guard | Reliable evidence at 0.85, 0.60, or below 0.60; variant has 0.99 but materially conflicting evidence | Default High Confidence, Needs Review, Uncertain respectively; guarded variant cannot be High Confidence. All still require confirmation | BRULE-GAR-001, BRULE-GAR-007, BRULE-GAR-008 |
-| B19 — Behavioral elapsed-time boundary | Anchor `2026-01-01T10:00:00Z`; evaluate at `2026-02-01T09:59:00Z` (30 days 23h59m) and `2026-02-01T10:00:00Z` (exactly 31 days) | First evaluation: 30 completed elapsed days, 100% influence. Second: 31 completed elapsed days, 50%. Local calendar-date difference does not replace absolute elapsed time | BRULE-PERS-003 |
-| B20 — Normalized group anchor | Same user/outfit/original local date and UTC+07:00 timezone: accepted events at 08:00, 13:00, 20:00; remove 20:00, then 13:00, then 08:00 | Three initial reports, one +2 increment before aging, anchor 20:00. Removal gives two reports/anchor 13:00, then one/anchor 08:00, then no surviving group contribution; each step recalculates elapsed age and applicable decay/recency | BRULE-PERS-005–BRULE-PERS-006, BRULE-WEAR-005 |
+| B19 — Stored event timestamps | Stored events carry absolute timestamps and original local day/time | History preserves absolute timestamps and original local context; device timezone does not re-date history | BRULE-WEAR-003 |
+| B20 — History group anchor | Same user/outfit/original local date and UTC+07:00 timezone: accepted events at 08:00, 13:00, 20:00; remove 20:00, then 13:00, then 08:00 | Three stored reports, then two, then one, then no surviving events in the group | BRULE-PERS-005–BRULE-PERS-006, BRULE-WEAR-005 |
 | B21 — Weather freshness / bounded wait | Weather age exactly 30 minutes versus older; stale refresh supplies no usable current information within 2 seconds | Equality remains current; older weather is refreshed before current use. No usable result by boundary means disclosed unavailable environment, preserving remaining validity without blanket rejection | BRULE-PROF-003, BRULE-OUT-006 |
 | B22 — Candidate evidence | Supported user-provided/identifiable configured-source descriptors; separate variant has unsupported attributes | Supported information can enter the applicable evaluation; unsupported attributes are not fabricated and cannot establish exact utility | BRULE-SHOP-001, BRULE-MULT-004, BRULE-MULT-006 |
 | B23 — Commercial age | Supported candidate utility; price/availability exactly 24 hours old versus older | Equality is current informational guidance without merchant guarantees. Older fields are refreshed, explicitly stale/last checked, or omitted; utility remains valid unless its own evaluation basis changes | BRULE-SHOP-001, BRULE-MULT-008 |
 | B24 — Removed garment retention | Accepted removal at t0; historical report still needs a minimal descriptor snapshot | Current ownership/advice excludes it immediately. Original image/nonessential personal data deleted by t0 +30 days; only the necessary understandable historical snapshot remains | BRULE-GAR-009, BRULE-HIST-002 |
-| B25 — Removed event retention | Accepted individual removal at t0 with another same-outfit/day report surviving | Immediate effective exclusion and survivor-anchor recalculation; applicable personal event data deleted by t0 +30 days; surviving history, underlying Outfit/Garments and unrelated events remain | BRULE-WEAR-005, BRULE-PERS-006 |
-| B26 — Measurement vs history | User-linked engagement reaches 90-day limit; necessary unremoved Wear history is older than the ranking window | Measurement is deleted or aggregated/de-identified so it is no longer user-linked; necessary history is not erased solely by the ranking/measurement window | BRULE-HIST-003 |
+| B25 — Removed event retention | Accepted individual removal at t0 with another same-outfit/day report surviving | Immediate stored-history exclusion; applicable personal event data deleted by t0 +30 days; surviving history, underlying Outfit/Garments and unrelated events remain | BRULE-WEAR-005, BRULE-PERS-006 |
+| B26 — Measurement vs history | User-linked engagement reaches 90-day limit; necessary unremoved Wear history is older | Measurement is deleted or aggregated/de-identified so it is no longer user-linked; necessary history is not erased solely by the measurement window | BRULE-HIST-003 |
 | B27 — Correction is not training consent | User confirms/corrects a garment or supplies feedback | Necessary private functionality/personalization is permitted; personal data does not enter MVP AI training/improvement. Future training requires separate explicit opt-in and approved product/privacy change | BRULE-AUTH-007 |
 
 ## 16. Rule Traceability

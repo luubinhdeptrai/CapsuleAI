@@ -57,6 +57,7 @@ Stable IDs in this BRD identify business intent. Subsequent artifacts must refer
 | 0.4 | 2026-11-05 | Approved eight-category wardrobe taxonomy and optional Brand/purchase Price; existing goals and business IDs preserved, product-policy follow-ups explicit. |
 | 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.6 | 2026-11-07 | Product Owner decision: Style is a set of zero or more distinct approved values, like Material (property table synchronized with the garment-property authority); no change to business scope or IDs. |
+| 0.7 | 2026-11-09 | Founder override (branch `danh/docs`): community feed browse, AI chat stylist, generic-model try-on preview, internal catalog search and bulk import are in MVP scope; Like/Wear stored as events with no fixed +1/+2 weights or decay; Dislike is AI-generated targets only (Today + chat suggestions), never community posts. Existing IDs retained; superseded weight/decay/exclusion text marked below. |
 
 ### 1.4 Business Visualization Policy
 
@@ -506,10 +507,13 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 | Area | Initial Business Scope |
 |---|---|
 | Account & Personalization | Registration/login; personal profile; actively used style preferences and occasion; optional editable gender/body profile; location/weather context with manual location selection. |
-| AI Digital Closet | Capture or select garment images; background removal; attribute extraction; confidence-aware predictions; user review/confirmation/correction; manual creation when AI is unavailable. |
-| Wardrobe Management & Intelligence | Garment creation, viewing, updating, and deletion; browsing/search/filtering; the structured garment-intelligence direction in Section 13.2; recorded wear/utilization information. |
+| AI Digital Closet | Capture or select garment images; background removal; attribute extraction; confidence-aware predictions; user review/confirmation/correction; manual creation when AI is unavailable; bulk import (multi-photo select → batch queue → review & save). |
+| Wardrobe Management & Intelligence | Garment creation, viewing, updating, and deletion; browsing/search/filtering of owned wardrobe; internal catalog search and add-to-closet; the structured garment-intelligence direction in Section 13.2; recorded wear/utilization information. |
 | Context-Aware Styling | Future owned-wardrobe advice with relevant context and personalization, under an explicitly approved engine policy; property-based eligibility is deferred. |
-| Interaction & Learning | Shuffle Item; Wear This Today; Like/Dislike; outfit history; lightweight behavioral personalization with recency and diversity considerations. |
+| Interaction & Learning | Shuffle Item; Wear This Today (logged to history, no fixed ranking weight); Like on AI and community outfits and Dislike on AI-generated targets only (Today strip + chat suggestions, never community posts); outfit history; Like/Wear stored as events for the matching engine's own rules — no fixed contributions, recency bands, or decay in business scope. |
+| Community Feed (outfit inspiration) | Home feed of shared outfits for inspiration (not a complete social network); MVP actions: Like, Follow creator, outfit sharing, Edit-as-duplicate (copy to own outfit view as editable draft), Save look, generic-model Try-On. No comments, no messaging, no wardrobe sharing in MVP. |
+| AI Chat Stylist | Single-thread conversational stylist; text + outfit/item cards, suggestion chips, attach photo routing into Add flow. Chat-suggested outfits support Dislike. No multi-thread history in MVP. |
+| Try-On Preview (generic model) | Generic-model preview wearing the selected outfit (no selfie/personal avatar in MVP); Save look / Wear Today from preview. Personalized avatar, AR/3D simulation remain out of scope. |
 | Wardrobe Intelligence | Explainable Wardrobe Coverage Score; Gap Analysis; candidate staple evaluation; Wardrobe Multiplier; hypothetical outfit preview. |
 | Strategic Shopping | Recommendation cards; gap and utility explanations; optional external shopping links; recommendation-view and external-link interaction tracking with future affiliate compatibility. |
 
@@ -517,8 +521,8 @@ The supported wardrobe categories are **Tops, Dresses/Jumpsuits, Pants, Skirts, 
 
 ### 16.2 Out of Scope
 
-- AR virtual try-on, 3D avatars or clothing simulation, and real-time video garment recognition.
-- A complete social network/community.
+- Personalized selfie avatar, AR/3D clothing simulation, and real-time video garment recognition. Generic-model try-on preview is in scope; personal avatar creation is a future opportunity.
+- Full social network beyond outfit inspiration (comments, messaging, public wardrobe sharing). MVP community scope is outfit-inspiration feed with Like / Follow creator / outfit sharing / Edit-as-duplicate / Save / Try-On only.
 - Native shopping carts, checkout, payment processing or gateways, order management, shipping/logistics, seller management, or a complete marketplace.
 - Additional primary categories beyond the eight approved categories, including jewelry, watches, scarves and hair accessories. New Dresses/Jumpsuits, Bags and Headwear outfit compositions require the open PRD policy decisions; their wardrobe creation and inspection are supported.
 - Consumer web and desktop applications as initial required platforms.
@@ -666,8 +670,8 @@ The following are possibilities for later evaluation, not additions to MVP scope
 | Advanced ML ranking and personalization models | Improve relevance as sufficient trustworthy feedback becomes available. | No sophisticated learned model required initially. |
 | Retailer integrations and affiliate partnerships | Improve candidate information, external destinations, and referral evidence. | No existing integration, contract, native commerce, or retailer dependency assumed. |
 | Subscriptions / premium insights | Explore payment for sustained wardrobe intelligence. | Packaging, willingness to pay, and commercial terms require later validation. |
-| Social / community experiences | Explore optional inspiration and sharing. | A complete community is excluded initially and needs a separate privacy/value assessment. |
-| AR / virtual try-on | Explore additional purchase-confidence support. | AR, 3D avatars, and clothing simulation are deferred. |
+| Social / community experiences | Explore optional inspiration and sharing. | MVP includes outfit-inspiration feed only (Like / Follow creator / outfit sharing / Edit-as-duplicate / Save / Try-On; no comments, no messaging, no wardrobe sharing). Full social graph (comments, messaging, public wardrobes) remains excluded pending separate privacy/value assessment. |
+| Generic-model try-on preview | In MVP scope. | Personal avatar creation, AR, 3D avatars, and clothing simulation remain deferred. |
 | Additional markets and localization | Adapt the value loop to more climates, occasions, languages, and shopping contexts. | Expansion readiness does not require simultaneous multi-market launch. |
 
 ## 26. Traceability
