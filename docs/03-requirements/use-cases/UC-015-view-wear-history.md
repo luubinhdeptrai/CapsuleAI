@@ -55,7 +55,7 @@ At Main Step 2:
 At Main Step 2:
 
 1. CapsuleAI shows each legitimate event separately, even when outfit and original local day match.
-2. The User selects the particular event at Main Step 3; daily ranking normalization does not delete or merge the reports.
+2. The User selects the particular event at Main Step 3; history display/counting groups never delete or merge distinct intentional reports.
 
 ### A3 — Device timezone has changed
 
@@ -69,7 +69,7 @@ At Main Step 4:
 At Main Step 4:
 
 1. CapsuleAI preserves understandable historical information subject to retention policy and labels a removed item as Removed from wardrobe.
-2. The snapshot does not become current owned inventory; passing the 90-day ranking horizon alone does not erase history.
+2. The snapshot does not become current owned inventory; the separate measurement-retention limit does not erase necessary unremoved functional history.
 
 ## 8. Exception / Failure Flows
 
@@ -117,7 +117,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-WEAR-003` | Present original event-local interpretation after travel. |
 | `BRULE-HIST-001` | History is reported evidence with incomplete-logging limitations. |
 | `BRULE-HIST-002` | Preserve understandable removed-garment snapshots without current ownership. |
-| `BRULE-HIST-003` | The 90-day ranking horizon is not a retention limit. |
+| `BRULE-HIST-003` | Functional history and the separate 90-day user-linked measurement retention have distinct purposes; no ranking-decay horizon applies. |
 
 ## 12. Requirements Traceability
 
@@ -158,6 +158,6 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-015-view-wear-history.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.

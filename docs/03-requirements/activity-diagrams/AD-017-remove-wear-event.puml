@@ -41,16 +41,15 @@ repeat
         :Attempt acceptance of selected-event removal;
         if (Removal accepted?) then (Yes)
             :Immediately exclude selected event
-from effective history, utilization, recency and personalization;
+from stored history and utilization;
             :Recompute history/utilization for surviving reports;
             if (Same-outfit/original-day reports survive?) then (Yes)
                 :Retain each surviving historical report;
-                :Recompute latest surviving absolute anchor;
-                :Recompute age/decay of single group increment;
+                :Update surviving history group and timestamps;
             else (None)
-                :Remove this group's Wear-based contribution;
+                :Show no surviving events in this history group;
             endif
-            :Recompute recency from remaining effective events;
+            :Retain current stored evidence for future engine use;
             :Confirm removal and explain physical deletion deadline;
             note right
               Applicable personal event data is physically

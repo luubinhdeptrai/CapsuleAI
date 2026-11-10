@@ -1,0 +1,60 @@
+@startuml
+' AD-031; source ../use-cases/UC-031-review-and-confirm-bulk-import.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-BULK-001; BR-031; CAP-15; PBI-048; US-BULK-001 AC.
+' SRS: FR-BULK-001, FR-BULK-002, FR-BULK-003, FR-BULK-004, FR-BULK-005, FR-BULK-006; DATA-BULK-001.
+' Business Rules: BRULE-BULK-001/002; BRULE-GAR-001/002/005/006/010; BRULE-AUTH-001/007.
+' Open policy: MVP-Q08, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-031 - Review and confirm bulk garment import
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-031;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|User|
+:Select multiple garment photos;
+|CapsuleAI|
+:Identify batch queue and per-item input / processing states;
+|User|
+:Select an item to review;
+|CapsuleAI|
+if (Reviewable item available?) then (Yes)
+  :Show available information; manual completion remains possible;
+else (Failed / pending / uncertain)
+  :Explain item state; preserve other known accepted outcomes;
+  :Offer item correction / outcome review / safe retry;
+  stop
+endif
+|User|
+:Review / correct applicable 13-property profile;
+if (Explicitly confirm item for saving?) then (Yes)
+  |CapsuleAI|
+  :Validate Category / one Color and supplied optional values;
+  :Apply approved batch save policy and logical item identity;
+  if (Item acceptance established?) then (Yes)
+    :Show accepted owned garment without duplicate retry effect;
+  else (Failed / uncertain)
+    :Show actual per-item outcome; offer safe recovery;
+  endif
+else (Not confirmed)
+  |CapsuleAI|
+  :No ownership from this unconfirmed item;
+endif
+:Retain actual queue / accepted outcomes for further review;
+note right
+  One item path is shown; repeat for chosen queue items.
+  Limits, resumption, processing and save atomicity are open.
+  No assumed partial-commit or whole-batch transaction model.
+  Upload / AI completion alone is never confirmation.
+end note
+
+stop
+@enduml

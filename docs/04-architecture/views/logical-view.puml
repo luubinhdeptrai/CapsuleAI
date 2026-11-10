@@ -1,4 +1,6 @@
 @startuml
+' 2026-11-09: PR #4 / DD-007 impact; approved capability scope, new allocation unselected.
+' See ADD Section 15 and PRD MVP-Q01-Q10; existing selected modules/runtime/store choices preserved.
 ' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Logical View
@@ -87,7 +89,7 @@ rectangle "CapsuleAI Business Core - Modular Monolith" as Core #FFFFFF {
         component "Confirmed Garment / Wardrobe Authority\nGarment identity; confirmation / correction truth\nSaveable minimum; unevaluated eligibility boundary\nBrowse, search, edit, remove; private media\nAnalysis drafts never establish ownership" as Garments #F0FDF4
     }
     package "Outfit Advice and Use" as Outfits <<logical context>> #FEF3C7 {
-        component "Owned-Outfit Advice / Reported Use\nDaily choices, Shuffle and soft ranking\nOutfit-targeted feedback; distinct Wear Events\nHistory, utilization, effective aged evidence\nCoherent survivor effects; minimal history\nOriginal local grouping / absolute elapsed aging" as Advice #FFFBEB
+        component "Owned-Outfit Advice / Reported Use\nDaily choices, Shuffle and soft ranking\nOutfit-targeted feedback; distinct Wear Events\nHistory, utilization, stored behavioral evidence\nCoherent survivor effects; minimal history\nOriginal local history / absolute timestamps" as Advice #FFFBEB
         component "Outfit Evaluation Semantics\nGarment-identity-set outfit identity\nHard validity; uses confirmed Wardrobe properties; policy deferred\nOwned / historical / hypothetical distinction\nCaller-supplied inputs; independent of Daily" as Evaluation <<published contract>> #FDE68A
     }
     package "Wardrobe Intelligence" as Intelligence <<logical context>> #EDE9FE {
@@ -114,6 +116,19 @@ Assessments --> Shopping : optional evidence / navigation; ACL
 ' One representative event dependency; other FR-MET interactions use the same supporting owner.
 Advice ..> Measurement : <<local application event>>
 
+note as MVPImpact
+  Approved PR #4 capabilities; allocation NOT selected:
+  Community shared posts / creators / Follow / Save / independent drafts.
+  Single-thread Chat; generic-model preview; catalog discovery; batch review.
+  Private Wardrobe remains confirmed-garment authority.
+  Outfit Advice and Use retains typed feedback / Wear authority.
+  Shared-content, catalog and orchestration owners need MVP-Q09 review.
+  Like: AI Today/Chat and Community; Dislike: AI Today/Chat only.
+  No fixed ranking weights, decay, penalties or outfit/day increment cap.
+  Sharing is an approved projection, never private inventory or source media.
+  Catalog / upload / preview / duplicate alone creates no ownership or Wear.
+end note
+
 legend bottom
   |= Notation |= Logical meaning |
   | Package <<logical context>> | Human-accepted accountable domain owner; internal models stay private. |
@@ -139,7 +154,8 @@ legend bottom
   Its lifecycle differs from functional history. A local event implies neither async nor durability.
   No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
   Derived-result ownership does not select a permanent store; Clean realization is in Implementation View.
-  Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Current: Sprint 1-2 backend exists; refine candidates and open policies.
+  Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.
   Future composition/compatibility/eligibility policy is deferred.

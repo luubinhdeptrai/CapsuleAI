@@ -1,6 +1,6 @@
 @startuml
 
-' CapsuleAI master MVP Use Case Diagram. Stable UC-* IDs align with the 23 detailed specifications.
+' CapsuleAI master MVP Use Case Diagram. Stable UC-* IDs align with the 31 detailed specifications.
 ' Review status: Baseline Draft; this diagram does not approve or change upstream scope.
 ' Sources: BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2.
 ' Process authority: Initial files/CapsuleAI_Scrum_Development_Workflow.md, Sections 10 and 40.
@@ -93,6 +93,24 @@ rectangle "CapsuleAI" {
         ' UC-023 traces to JRN-07, FEAT-SHOP-002, FR-SHOP-005, FR-SHOP-006, FR-SHOP-007, SI-004, BRULE-SHOP-002, BRULE-SHOP-003.
         usecase "UC-023\nOpen External Shopping Link" as UC023
     }
+    package "Outfit Inspiration and Assisted Decisions" {
+        ' FEAT-COM-001; BR-025; PBI-042; US-COM-001; PR #4 / DD-007.
+        usecase "UC-024\nBrowse and interact with outfit inspiration" as UC024
+        ' FEAT-COM-002; BR-026; PBI-043; US-COM-002; PR #4 / DD-007.
+        usecase "UC-025\nExplicitly share a selected outfit" as UC025
+        ' FEAT-COM-002; BR-026; PBI-043; US-COM-003; PR #4 / DD-007.
+        usecase "UC-026\nDuplicate shared inspiration as an independent outfit draft" as UC026
+        ' FEAT-CHAT-001; BR-027; PBI-044; US-CHAT-001; PR #4 / DD-007.
+        usecase "UC-027\nConsult the single-thread AI Chat Stylist" as UC027
+        ' FEAT-TRY-001; BR-028; PBI-045; US-TRY-001; PR #4 / DD-007.
+        usecase "UC-028\nPreview a selected look on a generic model" as UC028
+        ' FEAT-CAT-001; BR-029; PBI-046; US-CAT-001; PR #4 / DD-007.
+        usecase "UC-029\nSearch the internal garment catalog" as UC029
+        ' FEAT-CAT-002; BR-030; PBI-047; US-CAT-002; PR #4 / DD-007.
+        usecase "UC-030\nConfirm a catalog item into the owned closet" as UC030
+        ' FEAT-BULK-001; BR-031; PBI-048; US-BULK-001; PR #4 / DD-007.
+        usecase "UC-031\nReview and confirm bulk garment import" as UC031
+    }
 }
 
 ' Neutral solid associations identify participation, not ordering or mandatory dependency success.
@@ -119,6 +137,14 @@ User -- UC020
 User -- UC021
 User -- UC022
 User -- UC023
+User -- UC024
+User -- UC025
+User -- UC026
+User -- UC027
+User -- UC028
+User -- UC029
+User -- UC030
+User -- UC031
 
 UC004 -- EmailDelivery
 UC006 -- DeviceLocation
@@ -140,9 +166,12 @@ UC023 .[norank].> UC021 : <<extend>>
 
 legend bottom
   Add Garment: image-assisted or imageless manual entry; user review/correction and confirmation establish authority.
-  Saveable does not imply Recommendation-Ready. Garment removal preserves understandable history.
+  Saving leaves recommendation eligibility NOT_EVALUATED; no readiness policy is inferred. Garment removal preserves understandable history.
   Candidate evaluation: Wardrobe Multiplier and hypothetical previews; no new ownership or Wear Event.
   Device location/weather are optional; manual location remains available and reduced-context advice continues where evaluable.
+  Like: AI Today/Chat and Community. Dislike: AI Today/Chat only; never Community.
+  Private Wardrobe is separate from approved sharing projection; catalog items are not owned.
+  New goals are Draft requirements, not implemented features or selected Sprint work.
   Feedback differs from reported wear. Available shopping links open only by user choice; purchases happen outside CapsuleAI.
 endlegend
 
@@ -166,8 +195,8 @@ endlegend
 ' UC-022 includes Multiplier meaning/context, newly enabled previews and all five evaluation states.
 ' UC-022 evaluates a candidate from documented gap/advice; no candidate capture/import goal is introduced.
 ' Viewing candidates/previews or opening links creates no owned garment, verified purchase or Wear Event.
-' Exactness, evidence aging and other domain constraints stay in Business Rules and later UC flows.
-' Temporal grouping/aging, privacy/retention, external freshness and mobile acceptance follow the current SRS and rules.
+' Exactness, stored evidence and other domain constraints stay in Business Rules and later UC flows.
+' Original event-local history/grouping, privacy/retention, external freshness and mobile acceptance follow the current SRS and rules.
 
 ' MVP FEAT coverage review: direct goals, embedded behavior, or intentionally cross-cutting.
 ' FEAT-AUTH-001 | direct | UC-001, UC-002, UC-003, UC-004 | Registration, login, logout and recovery; session continuity is embedded access behavior.

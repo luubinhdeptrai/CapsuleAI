@@ -1,0 +1,58 @@
+@startuml
+' AD-024; source ../use-cases/UC-024-browse-community-outfit-inspiration.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-COM-001; BR-025; CAP-11; PBI-042; US-COM-001 AC.
+' SRS: FR-COM-001, FR-COM-002, FR-COM-003, FR-COM-006, FR-COM-007, FR-COM-008, FR-COM-009; DATA-COM-001.
+' Business Rules: BRULE-COM-001–003; BRULE-PERS-001; BRULE-AUTH-001/007.
+' Open policy: MVP-Q01, MVP-Q02, MVP-Q06, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-024 - Browse and interact with outfit inspiration
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-024;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|CapsuleAI|
+:Retrieve attributed shared outfit posts;
+if (Retrieval available?) then (Yes)
+  if (Posts available?) then (Yes)
+    :Show accessible shared looks and creators;
+  else (Empty)
+    :Show genuine empty-feed state;
+    stop
+  endif
+else (Unavailable)
+  :Explain unavailability; offer retry / return;
+  stop
+endif
+|User|
+:Select accessible post and a supported action;
+|CapsuleAI|
+switch (Chosen action?)
+case (Like / clear)
+  :Apply typed feedback policy (UC-013);
+case (Follow creator)
+  :Record Follow for identified creator;
+case (Save look)
+  :Apply approved saved-look policy;
+case (Try-On)
+  :Hand selected-look basis to UC-028;
+case (Share / duplicate entry)
+  :Navigate to UC-025 / UC-026;
+endswitch
+:Show actual accepted state or handoff;
+note right
+  Community Dislike is neither offered nor accepted.
+  Private inventory is not the sharing projection.
+  No action alone creates garment ownership or Wear.
+end note
+
+stop
+@enduml

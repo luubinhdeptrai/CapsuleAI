@@ -7,12 +7,12 @@
 | Field | Value |
 |---|---|
 | Document | CapsuleAI — Software Requirements Specification |
-| Version / Status | 0.5 / Baseline Draft |
-| Last Updated | 2026-11-05 |
+| Version / Status | 0.7 / Baseline Draft |
+| Last Updated | 2026-11-09 |
 | Primary Owner | Requirements Engineer / Business Analyst / System Analyst |
 | Decision Authority | Product Owner, with Engineering and QA review |
-| Business Baseline | [BRD v0.5](../01-business/BRD.md) |
-| Product Baseline | [PRD v0.4](../02-product/PRD.md) |
+| Business Baseline | [BRD](../01-business/BRD.md) |
+| Product Baseline | [PRD](../02-product/PRD.md) |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Authoritative Location | `docs/03-requirements/SRS.md` |
 | Development Model | Scrum / Agile |
@@ -27,6 +27,7 @@
 | 0.4 | 2026-11-05 | Approved eight-category taxonomy, optional Brand/purchase Price and open readiness/validation follow-ups; added FR-GAR-012/013 with traceability, preserving all prior requirement IDs. |
 | 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.6 | 2026-11-07 | Product Owner decisions: multiple Styles (FR-GAR-009, DATA-GAR-002), Brand/Price validation (FR-GAR-012/013, Section 3.5.2), paged overview (FR-WAR-001), recovery abuse protection (FR-AUTH-019), recovery link (FR-AUTH-020), reset-record retention (DATA-AUTH-006); obsolete SOLID-density verification removed. Existing IDs retained. |
+| 0.7 | 2026-11-09 | Synchronized approved PR #4 / DD-007: expanded functional/data/privacy coverage, typed feedback targets, removal of residual ranking-policy contradictions, and downstream traceability; existing IDs and implemented contracts preserved. |
 
 ### 1.1 Purpose
 
@@ -38,7 +39,9 @@ The BRD and PRD provide the business and product sources of truth. Sections 3–
 
 The initial system supports a Vietnamese mobile experience on Android and iOS: private account access; progressive context setup; assisted/manual wardrobe creation; confirmed garment intelligence; wardrobe management; validity-first personalized outfits; feedback and multiple user-reported Wear Events; utilization and contextual coverage; capability-based gaps; and candidate utility with hypothetical previews and optional external shopping.
 
-The supported primary categories are TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. Consumer web/desktop, extra garment categories, social/guest access, native commerce, automatic wear/purchase verification, advanced learned ranking as a prerequisite, social/community, AR/3D/video ingestion, and guaranteed offline operation are excluded. Additional interface languages are future-only.
+The approved MVP also includes bounded Community outfit inspiration/sharing, single-thread AI Chat Stylist, generic-model Try-On, internal catalog search/confirmed Add-to-Closet and reviewed bulk-photo import (Sections 3.19–3.23). Scope authority is merged PR #4 / DD-007; their documentation does not establish implementation.
+
+The supported primary categories are TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. Consumer web/desktop, extra garment categories, social/guest access, native commerce, automatic wear/purchase verification, advanced learned ranking as a prerequisite, comments, messaging, entire-wardrobe sharing, personalized avatars, AR/3D/video ingestion, and guaranteed offline operation are excluded. Additional interface languages are future-only.
 
 ### 1.3 Document Conventions
 
@@ -65,7 +68,7 @@ IDs are stable after assignment. Requirement statements may be refined through r
 
 Source precedence is current approved BRD decisions → current approved PRD decisions → workflow for process and artifact boundaries → other current CapsuleAI sources → older or exploratory sources. The Food Delivery document is used only as a structural reference. Software requirements and acceptance conditions refine feature/business intent without redefining it.
 
-BRD BG-01–BG-04, BR-001–BR-024, and CAP-01–CAP-10 remain unchanged. PRD FEAT-* and JRN-* remain upstream identifiers. Existing upstream scope, vocabularies, personas and product behavior remain the basis for this specification.
+BRD BG-01–BG-04, BR-001–BR-031, and CAP-01–CAP-15 remain unchanged. PRD FEAT-* and JRN-* remain upstream identifiers. Existing upstream scope, vocabularies, personas and product behavior remain the basis for this specification.
 
 Legacy fixed weather/pattern heuristics, combined recognition claims, implementation stacks, cached-operation timings, and Sprint plans do not override the normalized baselines. Workflow examples illustrate artifact types rather than establish additional CapsuleAI domain rules.
 
@@ -80,7 +83,7 @@ The chain is BG-* → BR-* → CAP-* → FEAT-* → SRS requirement. It is a rel
 | Reference | Use |
 |---|---|
 | [BRD](../01-business/BRD.md), especially Sections 13–24 and 27 | Business meaning, scope, validation directions, trust, and resolved business questions. |
-| [PRD](../02-product/PRD.md), especially Sections 8–26 and 33–37 | Journeys, 22 features, acceptance criteria, states, the original ten resolved product decisions, and the later approved taxonomy/property revision with open follow-ups in Section 34.1. |
+| [PRD](../02-product/PRD.md), especially Sections 8–26 and 33–37 | Journeys, 29 features, acceptance criteria, states, the original ten resolved product decisions, and the later approved taxonomy/property revision with open follow-ups in Section 34.1. |
 | [Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 8–11 and 39–41 | SRS ownership, next artifacts, traceability, and change propagation. |
 | Food Delivery SRS — structural reference | Introduction, feature sequences, logical information, interfaces, quality, localization, and glossary discipline only. The reference source is not included in this checkout; no domain, technology, legal claim, or numerical target is copied. |
 | [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md), [Project Proposal](../../Initial%20files/DA%202%20Proposal.md), and [Official Project Outline](../../Initial%20files/%C4%90%E1%BB%80%20C%C6%AF%C6%A0NG%20%C4%90%E1%BB%92%20%C3%81N%202_%20H%E1%BB%86%20TH%E1%BB%90NG%20QU%E1%BA%A2N%20L%C3%9D%20V%C3%80%20G%E1%BB%A2I%20%C3%9D%20PH%E1%BB%90I%20%C4%90%E1%BB%92%20TH%C3%94NG%20MINH.md) | Historical context only where consistent with current baselines. |
@@ -273,13 +276,12 @@ The [garment-property authority](../../Initial%20files/Image%20to%20Properties%2
 
 #### 3.5.1 Saving and Deferred Recommendation Eligibility
 
-Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new database field. The implemented Sprint 2 OpenAPI response already reports `recommendationEligibility: NOT_EVALUATED`; preserve that existing contract.
 
 The old readiness predicates are superseded. Retained superseded/deferred IDs establish no implementation obligation for removed fields. Optional absence is separate from invalid supplied input, failed persistence and lost authorization.
 
-|---|---|
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
 | FR-GAR-001 | The system shall support primary classification limited to TOPS, DRESSES_JUMPSUITS, PANTS, SKIRTS, OUTERWEAR, SHOES, BAGS, HEADWEAR. | MVP | FEAT-GAR-001; BR-003 | T: defined categories only. |
@@ -330,7 +332,7 @@ JRN-04 requires sufficient applicable confirmed wardrobe/context information, no
 
 #### 3.7.1 Outfit Validity Rules
 
-**Deferred policy.** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+**Deferred policy.** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new database field. The implemented Sprint 2 OpenAPI response already reports `recommendationEligibility: NOT_EVALUATED`; preserve that existing contract.
 
 Authorization, confirmed ownership, identity uniqueness, validity before ranking and truthful result states remain product goals. Numerical fixtures elsewhere require an explicitly supplied future approved evaluation policy; they do not establish current compatibility.
 
@@ -340,7 +342,7 @@ Authorization, confirmed ownership, identity uniqueness, validity before ranking
 | FR-OUT-002 | The system shall evaluate available environmental/season context, current occasion, declared style, and relevant personalization context. | MVP | FEAT-OUT-001; BR-007, BR-010 | T/A: context variation. |
 | FR-OUT-003 | The system shall exclude combinations that fail applicable hard validity constraints before personalized ranking. | MVP | FEAT-OUT-001; BR-009 | A: invalid high-preference fixture. |
 | FR-OUT-004 | **Deferred policy — legacy ID retained.** Previous fixed composition, category-to-role mappings and removed-property compatibility rules are superseded. Define and approve composition/compatibility during recommendation-engine development; this entry supplies no current eligibility predicate or replacement algorithm. | Deferred policy | FEAT-OUT-001; BR-007, BR-009 | Deferred: history only; future composition/compatibility approval required. |
-| FR-OUT-005 | The system shall rank valid candidates through soft color harmony, style, current occasion, Like/Dislike, Wear/history, recency/diversity and optional body/gender, never using body/gender/stereotypes as hard category restrictions. | MVP | FEAT-OUT-001; BR-007, BR-009, BR-010, BR-011, BR-012 | A: preference differences among valid sets; no identity-based category rejection. |
+| FR-OUT-005 | The system shall rank only valid candidates using declared style/current occasion and relevant approved soft context; supported stored feedback/Wear may be consumed under a future explicitly approved Matching Engine policy, with no prescribed contribution, aging, recency penalty or overlooked boost and no body/gender category restriction. | MVP | FEAT-OUT-001; BR-007, BR-009, BR-010, BR-011, BR-012 | A: preference differences among valid sets; no identity-based category rejection. |
 | FR-OUT-006 | The system shall present at least three distinct valid outfits when that many exist under the current wardrobe/context. | MVP | FEAT-OUT-001; BR-008 | T/A: three-valid fixture. |
 | FR-OUT-007 | The system shall count a reordered combination of the same garment identities as the same outfit rather than a distinct option. | MVP | FEAT-OUT-001; BR-008 | A: reordered duplicates. |
 | FR-OUT-008 | The system shall show the actual fewer-valid/no-valid result with limitations instead of duplicate padding or invalid alternatives. | MVP | FEAT-OUT-001; BR-008, BR-022 | T: two, one, zero valid. |
@@ -385,6 +387,7 @@ Preference feedback is not reported wear and is reversible as specified by FEAT-
 | FR-PERS-003 | The system shall keep Like/Dislike state until changed, cleared, or superseded through user action and prevent simultaneously effective contradictory feedback for the same target. | MVP | FEAT-PERS-001; BR-011, BR-021 | T: persisted state, revise/clear; no fixed influence. |
 | FR-PERS-004 | The system shall distinguish accepted feedback from an unsuccessful recording attempt. | MVP | FEAT-PERS-001; BR-011 | T: failed versus recorded signal. |
 | FR-PERS-005 | The system shall avoid creating Wear Events from Like, Dislike, recommendation views, or other preference-only interactions. | MVP | FEAT-PERS-001; BR-011 | T: history unchanged. |
+| FR-PERS-014 | The system shall identify feedback by affected user and supported target kind/origin with an identifiable source reference, distinguishing AI Today/Chat outfit suggestions from Community posts even when they show the same garment combination. It shall reject Community Dislike without mutation and never redirect feedback to an unrelated target. | MVP | FEAT-PERS-001, FEAT-COM-001, FEAT-CHAT-001; BR-011, BR-025, BR-027 | T: same-look AI versus Community targets; Like/revise/clear; prohibited Dislike; unavailable target and wrong-account state. |
 
 ### 3.11 Wear Events
 
@@ -443,7 +446,7 @@ No additional numeric ranking weights or mandatory learned model are specified.
 | FR-PERS-010 | The system shall use optional body context only softly and avoid category restrictions or prerequisite eligibility based on body/gender. | MVP | FEAT-PERS-003, FEAT-PROF-001; BR-012 | T/A: optional context and eligibility. |
 | FR-PERS-011 | The system shall keep validity dominant over every preference signal and avoid requiring a changed result when no useful valid alternative exists. | MVP | FEAT-PERS-003, FEAT-OUT-001; BR-009, BR-011 | A: constrained/no-alternative fixture. |
 | FR-PERS-012 | The system shall retain all legitimate Wear Events as separate history records and group same-exact-outfit/same-local-day reports for display/counting only, with no business-rule increment cap or decay. | MVP | FEAT-PERS-003, FEAT-PERS-002; BR-011 | A: separate history; grouping for display only. |
-| FR-PERS-013 | The system shall update stored preference/history state after feedback/event/context revision or removal without applying decay/normalization and without deleting unrelated history or automatically clearing feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012 | T/A: clear/revise/remove; unrelated history intact. |
+| FR-PERS-013 | The system shall update stored preference/history state after feedback/event/context revision or removal without requiring a ranking decay/normalization calculation and without deleting unrelated history or automatically clearing feedback. | MVP | FEAT-PERS-003, FEAT-PERS-001, FEAT-PERS-002; BR-011, BR-012 | T/A: clear/revise/remove; unrelated history intact. |
 
 ### 3.13 Wardrobe Utilization & History
 
@@ -601,10 +604,81 @@ This specifies conceptual measurable outcomes, not an analytics schema/vendor or
 | FR-MET-001 | The system shall make confirmed garment additions, attribute corrections, outfit requests/views, Shuffle outcomes, and Like/Dislike changes distinguishable for measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001; BR-019, BR-001, BR-007 | T/I: distinct interaction evidence. |
 | FR-MET-002 | The system shall distinguish Wear Event creation, correction, and removal as separate measurement meanings. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/I: event lifecycle evidence. |
 | FR-MET-003 | The system shall make coverage/gap/candidate/previews views and external-link attempts/openings distinguishable without interpreting them as sales. | MVP | FEAT-MET-001, FEAT-SHOP-002; BR-019 | T/I: exposure versus navigation. |
-| FR-MET-004 | The system shall support recognition/preview validation and processing/recommendation timing evidence under 's locked benchmark, timing boundaries and p95 targets, alongside manual continuity/utilization/repeat-use measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001; BR-019, BR-001, BR-007, BR-006 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
+| FR-MET-004 | The system shall support recognition/preview validation and processing/recommendation timing evidence under Section 8.1's locked benchmark, timing boundaries and p95 targets, alongside manual continuity/utilization/repeat-use measurement. | MVP | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001; BR-019, BR-001, BR-007, BR-006 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
 | FR-MET-005 | The system shall avoid inflation from one logical Wear action's retries, distinguishing intentional event counts from retries. | MVP | FEAT-MET-001, FEAT-PERS-002; BR-019, BR-011 | T/A: distinct intentional history events; retry counted once. |
 | FR-MET-006 | The system shall minimize user-linked measurement content, avoid requiring raw private images or sensitive profile detail for ordinary engagement metrics, and delete or aggregate/de-identify user-linked engagement/measurement information within 90 days so older information is no longer maintained as user-linked personal behavior. | MVP | FEAT-MET-001; BR-021 | I/T: metric contents and 90-day retention boundary; no residual user-linked information in aggregates. |
 | FR-MET-007 | The system shall preserve an otherwise usable core action when measurement is unavailable without falsely changing its success/failure state. | MVP | FEAT-MET-001; BR-019 | T: measurement dependency failure. |
+
+
+### 3.19 Community Outfit Inspiration
+
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| FR-COM-001 | The system shall allow browsing of shared outfit posts with an identifiable shared outfit representation and its creator, distinct from private wardrobe inventory. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: authorized post and creator correspondence. |
+| FR-COM-002 | The system shall distinguish Community loading, genuinely empty results, unavailable retrieval and denied access, with applicable continuation or retry and no private-data disclosure. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: all four states and no false empty/success. |
+| FR-COM-003 | The system shall support Like on a Community post and Follow its identified creator; Community posts shall never offer or accept Dislike. Feedback revision/clearing follows FR-PERS-003/014. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: Like/clear and correct creator; Community Dislike rejected without mutation. |
+| FR-COM-004 | The system shall allow explicit sharing of a selected outfit only through its approved sharing representation and authorized audience, without granting access to the creator's wardrobe inventory, private source images or unrelated personal data. Audience, consent and publishable fields require MVP-Q01 approval before this story is Ready. | MVP | FEAT-COM-002; BR-026, BR-021, BR-022 | T/I: chosen projection only; cancel/denied share has no publication. |
+| FR-COM-005 | The system shall create an independently editable outfit draft for the requesting user through Edit-as-duplicate, without modifying the shared original or creating confirmed owned garments. | MVP | FEAT-COM-002; BR-026, BR-021, BR-022 | T/I: edit copy; original and ownership unchanged. |
+| FR-COM-006 | The system shall support an explicit Save look action on accessible shared inspiration, separate from Like, Follow, Wear and garment ownership; retained representation and withdrawal behavior require MVP-Q02 approval. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: Save is distinct from preference, Wear and ingestion. |
+| FR-COM-007 | The system shall offer generic-model Try-On entry for the selected accessible shared outfit, carrying its identified basis into FR-TRY-001–005. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: selected outfit handoff; no ownership side effect. |
+| FR-COM-008 | The system shall authorize shared-content access and each creator or affected-user operation separately from private Wardrobe authorization, applying the approved visibility/consent policy without exposing private inventory, purchase Price, profile or history. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: two-account allowed projection and denied private access. |
+| FR-COM-009 | The system shall limit Community MVP interaction to browse, Like, Follow creator, outfit sharing, Edit-as-duplicate, Save look and generic-model Try-On, excluding comments, messaging and entire-wardrobe sharing. | MVP | FEAT-COM-001, FEAT-COM-002; BR-025, BR-026, BR-021, BR-022 | T/I: excluded operations absent; approved actions have defined outcomes. |
+
+### 3.20 AI Chat Stylist
+
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| FR-CHAT-001 | The system shall provide one AI stylist conversation thread supporting user text and corresponding AI replies, without requiring or introducing multi-thread history. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: text interaction in one thread; no multithread claim. |
+| FR-CHAT-002 | The system shall present supported outfit/item cards in Chat with identifiable referenced looks/items and their current owned, catalog or inspiration meaning, without fabricating ownership or verified suitability. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: card source identity and ownership meaning. |
+| FR-CHAT-003 | The system shall offer suggestion chips for continuing the conversation or an identified product action, without treating chip selection alone as Like, Dislike, Wear or confirmed ownership. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: chip action meaning and no implied mutation. |
+| FR-CHAT-004 | The system shall route an attached garment photo into Add Garment review and explicit confirmation, preserving the same property, authority, media-authorization and failure rules rather than silently adding a garment from Chat. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: photo route, correction/confirmation/cancel; no auto-add. |
+| FR-CHAT-005 | The system shall support Like and Dislike on AI-generated Chat outfit suggestions through FR-PERS-001–005/014, without applying that Dislike to a Community post or an unrelated target. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: AI Chat Like/Dislike/clear; Community target rejected. |
+| FR-CHAT-006 | The system shall use only the current user's authorized relevant context for Chat, identify missing context, and restrict any external exchange to the approved purpose-minimal contract; conversation retention and disclosure require MVP-Q03/MVP-Q09 refinement before Ready. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: account isolation, absent context and provider payload inspection. |
+| FR-CHAT-007 | The system shall show pending, unavailable or failed AI replies truthfully and allow appropriate retry or return to independent wardrobe actions, without claiming a fabricated answer or completed product mutation. | MVP | FEAT-CHAT-001; BR-027, BR-021, BR-022 | T/I: AI unavailable and uncertain reply/action recovery. |
+
+### 3.21 Generic-Model Try-On
+
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| FR-TRY-001 | The system shall accept an identified accessible selected outfit as generic-model preview input, preserving whether constituents are owned or unowned; no selfie/personal-avatar input or AR/3D simulation is required or introduced. | MVP | FEAT-TRY-001; BR-028, BR-021, BR-022 | T/I: owned and shared selection; excluded modes absent. |
+| FR-TRY-002 | The system shall associate an available generic-model result with the outfit actually previewed, distinguish it from a current suitability/fit guarantee and not present an older selection's preview as the new selection. | MVP | FEAT-TRY-001; BR-028, BR-021, BR-022 | T/I: selection change and result basis correspondence. |
+| FR-TRY-003 | The system shall offer Save look from an available preview as a separate explicit action under the same saved-look semantics as FR-COM-006, without creating a Wear Event or owned garment. | MVP | FEAT-TRY-001; BR-028, BR-021, BR-022 | T/I: Save from preview; no Wear/ownership side effect. |
+| FR-TRY-004 | The system shall offer Wear Today entry from preview and accept a report only after existing current-valid-owned-outfit requirements FR-WEAR-001/009/011 are satisfied; unowned/shared/candidate looks shall not bypass those rules or silently create ownership. | MVP | FEAT-TRY-001; BR-028, BR-021, BR-022 | T/I: owned report versus unowned/invalid denial; retry versus new intention. |
+| FR-TRY-005 | The system shall distinguish preview pending, failed, unavailable and available results, retaining the selected-look context for retry/return and not fabricating a successful preview or reversing independent accepted actions. | MVP | FEAT-TRY-001; BR-028, BR-021, BR-022 | T/I: failure/retry and independent action outcome. |
+
+### 3.22 Internal Catalog and Confirmed Ownership
+
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| FR-CAT-001 | The system shall search the internal garment catalog as a source distinct from the authenticated user's owned-wardrobe search governed by FR-WAR-007. | MVP | FEAT-CAT-001; BR-029, BR-021, BR-022 | T/I: same query in separate catalog and owned domains. |
+| FR-CAT-002 | The system shall present identifiable catalog results and available descriptive information while distinguishing missing, uncertain or unavailable information from confirmed personal garment values. | MVP | FEAT-CAT-001; BR-029, BR-021, BR-022 | T/I: result identity, known/unknown fields and provenance. |
+| FR-CAT-003 | The system shall distinguish catalog loading, no matches, unavailable retrieval and denied access, offering change/reset/retry where applicable without implying deletion of owned garments. | MVP | FEAT-CAT-001; BR-029, BR-021, BR-022 | T/I: all result states; wardrobe unchanged. |
+| FR-CAT-004 | The system shall allow selection of a catalog result for an explicit Add-to-Closet intent without treating viewing, searching or selecting alone as confirmed ownership. | MVP | FEAT-CAT-002; BR-030, BR-021, BR-022 | T/I: search/select has no ownership side effect. |
+| FR-CAT-005 | The system shall allow review/correction of all 13 applicable garment properties before catalog-to-closet confirmation, preserving complete source vocabularies, distinct Materials and Styles, category applicability and the confirmed Category/one Color minimum. | MVP | FEAT-CAT-002; BR-030, BR-021, BR-022 | T/I: full/partial/minimum profiles and invalid applicability. |
+| FR-CAT-006 | The system shall create a distinct owner-controlled garment only on accepted user confirmation, retain source-versus-user-confirmed meaning, and prevent later catalog updates from silently overwriting its confirmed profile. | MVP | FEAT-CAT-002; BR-030, BR-021, BR-022 | T/I: confirmed addition versus later source change. |
+| FR-CAT-007 | The system shall permit correction/manual completion or cancellation when catalog information cannot satisfy the saving minimum; it shall not infer personal purchase Price from catalog asking price or impose an optional-property/eligibility gate. | MVP | FEAT-CAT-002; BR-030, BR-021, BR-022 | T/I: missing minimum, missing optional data and no price inference. |
+| FR-CAT-008 | The system shall distinguish canceled, pending, known failed, uncertain and accepted catalog additions and recover one logical addition without duplicate accepted garments or another user's data. | MVP | FEAT-CAT-002; BR-030, BR-021, BR-022 | T/I: same-action retry, separate intent and owner isolation. |
+
+### 3.23 Bulk Garment Import
+
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| FR-BULK-001 | The system shall allow selection of multiple garment photos into an identifiable import batch queue under applicable photo permissions and input-validation rules. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: multiphoto queue correspondence and invalid item. |
+| FR-BULK-002 | The system shall show each queued item's pending, reviewable, accepted, failed or uncertain outcome independently, without representing an uploaded photo as a confirmed owned garment. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: mixed item outcomes and no upload-only ownership. |
+| FR-BULK-003 | The system shall allow each reviewable item's applicable approved garment profile to be reviewed/corrected, supporting all 13 properties, optional distinct Materials/Styles, category applicability and user authority. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: review/correction and unknown optional information. |
+| FR-BULK-004 | The system shall save only entries explicitly confirmed by the user with Category and one Color, retaining all accepted optional information and truthful unevaluated recommendation eligibility; upload or AI completion alone shall not confirm an item. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: confirmed versus uploaded/proposed entries. |
+| FR-BULK-005 | The system shall distinguish each failed or uncertain item from accepted additions, preserve known accepted outcomes and offer correction/outcome review/safe retry without falsely claiming the whole batch succeeded. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: partial failure, uncertain acknowledgment and accepted survivors. |
+| FR-BULK-006 | The system shall preserve one accepted garment per logical confirmed item action across retries/reprocessing, while permitting separately intentional additions, enforcing affected-user/media authorization and preventing cross-item association errors. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: item retry versus separate intent; cross-account/cross-item checks. |
 
 
 ## 4. Data Requirements
@@ -640,13 +714,13 @@ These requirements specify information meaning/ownership, not tables, storage ty
 | DATA-GAR-002 | The system shall preserve exactly the 13 source-approved fashion properties and applicability, including optional multiple distinct Materials and Styles, one dominant Color, category-specific fields, Brand text and decimal purchase Price with explicit ISO 4217 currency; absent values and necessary metadata shall remain distinct. | MVP | FEAT-GAR-001; BR-003 | I/T: every approved value, distinct Material and Style sets, category applicability and non-mandatory rich information. |
 | DATA-GAR-003 | The system shall associate proposals with evidence-based confidence/provenance under Section 8.1 separately from authoritative user values, without treating numeric confidence as confirmation. | MVP | FEAT-GAR-001, FEAT-AI-002; BR-002, BR-003 | T/I: default thresholds, evidence guards, calibration and confirmation. |
 | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
-| DATA-GAR-005 | The system shall represent active/removed ownership independently from missing optional properties and unevaluated recommendation eligibility, without requiring a readiness flag, NOT_EVALUATED enum, compatibility field or physical schema prescribed by this SRS. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: ownership and unevaluated eligibility remain distinct; no property gate. |
+| DATA-GAR-005 | The system shall represent active/removed ownership independently from missing optional properties and unevaluated recommendation eligibility, without a readiness/compatibility gate or a physical schema prescribed by this SRS; preserve the implemented API's `NOT_EVALUATED` result. | MVP | FEAT-GAR-001, FEAT-WAR-002; BR-003, BR-005 | T/I: ownership and unevaluated eligibility remain distinct; no property gate. |
 
 ### 4.4 Outfit & Recommendation Data
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-OUT-001 | The system shall identify an outfit through its set of constituent garment identities, treating every permutation of that set as one unique combination for advice, feedback, daily Wear normalization and multiplier comparison. | MVP | FEAT-OUT-001, FEAT-MULT-001; BR-008, BR-016 | A: identity permutations and exact-combination targeting. |
+| DATA-OUT-001 | The system shall identify an outfit through its set of constituent garment identities, treating every permutation of that set as one unique combination for advice, history grouping and multiplier comparison. A feedback target also retains its kind/source identity; a Community post is not interchangeable with an AI suggestion merely because constituent sets match. | MVP | FEAT-OUT-001, FEAT-MULT-001; BR-008, BR-016 | A: identity permutations and exact-combination targeting. |
 | DATA-OUT-002 | The system shall associate advice with its evaluated wardrobe/context and relevant validity-rule version, sufficient for explanations and input/rule-based outdated-state detection. | MVP | FEAT-OUT-001, FEAT-OUT-002; BR-007, BR-022 | T/I: context/rule version and changed-input detection. |
 | DATA-OUT-003 | The system shall distinguish current owned outfits, historical selections, and hypothetical candidate outfits in their logical meaning. | MVP | FEAT-OUT-002, FEAT-MULT-001; BR-017, BR-022 | I: three outfit contexts. |
 
@@ -654,7 +728,7 @@ These requirements specify information meaning/ownership, not tables, storage ty
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| DATA-WEAR-001 | The system shall associate current outfit-targeted Like/Dislike state and applicable action-time information with the correct user/combination, sufficient to preserve state for history and engine use. | MVP | FEAT-PERS-001; BR-011, BR-021 | T/I: target, user revision, and persistent feedback state. |
+| DATA-WEAR-001 | The system shall associate current Like/Dislike state and applicable action-time information with the correct user and identified target kind/source reference, sufficient to preserve state for history and engine use. | MVP | FEAT-PERS-001; BR-011, BR-021 | T/I: target, user revision, and persistent feedback state. |
 | DATA-WEAR-002 | The system shall represent each intentional Wear Event with outfit, absolute timestamp, associated timezone or UTC offset, original local date/time context, available occasion/context, user-reported meaning and applicable corrected information. | MVP | FEAT-PERS-002; BR-006, BR-011 | I/T: time information and valid same-original-day correction. |
 | DATA-WEAR-003 | The system shall distinguish logical-action identity from exact-outfit/local-day grouping, preserving separate intentional events while deduplicating one action. | MVP | FEAT-PERS-002; BR-011 | T/A: retries versus explicit repeats; separate history records. |
 | DATA-WEAR-004 | The system shall reflect valid event corrections/removals in stored history without deleting underlying Outfit/Garments or unrelated events. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011 | T/A: surviving reports preserved after removal/correction. |
@@ -726,6 +800,19 @@ Profile Style preferences and Occasion/request context are separate from garment
 
 Unknown optional information is absent, not an extra enum value. Etc is explanatory, not accepted as Style. Real fallback labels remain only where listed. Technical metadata and optional media are outside the 13 properties; no automatic cross-property inference or extra readiness field is selected.
 
+### 4.11 Approved MVP Extension Information Boundaries
+
+These are conceptual information obligations, not schemas or new persistence owners. Active/minimal history, removed garment/Wear data and user-linked measurement retain Section 4.9's distinct policies; those limits must not be invented as Chat, Community or staged-media retention defaults.
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| DATA-COM-001 | The system shall preserve creator attribution, authorized shared-outfit projection, affected-user Follow/Save state and independent draft meaning separately from private Wardrobe authority; shared and saved content lifecycle requires MVP-Q01/Q02/Q06 resolution. | MVP | FEAT-COM-001/002; BR-025, BR-026, BR-021 | I/T: owner/source separation, accepted versus pending outcomes and approved lifecycle policy. |
+| DATA-CHAT-001 | The system shall associate the single conversation, messages, identified cards/chips and photo Add routing with the authorized user and purpose, without treating thread contents as ownership, training consent or measurement storage; retention/context rules require MVP-Q03. | MVP | FEAT-CHAT-001; BR-027, BR-021 | I/T: owner/source separation, accepted versus pending outcomes and approved lifecycle policy. |
+| DATA-TRY-001 | The system shall associate each preview outcome with its selected-look basis, generic-model meaning and authorized inputs, keeping separate Save and valid-owned Wear action outcomes; generated-media lifecycle/integration requires MVP-Q04/MVP-Q09. | MVP | FEAT-TRY-001; BR-028, BR-021 | I/T: owner/source separation, accepted versus pending outcomes and approved lifecycle policy. |
+| DATA-CAT-001 | The system shall keep catalog source information separate from individually confirmed owned garment profiles and their authority, provenance and safe-add outcomes; catalog asking price is never silently the user's purchase Price. | MVP | FEAT-CAT-001/002; BR-029, BR-030, BR-021 | I/T: owner/source separation, accepted versus pending outcomes and approved lifecycle policy. |
+| DATA-BULK-001 | The system shall associate batch items, private staged media, review/confirmation and each logical accepted-add outcome without cross-item/user mixing or ownership from upload; limits, resumption, save atomicity and staged-media cleanup require MVP-Q08. | MVP | FEAT-BULK-001; BR-031, BR-021 | I/T: owner/source separation, accepted versus pending outcomes and approved lifecycle policy. |
+
+
 ## 5. External Interface Requirements
 
 ### 5.1 User Interfaces
@@ -796,7 +883,7 @@ Faster valid completion is acceptable.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
-| NFR-PRIV-001 | The system shall limit personal data processing to necessary functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity; explain its purpose and respect omission/correction/removal/permission controls within the authorized User's private experience, with no public wardrobes, user-to-user sharing, unrestricted third-party sharing or sale of personal data. | MVP | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002, FEAT-PERS-001, FEAT-PERS-002; BR-012, BR-013, BR-021 | I/D: purpose, private access, feature controls and absence of unapproved sharing/sale. |
+| NFR-PRIV-001 | The system shall limit personal data to necessary functionality, authorized bounded outfit sharing, personalization, history/utilization, measurement, security and operational integrity, respecting omission/correction/removal/permission controls. Only an explicitly approved shared-outfit/creator/media projection may be available to its authorized audience; this grants no access to private wardrobe inventories, source images, purchase information, profile, feedback or history. No entire-wardrobe sharing, unrestricted third-party sharing or personal-data sale is permitted. Sharing audience, consent and publishable fields remain MVP-Q01, not inferred permission. | MVP | FEAT-AUTH-001, FEAT-COM-001/002, FEAT-CHAT-001, FEAT-TRY-001; BR-021, BR-025–BR-028 | I/T: permitted shared projection versus denied private operations; explicit sharing and account isolation; policy approval required before sharing stories are Ready. |
 | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
 ### 6.4 Reliability
@@ -943,7 +1030,7 @@ These are the normative explanation requirements. Explanations must correspond t
 
 FR-AUTH-008, DATA-AUTH-001, COM-001/COM-003, NFR-SEC-001–NFR-SEC-003, and NFR-PRIV-001/NFR-PRIV-002 establish private access, protected exchange, clear purposes, and control. FR-PROF-005–FR-PROF-007 and HW-003 preserve optional context. FR-MET-006 limits engagement evidence; DATA-RET-* preserves settled effective-removal/history semantics.
 
-Personal data is processed only for necessary product, feed sharing, personalization, history/utilization, validation/measurement, security and operational purposes. MVP personal data is not used for AI training/improvement; future use requires separate explicit opt-in and an approved product/privacy change. Private access excludes public wardrobes (entire-wardrobe sharing), unrestricted third-party sharing and sale of personal data; allowed sharing is limited to outfit posts, Like, Follow creator, and explicitly chosen shopping navigation. External dependencies receive only purpose-minimal information: selected weather location, email/necessary recovery-delivery information, or explicitly chosen shopping navigation. Section 4.9 defines active/minimal history retention, 30-day removed-data deletion and 90-day user-linked measurement retention. Optional fields and permissions cannot become undisclosed access gates.
+Personal data is processed only for necessary product, feed sharing, personalization, history/utilization, validation/measurement, security and operational purposes. MVP personal data is not used for AI training/improvement; future use requires separate explicit opt-in and an approved product/privacy change. Private access excludes public wardrobes (entire-wardrobe sharing), unrestricted third-party sharing and sale of personal data; allowed sharing is limited to outfit posts, Like, Follow creator, and explicitly chosen shopping navigation. External dependencies receive only purpose-minimal approved input for their actual role: selected weather location, necessary recovery delivery, explicit shopping navigation, or authorized Chat/preview/analysis input. Chat/preview capability approval does not select a provider or authorize arbitrary private-data transfer; MVP-Q03/Q04/Q09 govern the unresolved exchange. Section 4.9 defines active/minimal history retention, 30-day removed-data deletion and 90-day user-linked measurement retention. Optional fields and permissions cannot become undisclosed access gates.
 
 ### 8.4 Auditability / Provenance Requirements
 
@@ -1139,7 +1226,7 @@ These audits establish specification coverage; implementation and successful ver
 | FR-WEAR-004 | FEAT-PERS-002 | BR-006, BR-011 | CAP-06, CAP-07 | T/I: absolute/local correspondence and later timezone change. |
 | FR-WEAR-005 | FEAT-PERS-002 | BR-011, BR-022 | CAP-06, CAP-07 | T: available/missing context. |
 | FR-WEAR-006 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: outfit/context correction; future/cross-day rejection in original timezone. |
-| FR-WEAR-007 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T/I: immediate effective exclusion, surviving group recalculation and physical deletion by the 30-day deadline. |
+| FR-WEAR-007 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T/I: immediate stored-history/utilization exclusion, surviving reports preserved and physical deletion by the 30-day deadline. |
 | FR-WEAR-008 | FEAT-PERS-002 | BR-006, BR-021 | CAP-06, CAP-07 | T: underlying objects remain. |
 | FR-WEAR-009 | FEAT-PERS-002 | BR-011 | CAP-06, CAP-07 | T: one logical action retried; separate explicit repeat; no date/outfit-only deduplication. |
 | FR-WEAR-010 | FEAT-PERS-002, FEAT-ANL-001, FEAT-PERS-003 | BR-006, BR-011 | CAP-05, CAP-06, CAP-07 | T/A: corrected outfit/time and removal change effective signals/history appropriately. |
@@ -1193,9 +1280,46 @@ These audits establish specification coverage; implementation and successful ver
 | FR-MET-002 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/I: event lifecycle evidence. |
 | FR-MET-003 | FEAT-MET-001, FEAT-SHOP-002 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/I: exposure versus navigation. |
 | FR-MET-004 | FEAT-MET-001, FEAT-AI-001, FEAT-OUT-001, FEAT-ANL-001 | BR-019, BR-001, BR-007, BR-006 | CAP-02, CAP-04, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | A/I: separate accuracy reports, sample durations/start-end boundaries and honest event outcomes. |
-| FR-MET-005 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/A: two intentional history events versus one preference increment; retry counted once. |
+| FR-MET-005 | FEAT-MET-001, FEAT-PERS-002 | BR-019, BR-011 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T/A: distinct intentional history events; retry counted once, no prescribed preference increment. |
 | FR-MET-006 | FEAT-MET-001 | BR-021 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | I/T: metric contents and 90-day retention boundary; no residual user-linked information in aggregates. |
 | FR-MET-007 | FEAT-MET-001 | BR-019 | CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-10 | T: measurement dependency failure. |
+| FR-COM-001 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: authorized post and creator correspondence. |
+| FR-COM-002 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: all four states and no false empty/success. |
+| FR-COM-003 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: Like/clear and correct creator; Community Dislike rejected without mutation. |
+| FR-COM-004 | FEAT-COM-002 | BR-026, BR-021, BR-022 | CAP-11 | T/I: chosen projection only; cancel/denied share has no publication. |
+| FR-COM-005 | FEAT-COM-002 | BR-026, BR-021, BR-022 | CAP-11 | T/I: edit copy; original and ownership unchanged. |
+| FR-COM-006 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: Save is distinct from preference, Wear and ingestion. |
+| FR-COM-007 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: selected outfit handoff; no ownership side effect. |
+| FR-COM-008 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: two-account allowed projection and denied private access. |
+| FR-COM-009 | FEAT-COM-001, FEAT-COM-002 | BR-025, BR-026, BR-021, BR-022 | CAP-11 | T/I: excluded operations absent; approved actions have defined outcomes. |
+| FR-CHAT-001 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: text interaction in one thread; no multithread claim. |
+| FR-CHAT-002 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: card source identity and ownership meaning. |
+| FR-CHAT-003 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: chip action meaning and no implied mutation. |
+| FR-CHAT-004 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: photo route, correction/confirmation/cancel; no auto-add. |
+| FR-CHAT-005 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: AI Chat Like/Dislike/clear; Community target rejected. |
+| FR-CHAT-006 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: account isolation, absent context and provider payload inspection. |
+| FR-CHAT-007 | FEAT-CHAT-001 | BR-027, BR-021, BR-022 | CAP-12 | T/I: AI unavailable and uncertain reply/action recovery. |
+| FR-TRY-001 | FEAT-TRY-001 | BR-028, BR-021, BR-022 | CAP-13 | T/I: owned and shared selection; excluded modes absent. |
+| FR-TRY-002 | FEAT-TRY-001 | BR-028, BR-021, BR-022 | CAP-13 | T/I: selection change and result basis correspondence. |
+| FR-TRY-003 | FEAT-TRY-001 | BR-028, BR-021, BR-022 | CAP-13 | T/I: Save from preview; no Wear/ownership side effect. |
+| FR-TRY-004 | FEAT-TRY-001 | BR-028, BR-021, BR-022 | CAP-13 | T/I: owned report versus unowned/invalid denial; retry versus new intention. |
+| FR-TRY-005 | FEAT-TRY-001 | BR-028, BR-021, BR-022 | CAP-13 | T/I: failure/retry and independent action outcome. |
+| FR-CAT-001 | FEAT-CAT-001 | BR-029, BR-021, BR-022 | CAP-14 | T/I: same query in separate catalog and owned domains. |
+| FR-CAT-002 | FEAT-CAT-001 | BR-029, BR-021, BR-022 | CAP-14 | T/I: result identity, known/unknown fields and provenance. |
+| FR-CAT-003 | FEAT-CAT-001 | BR-029, BR-021, BR-022 | CAP-14 | T/I: all result states; wardrobe unchanged. |
+| FR-CAT-004 | FEAT-CAT-002 | BR-030, BR-021, BR-022 | CAP-14 | T/I: search/select has no ownership side effect. |
+| FR-CAT-005 | FEAT-CAT-002 | BR-030, BR-021, BR-022 | CAP-14 | T/I: full/partial/minimum profiles and invalid applicability. |
+| FR-CAT-006 | FEAT-CAT-002 | BR-030, BR-021, BR-022 | CAP-14 | T/I: confirmed addition versus later source change. |
+| FR-CAT-007 | FEAT-CAT-002 | BR-030, BR-021, BR-022 | CAP-14 | T/I: missing minimum, missing optional data and no price inference. |
+| FR-CAT-008 | FEAT-CAT-002 | BR-030, BR-021, BR-022 | CAP-14 | T/I: same-action retry, separate intent and owner isolation. |
+| FR-BULK-001 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: multiphoto queue correspondence and invalid item. |
+| FR-BULK-002 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: mixed item outcomes and no upload-only ownership. |
+| FR-BULK-003 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: review/correction and unknown optional information. |
+| FR-BULK-004 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: confirmed versus uploaded/proposed entries. |
+| FR-BULK-005 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: partial failure, uncertain acknowledgment and accepted survivors. |
+| FR-BULK-006 | FEAT-BULK-001 | BR-031, BR-021, BR-022 | CAP-15 | T/I: item retry versus separate intent; cross-account/cross-item checks. |
+| FR-PERS-014 | FEAT-PERS-001, FEAT-COM-001, FEAT-CHAT-001 | BR-011, BR-025, BR-027 | CAP-06, CAP-11, CAP-12 | T: typed target policy and denied Community Dislike. |
+
 
 #### 10.2.1 Cross-Cutting Acceptance Traceability
 
@@ -1208,7 +1332,7 @@ These audits establish specification coverage; implementation and successful ver
 
 ### 10.3 PRD Feature Coverage Audit
 
-All 22 MVP features remain covered. Functional coverage is exhaustive; supporting examples point to representative cross-cutting requirements.
+All 29 MVP features have source-linked specification coverage; new Draft capability policies still require refinement. Functional coverage is exhaustive; supporting examples point to representative cross-cutting requirements.
 
 | PRD Feature / Name | Functional Coverage | Supporting Examples | Result |
 |---|---|---|---|
@@ -1234,10 +1358,17 @@ All 22 MVP features remain covered. Functional coverage is exhaustive; supportin
 | FEAT-SHOP-001 — Utility-led candidate advice | FR-SHOP-001–FR-SHOP-004, FR-SHOP-008 | DATA-ANL-003, UI-009, ERR-SHOP-001 | Covered — MVP |
 | FEAT-SHOP-002 — External shopping navigation | FR-SHOP-005–FR-SHOP-008; FR-MET-003 | DATA-INT-003, UI-009, SI-004, COM-003, NFR-PRIV-002 | Covered — MVP |
 | FEAT-MET-001 — Product measurement | FR-MET-001–FR-MET-007 | NFR-PERF-001, NFR-SEC-003, NFR-PRIV-002, NFR-AVL-001, NFR-TEST-002 | Covered — MVP |
+| FEAT-COM-001 — Browse and interact with outfit inspiration | FR-COM-001–FR-COM-009 | DATA-COM-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-COM-002 — Explicit outfit sharing and independent reuse | FR-COM-001–FR-COM-009 | DATA-COM-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-CHAT-001 — Single-thread AI Chat Stylist | FR-CHAT-001–FR-CHAT-007 | DATA-CHAT-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-TRY-001 — Generic-model outfit Try-On preview | FR-TRY-001–FR-TRY-005 | DATA-TRY-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-CAT-001 — Search the internal garment catalog | FR-CAT-001–FR-CAT-008 | DATA-CAT-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-CAT-002 — Confirm a catalog item into the owned closet | FR-CAT-001–FR-CAT-008 | DATA-CAT-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
+| FEAT-BULK-001 — Review and confirm bulk garment-photo import | FR-BULK-001–FR-BULK-006 | DATA-BULK-001; NFR-PRIV-001; FR-PERS-014 where applicable | Specified — policy refinement pending, not implemented |
 
 ### 10.4 BRD Requirement Coverage Audit
 
-BR-001–BR-024 remain accounted for. Conditional BR-020 information depends on credible sources and does not defer required candidate utility or weaken exact-evaluation prerequisites.
+BR-001–BR-031 remain accounted for. Conditional BR-020 information depends on credible sources and does not defer required candidate utility or weaken exact-evaluation prerequisites.
 
 | BRD Requirement | Direct Functional Coverage | Result / Relevant Boundary |
 |---|---|---|
@@ -1265,6 +1396,13 @@ BR-001–BR-024 remain accounted for. Conditional BR-020 information depends on 
 | BR-022 | FR-WEATHER-004–FR-WEATHER-005; FR-AI-005, FR-AI-011–FR-AI-012; FR-OUT-008–FR-OUT-009, FR-OUT-011–FR-OUT-013, FR-OUT-016; FR-WEAR-005; FR-ANL-004–FR-ANL-006, FR-ANL-009, FR-ANL-011–FR-ANL-012, FR-ANL-014–FR-ANL-015; FR-GAP-002, FR-GAP-004; FR-MULT-004, FR-MULT-007–FR-MULT-008; FR-SHOP-006 | Covered — direct software behavior. |
 | BR-023 | FR-PROF-001 | Covered — Android/iOS and Vietnamese/localization also specified by LOC-* and Section 2. |
 | BR-024 | FR-ANL-015; FR-GAP-004–FR-GAP-005; FR-SHOP-004, FR-SHOP-008 | Covered — core wardrobe value remains independent of commerce. |
+| BR-025 | FR-COM-001–FR-COM-009; DATA-COM-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-026 | FR-COM-001–FR-COM-009; DATA-COM-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-027 | FR-CHAT-001–FR-CHAT-007; DATA-CHAT-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-028 | FR-TRY-001–FR-TRY-005; DATA-TRY-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-029 | FR-CAT-001–FR-CAT-008; DATA-CAT-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-030 | FR-CAT-001–FR-CAT-008; DATA-CAT-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
+| BR-031 | FR-BULK-001–FR-BULK-006; DATA-BULK-001 | Approved outcome specified; unresolved policies tracked in PRD Section 34.2. |
 
 ### 10.5 Capability Continuity Audit
 
@@ -1282,8 +1420,13 @@ Capabilities retain BRD identity and current PRD feature links; feature coverage
 | CAP-08 — Gap Analysis | FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001, FEAT-SHOP-001, FEAT-MET-001 | Covered |
 | CAP-09 — Wardrobe Multiplier | FEAT-MULT-001, FEAT-SHOP-001, FEAT-MET-001 | Covered |
 | CAP-10 — Strategic Shopping | FEAT-SHOP-001, FEAT-SHOP-002, FEAT-MET-001 | Covered |
+| CAP-11 | FEAT-COM-001, FEAT-COM-002 | Specified — Draft refinement |
+| CAP-12 | FEAT-CHAT-001 | Specified — Draft refinement |
+| CAP-13 | FEAT-TRY-001 | Specified — Draft refinement |
+| CAP-14 | FEAT-CAT-001, FEAT-CAT-002 | Specified — Draft refinement |
+| CAP-15 | FEAT-BULK-001 | Specified — Draft refinement |
 
-Coverage totals: **149 retained functional identifiers, including superseded/deferred entries; 22/22 features; 24/24 business requirements; 10/10 capabilities**. The SRS contains 262 requirement IDs: all 260 prior IDs preserved and FR-GAR-012/013 added. BG-01–BG-04 retain the BRD mappings; verification remains planned evidence.
+Coverage totals: **187 retained functional identifiers (including superseded/deferred entries); 29/29 product features; 31/31 business requirements; 15/15 capabilities**. There are **306 distinct specified requirement IDs** in functional and supporting families. Earlier IDs are preserved; new specification coverage is not implemented or passed verification. BG-01–BG-04 retain their meaning.
 
 ## 11. Glossary
 
@@ -1319,7 +1462,7 @@ Coverage totals: **149 retained functional identifiers, including superseded/def
 | Outdated Assessment | Result whose relevant wardrobe/garment/candidate/profile/context or validity rules changed since evaluation; prior results cannot be current without reevaluation. |
 | Refresh Session | A login-session authorization context with maximum 30-day lifetime and rotating Refresh Token; independent devices may have separate sessions. Reuse revokes the affected session; password reset revokes all account Refresh Sessions. |
 | Logical Wear Action | One explicit intention to report a wearing instance, unchanged by retry/delivery/reprocessing. A new explicit initiation is a new action. |
-| Environmental Band | Active temperature category: HOT ≥30°C; WARM 24–<30°C; MILD 18–<24°C; COOL 12–<18°C; COLD <12°C. Missing weather is disclosed and handled through remaining validity. |
+| Environmental Band | Historical superseded compatibility vocabulary; no active temperature-band garment/validity policy is approved. Request weather retains its own freshness and availability rules. |
 | Visual Noise | Superseded garment attribute; not part of the approved model or an active compatibility rule. |
 | Need Coverage | Ratio min(ValidDistinctOutfitsForNeed / 3, 1), displayed as a percentage for a mapped relevant capsule need. |
 | Coverage Score | Synonym for the Wardrobe Coverage Score: 100 × priority-weighted sum of Need Coverage divided by total positive priority weight. |
@@ -1397,22 +1540,20 @@ These are MVP validation criteria, not WCAG, Android/iOS accessibility or legal-
 
 ## 13. SRS Exit Criteria
 
-This v0.3 Baseline Draft is ready for synchronized requirements review when Product Owner, Requirements, Engineering, QA and relevant UX/AI/security reviewers confirm:
+This v0.7 Baseline Draft is ready for synchronized requirements review when Product Owner, Requirements, Engineering, QA and relevant UX/AI/security reviewers confirm:
 
-- All 22 MVP features, BR-001–BR-024 and CAP-01–CAP-10 remain source-linked; all existing requirement IDs retain their identity.
+- All 29 MVP features, BR-001–BR-031 and CAP-01–CAP-15 remain source-linked; all existing requirement IDs retain their identity.
 - Image qualification, locked benchmark/accuracy floors, confidence/authority, unchanged timing boundaries and reference measurement conditions are explicit.
 - Access/session/password/email/recovery policy, unevaluated garment eligibility and future approved validity-before-ranking remain consistent.
-- Logical Wear identity, intentional repeats, original event-local history, completed elapsed-time aging and survivor-group anchors remain deterministic after accepted correction/removal.
+- Logical Wear identity, intentional repeats, original event-local history, stored timestamps and surviving history remain truthful after accepted correction/removal.
 - Coverage/gap sufficiency and formulas, and all five Multiplier states/unique-valid set comparisons, preserve the existing domain meaning.
 - Purpose-limited private data use, no MVP personal-data training, minimal external exchange, 30-day removed-data deletion and 90-day user-linked measurement limits reach relevant requirements/rules/use cases.
 - Weather/commercial currentness, bounded weather fallback and navigation-independent utility are reflected in failures and acceptance evidence.
 - Supported platforms, reference conditions, separate functional concurrency, recoverable restart and usability/accessibility criteria are traceable and testable.
-- Traceability/reverse coverage, interaction outcomes and corresponding focused diagrams agree; no new actor goal, native commerce or implementation design is introduced.
+- Traceability/reverse coverage, interaction outcomes and corresponding focused diagrams agree; new approved actor goals preserve their bounded scope; native commerce and implementation design are not introduced.
 
 Baseline Draft records required behavior and review criteria, not formal approval or executed software acceptance.
 
 ## 14. Next Artifact
 
-The current SRS, [Business Rules](business-rules.md), [master Use Case Diagram](use-cases/use-case-diagram.puml), 23 detailed Use Case Specifications and their focused diagrams form the requirements baseline for review.
-
-After review, the next workflow step is **core UML Activity Diagram modeling**, following Workflow Section 11. Activity Diagrams refine complex actor/system workflows, branches and outcomes from the Use Case Specifications while retaining SRS/BRULE/FEAT/BR/CAP traceability. Quality Attribute Analysis, ASR/ADD/ADR, delivery/backlog and design artifacts follow their separate workflow responsibilities.
+Maintain the existing Business Rules, [master Use Case Diagram](use-cases/use-case-diagram.puml), detailed Use Cases and complex [Activity Diagrams](activity-diagrams/) against this living baseline. Resolve relevant [PRD MVP questions](../02-product/PRD.md#342-mvp-expansion-open-decisions) and story feasibility in refinement; Sprint Planning precedes selected-story JIT detailed design and automated test/implementation. This synchronization does not recreate completed architecture or authorize new feature implementation.

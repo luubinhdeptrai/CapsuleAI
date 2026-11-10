@@ -1,4 +1,6 @@
 @startuml
+' 2026-11-09: PR #4 / DD-007 impact; approved capability scope, new allocation unselected.
+' See ADD Section 15 and PRD MVP-Q01-Q10; existing selected modules/runtime/store choices preserved.
 ' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Implementation View
@@ -279,6 +281,17 @@ ContextIn -[hidden]right-> IdentityIn
 WardrobeStore -[hidden]down-> DB
 
 
+note as MVPImpact
+  PR #4 adds required capabilities, NOT new selected packages or interfaces.
+  Reuse Wardrobe confirmation and Outfit Advice/Use feedback/Wear semantics.
+  Distinguish typed AI suggestion and Community post targets through public contracts.
+  Shared projection, creator/Follow/Save/draft and catalog ownership are unallocated.
+  Chat and generic-preview ports/context/lifecycle need MVP-Q03/Q04/Q09 review.
+  Batch queue / item acceptance / retry coordination needs MVP-Q08 design.
+  No endpoint, module package, provider DTO, physical table or broker is added here.
+  AR-01-AR-08 applies to any later selected owner: owned schema, no cross-owner SQL/FK.
+end note
+
 legend bottom
   |= Notation |= Source-architecture meaning |
   | Soft module color | Approved logical owner -> proposed Java package; one core application. |
@@ -299,7 +312,8 @@ legend bottom
   No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
   Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
   2026-11-06 AR-01-AR-08: one schema per owner; api-only imports and owner-only SQL are test-enforced.
-  Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Current: Sprint 1-2 backend exists; refine candidates and open policies.
+  Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.
   Future composition/compatibility/eligibility policy is deferred.

@@ -9,7 +9,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Delivery Decision Log |
-| Version | 0.1.9 |
+| Version | 0.2 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Primary Audience | Backend Developer / Development Team |
@@ -29,6 +29,7 @@
 | 0.1.7 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.8 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.9 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+| 0.2 | 2026-11-09 | Propagated merged PR #4 / DD-007 into source-linked scope/story/interaction/architecture coverage; preserved original backlog order and architecture selections, distinguished historical preparation from implemented Sprint 1–2 and current refinement. |
 
 ## 2. Purpose
 
@@ -44,11 +45,13 @@ Keep DD IDs stable. When guidance changes, update its authoritative source first
 
 ## 4. Active Delivery Decisions
 
+**Current applicability — 2026-11-09:** DD-002/DD-003 retain the original first-horizon/eight-story decision history; they are not a claim that the current catalogue still has eight stories. Sprint 1–2 plans record actual historical selections and the backend now implements their access/recovery/create/page/detail scope. DD-005 means Draft scope never automatically becomes a new Sprint commitment. DD-007 is the later approved MVP/feedback authority.
+
 ### DD-001 — Preserve the single ordered Product Backlog
 
 **Status:** Active
 
-**Decision:** Use the existing 41-PBI Product Backlog as the delivery-order authority. The Product Owner remains accountable for ordering, with team input. Preserve current Order fields and stable PBI IDs; themes and illustrative workflow Sprint examples do not supply competing priorities.
+**Decision:** Use the Product Backlog as the delivery-order authority: preserve existing Orders 1–41; PBI-042–048 form the approved-scope unranked pool pending Product Owner placement. The Product Owner remains accountable for ordering, with team input. Preserve current Order fields and stable PBI IDs; themes and illustrative workflow Sprint examples do not supply competing priorities.
 
 **Reason:** The order connects private wardrobe understanding to useful styling, learning and informed improvement, with necessary enabling/quality work. Separate theme orders or backend-driven priorities would fragment that value and dependency logic.
 
@@ -117,7 +120,7 @@ Keep DD IDs stable. When guidance changes, update its authoritative source first
 
 **Decision:** Preserve the workflow's explicit architecture gate: Quality Attribute Analysis → ASR → Architecture Decision Analysis → **human Selected Architecture Decisions** → ADD + Logical/Implementation/Deployment/Data Views. Continue with Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning → Sprint execution: selected-Story JIT Detailed Design → Automated Test + Implementation → PR / CI / Review → Done. No separate baseline ADR phase or whole-MVP API/Data/Sequence/State design gate applies.
 
-QA, ASR and ADA drafts exist; [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) retains the Project Owner / Backend Developer's 2026-10-10 selection of all ADA-001–018, without override/deferral. [ADD](../04-architecture/ADD.md) and all four [architecture views](../04-architecture/views/) already exist. **Test Strategy, then Engineering Baseline, is the current preparation handoff.** Refinement makes candidates Ready; Sprint Planning selects work and an initial plan. Only selected Stories receive JIT / Just-Enough Detailed Design during execution, with automated tests/implementation and review/CI through Done. ADA/selection already preserve current decision history; standalone ADRs are optional for significant future evolution. Artifact approval and software/benchmark success are not claimed.
+QA, ASR and ADA drafts exist; [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md) retains the Project Owner / Backend Developer's 2026-10-10 selection of all ADA-001–018, without override/deferral. [ADD](../04-architecture/ADD.md) and all four [architecture views](../04-architecture/views/) already exist. Those preparation artifacts and Sprint 1–2 backend now exist; the current handoff is candidate refinement and relevant policy/feasibility review before authorized Sprint Planning. Refinement makes candidates Ready; Sprint Planning selects work and an initial plan. Only selected Stories receive JIT / Just-Enough Detailed Design during execution, with automated tests/implementation and review/CI through Done. ADA/selection already preserve current decision history; standalone ADRs are optional for significant future evolution. Artifact approval and software/benchmark success are not claimed.
 
 **History / Extension:** DD-006 v0.1 handed the initial stories/DoD to analysis of all 14 QAs. Version 0.1.1 naturally extends the same preparation/handoff decision with the new workflow stages and current progress. DD-006 remains Active; no prior DD entry is deleted or superseded. On 2026-10-10, v0.1.3 records the completed selection gate and advances the current handoff to ADD; the preparation sequence remains unchanged. Version 0.1.4 acknowledges ADD v0.1 creation and advances to Logical View on 2026-10-10, without changing that sequence. Version 0.1.5 acknowledges Logical View v0.1 and advances to Implementation View on 2026-10-10, preserving the same sequence. Version 0.1.6 records the human-accepted Logical decomposition and Implementation View v0.1 creation on 2026-10-10; its review precedes Deployment View, preserving the sequence. Version 0.1.7 records explicit human acceptance of both existing views and Deployment View v0.1 creation on 2026-10-11; Deployment review precedes Data View, preserving the sequence. Version 0.1.8 records explicit human acceptance of all three preceding views and Data View v0.1 creation on 2026-10-11; Data View review precedes ADRs, preserving the sequence. Version 0.1.9 (2026-10-20) synchronizes the current sequence with the revised workflow: Test Strategy and Engineering Baseline precede iterative delivery; detailed design follows Sprint selection inside execution; standalone ADRs are optional for significant future evolution. Earlier handoffs remain historical; selection and product/delivery scope are unchanged.
 
@@ -137,7 +140,7 @@ QA, ASR and ADA drafts exist; [Selected Architecture Decisions](../04-architectu
 
 **Authoritative Basis:** BRD §16; PRD §27–§28; SRS §3.10/§3.12; Business Rules BRULE-PERS-001–006; UC-013; Product Goal §6; backlog PBI-015/PBI-029 notes.
 
-**Backend Developer Impact:** Persist Like/Dislike/Wear events with timestamps for engine use with no fixed weights, decay bands, or recency penalties. Treat feed/chat/try-on/catalog/bulk as pending new UC/US/PBI refinement — no API, schema, or Sprint commitment is made here. New feed/chat/try-on/catalog/bulk requirements need separate UC, Activity, SRS, architecture, and backlog items before Sprint selection.
+**Backend Developer Impact:** Persist Like/Dislike/Wear events with timestamps for engine use with no fixed weights, decay bands, or recency penalties. The PR #4 synchronization supplies BR-025–031, CAP-11–15, seven FEATs, FR-COM/CHAT/TRY/CAT/BULK, PBI-042–048, eight Draft Stories and UC/AD-024–031. AD-013 clarifies typed feedback. Their relevant open policy/feasibility questions remain in PRD Section 34.2; no Ready, API, schema, provider, relative order, Sprint commitment or implementation is selected.
 
 ## 5. Superseded Decisions
 
@@ -145,10 +148,10 @@ None currently.
 
 ## 6. Backend Developer Handoff Summary
 
-**Current stage:** The system-wide requirements, Business Rules, Use Cases/Activities, globally ordered 41-PBI backlog, eight initial stories/AC, DoD, QA/ASR, ADA/Selected Architecture Decisions, ADD and four views exist. All 18 architecture selections remain unchanged. Existing Baseline Draft statuses and review needs are preserved; no Sprint Goal, Sprint Backlog or implementation commitment is inferred.
+The system-wide baseline, Test Strategy and engineering foundation exist. Sprint 1–2 backend access, sessions/recovery and Wardrobe creation/cursor paging/detail are present in source, migrations, OpenAPI and tests; current execution and full-story DoD evidence remain separate claims. Preserve those contracts and all 18 architecture selections / AR-01–08.
 
-**Next focus:** **Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** During execution, each selected Story receives only necessary JIT Detailed Design, automated tests/implementation, integration verification and PR/CI/review through Done. Separate baseline ADRs and complete MVP detailed design are not prerequisites. Follow Workflow Section 46 and DD-005/DD-006; preserve backlog order and requirements/AC authority.
+The current synchronization adds unranked PBI-042–048 and eight Draft Stories with required source coverage. Resolve only relevant PRD Section 34.2 questions and feasibility in refinement. The user-supplied Sprint 3 candidates remain US-GAR-002, US-GAR-003, US-PROF-001 and US-MEAS-001; [candidate impact review](backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) supplies advice without selecting additional work or inventing estimates/goals. Sprint Planning precedes selected-story JIT design and automated implementation/testing; no new feature implementation follows from this log.
 
 ## 7. Status
 
-**Version 0.1.9 — Baseline Draft.** Seven Active entries, no Superseded entries.
+**Version 0.2 — Baseline Draft.** Seven Active entries, no Superseded entries.

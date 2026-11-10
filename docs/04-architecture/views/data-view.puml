@@ -1,4 +1,6 @@
 @startuml
+' 2026-11-09: PR #4 / DD-007 impact; approved capability scope, new allocation unselected.
+' See ADD Section 15 and PRD MVP-Q01-Q10; existing selected modules/runtime/store choices preserved.
 ' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Data View
@@ -35,9 +37,10 @@
 ' SRS / Business Rules / ADD; this refactor removes no rule from those authoritative homes.
 ' Draft/evidence/result persistence, physical references/transactions and cleanup realization remain
 ' unresolved detailed design (ADD 9.2-9.9); no shared action/work entity or new decision is selected.
-' Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+' Current: Sprint 1-2 backend exists; refine candidates and open policies.
+' Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
 
-title CapsuleAI - Data Ownership Overview\nData View v0.2 | Baseline Draft
+title CapsuleAI - Data Ownership Overview\nData View v0.4 | Baseline Draft
 allowmixing
 top to bottom direction
 hide empty members
@@ -81,11 +84,13 @@ package "Wardrobe" as Wardrobe #F0FDF4 {
 package "Outfit Advice and Use" as Outfits #FFFBEB {
     class "Outfit Evaluation Semantics\nOutfit identity / hard validity" as Evaluation #DBEAFE
     class "Daily / Shuffle Advice\nUtilization / effective evidence" as Advice #FEF3C7
-    class "Feedback (Like / Dislike)" as Feedback #DCFCE7
+    class "Feedback (Like / Dislike)\nUser + typed source target" as Feedback #DCFCE7
     class "Wear Event" as Wear #DCFCE7
     class "Minimal History" as History #DBEAFE
     Advice -up-> Evaluation
-    Feedback -up-> Evaluation : outfit target
+    class "Feedback Target\nAI Today / Chat suggestion OR Community post\nKind / origin + source reference" as FeedbackTarget #DBEAFE
+    Feedback --> FeedbackTarget : accepted state for user
+    FeedbackTarget ..> Evaluation : AI outfit identity when applicable
     Wear -up-> Evaluation : reported outfit
     Wear -down-> History
     Feedback -[hidden]right-> Wear
@@ -136,7 +141,7 @@ note as Boundaries
   Implemented today: identity schema (Flyway V6); others are created by their first story.
   Garment: 13 source-approved properties across eight categories.
   Category + one Color + confirmation save; other applicable values optional.
-  Material is a distinct-value collection; category details follow source applicability.
+  Material and Style are distinct-value collections; category details follow source applicability.
   Optional Price = user-reported decimal purchase amount + ISO 4217 currency.
   Preserve every accepted value; eligibility is not evaluated.
   All engine composition/compatibility policy is deferred (PRD OPQ-015).
@@ -148,6 +153,27 @@ note as Boundaries
   Lifecycle / authority / retention: SRS, Business Rules and ADD.
 end note
 DB -[hidden]down-> Boundaries
+
+package "PR #4 information concerns - OWNER ALLOCATION PENDING\nNot a selected module, schema or shared entity model" as MVPConcerns #F8FAFC {
+    class "Shared Outfit Post / Creator Projection" as SharedProjection
+    class "Follow / Saved Look / Independent Outfit Draft" as SharedActions
+    class "Single Stylist Conversation" as ChatThread
+    class "Generic Preview + Selected-Look Basis" as GenericPreview
+    class "Catalog Item / Source Evidence" as CatalogItem
+    class "Import Batch / Item Review and Outcome" as ImportItem
+}
+note as MVPImpact
+  Concepts specify required information, not approved persistence owners.
+  MVP-Q01/Q02/Q03/Q04/Q06/Q07/Q08/Q09 resolve policy and allocation.
+  Shared post projection is separate from private Wardrobe / source media.
+  Confirmed Garment stays Wardrobe-owned; catalog / batch review is not ownership.
+  Like: AI Today/Chat + Community. Dislike: AI Today/Chat only.
+  Matching garment sets do not alias their source targets.
+  Preserve all 13 properties, distinct Materials / Styles and NOT_EVALUATED.
+  No fixed feedback ranking weight / decay / penalty / increment cap.
+  Functional history differs from 90-day user-linked measurement retention.
+  No Chat / post / preview / staged-media retention period is selected.
+end note
 
 legend bottom
   |<#DCFCE7> Authoritative |<#FEF3C7> Derived / evaluated |<#EDE9FE> Hypothetical |

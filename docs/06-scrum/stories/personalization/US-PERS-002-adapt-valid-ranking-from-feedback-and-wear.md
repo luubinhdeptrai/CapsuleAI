@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-PERS-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-024](../../product-backlog.md#pbi-024--adapt-future-valid-outfit-ranking-to-feedback-and-reported-use) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -25,7 +27,7 @@ Make repeated use of CapsuleAI more personally relevant and help rediscover owne
 
 ## 3. Scope
 
-Lightweight effective-evidence contribution, elapsed-time aging, same-outfit/day Wear normalization, recency/diversity and survivor/context revisions after hard validity.
+Source-faithful stored feedback/Wear evidence for future Matching Engine use, with revisions/clearing and corrections/removals reflected after hard validity. Exact engine strategy is unresolved (MVP-Q10); no prescribed weights, ranking aging, penalties, boosts or outfit/day increment cap.
 
 ## 4. Preconditions
 
@@ -37,33 +39,33 @@ Lightweight effective-evidence contribution, elapsed-time aging, same-outfit/day
 
 Rank only already-valid outfits. Declared style/current occasion work without history, optional body/gender stay soft, and no useful valid alternative means a changed result is not guaranteed.
 
-### AC-02 — Apply base contributions
+### AC-02 — Preserve distinct evidence types
 
-In controlled equal-condition cases, Like contributes +1, Dislike -2 and an effective Wear increment +2 before decay; Wear is stronger positive evidence than Like, while Dislike is not a permanent garment/category ban.
+Current supported Like/Dislike state and distinct user-reported Wear Events remain available with correct user, typed feedback target or outfit, timestamps and available context. No numeric contribution or strength comparison between Like and Wear is an acceptance condition.
 
-### AC-03 — Age by absolute elapsed time
+### AC-03 — Preserve timestamps without mandated aging
 
-Use completed elapsed 24-hour periods between evaluation and the applicable evidence anchor: 0–30 days gives 100%, 31–60 gives 50%, 61–90 gives 25%, and beyond 90 gives zero. At 30 days 23h59m influence is 100%; exactly 31/61/91 days gives 50%/25%/0%. Device timezone changes alone do not change age.
+Persist accepted action-time information and original Wear local/timezone context faithfully. No fixed ranking decay, elapsed-day influence bands or expiry of displayed feedback is required; state changes only through its approved lifecycle.
 
-### AC-04 — Normalize Wear without merging history
+### AC-04 — Keep history identity distinct from grouping
 
-For the same user/exact outfit/original local day, surviving reports supply at most one +2 increment before decay, anchored at the latest surviving accepted absolute timestamp. Different outfits/days remain distinct; multiple intentional reports remain separate history events.
+Retain each legitimate intentional Wear Event, including repeated same-outfit/local-day reports. One logical action retried creates one event. Outfit/day grouping may serve history presentation/counting and never merges/deletes events or imposes a preference-increment cap.
 
-### AC-05 — Apply bounded soft recency
+### AC-05 — Defer recency strategy
 
-For exact-outfit latest effective wear, 0–2 completed elapsed days gives a strong soft diversity penalty, 3–7 mild and beyond 7 none. These never invalidate an outfit; numerical penalty magnitudes are not invented.
+No mandatory recency penalty or recency band applies. A future explicitly approved engine strategy may use stored evidence, but its tests must be source-linked and cannot override validity or user control.
 
-### AC-06 — Bound optional overlooked boost
+### AC-06 — Defer overlooked-item ranking strategy
 
-A ready garment with no recorded wear for at least 14 completed elapsed days may receive a small soft boost only with an established evidence anchor and without overriding validity, strong explicit negative feedback or context relevance. Do not invent garment-creation time as the anchor; CAT-Q03 remains open.
+No mandatory or default overlooked-garment boost or evidence-age anchor is specified. Recorded-use indicators retain their honest history meaning and do not prove a garment was not worn. Former CAT-Q03 boost-anchor work is superseded by DD-007.
 
-### AC-07 — Recompute current evidence
+### AC-07 — Refresh stored evidence after user changes
 
-Accepted feedback revision/clearing, context revision and Wear correction/removal recompute affected groups, latest surviving anchors, decay and recency. No surviving report means no group Wear contribution; unrelated accepted reports remain.
+Accepted feedback revision/clearing, optional context removal and Wear correction/removal update applicable stored state and surviving history for engine consumption. Unrelated reports and independent feedback remain. Do not calculate a mandated age, increment or penalty.
 
-### AC-08 — Separate aging and retention
+### AC-08 — Separate functional evidence and measurement retention
 
-Expired ranking influence does not erase necessary history or clear effective Like/Dislike state. Removed optional context stops current use; removal/deletion and user-linked measurement retention retain their separate policies.
+Necessary unremoved Wear history and functional feedback state follow their own lifecycle. User-linked measurement still expires or becomes non-user-linked within 90 days, and applicable removed garment/Wear data has its existing 30-day deletion obligation. Neither is a ranking-decay window.
 
 ### AC-09 — Handle missing evidence honestly
 
@@ -97,9 +99,7 @@ Feedback/event capture and repair remain their owning stories; no complete ranki
 
 ## 10. Open Refinement Notes
 
-CAT-Q03: PO/BA with Developers must establish a supported evidence anchor before applying the optional >=14-day no-recorded-wear boost. No created-at origin or numerical boost magnitude is authorized. Required contribution/decay/recency rules are already specified.
-
-Question ownership and impact: [catalogue questions CAT-Q03](../README.md#4-open-questions-and-readiness). These are unresolved refinements, not new requirement identifiers.
+[MVP-Q10](../../../02-product/PRD.md#342-mvp-expansion-open-decisions): PO/BA with engine Developers/QA must approve any future Matching Engine strategy and its proportional acceptance evidence. This Draft does not claim a ranking algorithm is specified or implemented. CAT-Q03's former optional-boost anchor is superseded; logical-action identity, typed targets, validity and retention are settled requirements, not reopened questions.
 
 ## 11. Status
 

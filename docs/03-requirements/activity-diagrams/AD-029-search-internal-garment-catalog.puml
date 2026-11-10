@@ -1,0 +1,51 @@
+@startuml
+' AD-029; source ../use-cases/UC-029-search-internal-garment-catalog.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-CAT-001; BR-029; CAP-14; PBI-046; US-CAT-001 AC.
+' SRS: FR-CAT-001, FR-CAT-002, FR-CAT-003, FR-CAT-004; DATA-CAT-001.
+' Business Rules: BRULE-CAT-001; BRULE-AUTH-001/007.
+' Open policy: MVP-Q07, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-029 - Search the internal garment catalog
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-029;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|User|
+:Enter supported internal-catalog search;
+|CapsuleAI|
+:Retrieve identifiable catalog results;
+if (Retrieval available?) then (Yes)
+  if (Matches available?) then (Yes)
+    :Show descriptive results with qualified missing values;
+  else (No matches)
+    :Offer search change / reset;
+    stop
+  endif
+else (Unavailable)
+  :Explain unavailable catalog; offer retry / return;
+  stop
+endif
+|User|
+:Inspect result;
+if (Explicit Add-to-Closet intent?) then (Yes)
+  |CapsuleAI|
+  :Hand selected catalog item to UC-030 review;
+else (Continue)
+  :Continue discovery without owned addition;
+endif
+note right
+  Catalog search differs from owned search (UC-008).
+  Viewing / selecting does not confirm ownership.
+end note
+
+stop
+@enduml

@@ -6,14 +6,14 @@
 
 | Field | Value |
 |---|---|
-| Version / Status | 0.3 / Baseline Draft |
+| Version / Status | 0.5 / Baseline Draft |
 | Product revision | 2026-11-05: final 13-property/source-vocabulary approval; all applicable properties included in Sprint 2; obsolete attributes and eligibility/composition predicates superseded with IDs retained. |
-| Last Updated | 2026-11-05 |
+| Last Updated | 2026-11-09 |
 | Primary Owner | Business Analyst / Product Owner |
 | Reviewers | Engineering / QA |
-| Business Source | [BRD v0.5](../01-business/BRD.md) |
-| Product Source | [PRD v0.4](../02-product/PRD.md) |
-| Software Requirements Source | [SRS v0.5](SRS.md) |
+| Business Source | [BRD](../01-business/BRD.md) |
+| Product Source | [PRD](../02-product/PRD.md) |
+| Software Requirements Source | [SRS](SRS.md) |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Authoritative Location | `docs/03-requirements/business-rules.md` |
 
@@ -24,6 +24,7 @@
 | 0.1.2 | 2026-10-06 | Defined purpose-limited private data use, removal/measurement retention, weather and commercial freshness, and navigation-independent utility; normalized current rule presentation and preserved established domain semantics. |
 | 0.3 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.4 | 2026-11-07 | Product Owner decisions: multiple Styles, Brand/Price validation, recovery rate limits, active-session-only revocation on reset, 30-day reset-record retention. Existing IDs retained. |
+| 0.5 | 2026-11-09 | Propagated approved PR #4 / DD-007 into typed feedback, stored history/time interpretation and bounded MVP capability rules; obsolete ranking obligations removed while original IDs and retention policies remain. |
 
 ### 1.1 Purpose
 
@@ -39,7 +40,7 @@ Observable interaction sequences and quality acceptance remain in the SRS. This 
 
 All four current source documents listed in document control were read. Business intent follows the BRD; product behavior follows the PRD; required software behavior and quality acceptance follow the SRS. The workflow governs artifact ownership, order, and change propagation. Other current material and historical proposals provide context only when consistent with these sources; illustrative workflow rules do not override current CapsuleAI domain decisions.
 
-Each rule cites defining SRS requirements. Section 16 maps those sources to FEAT-*, BR-*, and relevant CAP-* identifiers. Absolute elapsed-time interpretation and latest-surviving Wear-group anchors are defined directly in the personalization/Wear rules and examples; contribution values, age bands and event semantics retain their established meaning.
+Each rule cites defining SRS requirements. Section 16 maps those sources to FEAT-*, BR-*, and relevant CAP-* identifiers. PR #4 / DD-007 supersedes mandatory ranking contributions, age/decay bands, penalties, boosts and preference-increment caps. Original event-local history, absolute timestamps, logical-action retry identity and lifecycle obligations remain authoritative; policy expiry/retention intervals keep their separate meaning.
 
 ### 1.4 Rule Identification Scheme
 
@@ -70,7 +71,7 @@ Apply the following order within the relevant domain operation. Steps 1–6 cons
 | 5 | Future outfit validity | Composition/compatibility/eligibility policy is deferred; authorization and identity remain active boundaries. |
 | 6 | Available environmental/contextual hard validity | Enforce applicable environmental compatibility; unavailable weather follows the explicit fallback. |
 | 7 | Soft personalization / ranking | Rank already-valid choices using available preferences and evidence. |
-| 8 | Diversity / recency adjustments | Apply soft penalties or the permitted boost within the preceding boundaries. |
+| 8 | Future engine strategy | No mandated recency penalty or overlooked boost; any later strategy requires explicit policy and preserves preceding boundaries. |
 
 Soft ranking cannot override authorization, confirmed ownership or a future approved hard rule. No previous property-based compatibility predicate is active; do not infer eligibility from optional absence or undefined policy.
 
@@ -130,9 +131,9 @@ Candidate evaluation is a separately identified hypothetical scope: the candidat
 
 ### BRULE-AUTH-007 — Purpose-Limited Private Data Use
 
-**Rule:** Personal data is used only as necessary for CapsuleAI functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity within the authorized User's private experience. MVP personal images, profiles, Wear Events, feedback and corrections are not used for AI model training/improvement. Future personal-data training requires separate explicit opt-in and an approved future product/privacy change.
+**Rule:** Personal data is used only as necessary for CapsuleAI functionality, personalization, wardrobe/history/utilization, validation/measurement, security and operational integrity within the authorized User's private experience, plus explicitly authorized bounded outfit sharing under BRULE-COM-001. MVP personal images, profiles, Wear Events, feedback and corrections are not used for AI model training/improvement. Future personal-data training requires separate explicit opt-in and an approved future product/privacy change.
 
-No public wardrobes, user-to-user wardrobe sharing, unrestricted third-party sharing or sale of personal data is introduced. External dependencies receive only purpose-minimal information: required selected weather location, email/necessary recovery-delivery information, or explicitly chosen shopping navigation without unrelated wardrobe/profile/history disclosure. Necessary active-account information and minimal history follow the retention/removal rules; this policy adds no Delete Account goal or legal certification.
+Only an approved shared outfit/creator/media projection may be exposed to its authorized audience. This never authorizes private inventory, source-image, purchase-information, profile or history access. Entire-wardrobe sharing, unrestricted third-party sharing and personal-data sale remain excluded; sharing audience/consent/fields require MVP-Q01 approval. External dependencies receive only purpose-minimal information: required selected weather location, email/necessary recovery-delivery information, explicitly chosen shopping navigation, or necessary authorized Chat/preview/analysis input under its approved minimal contract; unrelated wardrobe/profile/history disclosure is prohibited. Provider/context choices remain MVP-Q03/Q04/Q09. Necessary active-account information and minimal history follow the retention/removal rules; this policy adds no Delete Account goal or legal certification.
 
 **Applies To:** personal information, account/profile/wardrobe/history, validation/measurement and external exchanges.
 
@@ -194,7 +195,7 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 
 **Status: revised; old predicates superseded.**
 
-**Rule:** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+**Rule:** Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new database field. Preserve the implemented Sprint 2 `recommendationEligibility: NOT_EVALUATED` response.
 
 **Source:** FR-GAR-004/005, DATA-GAR-005, ERR-GAR-002; final Product Owner property-model decision.
 
@@ -210,7 +211,7 @@ The [garment-property authority](../../Initial%20files/Image%20to%20Properties%2
 
 ### BRULE-GAR-005 — Bounded Garment Descriptors
 
-**Rule:** Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+**Rule:** Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
 | # | Property | Applicability | Required for Saving | Meaning / Value Authority |
 |---|---|---|---|---|
@@ -288,7 +289,7 @@ Future edits may revise or clear these properties with explicit user confirmatio
 
 ## 5. Outfit Validity Rules
 
-Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new database field. Preserve the implemented Sprint 2 `recommendationEligibility: NOT_EVALUATED` response.
 
 ### 5.1 Structural Composition
 
@@ -366,7 +367,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 ### BRULE-OUT-009 — Canonical Outfit Identity and Available Choice
 
-**Rule:** An outfit combination is identified by its set of constituent garment identities; permutation creates no new outfit. Use the same identity meaning for advice, feedback targets, Wear normalization, Coverage, and Multiplier. Present at least three distinct valid options when they exist; otherwise the actual one, two, or zero valid options are authoritative and must not be padded with duplicates or invalid combinations.
+**Rule:** An outfit combination is identified by its set of constituent garment identities; permutation creates no new outfit. Use the same constituent-set identity for advice, history grouping, Coverage and Multiplier. Feedback additionally retains target kind/origin and source reference; identical garment sets do not alias a Community post to an AI suggestion. Present at least three distinct valid options when they exist; otherwise the actual one, two, or zero valid options are authoritative and must not be padded with duplicates or invalid combinations.
 
 **Applies To:** recommendation options and every distinct-outfit count.
 
@@ -390,6 +391,8 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 **Rule:** Like and Dislike are stored as user-expressed preference state on the identified outfit/post target with no fixed numeric contribution. Like is available on AI-generated targets (Today strip, chat suggestions) and community posts; Dislike is available on AI-generated targets only (Today + chat suggestions), never on community posts. Contradictory feedback is not simultaneously effective for one user's target. State persists until changed, cleared, or superseded by user action. Dislike does not permanently ban constituent garments/categories and does not by itself change validity. Preference actions and views do not create Wear Events. No fixed contribution, aging band, or decay applies; the matching engine consumes stored events under its own rules.
 
+Feedback identity includes the affected user, supported target kind/origin and identifiable source reference (FR-PERS-014). Identical constituent sets do not transfer an AI Dislike onto a Community post. A Community Like can be cleared, never changed into Community Dislike; an unsupported action is rejected without changing accepted state. This does not prescribe event sourcing or an API enum.
+
 **Applies To:** feedback recording/revision and event storage for engine use.
 
 **Source:** FR-PERS-001, FR-PERS-002, FR-PERS-003, FR-PERS-005, DATA-WEAR-001.
@@ -404,9 +407,9 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 **Source:** FR-PERS-008, FR-WEAR-011, FR-PERS-011.
 
-### 7.3 Evidence Aging
+### 7.3 Stored Evidence and Future Engine Policy
 
-### BRULE-PERS-003 — Evidence Aging
+### BRULE-PERS-003 — No Prescribed Ranking Aging
 
 **Rule:** No business-rule aging band or decay applies to Like/Dislike/Wear influence. Feedback state persists until user revision/clearing; history retention follows BRULE-WEAR-005 and BRULE-HIST-003. The matching engine defines any recency handling under its own rules.
 
@@ -424,7 +427,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 **Source:** FR-PERS-009, FR-PERS-011, FR-ANL-003.
 
-### 7.5 Evidence Normalization
+### 7.5 History Grouping and Stored-State Updates
 
 ### BRULE-PERS-005 — Exact-Outfit / Event-Local-Day Grouping
 
@@ -448,7 +451,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 ### BRULE-WEAR-001 — Logical Reporting Intention
 
-**Rule:** One logical Wear action is one explicit user intention to report one wearing instance. A new report requires a current valid owned outfit, remains user-reported, and defaults to the accepted current time of the action. Report identity is distinct from the outfit/day grouping used for ranking.
+**Rule:** One logical Wear action is one explicit user intention to report one wearing instance. A new report requires a current valid owned outfit, remains user-reported, and defaults to the accepted current time of the action. Report identity is distinct from outfit/day grouping used for history presentation/counting, which does not cap or merge accepted events.
 
 **Applies To:** Wear This Today and accepted report creation.
 
@@ -468,7 +471,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 ### BRULE-WEAR-003 — Original Event-Local Time
 
-**Rule:** Each event retains an absolute timestamp, associated timezone or UTC offset, original local date/time, and available occasion/context. Later device-timezone changes during travel must not automatically re-date the event. Missing optional context is not fabricated; present history using the original event-local basis. Original event-local date/time serves history and same-day normalization grouping; absolute timestamps serve elapsed behavioral age, decay, and elapsed-day recency. Travel changes neither the preserved grouping date nor age calculated at the same absolute EvaluationInstant.
+**Rule:** Each event retains an absolute timestamp, associated timezone or UTC offset, original local date/time, and available occasion/context. Later device-timezone changes during travel must not automatically re-date the event. Missing optional context is not fabricated; present history using the original event-local basis. Original event-local date/time serves history/grouping; absolute timestamps preserve actual ordering and recorded-use evidence. Travel does not change the original event-local date/time. No business-rule ranking aging, decay or recency penalty follows from storing timestamps.
 
 **Applies To:** Wear reports, history grouping, time interpretation.
 
@@ -478,7 +481,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 ### BRULE-WEAR-004 — Bounded Individual Correction
 
-**Rule:** Correction targets an existing individual report's applicable outfit, occasion/context, and local time. Corrected time must not be future and must stay within the event's original local calendar day. Accepted corrections preserve that original event-local context. Invalid, failed, or canceled corrections leave the last accepted event unchanged; no unrelated record is changed. A valid accepted timestamp correction requires recomputing the affected group's latest surviving absolute anchor and applicable aging/recency under BRULE-PERS-006.
+**Rule:** Correction targets an existing individual report's applicable outfit, occasion/context, and local time. Corrected time must not be future and must stay within the event's original local calendar day. Accepted corrections preserve that original event-local context. Invalid, failed, or canceled corrections leave the last accepted event unchanged; no unrelated record is changed. A valid accepted correction updates the affected stored event and history group under BRULE-PERS-006, preserving unrelated reports and without a ranking-aging calculation.
 
 **Applies To:** event-specific history correction.
 
@@ -528,7 +531,7 @@ The previous fixed composition or removed-property compatibility rule is no long
 
 User-linked engagement/measurement information has a separate maximum retention of 90 days; then delete or aggregate/de-identify it so it is no longer maintained as user-linked personal behavior. Ordinary engagement metrics do not require raw private images/sensitive profiles. This measurement boundary neither deletes necessary unremoved Wear history/functional feedback state nor extends removed-data deletion deadlines; it does not permit indefinite user-linked measurement copies.
 
-**Applies To:** history retention boundaries and behavioral aging.
+**Applies To:** functional history/feedback retention versus separate user-linked measurement retention.
 
 **Source:** DATA-RET-001, DATA-RET-002, DATA-HIST-001, FR-ANL-003, DATA-RET-003, FR-MET-006.
 
@@ -764,6 +767,77 @@ Price, material, durability/longevity, retailer and link are optional, credible/
 
 **Source:** FR-SHOP-003, FR-SHOP-004, FR-SHOP-008, FR-GAP-005.
 
+### 13.1 Approved MVP Inspiration and Entry Invariants
+
+PR #4 / DD-007 approves these bounded capabilities. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; none is resolved by an illustrative rule or architecture note.
+
+### BRULE-COM-001 — Explicit sharing projection and authority
+
+**Rule:** Only the deliberately chosen outfit representation and approved creator/media fields may be shared with its authorized audience. Sharing never grants access to private Wardrobe inventory, private source images, purchase Price, profile, feedback or Wear history. Audience, consent, publishable fields, creator authority and removal effects require MVP-Q01/Q02/Q06 before affected stories are Ready. No comments, messaging or entire-wardrobe sharing.
+
+**Source:** FR-COM-004/008/009; NFR-PRIV-001; DATA-COM-001.
+
+### BRULE-COM-002 — Independent reuse and saved interest
+
+**Rule:** Edit-as-duplicate creates the requesting user's independent editable outfit draft and leaves the original unchanged. Save look retains interest under the approved saved-look policy, not a Like, Wear Event or owned Garment. Neither action silently copies another user's private wardrobe/media. Saved reference/snapshot and source withdrawal semantics remain MVP-Q02.
+
+**Source:** FR-COM-005/006; FR-TRY-003; DATA-COM-001.
+
+### BRULE-COM-003 — Creator and supported Community interactions
+
+**Rule:** A visible post is attributed to its identified creator. Follow targets that creator; Like targets the post through BRULE-PERS-001. Community Dislike is never offered or accepted. Creator projection/Follow lifecycle and feed effects remain MVP-Q06; private profile preferences do not automatically become public creator data.
+
+**Source:** FR-COM-001/003/008; FR-PERS-014.
+
+### BRULE-CHAT-001 — One conversation with distinct actions
+
+**Rule:** The stylist supports one text thread with outfit/item cards and suggestion chips. Identify card origin and owned/unowned meaning. Selecting a chip or viewing a card alone is not preference feedback, ownership or Wear. AI-generated Chat outfit suggestions support Like/Dislike through the typed feedback policy.
+
+**Source:** FR-CHAT-001/002/003/005; FR-PERS-014.
+
+### BRULE-CHAT-002 — Photo routing and authorized Chat context
+
+**Rule:** A photo attachment enters Add Garment review/confirmation, never automatic owned addition. Use only authorized relevant context, do not infer missing personal data or MVP training consent, and show unavailable AI honestly. Retention/context disclosure and integration allocation remain MVP-Q03/Q09; no multithread scope or provider is selected.
+
+**Source:** FR-CHAT-004/006/007; DATA-CHAT-001; NFR-PRIV-001/002.
+
+### BRULE-TRY-001 — Generic preview basis
+
+**Rule:** A preview illustrates the selected outfit on a generic model, with identifiable input/result basis and limitations. It is not a personal avatar, AR/3D simulation, fit guarantee, confirmed ownership or verified physical wear. A changed selection cannot reuse an old preview as a current result.
+
+**Source:** FR-TRY-001/002/005; DATA-TRY-001.
+
+### BRULE-TRY-002 — Separate Save and Wear intentions
+
+**Rule:** Save look and Wear Today are explicit separate preview entry points. Save is not Wear. Accept Wear only under existing current-valid-owned-outfit and logical-action identity rules; an unowned inspiration/candidate look cannot silently become owned or reported worn. MVP-Q05 resolves prerequisite navigation, not permission to bypass these rules.
+
+**Source:** FR-TRY-003/004; FR-WEAR-001/009/011.
+
+### BRULE-CAT-001 — Catalog is not owned Wardrobe
+
+**Rule:** Catalog information is a separately identified discovery source, not private owned inventory or an automatic recommendation. Search, view and selection create neither ownership nor Wear. Source rights, allowed fields and search semantics remain MVP-Q07.
+
+**Source:** FR-CAT-001/002/003/004; DATA-CAT-001.
+
+### BRULE-CAT-002 — Confirmed catalog-to-closet authority
+
+**Rule:** An explicit Add-to-Closet intent leads to review/correction and confirmation of the same approved 13-property model. Only an accepted confirmed profile establishes a distinct owned garment. All optional applicable values stay optional; asking price is not the personal purchase Price. Retain provenance and confirmed authority against later catalog changes, preserve cancellation/failure and one logical addition's retry outcome.
+
+**Source:** FR-CAT-005/006/007/008; DATA-CAT-001; BRULE-GAR-001/002/005/006/010.
+
+### BRULE-BULK-001 — Review before batch ownership
+
+**Rule:** Multi-photo input creates a review queue, not confirmed ownership. Each accepted entry requires user confirmation of Category and one Color, preserving every supplied valid optional property under the same 13-property authority. Uncertain AI or an unavailable analysis capability does not remove manual review/confirmation.
+
+**Source:** FR-BULK-001/002/003/004; DATA-BULK-001.
+
+### BRULE-BULK-002 — Individual outcomes and retry identity
+
+**Rule:** Track each item's actual outcome without cross-item/account mixing. Distinguish pending, reviewable, accepted, failed and uncertain; preserve accepted results and recover the same logical confirmed item action without duplicates. Multiple separate intentional additions remain possible. Limits, queue processing/resumption, save atomicity and staged-media lifecycle require MVP-Q08; no numeric limit, broker or asynchronous topology is implied.
+
+**Source:** FR-BULK-002/005/006; DATA-BULK-001; DATA-INT-004.
+
+
 ## 14. Decision Tables
 
 These tables restate current rules and explicitly mark superseded policies. Missing optional properties do not affect saving. No fixture authorizes a removed descriptor or a recommendation algorithm; future evaluation fixtures require approved policy.
@@ -959,12 +1033,23 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 | BRULE-SHOP-001 | FR-SHOP-001, FR-SHOP-002, FR-SHOP-003, FR-SHOP-004, ERR-SHOP-002, DATA-ANL-003 | FEAT-SHOP-001, FEAT-MULT-001 | BR-018, BR-020, BR-016, BR-017, BR-024, BR-022, BR-015 | CAP-10, CAP-08, CAP-09 |
 | BRULE-SHOP-002 | FR-SHOP-005, FR-SHOP-006, FR-SHOP-007, FR-MET-003, ERR-SHOP-003, DATA-INT-003, COM-003 | FEAT-SHOP-002, FEAT-MET-001, FEAT-SHOP-001, FEAT-MULT-001, FEAT-AUTH-001 | BR-018, BR-022, BR-019, BR-024, BR-015, BR-017, BR-021 | CAP-10, CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09, CAP-01 |
 | BRULE-SHOP-003 | FR-SHOP-003, FR-SHOP-004, FR-SHOP-008, FR-GAP-005 | FEAT-SHOP-001, FEAT-SHOP-002, FEAT-GAP-001 | BR-020, BR-024, BR-018 | CAP-10, CAP-08, CAP-09, CAP-07 |
+| BRULE-COM-001 | FR-COM-004/008/009; NFR-PRIV-001; DATA-COM-001 | FEAT-COM-002 | BR-026, BR-021 | CAP-11 |
+| BRULE-COM-002 | FR-COM-005/006; FR-TRY-003; DATA-COM-001 | FEAT-COM-001/002, FEAT-TRY-001 | BR-025, BR-026, BR-028 | CAP-11, CAP-13 |
+| BRULE-COM-003 | FR-COM-001/003/008; FR-PERS-014 | FEAT-COM-001 | BR-025, BR-021 | CAP-11 |
+| BRULE-CHAT-001 | FR-CHAT-001/002/003/005; FR-PERS-014 | FEAT-CHAT-001 | BR-027, BR-011 | CAP-12, CAP-06 |
+| BRULE-CHAT-002 | FR-CHAT-004/006/007; DATA-CHAT-001; NFR-PRIV-001/002 | FEAT-CHAT-001 | BR-027, BR-002, BR-021 | CAP-12, CAP-02 |
+| BRULE-TRY-001 | FR-TRY-001/002/005; DATA-TRY-001 | FEAT-TRY-001 | BR-028, BR-022 | CAP-13 |
+| BRULE-TRY-002 | FR-TRY-003/004; FR-WEAR-001/009/011 | FEAT-TRY-001 | BR-028, BR-011 | CAP-13, CAP-06 |
+| BRULE-CAT-001 | FR-CAT-001/002/003/004; DATA-CAT-001 | FEAT-CAT-001 | BR-029 | CAP-14 |
+| BRULE-CAT-002 | FR-CAT-005/006/007/008; DATA-CAT-001; BRULE-GAR-001/002/005/006/010 | FEAT-CAT-002 | BR-030, BR-002, BR-003 | CAP-14, CAP-04 |
+| BRULE-BULK-001 | FR-BULK-001/002/003/004; DATA-BULK-001 | FEAT-BULK-001 | BR-031, BR-002, BR-003 | CAP-15, CAP-02 |
+| BRULE-BULK-002 | FR-BULK-002/005/006; DATA-BULK-001; DATA-INT-004 | FEAT-BULK-001 | BR-031, BR-021 | CAP-15 |
 
 | Rule Family | Defined IDs | Count |
 |---|---|---|
 | AUTH | BRULE-AUTH-001–BRULE-AUTH-007 | 7 |
 | PROF | BRULE-PROF-001–BRULE-PROF-003 | 3 |
-| GAR | BRULE-GAR-001–BRULE-GAR-009 | 9 |
+| GAR | BRULE-GAR-001–BRULE-GAR-010 | 10 |
 | OUT | BRULE-OUT-001–BRULE-OUT-010 | 10 |
 | PERS | BRULE-PERS-001–BRULE-PERS-006 | 6 |
 | WEAR | BRULE-WEAR-001–BRULE-WEAR-006 | 6 |
@@ -973,12 +1058,17 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 | GAP | BRULE-GAP-001–BRULE-GAP-002 | 2 |
 | MULT | BRULE-MULT-001–BRULE-MULT-009 | 9 |
 | SHOP | BRULE-SHOP-001–BRULE-SHOP-003 | 3 |
+| COM | BRULE-COM-001–BRULE-COM-003 | 3 |
+| CHAT | BRULE-CHAT-001–BRULE-CHAT-002 | 2 |
+| TRY | BRULE-TRY-001–BRULE-TRY-002 | 2 |
+| CAT | BRULE-CAT-001–BRULE-CAT-002 | 2 |
+| BULK | BRULE-BULK-001–BRULE-BULK-002 | 2 |
 
-Coverage: **64 rules across 11 families**. Every rule has defining SRS sources and corresponding FEAT-*, BR-*, and CAP-* links. This is a rule coverage statement, not a claim that all 260 SRS requirements belong in this artifact.
+Coverage: **76 rules across 16 families**. Each defining rule cites its SRS source and the traceability table links product/business/capability intent. Retained superseded IDs are history, not active compatibility obligations; coverage does not claim executed verification.
 
 ## 17. Rule Validation Boundaries
 
-Domain behavior is specified directly in these rules. Completed elapsed 24-hour aging, original event-local grouping, latest surviving accepted Wear-group anchors and recalculation after accepted correction/removal are covered by Sections 7–9, decision tables and boundary examples.
+Domain behavior is specified directly in these rules. Sections 7–9 preserve stored feedback revisions, distinct intentional Wear reports, original event-local grouping and surviving history after correction/removal. No business-level ranking weights, aging bands, penalties, boosts or outfit/day preference cap apply.
 
 Purpose-limited data use, immediate effective removal, minimal history, physical-deletion/measurement retention, weather availability and credible commercial guidance reach the relevant SRS sources. Device/network, performance sampling, functional concurrency, recovery, usability and accessibility acceptance remain in SRS Sections 2.3, 6 and 12; these software-quality values are not separate domain rules.
 
@@ -992,7 +1082,7 @@ The Business Analyst / Product Owner, with Engineering and QA review, evaluates 
 - Saving and recommendation eligibility as not evaluated decisions are explicit; authoritative information and UNKNOWN behavior remain distinct.
 - Ownership and identity remain defined; former composition/removed-property rules are superseded and future engine policy must be approved before valid-outfit claims.
 - Shuffle preserves fixed context/constituents and never implies feedback or wear.
-- Feedback strengths, aging bands, outfit/day normalization, recency, and optional diversity effects are consistent. Completed elapsed-day aging/recency and the latest surviving accepted Wear-group anchor are deterministic, including recalculation after accepted correction/removal.
+- Like on AI Today/Chat and Community, AI Today/Chat-only Dislike, typed target separation and stored revisable/clearable state agree with DD-007. No superseded ranking strength, decay, recency penalty, boost or outfit/day increment cap remains mandatory.
 - Logical Wear identity, deliberate repetition, original event-local time, bounded correction, effective removal, and resulting history/signals are consistent.
 - Contextual need mapping, priorities, Coverage formulas, and insufficient-versus-zero decisions are deterministic for established inputs.
 - Gaps are capabilities backed by evaluated need evidence, not manufactured purchase obligations.
@@ -1001,12 +1091,10 @@ The Business Analyst / Product Owner, with Engineering and QA review, evaluates 
 - Every BRULE-* reaches SRS/PRD/BRD/capability sources; privacy/external-information boundaries and applicable software acceptance criteria agree.
 - Private processing, no MVP personal-data training, minimal external exchange, removal/measurement deadlines and freshness fixtures match SRS acceptance; architecture mechanisms remain downstream.
 
-No unresolved domain-rule ambiguity blocks core Activity Diagram modeling. Purpose-limited use, retention and external-currentness examples must agree with the SRS and Use Case outcomes.
+The approved invariants support Draft Activity modeling; PRD Section 34.2 records policies that still block affected stories becoming Ready. Purpose-limited use, retention and external-currentness examples must agree with the SRS and Use Case outcomes.
 
 Status remains Baseline Draft. Specification audits and examples do not constitute formal acceptance or executed software verification.
 
 ## 19. Next Artifact
 
-The [master Use Case Diagram](use-cases/use-case-diagram.puml), 23 detailed Use Case Specifications and focused diagram projections describe current actors/goals and interaction outcomes.
-
-After baseline review, the next workflow step is **core UML Activity Diagram modeling**, following Workflow Section 11. Complex use-case workflows reference SRS, BRULE-*, FEAT-*, BR-* and CAP-* sources and preserve these domain invariants. Delivery/backlog and Quality Attribute Analysis/ASR/ADD/ADR retain their separate workflow responsibilities.
+Maintain the existing [master Use Case Diagram](use-cases/use-case-diagram.puml), detailed Use Cases and [Activity Diagrams](activity-diagrams/), linking complex branches to these invariants. Approved capability scope is represented in downstream Draft artifacts; resolve only relevant policy/feasibility questions before selecting affected work. Architecture analysis/selection, ADD/views and selected-story JIT design retain separate responsibilities; standalone baseline ADRs are not required.

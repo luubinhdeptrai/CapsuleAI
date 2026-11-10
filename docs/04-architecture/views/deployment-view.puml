@@ -1,4 +1,6 @@
 @startuml
+' 2026-11-09: PR #4 / DD-007 impact; approved capability scope, new allocation unselected.
+' See ADD Section 15 and PRD MVP-Q01-Q10; existing selected modules/runtime/store choices preserved.
 ' Product update 2026-11-05: Initial files/Image to Properties Extraction.md is property authority.
 ' No owner/boundary/deployment selection changes; eligibility policy is deferred.
 ' Artifact: CapsuleAI Deployment View
@@ -126,6 +128,17 @@ Core --> Email : necessary recovery delivery\ndelivery outcome, not reset comple
 Core --> Commerce : optional credible evidence\nqualified guidance / link information
 Mobile -[norank]-> Destination : explicit UC-023 navigation only\nno purchase / ownership / Wear acceptance
 
+note as MVPImpact
+  PR #4 runtime impact is pending feasibility / selection, NOT a new topology.
+  Existing Python role is selected-image assistance; Chat / generic Try-On
+  runtime, provider, permitted input and resource demands are not selected by it.
+  A batch queue does not select asynchronous processing, a broker or a new service.
+  Keep shared projection delivery separate from private source-media authorization.
+  No new host, public storage, database, cache or deployment technology is selected.
+  Preserve the existing controlled Core / AI / PostgreSQL / private media baseline.
+  See ADD 15 and PRD MVP-Q01-Q09 before affected Story readiness / JIT work.
+end note
+
 legend bottom
   |= Element / Concern |= Deployment interpretation |
   | Device / contained artifact | Client software executes on the user device; mobile framework remains open. |
@@ -144,7 +157,8 @@ legend bottom
   Supervisor/evidence tooling, providers, protocols, physical placement and capacity remain unresolved.
   AI image transfer/access and media delivery mechanics remain open; Core governs private access.
   Shared-resource failure/contention risks need evidence; no timing, capacity or recovery pass claimed.
-  Next: Test Strategy -> Engineering Baseline; Story JIT design follows Sprint selection.
+  Current: Sprint 1-2 backend exists; refine candidates and open policies.
+  Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.
   Future composition/compatibility/eligibility policy is deferred.

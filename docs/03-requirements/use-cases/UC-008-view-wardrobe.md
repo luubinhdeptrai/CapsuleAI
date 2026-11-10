@@ -167,6 +167,8 @@ Related goals do not imply UML include relationships. The master diagram defines
 - [UC-018 — View Wardrobe Utilization](UC-018-view-wardrobe-utilization.md): Inspect reported utilization in more detail.
 - [UC-002 — Log In](UC-002-log-in.md): Reestablish usable authorized access if it is lost.
 
+Owned wardrobe search/filter remains US-WAR-003 / FR-WAR-007. [Internal catalog search](UC-029-search-internal-garment-catalog.md) and [Community discovery](UC-024-browse-community-outfit-inspiration.md) have separate scope and authorization; they do not expose another user's private wardrobe through this goal.
+
 ## 15. Open Issues
 
 PRD OPQ-012 defers readiness/composition to engine development; OPQ-013 (Brand/Price validation) and OPQ-014 are resolved, and OPQ-016–018 (multiple Styles, Tanks & Camis, paged overview) were decided on 2026-11-07. Earlier issue review below predates this revision.

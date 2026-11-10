@@ -6182,12 +6182,12 @@ AFTER
 JUnit Jupiter runs the tests; AssertJ expresses outcomes and Mockito controls selected dependencies.
 ```
 
-**Change 5 of 5** — state after US-AUTH-005, starting at line 469. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 5 of 5** — state after US-AUTH-005, starting at line 469. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 
@@ -6201,7 +6201,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 AFTER
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WEAR-003 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-022](../../product-backlog.md#pbi-022--correct-one-reported-wear-event-within-its-original-local-day) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -45,9 +47,9 @@ Accept a corrected local time only when it is not future and stays within the or
 
 An outfit-only/context-only correction retains unchanged time information; accepted time correction updates the corresponding absolute instant while preserving original local-day meaning and unrelated events.
 
-### AC-04 — Recompute effective consequences
+### AC-04 — Update only affected stored evidence
 
-Accepted correction updates history/utilization and affected exact-outfit/original-day memberships, latest surviving accepted absolute anchors, elapsed aging/decay and exact-outfit recency. A moved latest timestamp can move the group anchor; normalization remains distinct from event identity.
+Accepted correction updates the selected event, relevant history/utilization and affected history-group membership while preserving original local-day/timezone limits and unrelated reports. Stored corrected timestamps remain available to future engine use; no prescribed ranking aging, decay, recency penalty or normalized increment is recalculated.
 
 ### AC-05 — Cancel or recover safely
 

@@ -52,13 +52,12 @@ and unchanged original local calendar day;
         if (Correction accepted?) then (Yes)
             :Show revised authoritative report;
             :Recompute effective history and utilization;
-            :Recompute affected outfit/day memberships
-and latest surviving accepted absolute anchors;
-            :Recompute completed elapsed-day age,
-decay and exact-outfit recency;
+            :Update affected history groups and stored timestamps;
+            :Retain surviving event evidence without ranking-aging rules;
             note right
               Original event-local date governs grouping.
-              Completed elapsed 24-hour periods govern aging.
+              Absolute timestamps preserve recorded ordering.
+              No ranking decay or increment cap is required.
               Correction creates no new event or ownership.
               Unrelated reports remain unchanged.
             end note

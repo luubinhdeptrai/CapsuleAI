@@ -1,0 +1,42 @@
+@startuml
+' Draft v0.1, 2026-11-09; UC-013, FR-PERS-001-005/014, DATA-WEAR-001.
+' BRULE-PERS-001/003/006, BRULE-OUT-008; US-PERS-001; PR #4 / DD-007.
+title AD-013 - Provide supported typed-target feedback
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Choose identified target and Like / Dislike / clear;
+|CapsuleAI|
+:Resolve user and target kind / origin / source reference;
+if (Accessible identified target and authorized user?) then (Yes)
+  if (AI Today / Chat suggestion?) then (Yes)
+    :Allow Like, Dislike or clearing current feedback;
+  else (Community post)
+    if (Requested Dislike?) then (Yes)
+      :Reject unsupported action; retain prior state;
+      stop
+    else (Like / clear)
+      :Allow Like or clearing current Like;
+    endif
+  endif
+else (No)
+  :Explain unavailable / denied target; mutate nothing;
+  stop
+endif
+:Attempt supported state change;
+if (Acceptance established?) then (Yes)
+  :Show one accepted effective state or cleared state;
+  :Store user-expressed evidence with action time;
+else (Failed / uncertain)
+  :Retain prior state on known failure;
+  :Explain uncertainty; review before safe retry;
+endif
+note right
+  Matching garment sets do not alias AI and Community targets.
+  No Wear / ownership from feedback.
+  No fixed weights, decay or mandatory ranking effect.
+  Future ranking cannot bypass hard validity.
+end note
+stop
+@enduml

@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WEAR-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-021](../../product-backlog.md#pbi-021--report-intentional-wear-and-review-distinct-wear-events) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -49,9 +51,9 @@ Retry, repeated delivery or reprocessing of the same logical initiation yields t
 
 A new explicit initiation creates a separate event even for the same exact outfit and original local day, and a different outfit report retains earlier reports. User+outfit+date alone is not duplicate identity.
 
-### AC-05 — Acknowledge effects honestly
+### AC-05 — Preserve distinct stored use
 
-Accepted reports are available for history and applicable utilization/recency/evidence. Distinct history is retained while the same exact-outfit/original-day group supplies at most one +2 Wear preference increment before decay, anchored at its latest surviving accepted timestamp.
+Accepted reports are available for history, reported utilization and future engine use. Retain separate intentional same-outfit/day events and original timestamps; retries of one logical action create no extra event. No numeric ranking increment, strength comparison, aging band or outfit/day preference cap applies.
 
 ### AC-06 — Handle changed/failed acceptance
 

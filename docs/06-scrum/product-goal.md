@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Scrum Product Goal |
-| Version | 0.1.1 |
+| Version | 0.1.2 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Owner / Accountability | Product Owner |
@@ -40,7 +40,7 @@ The experience follows **Understand My Wardrobe → Use My Wardrobe Better → I
 | Use My Wardrobe Better | Valid personalized choices help users dress for their context; reported wear and utilization insights reveal useful combinations and overlooked clothing. |
 | Improve My Wardrobe | Coverage and Gaps make underserved needs understandable; candidate evaluation and Wardrobe Multiplier show whether an addition would expand useful outfit options. Improvement can also mean rediscovering owned clothing. |
 
-Explicit Like/Dislike feedback and user-reported Wear Events inform lightweight personalization and future wardrobe-use insights. A newly acquired garment enters the loop through a separate user-confirmed wardrobe addition.
+Supported Like/Dislike state and distinct user-reported Wear Events are stored for future Matching Engine use and wardrobe-use insights, without prescribed contribution weights, ranking decay, recency penalties, boosts or outfit/day preference-increment caps. Like applies to AI Today/Chat and Community; Dislike only to AI Today/Chat suggestions. A newly acquired garment enters the loop through a separate user-confirmed wardrobe addition.
 
 ## 6. Goal Boundaries
 
@@ -82,9 +82,10 @@ Business identifiers refer to [BRD v0.3](../01-business/BRD.md); journey and fea
 | Learning and greater owned-clothing value | BG-03; BR-006, BR-011 | CAP-06, CAP-07 | JRN-05; FEAT-PERS-003, FEAT-ANL-001 |
 | Understand needs and assess additions | BG-03, BG-04; BR-014–BR-018, BR-024 | CAP-07–CAP-10 | JRN-06, JRN-07; FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001, FEAT-SHOP-001 |
 | Personal context and trust across the loop | BG-01–BG-04; BR-012, BR-013, BR-021–BR-023 | CAP-01 | JRN-01; FEAT-PROF-001, FEAT-PROF-002; Sections 21–25 |
+| Inspiration and assistance | BG-01–BG-04; BR-025–BR-031; BR-021 | CAP-11–CAP-15 | JRN-08–JRN-12; FEAT-COM-001/002, FEAT-CHAT-001, FEAT-TRY-001, FEAT-CAT-001/002, FEAT-BULK-001 |
 
-[SRS v0.3](../03-requirements/SRS.md), [Business Rules v0.1.2](../03-requirements/business-rules.md), the [master Use Case Diagram](../03-requirements/use-cases/use-case-diagram.puml), all 23 [Use Case specifications](../03-requirements/use-cases/), and all 12 current [Activity Diagrams](../03-requirements/activity-diagrams/) provide the behavioral and quality constraints behind this summary. They retain their source authority; this goal does not replace their detailed requirements or rules.
+[SRS v0.3](../03-requirements/SRS.md), [Business Rules v0.1.2](../03-requirements/business-rules.md), the [master Use Case Diagram](../03-requirements/use-cases/use-case-diagram.puml), all 31 [Use Case specifications](../03-requirements/use-cases/), and all 21 current [Activity Diagrams](../03-requirements/activity-diagrams/) provide the behavioral and quality constraints behind this summary. They retain their source authority; this goal does not replace their detailed requirements or rules.
 
 ## 10. Current Status
 
-**Baseline Draft** for Product Owner and Scrum Team review. This goal will guide initial Product Backlog creation and refinement. The next intended Scrum artifact is the initial Product Backlog after Product Goal review, following the workflow sequence. Formal approval is not claimed.
+**Baseline Draft.** PR #4 / DD-007 scope is approved, separately from document review status. The existing Product Backlog and Story catalogue are maintained against this single Product Goal. New scope has unranked PBIs and Draft Stories; relevant open policy/feasibility questions precede selection. This synchronization establishes neither Sprint 3 commitment nor new implemented capabilities.

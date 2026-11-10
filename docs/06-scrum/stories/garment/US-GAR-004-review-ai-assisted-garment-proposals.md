@@ -34,6 +34,8 @@ Recommendation eligibility has not been evaluated. A saved garment is not invali
 
 All applicable property input is already included in Sprint 2 manual creation; this story retains only its separate future editing, photo or AI-assisted outcome. Future suggestions require explicit acceptance and cannot overwrite confirmed values; Price never comes from appearance. Metadata/media are separate, not extra properties.
 
+**PR #4 scope boundary — 2026-11-09:** This remains AI-assisted proposal/preview review with explicit confirmation. It does not implement Bulk Import, Catalog or Chat. Apply the complete 13-property authority, multiple distinct Materials and Styles and approved Brand/Price validation; AI never infers purchase Price or overwrites confirmed values. No equal-accuracy claim is made for every attribute.
+
 ## 4. Preconditions
 
 - The user has authorized access to a supported selected garment image; usable analysis and a confirmed entry are outcomes, not assumed inputs.

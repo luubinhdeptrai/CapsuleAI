@@ -57,12 +57,12 @@ At Main Step 4:
 1. CapsuleAI labels the item as having no recorded use, not as never physically worn.
 2. The User may inspect the current garment or decide to report an actual use separately.
 
-### A3 — Intentional repeat reports and aging
+### A3 — Intentional repeat reports and retained history
 
 At Main Step 2:
 
 1. Utilization/history retains legitimate repeated reports, including same-outfit/day and retained events beyond the ranking horizon.
-2. The capped/aged ranking contribution is not substituted for the recorded event count; continue at Main Step 3.
+2. History grouping is not substituted for the distinct intentional event count; continue at Main Step 3.
 
 ### A4 — Historical removed garment
 
@@ -117,7 +117,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-HIST-002` | Removed historical references remain separate from current inventory. |
 | `BRULE-HIST-003` | The ranking horizon is not a history-retention cutoff. |
 | `BRULE-WEAR-006` | Accepted mutations affect effective utilization. |
-| `BRULE-PERS-005` | Normalized daily ranking increments do not replace distinct historical report counts. |
+| `BRULE-PERS-005` | History presentation/counting groups preserve all distinct intentional reports and do not impose a ranking cap. |
 | `BRULE-PERS-004` | Any applicable overlooked-item ranking adjustment is soft, not proof of non-use. |
 
 ## 12. Requirements Traceability
@@ -139,7 +139,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - No universal physical-wear or compulsory-purchase claim follows from an overlooked-item indicator.
-- Event-local display and absolute elapsed-time aging retain their separate purposes; the 90-day influence window does not truncate retained reported-use history.
+- Original event-local display and absolute timestamps retain faithful history meaning. Necessary functional history and the separate 90-day user-linked measurement limit remain distinct; no mandatory ranking-aging window applies.
 
 - Utilization reflects immediate accepted removal and necessary retained history; minimal removed-garment snapshots do not justify indefinite original-image retention. User-linked engagement measurements have a separate 90-day maximum, distinct from legitimate history counts.
 
@@ -160,6 +160,6 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-018-view-wardrobe-utilization.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.

@@ -6,14 +6,14 @@
 | --- | --- |
 | Artifact | Enabler Story |
 | Story ID | US-MEAS-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-009](../../product-backlog.md#pbi-009--minimum-necessary-measurement-from-first-wardrobe-use) |
 | Domain | Product Measurement |
 | Theme | Quality / Security / Operations |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Enabling / Protecting Product Value |
-| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. 2026-11-10: approved PR #4 scope/feedback synchronization; IDs and existing story scope retained. |
 
 ## 1. Story
 
@@ -26,6 +26,8 @@ Provide early evidence of useful digitization and reliable user actions without 
 ## 3. Scope
 
 Distinguishable exposure/attempt/accepted outcomes, early garment addition/correction evidence, lifecycle meaning, privacy-safe retention and independent measurement failure handling.
+
+**PR #4 scope boundary — 2026-11-09:** This candidate captures minimum evidence from actually delivered wardrobe outcomes. New Community/Chat/Try-On/Catalog/Bulk producers are integrated only when their owning features are delivered; their scope does not become a prerequisite or enter this story. Preserve separate 90-day user-linked measurement retention, safe retries and non-blocking measurement; store no private photos or sensitive profile detail as engagement payload.
 
 ## 4. Preconditions
 
@@ -43,7 +45,7 @@ As recommendation, Shuffle, feedback and Wear producers arrive, their exposure/a
 
 ### AC-03 — Avoid logical-action inflation
 
-Retries/repeated delivery of one accepted action do not inflate accepted-addition or Wear counts. Separate explicit Wear intentions remain separate reports; same-outfit/day ranking normalization is not the event count.
+Retries/repeated delivery of one accepted action do not inflate accepted-addition or Wear counts. Separate explicit Wear intentions remain separate reports; history grouping is not logical-action/event identity and imposes no ranking cap.
 
 ### AC-04 — Minimize private content
 

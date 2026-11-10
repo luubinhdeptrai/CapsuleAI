@@ -6,14 +6,14 @@
 | --- | --- |
 | Artifact | Enabler Story |
 | Story ID | US-MEAS-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-034](../../product-backlog.md#pbi-034--complete-product-goal-evidence-across-the-value-loop) |
 | Domain | Product Measurement |
 | Theme | Quality / Security / Operations |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Enabling / Protecting Product Value |
-| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. 2026-11-10: approved PR #4 scope/feedback synchronization; IDs and existing story scope retained. |
 
 ## 1. Story
 
@@ -39,7 +39,7 @@ Coverage/gap/candidate detail and hypothetical-preview views plus external-link 
 
 ### AC-02 — Preserve outcome meanings
 
-Exposure/attempt is not accepted action; Wear creation/correction/removal are separate, retries do not inflate intentional-event counts, and normalized ranking increments do not replace history counts. Navigation is not verified sale or ownership.
+Exposure/attempt is not accepted action; Wear creation/correction/removal are separate, retries do not inflate intentional-event counts, and history grouping never replaces distinct intentional-event counts. Navigation is not verified sale or ownership.
 
 ### AC-03 — Map existing outcome directions
 

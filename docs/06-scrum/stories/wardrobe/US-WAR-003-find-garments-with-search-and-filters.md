@@ -6,14 +6,14 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WAR-003 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-015](../../product-backlog.md#pbi-015--find-garments-through-wardrobe-search-and-filters) |
 | Domain | Wardrobe |
 | Theme | Digital Wardrobe |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Trustworthy Wardrobe Understanding; Greater Owned-Garment Value |
-| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. 2026-11-10: approved PR #4 scope/feedback synchronization; IDs and existing story scope retained. |
 
 ## 1. Story
 
@@ -26,6 +26,8 @@ Reduce effort to discover relevant clothing already owned.
 ## 3. Scope
 
 Supported descriptor search, category/color filters, visible conditions/reset, current owned results and relevant detail/return navigation.
+
+**PR #4 scope boundary — 2026-11-09:** This story searches only the user's current owned Wardrobe. Internal catalog search and confirmed catalog addition are US-CAT-001/002 (PBI-046/047), distinct approved future work; they do not enter this story.
 
 ## 4. Preconditions
 

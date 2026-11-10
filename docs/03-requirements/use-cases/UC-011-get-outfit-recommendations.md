@@ -143,7 +143,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-OUT-008` | Hard validity precedes all soft preferences. |
 | `BRULE-OUT-009` | Garment-identity sets define distinct choices; show actual available counts. |
 | `BRULE-PROF-001` | Optional body/gender influence is soft and does not prohibit categories. |
-| `BRULE-PERS-003` | Use the elapsed-time aging policy without deleting historical state. |
+| `BRULE-PERS-003` | Retain stored feedback/Wear evidence without prescribed aging or deletion from a ranking window. |
 | `BRULE-PERS-004` | Recency/diversity remain soft adjustments, not exclusion rules. |
 | `BRULE-PERS-005` | Legitimate repeated reports do not multiply same-outfit/event-local-day preference increments. |
 

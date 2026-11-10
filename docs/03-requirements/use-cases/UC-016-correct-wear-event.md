@@ -40,7 +40,7 @@ The User chooses to correct the identified Wear Event.
 3. The User changes the applicable outfit, occasion/context and/or local time and submits the correction.
 4. CapsuleAI confirms that the submitted correction meets the supported-field, non-future-time and original-local-day conditions; invalid proposals follow E1.
 5. CapsuleAI accepts the valid correction and shows the revised event while preserving its original event-local calendar-day meaning.
-6. The User reviews the accepted result; effective history/utilization/recency and normalized age-weighted evidence reflect the correction.
+6. The User reviews the accepted result; stored history/utilization and available engine evidence reflect only the accepted event correction, preserving unrelated reports and original local context.
 
 ## 7. Alternative Flows
 
@@ -56,7 +56,7 @@ At Main Step 3:
 At Main Step 3:
 
 1. The User supplies a non-future local time within the event's original local calendar day.
-2. After acceptance, the event's corrected absolute timestamp is reflected in elapsed-time aging and the applicable latest-surviving-event evidence anchor.
+2. After acceptance, the stored event and applicable history/utilization reflect the corrected timestamp while preserving the original local-day boundary and unrelated reports.
 
 ### A3 — Cancel before acceptance
 
@@ -98,7 +98,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - The accepted correction affects only the selected event's supported fields, with non-future corrected time within the original event-local day.
-- Effective history/utilization and normalized ranking evidence reflect the corrected event. Changed outfit/time updates affected group membership and latest surviving accepted absolute timestamp; unrelated reports remain.
+- Stored history/utilization reflect the corrected event. Changed outfit/time updates affected history grouping and original-local display; unrelated reports remain and no ranking increment or age rule is prescribed.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -119,7 +119,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-WEAR-006` | Only accepted corrections alter effective history/utilization/evidence. |
 | `BRULE-PERS-005` | Update affected exact-outfit/original-day groups and latest surviving accepted event anchor. |
 | `BRULE-PERS-006` | Recompute effective normalized/aged evidence after correction. |
-| `BRULE-PERS-003` | Use completed elapsed 24-hour periods, not current-timezone calendar subtraction. |
+| `BRULE-PERS-003` | No business-rule ranking age/decay applies; preserve original event-local history and stored timestamps. |
 | `BRULE-HIST-002` | Historical snapshots remain distinct from current owned inventory. |
 
 ## 12. Requirements Traceability
@@ -140,7 +140,7 @@ The following references constrain this interaction; detailed policy remains in 
 ## 13. Special Requirements / Constraints
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
-- The original event-local calendar day is a correction boundary; travel does not reinterpret it. Completed elapsed 24-hour periods govern age/recency; original event-local day governs grouping.
+- The original event-local calendar day is a correction boundary; travel does not reinterpret it. Original event-local day governs history grouping, absolute timestamps preserve ordering and no ranking-aging band is required.
 - Only supported applicable corrections are offered. No new backdated-creation, future scheduling or cross-day relocation feature is introduced.
 
 - Corrected reports remain purpose-limited private history/evidence without MVP AI training. Correction does not recreate a removed report or grant unrestricted sharing permission.
@@ -160,9 +160,9 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-016-correct-wear-event.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.
 
 ## 17. Activity Diagram
 

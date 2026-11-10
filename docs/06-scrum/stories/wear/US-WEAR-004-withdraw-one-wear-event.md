@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WEAR-004 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-023](../../product-backlog.md#pbi-023--withdraw-one-wear-event-and-remove-its-effective-influence) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -37,9 +39,9 @@ Explicit event-specific removal/cancellation, immediate effective exclusion, sur
 
 Identify the target and explain that only this report is being removed. Accepted explicit removal excludes it immediately from effective history/utilization/recency/personalization, without deleting the underlying Outfit/Garments, independent feedback or unrelated reports.
 
-### AC-02 — Retain surviving events
+### AC-02 — Preserve surviving history
 
-If other same-exact-outfit/original-day events survive, retain each in history and recompute that group's latest surviving accepted absolute anchor and its single aged Wear contribution. Removing the latest event moves the anchor to the survivor.
+If other same-exact-outfit/original-day events survive, each remains in history with its own timestamp. Update affected stored history/utilization without deleting independent feedback, underlying Outfits/Garments or unrelated reports. No group ranking contribution or aging calculation is required.
 
 ### AC-03 — Remove exhausted contribution
 

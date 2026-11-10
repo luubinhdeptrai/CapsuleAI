@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-WEAR-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-021](../../product-backlog.md#pbi-021--report-intentional-wear-and-review-distinct-wear-events) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -37,9 +39,9 @@ Chronological history, event-specific detail/original time, legitimate repeated 
 
 Present available accepted effective events chronologically and open the selected event's outfit snapshot, original local date/time/timezone meaning and available context as user-reported wear.
 
-### AC-02 — Retain legitimate repeats
+### AC-02 — Keep separate reports inspectable
 
-Separate intentional same-outfit/day and different-outfit/day reports remain individually inspectable. Daily ranking normalization does not merge them or replace event counts.
+Separate intentional same-outfit/day and different-outfit/day reports remain individually inspectable. History presentation/counting groups never merge or delete reports and do not impose a ranking-increment cap.
 
 ### AC-03 — Preserve time through travel
 

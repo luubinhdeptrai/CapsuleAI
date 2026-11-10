@@ -2527,12 +2527,12 @@ The **Pre-Sprint Engineering Baseline is implemented and merged into `main`** th
 Versions come from [pom.xml](pom.xml), [Wrapper configuration](.mvn/wrapper/maven-wrapper.properties), [Compose](../compose.yaml) and Boot's [4.1.1 dependency BOM](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.1.1/spring-boot-dependencies-4.1.1.pom).
 ```
 
-**Change 2 of 2** — state after US-GAR-001, starting at line 471. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 2 of 2** — state after US-GAR-001, starting at line 471. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 
@@ -2546,7 +2546,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 AFTER
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 

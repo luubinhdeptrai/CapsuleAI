@@ -7,10 +7,10 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Decision Analysis |
-| Version | 0.2.7 |
+| Version | 0.2.8 |
 | Status | Baseline Draft |
 | Decision State | ADA-001–018 Selected; authority: [Selected Architecture Decisions](selected-architecture-decisions.md) |
-| Last Updated | 2026-11-05 |
+| Last Updated | 2026-11-10 |
 | Ownership | Architect / Tech Lead with Developer input; review with AI, Mobile, QA and Product/BA where relevant |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 17.2–17.3, 18, 39–43 and 46 |
 | Requirements Baseline | BRD v0.3; PRD v0.2; SRS v0.3; Business Rules v0.1.2 |
@@ -27,6 +27,7 @@
 | 0.2.5 | 2026-10-11 | Linked Deployment View v0.1 and recorded explicit human acceptance of both Logical and Implementation Views; Deployment View review precedes Data View. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.6 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.2.7 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
+| 0.2.8 | 2026-11-10 | Updated the obsolete ranking-normalization realization claim and current navigation after PR #4; all selected recommendations, alternatives and architectural choices remain. |
 
 **2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
@@ -776,7 +777,7 @@ Selected
 
 #### Consequence If Selected
 
-ADD would make accepted identity/outcome and coherent consumer state explicit. A new same-outfit/day report would remain a separate event; normalization would cap only ranking contribution using the latest surviving accepted absolute anchor.
+ADD makes accepted logical-action identity/outcome and coherent stored consumer state explicit. A new same-outfit/day intention remains a separate event; PR #4 / DD-007 supersedes the former ranking-normalization cap and aging/anchor obligations. Durable action coordination and the selected option remain unchanged.
 
 #### Transaction Boundary and Future Extraction Coupling
 
@@ -1563,7 +1564,7 @@ This map tests boundary quality; it is not a module decomposition, migration com
 
 ## 8. Human Selection and Historical Review Guidance
 
-**Current state — 2026-10-20:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed on 2026-10-10. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD](ADD.md) realizes them. **Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All eight Critical and ten Important choices remain selected; evidence gaps remain realization/verification work.
+**Selection retained — 2026-10-10; navigation updated 2026-11-10:** the Project Owner / Backend Developer accepted all 18 current recommendations exactly as analyzed on 2026-10-10. ADA-001–018 are **Selected**, with no override, deferral or supersession. [Selected Architecture Decisions](selected-architecture-decisions.md) records the exact choices; [ADD](ADD.md) realizes them. **Current handoff: relevant candidate refinement / policy and feasibility review → authorized Sprint Planning → selected-story JIT design and automated test/implementation.** Test Strategy, engineering foundation and Sprint 1–2 backend already exist. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All eight Critical and ten Important choices remain selected; evidence gaps remain realization/verification work.
 
 ### Historical v0.2 Review Guidance
 
@@ -1599,7 +1600,7 @@ The future `selected-architecture-decisions.md` should record ADA ID, selected a
 
 - The selected modular core and relational authority reduce coordination surfaces; they still require deliberate transaction, ownership and concurrency design.
 - Framework JWT validation does not replace current-session/account authority. Reset, logout and refresh reuse have different effects.
-- A durable logical-action identity protects retries; it must not collapse new same-outfit/day Wear intentions. Original local grouping and absolute elapsed aging remain separate.
+- A durable logical-action identity protects retries; it must not collapse new same-outfit/day Wear intentions. Original local grouping and stored absolute timestamps preserve history without a ranking-aging obligation.
 - AI is selected as a private analysis boundary; user confirmation remains authoritative. Synchronous interaction fits the short complete-result target provisionally, subject to measurement.
 - Request-time intelligence avoids premature invalidation machinery. Shared validity/identity is necessary, while different consumers may use different algorithms. Exact Multiplier needs complete same-basis sets.
 - Redis, a broker and orchestration add correctness/operating work; measured need can justify them later. Required cleanup and recovery exist even without those services.
@@ -1637,8 +1638,8 @@ Reliability/Security remain Critical; Conceptual Integrity/Interoperability/Test
 
 ## 11. Status and Next Step
 
-**Version 0.2.7 — Baseline Draft. ADA-001–018 Selected.** Explicit human selection on 2026-10-10 remains in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges ADD, all three human-accepted preceding views and the Data View draft. Analytical recommendations, trade-offs, importance, confidence and evidence gaps remain unchanged; Data View approval, software conformance and benchmark success are not claimed.
+**Version 0.2.8 — Baseline Draft. ADA-001–018 Selected.** Explicit human selection on 2026-10-10 remains in [Selected Architecture Decisions](selected-architecture-decisions.md). Current navigation acknowledges ADD, all three human-accepted preceding views and the Data View draft. Analytical recommendations, trade-offs, importance, confidence and evidence gaps remain unchanged; Data View approval, software conformance and benchmark success are not claimed.
 
-**Current handoff: Test Strategy → Engineering Baseline → Backlog Refinement → Sprint Planning.** [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All Critical/Important recommendations remain Selected without override or deferral.
+**Current handoff: relevant candidate refinement / policy and feasibility review → authorized Sprint Planning → selected-story JIT design and automated test/implementation.** Test Strategy, engineering foundation and Sprint 1–2 backend already exist. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required. All Critical/Important recommendations remain Selected without override or deferral.
 
 This revision synchronizes current navigation only; ADD and all four architecture views exist separately. Historical revisions and preselection guidance remain visible; all ADA analytical content/statuses are unchanged. No product requirement, QA scenario or ASR obligation changes. Test Strategy and Engineering Baseline remain the next shared preparation activities. JIT design follows selection during Sprint execution; standalone ADRs are optional for significant future evolution. No Sprint scope or code is created.
