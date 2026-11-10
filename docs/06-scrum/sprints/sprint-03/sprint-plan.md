@@ -4,44 +4,45 @@
 
 | Field | Planning baseline |
 | --- | --- |
-| Artifact / version | Sprint 3 Backend Sprint Plan / 0.1 |
-| Status | Draft for Product Owner and technical review; recommendations are not approvals |
-| Repository inspected | `sprint_03`, commit `47b587d` (`update new businesses of Danh`), following merged PR #4 |
-| Scope authority | The Product Owner explicitly selected the four stories in Section 5 for this planning task |
+| Artifact / version | Sprint 3 Backend Sprint Plan / 0.2 |
+| Status | Updated for explicit Product Owner approvals; independent cross-story review remains open |
+| Repository revision for this update | `sprint_03`, commit `821ee2f` (`add sprint planning for sprint 3`); original backend analysis follows merged PR #4 |
+| Scope authority | Product Owner decision of 2026-11-11: exactly the three stories in Section 5 |
+| Revision note | 2026-11-11: recorded 18 unchanged recommended solutions as PO-approved and deferred US-MEAS-001 to a future, unspecified sprint; no other artifacts changed |
 | Accountability | Product Owner owns product decisions; Developers own implementation planning and technical feasibility; the PO is also the primary backend developer |
 | Planning convention | Flexible capstone Sprint; completion is assessed through outcomes and applicable evidence |
-| Change boundary | This task creates only this plan; existing requirements, decisions, backlog order, stories, code, contracts and migrations are unchanged |
+| Change boundary | This task updates only this plan; requirements, architecture decisions, backlog order, source stories, code, contracts and migrations are unchanged |
 
-This plan connects the selected outcomes to the actual Sprint 1–2 backend and current approved requirements. It does not approve new provider, concurrency, API or lifecycle choices. Section 9 analyzes 27 significant decision questions; Section 13 provides their matching review register. Existing approved boundaries are identified separately from proposed realization choices.
+This plan connects the selected outcomes to the actual Sprint 1–2 backend and current approved requirements. The Product Owner explicitly approved the unchanged recommended solutions for S3-GAR-01–05, S3-IMG-01–08 and S3-PROF-01–05 on 2026-11-11. Section 9 retains their analyses and the three independent cross-story questions; Section 13 contains the matching 21-entry register. Approval of a solution does not establish implementation, verification or deployment completion.
 
-The user’s explicit planning convention governs this plan: no fixed duration, start/end dates, capacity assumption, velocity, Story Points, delivery estimates or artificial deadlines are assigned. The general preference for roughly four to six related stories is satisfied by the four selected here. This does not reorder the Product Backlog or authorize additional work.
+The user’s explicit planning convention governs this plan: no fixed duration, start/end dates, capacity assumption, velocity, Story Points, delivery estimates or artificial deadlines are assigned. The current explicit three-story selection supersedes the earlier general preference for roughly four to six related stories. This does not reorder the Product Backlog or authorize additional work.
 
 The [workflow](../../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), especially Sections 26 and 31–33, still governs iterative execution: selection precedes story-specific Just-In-Time (JIT) design; automated tests accompany implementation. This plan is the initial implementation direction, not a whole-Sprint API/schema/sequence design gate. Test Strategy and Engineering Baseline already exist and are reused.
 
 ## 2. Sprint Goal
 
-**Enable users to build a more trustworthy and recognizable private wardrobe by correcting accepted garment information, confirming photo-supported additions, and declaring personal style and common needs, while capturing minimum reliable evidence without disrupting those actions.**
+**Enable users to build a more trustworthy and recognizable private wardrobe by correcting accepted garment information, confirming photo-supported additions, and declaring personal style and common needs.**
 
-Sprint 2 provides authenticated manual creation, current-wardrobe pages and full garment inspection. Sprint 3 lets users maintain that truth, recognize newly entered clothing through private photos, and establish private context for future advice. Minimum measurement distinguishes useful accepted work from uploads, attempts and retries. Together these outcomes strengthen “Understand My Wardrobe,” preparing later styling without claiming an implemented recommendation engine or measured product benefit.
+Sprint 2 provides authenticated manual creation, current-wardrobe pages and full garment inspection. Sprint 3 lets users maintain that truth, recognize newly entered clothing through private photos, and establish private context for future advice. Together these outcomes strengthen “Understand My Wardrobe,” preparing later styling without claiming an implemented recommendation engine or measured product benefit.
 
-The selected scope is explicit; this proposed Goal and the technical recommendations remain reviewable. Backend delivery alone does not establish complete mobile-story Done.
+The selected scope is explicit. The 18 GAR/IMG/PROF recommendations are approved; the three independent INT decisions retain their own statuses, and unresolved policy/JIT details remain visible. Backend delivery alone does not establish complete mobile-story Done.
 
 ## 3. Current Repository and Backend Baseline
 
 ### 3.1 Repository inspection and source precedence
 
-Inspection covered tracked repository structure, current status/history, the Product Goal/Backlog, BRD/PRD/SRS and Business Rules, current property authority and DD-007, story catalogue/refinement review, the four selected stories, relevant UC/Activity slices, QA/ASR/ADA/selected decisions, ADD and four views, DoD/Test Strategy, Sprint 1–2 plans/guides, engineering conventions, production Java, migrations, OpenAPI, tests and CI. Generated build output, dependency caches, `.git` internals and secret files are excluded from source analysis.
+The original baseline inspection covered tracked repository structure, current status/history, the Product Goal/Backlog, BRD/PRD/SRS and Business Rules, current property authority and DD-007, story catalogue/refinement review, the then-selected stories, relevant UC/Activity slices, QA/ASR/ADA/selected decisions, ADD and four views, DoD/Test Strategy, Sprint 1–2 plans/guides, engineering conventions, production Java, migrations, OpenAPI, tests and CI. Generated build output, dependency caches, `.git` internals and secret files are excluded from source analysis.
 
 | Source | Role in this plan |
 | --- | --- |
 | [BRD](../../../01-business/BRD.md), [PRD](../../../02-product/PRD.md), [SRS](../../../03-requirements/SRS.md), [Business Rules](../../../03-requirements/business-rules.md) | Business intent, current scope, enforceable behavior and invariants; latest explicit approvals override older conflicting wording |
 | [Property authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md), [delivery decisions](../../delivery-decisions.md) | Exact garment model, resolved Brand/Price/Style policy, DD-007 expanded MVP and stored-feedback policy |
-| [Product Goal](../../product-goal.md), [Product Backlog](../../product-backlog.md), [story catalogue](../../stories/README.md), [refinement review Section 10](../../backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) | Value, hard capability dependencies, current story boundaries and synchronization findings; earlier candidate status is superseded only by this task’s explicit four-story selection |
+| [Product Goal](../../product-goal.md), [Product Backlog](../../product-backlog.md), [story catalogue](../../stories/README.md), [refinement review Section 10](../../backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) | Value, hard capability dependencies, current story boundaries and synchronization findings; earlier candidate/selection status is superseded by the current explicit three-story scope and recorded approvals |
 | [Selected architecture decisions](../../../04-architecture/selected-architecture-decisions.md), [ADA](../../../04-architecture/architecture-decision-analysis.md), [ADD](../../../04-architecture/ADD.md), [views](../../../04-architecture/views/) | Approved decisions versus analysis; existing owner boundaries and realization obligations |
 | [Test Strategy](../../../07-testing/test-strategy.md), [DoD](../../definition-of-done.md), [backend conventions](../../../engineering/backend-conventions.md) | Proportional verification, completion and established code conventions |
 | [Sprint 1 plan](../sprint-01/sprint-plan.md), [Sprint 2 plan](../sprint-02/sprint-plan.md), [Sprint 2 shared guide](../sprint-02/implementation-guides/shared-architecture.md), [backend README](../../../../backend/README.md) | Historical selections and reusable implementation context; actual code is the evidence of present capability |
 
-The initial working tree contained the unrelated untracked `Image_Handling_Essential_Concepts (1).md`; it is preserved and is not a policy authority. No Sprint 3 plan existed. Static inspection establishes what source is present, not a fresh successful execution or production readiness.
+This revision starts from the existing Sprint 3 plan and a clean working tree at the repository revision above. The original baseline analysis below is retained; this documentation update does not establish a fresh successful software execution or production readiness.
 
 ### 3.2 Confirmed implementation and reuse
 
@@ -57,7 +58,7 @@ The initial working tree contained the unrelated untracked `Image_Handling_Essen
 | Response/error baseline | Flat garment values; absent scalar `null`, set `[]`; `recommendationEligibility: NOT_EVALUATED`; `recordedUse.availability: UNAVAILABLE`. Scoped `WardrobeApiExceptionHandler`, RFC 9457 Problem Details and stable codes | New media/revision fields and conflict/recovery behavior require synchronized contracts/tests during implementation; do not fabricate use data or expose private input in errors |
 | Migrations | V1–V8 exist; V6 moves Identity ownership, V7 adds recovery, V8 creates `wardrobe.wardrobe_garment`, material and style child tables | Only forward migrations. V8 has no edit revision or media association. One owner per new migration; no physical schema is selected by this plan |
 | Infrastructure | [Compose](../../../../compose.yaml) provides PostgreSQL 17.11 and Mailpit; no object-storage service or media decoder is configured | Media integration and deployment feasibility are real work; not assumed available |
-| Module skeletons | `personalcontext`, `productmeasurement`, `outfitadviceanduse`, `wardrobeintelligence` each contain only `package-info.java`; Identity and Wardrobe contain real implementation | Personal Context and Product Measurement gain their first capabilities; advice/intelligence remain unimplemented |
+| Module skeletons | `personalcontext`, `productmeasurement`, `outfitadviceanduse`, `wardrobeintelligence` each contain only `package-info.java`; Identity and Wardrobe contain real implementation | Personal Context gains its first capability; Product Measurement and advice/intelligence implementation remain outside Sprint 3 |
 
 ### 3.3 Existing checks and practical gaps
 
@@ -65,7 +66,7 @@ Existing tests include `ApprovedGarmentVocabularyTest`, `GarmentProfileTest`, `B
 
 `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest` and `DatabaseSchemaOwnershipIT` enforce boundaries. `IdentityOpenApiContractIT`, despite its name, checks all documented `/api` handler coverage, security and request/response shapes. It must evolve with new operations rather than be assumed Identity-only. Surefire runs `*Test`; Failsafe participates in `verify` for `*IT`.
 
-The [CI workflow](../../../../.github/workflows/backend-ci.yml) runs full Maven verification and checks required reports. Its triggers currently cover pushes to `main` and PRs targeting `main` or `sprint_02`, not `sprint_03`. Existing browser CORS allows GET/POST and a limited header set; PATCH and revision headers will need explicit synchronized treatment if selected. These are findings and future implementation tasks, not changes made here.
+The [CI workflow](../../../../.github/workflows/backend-ci.yml) runs full Maven verification and checks required reports. Its triggers currently cover pushes to `main` and PRs targeting `main` or `sprint_02`, not `sprint_03`. Existing browser CORS allows GET/POST and a limited header set. The approved PATCH/revision direction will need explicit synchronized CORS treatment during implementation. These are findings and future implementation tasks, not changes made here.
 
 ## 4. Approved Business and Architecture Constraints
 
@@ -76,13 +77,13 @@ The [CI workflow](../../../../.github/workflows/backend-ci.yml) runs full Maven 
 - Brand is optional exact user-entered text, at most 100 Unicode code points; blank is unspecified. Price is the user-reported original purchase amount plus explicit upper-case valid ISO 4217 currency. Known zero is valid; absence is not zero. Reject negatives, more than 12 integer digits and excess currency minor-unit precision; never round, infer currency or use binary floating point.
 - User-entered/confirmed/corrected truth is authoritative. Media, version, action identity and provenance are metadata outside the 13 properties. Images and successful AI analysis are not saving prerequisites. Retain `recommendationEligibility: NOT_EVALUATED`; no readiness fields, composition template or matching policy is introduced.
 - Profile styles are the separate seven-code vocabulary in SRS 4.10, not garment Style. Six common needs use Not Relevant=0, Low=1, Medium=2, High=3. Unset is absent context; explicit zero is a declaration. Current request occasion never automatically rewrites common priorities.
-- Private purpose-limited collection/exchange, current-session authorization and account isolation apply immediately. No personal-data AI training/improvement. Measurement is optional to core acceptance, user-linked for at most 90 days. Necessary functional information has a distinct lifecycle; removed-garment originals/nonessential data have the applicable 30-day physical-deletion obligation.
+- Private purpose-limited collection/exchange, current-session authorization and account isolation apply immediately. No personal-data AI training/improvement. Optional measurement failure must not reverse or misreport an otherwise accepted core action; implementing measurement is outside Sprint 3. Necessary functional information has a distinct lifecycle; removed-garment originals/nonessential data have the applicable 30-day physical-deletion obligation.
 
 ### 4.2 Selected architecture, not reopened alternatives
 
 [ADA-001–018 selections](../../../04-architecture/selected-architecture-decisions.md) remain binding: one Java/Spring Boot Modular Monolith, one PostgreSQL authority, pragmatic Clean Architecture per module, explicit published local contracts and private models/translation, narrowly bounded external ports/adapters, private object storage with application-controlled delivery, database-coordinated logical actions, no dedicated cache or broker initially, protected minimal observability, and deliberate recoverable coordination. The selected private Python analysis runtime remains for future AI assistance; photo-backed manual entry does not require an analysis call.
 
-[AR-01–AR-08](../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) require one schema per persistence owner, schema-qualified `<schema>_<name>` tables, no cross-owner SQL joins, persistence access or foreign keys, published `api` contracts, no internal HTTP, deliberate transaction participation and automated enforcement. `personal_context` and `product_measurement` are existing approved owners/schemas, created only by their first persisting story. One database role does not provide runtime schema isolation.
+[AR-01–AR-08](../../../04-architecture/selected-architecture-decisions.md#8-approved-architecture-refinement-ar-01ar-08--context-owned-schemas) require one schema per persistence owner, schema-qualified `<schema>_<name>` tables, no cross-owner SQL joins, persistence access or foreign keys, published `api` contracts, no internal HTTP, deliberate transaction participation and automated enforcement. `personal_context` is an existing approved owner/schema, created only by its first persisting story; deferred owners do not gain speculative schemas in this Sprint. One database role does not provide runtime schema isolation.
 
 Architecture analysis and selected decisions already record the baseline. No standalone ADR, microservice, shared repository, new database or cross-owner trigger is required here. Full DTOs, physical schemas, numeric technical limits and conditional UML belong to the affected story’s JIT work; no second generic Design phase follows it.
 
@@ -93,9 +94,10 @@ Architecture analysis and selected decisions already record the baseline. No sta
 | [US-GAR-002 — Correct and enrich authoritative garment information](../../stories/garment/US-GAR-002-correct-and-enrich-garment-information.md) | PBI-008 | Keep wardrobe truth accurate and useful | Explicitly confirm corrections/enrichment of an existing current owned garment |
 | [US-GAR-003 — Add a photo-supported garment with manual confirmation](../../stories/garment/US-GAR-003-add-photo-supported-garment.md) | PBI-012 | Recognize clothing visually without waiting for AI | One private photo supporting a separately confirmed new garment |
 | [US-PROF-001 — Set and revise style preferences and common needs](../../stories/profile/US-PROF-001-set-and-revise-style-and-common-needs.md) | PBI-010 | Prepare relevant future advice and Coverage under user control | Private progressive preference setup and safe revision |
-| [US-MEAS-001 — Capture minimum necessary wardrobe-use evidence](../../stories/measurement/US-MEAS-001-capture-minimum-wardrobe-use-evidence.md) | PBI-009 | Evaluate delivered work without distorted counts or blocked actions | Purpose-minimal outcome evidence, independent failure and retention |
 
-These are the only selected stories. Source document Draft labels are retained; selection here does not silently approve every AC document or new technical recommendation. Parent PBIs can be broader than a selected story: optional body/gender lifecycle, for example, belongs to US-PROF-002 and is not pulled in by selecting PBI-010’s private style/common-needs slice.
+These are the only selected stories. Source document Draft labels are retained; the explicit approval covers the 18 GAR/IMG/PROF recommended solutions, while the INT decisions remain independently reviewable. Parent PBIs can be broader than a selected story: optional body/gender lifecycle, for example, belongs to US-PROF-002 and is not pulled in by selecting PBI-010’s private style/common-needs slice.
+
+**Deferred scope:** US-MEAS-001 is removed from Sprint 3 and deferred to a future, unspecified sprint. Its upstream requirements and Product Backlog position are unchanged. Sprint 3 includes no measurement producers, intake, persistence, retention job or dedicated measurement verification.
 
 ## 6. User Story Scope and Acceptance Overview
 
@@ -114,9 +116,9 @@ The AC IDs, titles and text below are reproduced from each current story. They r
 | AC-07 — Resolve uncertain acceptance | If communication leaves acceptance uncertain, show an unconfirmed outcome and allow review before safe retry, preserving useful entered work where practical. Do not claim either saved or definitely unchanged state solely from the interrupted response. |
 | AC-08 — Protect the selected item | An expired/revoked or wrong-account request cannot inspect/edit another user's garment. A changed/removed selection is explained without editing another item or restoring historical ownership. |
 
-**Backend responsibilities/deliverables:** extend the current Wardrobe application/repository/web boundary for confirmed edits, validate the complete resulting profile, atomically revise Materials/Styles and scalar values, reject stale/non-current/wrong-owner selections, and expose accepted current truth for rereading. Preserve existing media association; no attach/replace action is implied. A revision token and safe uncertainty handling are proposed in S3-GAR-02/04. Reuse the existing complete detail route.
+**Backend responsibilities/deliverables:** extend the current Wardrobe application/repository/web boundary for confirmed edits, validate the complete resulting profile, atomically revise Materials/Styles and scalar values, reject stale/non-current/wrong-owner selections, and expose accepted current truth for rereading. Preserve existing media association; no attach/replace action is implied. A revision token and safe uncertainty handling are approved in S3-GAR-02/04. Reuse the existing complete detail route.
 
-**Important edges and integration:** clearing optional Brand/Price/sets; zero Price; inapplicable old fields after Category change; two editors; removal during editing; no-op resubmission versus accepted correction; commit with lost response; creation replay after a later edit. Future assessments must use fresh revisions or be marked outdated when those consumers exist; do not build a recommendation/invalidation engine now. Measurement consumes only accepted correction facts after commit.
+**Important edges and integration:** clearing optional Brand/Price/sets; zero Price; inapplicable old fields after Category change; two editors; removal during editing; no-op resubmission versus accepted correction; commit with lost response; creation replay after a later edit. Future assessments must use fresh revisions or be marked outdated when those consumers exist; do not build a recommendation/invalidation engine now.
 
 **Evidence and exclusions:** unit policy tests, real PostgreSQL rollback/races, authenticated API/contract and read-after-write regression; client review/clear/cancel/conflict/uncertainty evidence is still required. No creation feature, removal endpoint, reanalysis, recommendation eligibility evaluation or history rewriting is selected. UC-009 governs edit behavior; AD-007 covers only relevant shared confirmation/authority behavior and is not an edit activity model.
 
@@ -132,9 +134,9 @@ The AC IDs, titles and text below are reproduced from each current story. They r
 | AC-06 — Recover safely | Canceled preconfirmation work creates no confirmed item. Known failed saves are not success; interrupted/uncertain acceptance permits review and safe same-action retry without duplicate accepted additions. Missing media does not hide otherwise available accepted garment information. |
 | AC-07 — Protect private media | Only authorized ownership/session access permits the relevant image and garment operations; denied access creates no wardrobe mutation or private disclosure. Optional measurement failure does not reverse accepted creation. |
 
-**Backend responsibilities/deliverables:** private media port/adapter, genuine image validation including HEIC/HEIF, owner-scoped pending-upload/confirmation coordination if approved, one atomic database acceptance of garment/profile/media association/action outcome, authorized retrieval and resumable cleanup. Keep imageless creation independent of storage availability and avoid long object operations inside database transactions.
+**Backend responsibilities/deliverables:** private media port/adapter, genuine image validation including HEIC/HEIF, the approved owner-scoped pending-upload/confirmation approach, one atomic database acceptance of garment/profile/media association/action outcome, authorized retrieval and resumable cleanup. Keep imageless creation independent of storage availability and avoid long object operations inside database transactions.
 
-**Important edges and integration:** unsupported/corrupt or oversized data; minimum dimensions; denied camera with permitted library/manual route; staged image replacement/cancel before confirmation; wrong-owner stage; duplicate confirmations; lost upload/confirmation response; successful object write followed by database failure; missing photo after accepted creation. Missing media never hides accepted garment information. Use shared garment validation and non-blocking accepted-addition measurement.
+**Important edges and integration:** unsupported/corrupt or oversized data; minimum dimensions; denied camera with permitted library/manual route; staged image replacement/cancel before confirmation; wrong-owner stage; duplicate confirmations; lost upload/confirmation response; successful object write followed by database failure; missing photo after accepted creation. Missing media never hides accepted garment information. Use shared garment validation and preserve the source principle that optional measurement failure cannot reverse accepted creation; no measurement producer or intake is added in this Sprint.
 
 **Evidence and exclusions:** real object-adapter and PostgreSQL integration, valid format fixtures, concurrent confirmation/recovery, unauthorized retrieval and deletion/expiry races; camera/gallery permissions, recognizable preview, guidance and device HEIF behavior need mobile evidence. New single-photo creation only: attaching to an existing imageless garment, replacing a confirmed photo, bulk queue, background removal and AI extraction are unselected. UC-007/AD-007 cover broader assistance; only the manual-confirmation slice is delivered.
 
@@ -155,24 +157,6 @@ The AC IDs, titles and text below are reproduced from each current story. They r
 
 **Evidence and exclusions:** mapping/domain, PostgreSQL absent-state/rollback/concurrency, authenticated contract and safe reread tests; progressive onboarding/skip/return, local labels and device accessibility require client evidence. Optional body/gender management is US-PROF-002; actual location/weather is US-CTX-001; public creator profile, advice ranking and Coverage calculation remain outside this story. UC-005 is broader than this slice and has no dedicated current Activity Diagram.
 
-### 6.4. US-MEAS-001 — Capture minimum necessary wardrobe-use evidence
-
-| Source AC | Exact criterion and meaning |
-| --- | --- |
-| AC-01 — Distinguish early outcomes | Evidence distinguishes garment-entry attempts from confirmed additions, correction from creation, and pending/failed/uncertain from established outcomes. Image submission alone is not a confirmed owned garment. |
-| AC-02 — Preserve later action meanings | As recommendation, Shuffle, feedback and Wear producers arrive, their exposure/attempt/accepted outcomes remain distinguishable; Wear creation, correction and removal are separate meanings rather than extra creation counts. |
-| AC-03 — Avoid logical-action inflation | Retries/repeated delivery of one accepted action do not inflate accepted-addition or Wear counts. Separate explicit Wear intentions remain separate reports; history grouping is not logical-action/event identity and imposes no ranking cap. |
-| AC-04 — Minimize private content | Ordinary engagement evidence requires no raw private garment images or sensitive profile contents; access and external disclosures remain necessary, private and purpose-limited, with no credential/token/recovery secrets. |
-| AC-05 — Enforce measurement retention | User-linked engagement/measurement data is deleted or aggregated/de-identified within 90 days so older retained information is no longer user-linked. This neither deletes necessary functional history nor extends applicable 30-day removed-data deletion deadlines. |
-| AC-06 — Isolate measurement failure | If measurement is unavailable or its response fails, an otherwise usable core action retains its actual accepted/failed status. No fabricated action completion, lost accepted action or forced duplicate retry is introduced to satisfy measurement. |
-| AC-07 — Provide inspectable meaning | Using synthetic examples, evidence can show which exposure, attempt, accepted change or limitation was observed without claiming product benefits or growth targets. Undecided metric definitions are recorded for review. |
-
-**Backend responsibilities/deliverables:** first Product Measurement intake/persistence/lifecycle capability, explicit source/meaning distinctions for delivered wardrobe entry and correction, logical-action deduplication, privacy-safe inspectable synthetic evidence, independent failure handling and enforced retention. Accepted facts originate in committed business outcomes, not client success claims.
-
-**Important edges and integration:** an uploaded photo is not an addition; a retry is not a new acceptance; a correction is not creation; undelivered client observations are unknown, not fabricated failures/successes; measurement database failure must not reverse the garment/profile result. Profile measurement is a separate proposed minimum producer choice, not an existing explicit FR-MET-001 obligation.
-
-**Evidence and exclusions:** event-meaning/dedup unit tests, real independent transaction and consumer integration, failure/restart and 90-day boundary/cleanup tests, synthetic accepted-versus-attempt examples with limitations. Later recommendation/Shuffle/Like/Dislike/Wear/insight producers are integrated when delivered, not selected now. No analytics administrator, external vendor, dashboard, new KPI target, complete-loop analysis (US-MEAS-002) or ranking decay is introduced. CAT-Q07 limits benefits/cohort interpretation, not truthful early outcome distinctions.
-
 ## 7. Dependencies and Recommended Implementation Order
 
 ### 7.1 Hard dependencies versus useful sequence
@@ -182,20 +166,18 @@ The AC IDs, titles and text below are reproduced from each current story. They r
 | US-GAR-002 / PBI-008 | PBI-006 | Manual confirmed creation is implemented; current detail is useful reuse, not a new hard PBI-007 dependency |
 | US-GAR-003 / PBI-012 | PBI-006 | Same implemented creation authority; photo storage/decoding feasibility must be established within this selected work |
 | US-PROF-001 / PBI-010 | PBI-004 | Authentication/session capability exists. PBI-003 mobile foundation and PBI-006 are useful sequence, not hard completion gates |
-| US-MEAS-001 / PBI-009 | PBI-002 | First-operation privacy protections require applicable evidence; PBI-006 is useful producer sequence. Do not claim the whole privacy PBI Done merely because authorization code exists |
 
-No backlog hard dependency between the four selected stories is invented. Measurement verification needs actual delivered producers; this is an integration dependency of its evidence, not a new requirement that all future product stories be completed. Camera/gallery and progressive onboarding evidence depend on client collaboration; no additional mobile story is silently selected.
+No backlog hard dependency between the three selected stories is invented. Camera/gallery and progressive onboarding evidence depend on client collaboration; no additional mobile story is silently selected.
 
 ### 7.2 Recommended delivery sequence
 
-1. **Prepare shared meanings early:** review this decision register, accepted-action identity, correction-versus-creation meaning, absent/zero context and independent measurement failure. Investigate actual HEIC/HEIF and private-storage feasibility early; significant uncertainty can justify a bounded technical investigation within the selected work. This is preparation, not implementation of an extra selected story or full-Sprint design.
+1. **Prepare shared meanings early:** review the recorded approvals, independent INT questions, accepted-action identity, correction-versus-creation meaning and absent/zero context. Investigate actual HEIC/HEIF and private-storage feasibility early; significant uncertainty can justify a bounded technical investigation within the selected work. This is preparation, not implementation of an extra selected story or full-Sprint design.
 2. **US-GAR-002:** reuse the existing garment model/read path to establish confirmed editing, revision conflicts, shared validation and safe rereading. This gives later photo creation a well-defined accepted profile without making editing a new hard prerequisite.
-3. **US-GAR-003:** add private staged media and new confirmed photo-backed creation after its relevant decisions are resolved. Reuse garment validation and creation idempotency; retain imageless continuity.
+3. **US-GAR-003:** add private staged media and new confirmed photo-backed creation using its approved approaches while resolving the remaining TTL policy and necessary JIT details. Reuse garment validation and creation idempotency; retain imageless continuity.
 4. **US-PROF-001:** add the independent Personal Context capability and private published context meaning. Its preparation may proceed alongside media investigation because it does not depend on photo completion.
-5. **US-MEAS-001 integration and completion:** finish the minimum intake, deduplication, retention and failure-isolation capability against real delivered manual/photo creation and garment correction. Prepare its contract early and add producer hooks with each owning story; do not postpone all measurement work until after those stories are considered Done. Profile hooks are conditional on S3-MEAS-06 approval.
-6. **Integrate the selected outcomes:** run current-state, privacy, concurrency, cross-resource recovery, lifecycle and regression verification; collect relevant client evidence and review/CI evidence before claiming Done.
+5. **Integrate the selected outcomes:** run current-state, privacy, concurrency, cross-resource recovery, lifecycle and regression verification; collect relevant client evidence and review/CI evidence before claiming Done.
 
-The numbered story order is **GAR-002 → GAR-003 → PROF-001 → MEAS-001**, with early measurement preparation and optional independent profile preparation. It is an implementation recommendation, not a change to global PBI Order fields.
+The numbered story order is **GAR-002 → GAR-003 → PROF-001**, with optional independent profile preparation. It is an implementation recommendation, not a change to global PBI Order fields.
 
 The diagram distinguishes existing capability inputs from proposed sequence and integration. Solid arrows show required existing capability inputs; dotted arrows show useful implementation/evidence sequence only.
 
@@ -204,14 +186,10 @@ flowchart LR
     A["Existing PBI-006 creation"] --> G["US-GAR-002: edits"]
     A --> I["US-GAR-003: photo creation"]
     B["Existing PBI-004 access"] --> P["US-PROF-001: preferences"]
-    C["PBI-002 privacy obligations"] --> M["US-MEAS-001: minimum evidence"]
     G -. "useful reuse" .-> I
-    G -. "accepted corrections" .-> M
-    I -. "accepted additions" .-> M
-    P -. "only if separately approved" .-> M
 ```
 
-The profile-to-measurement edge is conditional, not an approved new measurement obligation. The diagram adds no hard dependency between selected stories and does not imply that the whole PBI-002 has already been completed.
+The diagram adds no hard dependency between selected stories. Applicable privacy protections accompany each selected outcome; no separate measurement implementation or additional story is selected.
 
 ## 8. Architecture and Integration Impact
 
@@ -224,17 +202,16 @@ The profile-to-measurement edge is conditional, not an approved new measurement 
 | `wardrobe.adapter.in.web` | Existing garment group plus coherent media responsibility | Evolve `WardrobeGarmentController` for garment operations; a separate media controller is justified only by its resource responsibility, not one per story; scoped Problem Details and current-state recovery |
 | `wardrobe.adapter.out.persistence` / `.adapter.out` integration | Versioned persistence and storage adapter | Forward Wardrobe-only migrations, atomic acceptance and pending-work records, opaque immutable object identity, bounded adapter timeouts and truthful errors |
 | `com.capsuleai.personalcontext` | First declared style/common-needs behavior | Appropriate domain/application/ports/adapters/configuration following existing pragmatic Clean Architecture; first `personal_context` migration; controlled profile vocabulary and current context contract |
-| `com.capsuleai.productmeasurement` | First minimal independent evidence/lifecycle behavior | Published intake meanings, owner application port and independent transaction adapter, first `product_measurement` migration, deduplication and resumable purge; no access to Wardrobe/Identity tables |
 | `identity.api` / existing security configuration | Reused usable principal/session authority | No new authentication model or per-request account existence query. Synchronize affected CORS verbs/headers if used, retaining exact allowed origins and default denial |
 | `outfitadviceanduse`, `wardrobeintelligence` | Future consumers only | No new recommendation, Wear, Coverage or candidate engine. Fresh profile/garment revisions remain obtainable through owning APIs when real consumers require them |
 | External object storage / processing | Private photo resource behind Wardrobe ports | Local test/development service and approved managed deployment choice; production-like compatibility and genuine decoder evidence are required |
 | Shared engineering artifacts during implementation | Keep delivered truth synchronized | Affected OpenAPI/security contract tests, configuration examples, forward migrations, architecture ownership tests and CI configuration; update architecture documents only if architecture truth changes |
 
-Applied V1–V8 are immutable. The affected story chooses only necessary forward migrations; no version numbers, full table design or speculative empty schemas are reserved here. A logical migration touching two owners is split by owner and verified as a supported deployment transition. Measurements do not participate in the garment acceptance transaction.
+Applied V1–V8 are immutable. The affected story chooses only necessary forward migrations; no version numbers, full table design or speculative empty schemas are reserved here. A logical migration touching two owners is split by owner and verified as a supported deployment transition. Optional measurement failures must not reverse accepted business outcomes; this Sprint adds no measurement transaction, producer, listener or intake. Existing operational logging, security monitoring and protected diagnostics remain applicable to the selected capabilities.
 
 ### 8.2 Bounded component interaction
 
-This proposed interaction view shows ownership and approved boundaries, rather than final classes or endpoint contracts. Media objects are external resources; core authoritative state stays in PostgreSQL.
+This interaction view shows ownership and the approved boundaries, rather than final classes or endpoint contracts. Media objects are external resources; core authoritative state stays in PostgreSQL.
 
 ```mermaid
 flowchart LR
@@ -245,16 +222,13 @@ flowchart LR
     P --> PD[("personal_context schema")]
     W --> O["Private object-storage adapter"]
     O --> B[("Private object storage")]
-    W -. "committed outcome through published intake" .-> M["Product Measurement application"]
-    P -. "only if producer approved" .-> M
-    M --> MD[("product_measurement schema")]
 ```
 
-Each owner accesses only its own persistence. The dotted measurement interaction is independent of core acceptance; it does not create a distributed transaction or guarantee eventual recording. Private media delivery rechecks application authority and does not publish storage credentials or a public object URL.
+Each owner accesses only its own persistence. No Product Measurement implementation or dependency is introduced by this view. Private media delivery rechecks application authority and does not publish storage credentials or a public object URL.
 
 ### 8.3 Cross-resource coordination and recovery
 
-The proposed staged flow avoids pretending an object write and a database commit are atomic. Durable owner-scoped pending work and immutable object identity allow recovery; exact lifecycle/expiration policy remains pending in S3-IMG-08.
+The approved staged approach avoids pretending an object write and a database commit are atomic. Durable owner-scoped pending work and immutable object identity allow recovery; S3-IMG-08 approves the lifecycle approach while leaving the exact pending-media TTL unresolved.
 
 ```mermaid
 flowchart TD
@@ -280,11 +254,13 @@ recheck authoritative state"]
     L --> E["Mark cleanup complete only when established"]
 ```
 
-Uncertainty review may find no accepted action or still be unavailable; only an established accepted outcome reaches the accepted result. Otherwise, keep work recoverable and recheck authoritative state before any attempted acceptance or cleanup. An uncertain response establishes neither acceptance nor unchanged state; attached media is not canceled as if it were an unconfirmed upload. Cleanup and confirmation must coordinate on the same pending record so a sweeper cannot delete newly attached media. A missing object after acceptance yields a truthful media limitation while the accepted profile remains readable. Durable media cleanup is distinct from optional measurement delivery; introducing reliable media recovery does not select an analytics Outbox or broker.
+Uncertainty review may find no accepted action or still be unavailable; only an established accepted outcome reaches the accepted result. Otherwise, keep work recoverable and recheck authoritative state before any attempted acceptance or cleanup. An uncertain response establishes neither acceptance nor unchanged state; attached media is not canceled as if it were an unconfirmed upload. Cleanup and confirmation must coordinate on the same pending record so a sweeper cannot delete newly attached media. A missing object after acceptance yields a truthful media limitation while the accepted profile remains readable. Durable media cleanup does not require an analytics Outbox or broker.
 
 ## 9. Decision Analysis & Proposed Solutions
 
-**How to read statuses:** `APPROVED` below restates a cited existing authority; it is not approval granted by this plan. `PROPOSED — PENDING PO APPROVAL` identifies a new recommendation. `DEFERRED TO JIT DESIGN` leaves a bounded technical choice to the affected story before dependent implementation. `BLOCKED — REQUIRES PO DECISION` identifies an unresolved policy required before the affected behavior can be completed; it does not cancel the user-selected Sprint scope.
+**How to read statuses:** `APPROVED` records explicit Product Owner approval of all 18 GAR/IMG/PROF recommended solutions on 2026-11-11, including the three entries that already restated approved constraints. `PROPOSED — PENDING PO APPROVAL` remains the independent status of S3-INT-01/02; `DEFERRED TO JIT DESIGN` remains the independent status of S3-INT-03. No approval of an INT decision is inferred from approval of a related story approach.
+
+The Recommended Solution text, alternatives, trade-offs and rationale are retained as the decision record. Historical wording such as “proposed” within an unchanged recommendation does not override its current approved status. Alternatives remain available for future reference, not as permission to switch away from the approved option. Solution approval leaves necessary implementation detail, verification and the exact pending-media TTL unresolved.
 
 Stable S3 decision IDs are planning references, not new requirement IDs or standalone ADRs. Where two stories share a mechanism, the later entry applies the earlier decision instead of independently selecting another architecture.
 
@@ -321,7 +297,11 @@ Wardrobe web/application mappings must preserve field presence, distinguish abse
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -355,7 +335,7 @@ Option B — optimistic concurrency using an opaque representation/revision toke
 
 **Rationale**
 
-Owner, current membership and expected revision must still match when the database accepts the change. One competing edit wins; the stale edit is explained for rereview, not automatically merged or retried with a newer token. Brief database row locks may implement atomicity but are not locks held across user interaction. PostgreSQL rechecks conditional UPDATE predicates after competing commits; see Section 9.6.
+Owner, current membership and expected revision must still match when the database accepts the change. One competing edit wins; the stale edit is explained for rereview, not automatically merged or retried with a newer token. Brief database row locks may implement atomicity but are not locks held across user interaction. PostgreSQL rechecks conditional UPDATE predicates after competing commits; see Section 9.5.
 
 **Implementation Implications**
 
@@ -363,7 +343,11 @@ Add necessary Wardrobe revision metadata by forward migration, return it on curr
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -404,7 +388,11 @@ Validate the complete post-edit profile through shared domain rules. Return safe
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -445,7 +433,11 @@ JIT API/client recovery tests must cover commit-plus-disconnect, concurrent late
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -486,7 +478,11 @@ Extend GarmentRepository deliberately rather than exposing JDBC to services. Dom
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -530,7 +526,11 @@ Wardrobe owns the storage port and adapter; configure private buckets/credential
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval selects the provider strategy; AWS account configuration, production deployment, provider compatibility and budget verification remain uncompleted work.
 
 **Approval Owner**
 
@@ -538,7 +538,7 @@ Product Owner / project owner with Backend Tech Lead
 
 **Traceability**
 
-US-GAR-003 AC-02/04/06/07; DATA-GAR-004; NFR-PRIV-001/002; ADA-006/007/013; Deployment View; S3 references in Section 9.6.
+US-GAR-003 AC-02/04/06/07; DATA-GAR-004; NFR-PRIV-001/002; ADA-006/007/013; Deployment View; S3 references in Section 9.5.
 
 #### S3-IMG-02 — Upload transport
 
@@ -571,7 +571,11 @@ JIT design chooses multipart envelope and bounded temporary handling, gateway/se
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -579,7 +583,7 @@ Product Owner with Backend Tech Lead
 
 **Traceability**
 
-US-GAR-003 AC-02/03/06/07; FR-AI-012; HW-001/002; DATA-GAR-004; ADA-006/007/013/014; Section 9.6 provider references.
+US-GAR-003 AC-02/03/06/07; FR-AI-012; HW-001/002; DATA-GAR-004; ADA-006/007/013/014; Section 9.5 provider references.
 
 #### S3-IMG-03 — Upload versus explicit garment confirmation
 
@@ -612,7 +616,11 @@ Reuse canonical profile validation and durable creation identity. Verify stage o
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -653,7 +661,11 @@ Test intent-without-object, object-without-ready-status, ready-but-unconfirmed, 
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -694,7 +706,11 @@ Use opaque references, deny wrong-owner/unknown media without enumeration, preve
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -735,7 +751,11 @@ Validate bounded bytes, sniff container/content, genuinely decode and verify dim
 
 **Decision Status**
 
-DEFERRED TO JIT DESIGN
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval covers Option B as the investigation direction only; select and verify the concrete decoder/toolchain during JIT design.
 
 **Approval Owner**
 
@@ -743,7 +763,7 @@ Backend Tech Lead; Product Owner for any user-visible policy or requirement chan
 
 **Traceability**
 
-US-GAR-003 AC-02/03/07; FR-AI-001/002/012; NFR-PRIV-001/002; ADA-006/007/013; property authority metadata boundary; official decoder references in Section 9.6.
+US-GAR-003 AC-02/03/07; FR-AI-001/002/012; NFR-PRIV-001/002; ADA-006/007/013; property authority metadata boundary; official decoder references in Section 9.5.
 
 #### S3-IMG-07 — Photo attachment scope
 
@@ -757,7 +777,7 @@ The selected story expressly describes new single-photo garment creation; replac
 
 **Viable Solutions**
 
-Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related proposed decisions; prohibited scope/owner/default changes are not additional options.
+Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related decision analyses; prohibited scope/owner/default changes are not additional options.
 
 | Option | Solution | Advantages | Disadvantages / Trade-offs |
 | --- | --- | --- | --- |
@@ -778,6 +798,10 @@ Attribute editing retains any accepted media link. Staged replacement creates/re
 **Decision Status**
 
 APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -814,11 +838,15 @@ Use conceptual pending/validated/attached and cancel-or-expire/cleanup-pending/c
 
 **Implementation Implications**
 
-Cover canceled, replaced, expired, abandoned, corrupt and uncertain stages, secure pending reads, storage outages and idempotent deletion. Coordinate sweeper/confirmation in Wardrobe persistence; persist recovery intent and preserve original age across retries. Active accepted media is retained only while necessary; future removal must make it inaccessible immediately and physically purge applicable original/derivatives within 30 days. No garment-removal or account-deletion feature is selected. An unresolved TTL blocks lifecycle completion/Done, not the four-story selection or unrelated progress.
+Cover canceled, replaced, expired, abandoned, corrupt and uncertain stages, secure pending reads, storage outages and idempotent deletion. Coordinate sweeper/confirmation in Wardrobe persistence; persist recovery intent and preserve original age across retries. Active accepted media is retained only while necessary; future removal must make it inaccessible immediately and physically purge applicable original/derivatives within 30 days. No garment-removal or account-deletion feature is selected. An unresolved TTL blocks lifecycle completion/Done, not the three-story selection or unrelated progress.
 
 **Decision Status**
 
-BLOCKED — REQUIRES PO DECISION
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval covers Option A for the pending-media lifecycle. The exact pending-media TTL still requires an explicit PO decision; no retention period is selected here.
 
 **Approval Owner**
 
@@ -842,7 +870,7 @@ Logical/Implementation/Data Views and selected AR rules already assign declared 
 
 **Viable Solutions**
 
-Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related proposed decisions; prohibited scope/owner/default changes are not additional options.
+Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related decision analyses; prohibited scope/owner/default changes are not additional options.
 
 | Option | Solution | Advantages | Disadvantages / Trade-offs |
 | --- | --- | --- | --- |
@@ -864,6 +892,10 @@ Create only necessary owner-scoped state in the first Personal Context forward m
 
 APPROVED
 
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
+
 **Approval Owner**
 
 Product Owner / architecture authority — existing selected boundary
@@ -884,7 +916,7 @@ The profile vocabulary is MINIMAL, CASUAL, SMART_CASUAL, CLASSIC, STREETWEAR, SP
 
 **Viable Solutions**
 
-Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related proposed decisions; prohibited scope/owner/default changes are not additional options.
+Only the following existing approved boundary is available within this selection. Realization alternatives are analyzed in the related decision analyses; prohibited scope/owner/default changes are not additional options.
 
 | Option | Solution | Advantages | Disadvantages / Trade-offs |
 | --- | --- | --- | --- |
@@ -905,6 +937,10 @@ JIT persistence/API representation must round-trip absent needs, explicit zero a
 **Decision Status**
 
 APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -945,7 +981,11 @@ Personal Context owns validation, persistence and accepted revision response. JI
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -987,7 +1027,11 @@ Personal Context enforces unique owner state and atomic expected-revision update
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -1028,7 +1072,11 @@ Verify contract isolation and current/absent semantics with focused integration/
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged.
 
 **Approval Owner**
 
@@ -1038,261 +1086,13 @@ Product Owner with Backend Tech Lead
 
 US-PROF-001 AC-03/05; FR-PROF-004; FR-ANL-014; BRULE-COV-006; ADA-010/015–018; AR-02–07; S3-INT-01.
 
-### 9.4. US-MEAS-001 Decisions
-
-#### S3-MEAS-01 — Minimum measurement scope and source of truth
-
-**Problem**
-
-What evidence is useful now without comprehensive private interaction tracking or false acceptance counts?
-
-**Context**
-
-FR-MET-001 distinguishes additions/corrections; AC-01 distinguishes attempts and established outcomes. The backend cannot observe every screen exposure, camera choice or client cancellation.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | Minimum purpose-linked typed observations plus authoritative committed outcome facts | Fits delivered scope, privacy and testable meaning; avoids invented benefit claims | Coverage gaps and missing observations must be disclosed |
-| B | Broader instrumentation of delivered interactions after a reviewed purpose/field inventory | Can answer more detailed usability questions | More privacy, consent/purpose, validation and retention work; not justified as the default |
-
-**Recommended Solution**
-
-Option A — instrument the minimum delivered garment-entry/correction outcomes and necessary source-distinguished client observations.
-
-**Rationale**
-
-Client exposure/attempt reports establish only that an observation was reported. A validated upload establishes an uploaded stage, never a confirmed addition. Backend accepted facts originate only after business commit; rejected, failed and uncertain states remain distinct. A database reread establishes current persisted truth but not all historical attempts. Undelivered observations are unknown; do not infer success, failure, conversion rates or growth.
-
-**Implementation Implications**
-
-JIT design identifies the small accepted evidence vocabulary and source trust at published intake boundaries. A client intake, if required for AC-01, is authenticated, bounded and cannot submit server-authoritative accepted events. Use synthetic examples to show evidence limitations. No Wear/recommendation event is generated before its producer exists.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner / BA with Developers and QA
-
-**Traceability**
-
-US-MEAS-001 AC-01/02/04/07; FR-MET-001–003/006/007; NFR-TEST-002; FEAT-MET-001; CAT-Q07; BRULE-AUTH-007.
-
-#### S3-MEAS-02 — Measurement ownership and storage shape
-
-**Problem**
-
-How should the approved measurement owner persist inspectable minimal evidence?
-
-**Context**
-
-Product Measurement and its `product_measurement` schema are already selected; no analytics vendor, broker or additional database is selected.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | Purpose-minimal typed evidence rows in the owner schema with logical-action uniqueness and age-based cleanup | Supports inspectable examples, deduplication and retention in the existing database | Requires a small owned schema and disciplined data minimization |
-| B | Owner-local aggregates plus only the minimum deduplication/source evidence needed | Reduces retained behavioral detail | Harder to inspect attempts versus acceptance and safely deduplicate/recompute; aggregate keys may still be user-linked |
-
-**Recommended Solution**
-
-Option A — small Product Measurement-owned PostgreSQL evidence storage, retaining only fields justified by the delivered meanings.
-
-**Rationale**
-
-This realizes existing ownership while favoring AC-07 inspectability over a premature aggregate/reporting engine. Owner identifiers and action/revision references are still personal links and expire accordingly; a hash or pseudonym alone is not de-identification. No raw photos, object URLs, Brand/Price, preference values, credentials or token/reset secrets belong in ordinary engagement evidence.
-
-**Implementation Implications**
-
-Create the schema in its first persisting story migration, one owner per migration; no cross-schema FK/join. Use published local intake and a separate owner transaction port. Exact fields/indexes remain JIT; schema ownership and retention tests must include the new owner’s real tables. Operational logs are not a replacement behavioral store.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner with Backend Tech Lead; BA/QA review evidence meaning
-
-**Traceability**
-
-US-MEAS-001 AC-01/03/04/05/07; FR-MET-006; DATA-RET-003; ADA-003/014–018; AR-01–08; Implementation/Data Views.
-
-#### S3-MEAS-03 — Business acceptance survives measurement failure
-
-**Problem**
-
-How can a measurement write fail without rolling back or misreporting a successful garment/profile action?
-
-**Context**
-
-FR-MET-007 and AC-06 require outcome independence. All owners share one database, so this means transaction/error isolation, not independent physical infrastructure availability.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | After successful owner commit, attempt published measurement intake in a separate transaction with bounded failure handling | Simple explicit coordination; preserves core result; fits no-broker baseline | Process crash or failed intake may lose evidence; bounded extra work can add response latency |
-| B | Recoverable delivery work recorded by the business owner and retried through published intake | Can close part of the crash-loss window without a broker | Adds durable work, lifecycle and deduplication coupling; measurement must still not become a blocking acceptance prerequisite |
-
-**Recommended Solution**
-
-Option A — explicit post-commit best-effort measurement in an independent transaction; preserve the core response and report recording limitations safely.
-
-**Rationale**
-
-Call only after the owner transaction returns committed, and contain intake/timeout failures. Never catch a failed measurement SQL write inside the same transaction and assume it remains usable. If AFTER_COMMIT listeners are used, apply the same independent transaction and error guarantees: bound transactional resources require a new transaction for committed writes, and callback styles have different exception behavior. This plan does not promise zero event loss; Option B needs separate justification if such a guarantee is later required.
-
-**Implementation Implications**
-
-Keep core application policy framework-free through ports; place any Spring synchronization in adapters/configuration. Publish owner-controlled committed outcome facts through a framework-free producer port; translate public producer facts to the Measurement intake at the local adapter/wiring edge. No producer imports Measurement persistence/private models or shares its own private aggregate. Verify actual committed garment/profile state and successful core response during measurement rejection, timeout and transaction failure. Record a minimal protected diagnostic, never a false recorded-success claim. Same-database outage may affect both operations; do not promise independent service uptime. No broker, Outbox or unbounded retry queue is selected.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner with Backend Tech Lead
-
-**Traceability**
-
-US-MEAS-001 AC-06/07; US-GAR-003 AC-07; FR-MET-007; ERR-MET-001; ADA-009/012/014/017; AR-07; Spring references in Section 9.6.
-
-#### S3-MEAS-04 — Deduplicating accepted logical actions
-
-**Problem**
-
-Repeated delivery must not turn one accepted addition or correction into extra accepted counts.
-
-**Context**
-
-Current creation keys already distinguish one intended addition from two separate additions of identical garments. Media stages and HTTP retries are not accepted-action identities.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | Unique measurement origin plus accepted logical-action identity and outcome kind; accepted revision where relevant | Concurrency-safe deduplication using existing database authority; preserves different action meanings | Requires precise stable origin/identity/time contract and expiry behavior |
-| B | Consumer computes a canonical fingerprint from immutable producer facts, including object, accepted revision, outcome and original time | Avoids a separate producer event identifier; can deduplicate equivalent deliveries | Canonicalization and stable original-time requirements become part of the contract; insufficient fields can collapse separate actions |
-
-**Recommended Solution**
-
-Option A — deduplicate by stable producer identity plus accepted action/meaning; use garment identity for creation and accepted revision/action for corrections.
-
-**Rationale**
-
-Two deliveries of one confirmed photo-backed addition count once, not once for upload and again for confirmation. Separate genuine additions remain separate even with identical profiles/photos. One accepted correction revision differs from creation and from a later revision. Rejected/no-op/replayed commands are not new accepted corrections merely because a request was received. Preserve original accepted/captured time on retries; never renew its measurement age.
-
-**Implementation Implications**
-
-Enforce uniqueness in Product Measurement persistence and race-test concurrent intake. Producers distinguish newly accepted work from replay; old creation replays after edits must not emit a new creation with current time/profile. If a retried original fact is already outside its 90-day user-linked window, do not recreate a fresh linked record. Define meaningful no-op reporting in JIT consistent with this recommendation, without rewriting story AC.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner / BA with Backend Tech Lead
-
-**Traceability**
-
-US-MEAS-001 AC-01/03/05; FR-MET-001/005/006; DATA-INT-004; DATA-RET-003; ADA-009; S3-GAR-04 and S3-IMG-04.
-
-#### S3-MEAS-05 — Enforcing the separate 90-day measurement limit
-
-**Problem**
-
-How will linked measurement stop being retained within the approved maximum, including interrupted cleanup and retries?
-
-**Context**
-
-DATA-RET-003 concerns linked engagement/measurement, not functional garment/history authority or the superseded 90-day ranking-decay rule.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | Age-based bounded physical deletion with resumable application-owned cleanup | Smallest mechanism; directly verifiable absence of old linked rows | Requires scheduled execution, progress/failure evidence and deadline-aware recovery |
-| B | Aggregate/de-identify by the deadline, then delete all linkable source/detail | May preserve useful nonpersonal totals | Must prove no residual user/action link or reidentification path; more policy and verification work |
-
-**Recommended Solution**
-
-Option A — delete linked measurement within 90 days of original capture; retain no older user-linked derivatives.
-
-**Rationale**
-
-Deletion is simpler to substantiate than introducing statistical aggregation and de-identification rules now. Reads hiding old rows do not establish physical deletion. Cleanup must run with enough operating margin and monitored recovery to meet the maximum; do not schedule the first attempt only after the deadline and call it compliant. A fixed clock, bounded batches and repeated execution support deterministic evidence. The exact schedule is JIT operational design, not a new retention period.
-
-**Implementation Implications**
-
-Expire source evidence, deduplication links and any staging/retry data that constitutes measurement together; assess diagnostic/export/backup handling so retention is not defeated by retained copies. Preserve original timestamps and reject aged replay resurrection. Test just before/at/after the deadline, interrupted batches/restarts and privacy-safe inspection. Necessary functional state and any applicable 30-day removed-data obligation remain separate and are not deleted/extended by this job.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner / BA for lifecycle interpretation; Backend Tech Lead for enforcement
-
-**Traceability**
-
-US-MEAS-001 AC-04/05; FR-MET-006; DATA-RET-001–003; BRULE-AUTH-007; BRULE-HIST-003; ASR-SEC-002; ADA-012/014.
-
-#### S3-MEAS-06 — Cross-story producer inventory
-
-**Problem**
-
-Which selected outcomes emit evidence, and is profile-revision measurement already required?
-
-**Context**
-
-Current sources explicitly require garment entry and correction distinctions. Profile-revision engagement is not explicitly listed in FR-MET-001 or this story’s required early producer scope.
-
-**Viable Solutions**
-
-| Option | Solution | Advantages | Disadvantages / Trade-offs |
-| --- | --- | --- | --- |
-| A | Manual/photo confirmed-addition and garment-correction facts; profile verification stays functional | Directly source-supported minimum; avoids unnecessary private tracking | No profile adoption/engagement measure is added |
-| B | Option A plus a minimal accepted-profile-revision fact after explicit PO approval | Could show whether the delivered preference capability is used | Additional collection needs a purpose decision; never include style/need values or sensitive context |
-
-**Recommended Solution**
-
-Option A — required wardrobe producers only; keep profile measurement optional and unimplemented unless the PO explicitly chooses Option B.
-
-**Rationale**
-
-Manual and photo routes share one accepted-addition meaning with a minimal route distinction only where needed; stage upload is a separate attempt/technical limitation. Edits emit accepted corrections, not additions. Profile storage/revision tests prove US-PROF-001 without inventing an analytics obligation. A future approved profile fact would use the same independent intake, identity and retention conventions; it must not alter the core transaction.
-
-**Implementation Implications**
-
-Prepare the minimum intake early, integrate producer hooks when their owners are implemented, and complete end-to-end evidence in US-MEAS-001. Future advice/Shuffle/Like/Dislike/Wear/Community/Chat/Try-On/Catalog/Bulk producers remain future feature work. Do not add a dashboard or full value-loop assembly. Record CAT-Q07 operational metric/cohort definitions before benefit interpretation.
-
-**Decision Status**
-
-PROPOSED — PENDING PO APPROVAL
-
-**Approval Owner**
-
-Product Owner / BA with Backend Tech Lead and QA
-
-**Traceability**
-
-US-MEAS-001 AC-01/02/04/06/07; US-GAR-002 AC-05/07; US-GAR-003 AC-04/06/07; US-PROF-001 AC-05/06; FR-MET-001/006/007; CAT-Q07; DD-007.
-
-### 9.5. Cross-Story Decisions
+### 9.4. Cross-Story Decisions
 
 #### S3-INT-01 — Compatible API evolution and shared recovery vocabulary
 
 **Problem**
 
-How can new revision/media/profile/intake contracts be introduced without breaking current creation, paging, detail or security checks?
+How can new revision/media/profile contracts be introduced without breaking current creation, paging, detail or security checks?
 
 **Context**
 
@@ -1368,7 +1168,7 @@ Product Owner / project owner with Backend Tech Lead and QA
 
 **Traceability**
 
-All four selected stories; Test Strategy real-integration/failure policy; DoD integration/CI/runtime triggers; ADA-006/007/013/014; AR-08; existing CI, DatabaseSchemaOwnershipIT and Wardrobe integration support.
+All three selected stories; Test Strategy real-integration/failure policy; DoD integration/CI/runtime triggers; ADA-006/007/013/014; AR-08; existing CI, DatabaseSchemaOwnershipIT and Wardrobe integration support.
 
 #### S3-INT-03 — JIT design packaging and shared-file coordination
 
@@ -1411,14 +1211,13 @@ Backend Tech Lead / Developers; Product Owner for scope or policy changes
 
 Workflow Sections 26/27/31–34; DD-006; DoD documentation/review conditions; existing Sprint 2 guide pattern; all selected stories.
 
-### 9.6. Technical references used to bound recommendations
+### 9.5. Technical references used to bound recommendations
 
 The following official documentation was consulted through Context7 for technical capabilities, not to supersede repository selections. Recommendations remain project judgments requiring the statuses above; no cited library or provider is installed by this plan.
 
 | Reference | Decision implication |
 | --- | --- |
 | [PostgreSQL 17 transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html), [row locking](https://www.postgresql.org/docs/17/explicit-locking.html) | Conditional UPDATE predicates are reevaluated after a concurrent row update; short row locks do not protect stale user intent across requests. Supports S3-GAR-02/05 and S3-PROF-04. |
-| [Spring transaction synchronization contract](https://github.com/spring-projects/spring-framework/blob/main/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronization.java), [callback exception handling](https://github.com/spring-projects/spring-framework/blob/main/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronizationUtils.java) | Post-commit access can retain bound resources; writes need an independent transaction. Different callback paths handle exceptions differently, so verify the actual chosen mechanism rather than claiming every AFTER_COMMIT error propagates or is swallowed. Supports S3-MEAS-03. |
 | [S3 presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html), [conditional writes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html) | Grants can be reused until expiry and uploads may overwrite existing keys; explicit immutable-object/replay controls are necessary. A storage grant is not a current application session. Supports S3-IMG-02/04/05. |
 | [libheif project documentation](https://github.com/strukturag/libheif/blob/master/README.md), [decoder security limits](https://github.com/strukturag/libheif/blob/master/libheif/api/libheif/heif_security.h) | HEIF/HEIC decoding has real codec/plugin and resource-limit requirements. Proves a candidate investigation direction, not a production dependency, supported-device result or license conclusion. Supports S3-IMG-06. |
 
@@ -1426,7 +1225,7 @@ Recheck the concrete deployed versions and provider/codec behavior in JIT design
 
 ## 10. Verification and Testing Strategy
 
-This is planned implementation evidence under the existing Test Strategy, not a report that Sprint 3 tests exist or have passed. Use selective TDD for meaningful policy/race boundaries where useful; tests and implementation evolve together. Verify the chosen recommendations only after their relevant decisions are resolved.
+This is planned implementation evidence under the existing Test Strategy, not a report that Sprint 3 tests exist or have passed. Use selective TDD for meaningful policy/race boundaries where useful; tests and implementation evolve together. Verify the approved approaches as implementation proceeds; resolve the independent INT questions, exact TTL policy and necessary JIT details before dependent work.
 
 ### 10.1 Story verification portfolio
 
@@ -1434,12 +1233,11 @@ This is planned implementation evidence under the existing Test Strategy, not a 
 | --- | --- | --- | --- | --- |
 | US-GAR-002 | All approved values/applicability; patch presence/clearing; distinct sets; Brand code points and exact text; known-zero Price, paired currency/precision; no inferred fields/readiness; canceled/invalid/no-op meaning | PostgreSQL versioned scalar/set persistence, rollback and coherent reads; owner/current authorization; new contract/errors; detail and collection after edit | Two edits of one revision; late set failure; stale removed selection; commit with lost response; old creation replay after edit; no stale automatic resend | Review, explicit correction/clear, cancellation, field guidance, conflict/recovery and truthful accepted state on supported clients |
 | US-GAR-003 | Image/stage authority, actual validation outcomes, explicit confirmation, stage/action fingerprint and private reference mapping; storage failure independent of imageless entry | Real object protocol adapter plus decoder fixtures for JPEG/JPG, PNG, HEIC/HEIF; real PostgreSQL association/creation; private reads; exact approved 15 MB and 511/512 shortest-dimension boundaries | Concurrent same-stage/same-action confirmation; conflicting payload/key; another owner’s stage; object success/DB rollback; commit/lost response; upload retry; sweep/confirm race; canceled/expired/abandoned work and resumed delete | Separate camera/library permission alternatives, guidance, supported real device HEIF, recognizable preview, replace/cancel before confirmation, manual continuation and private display/cache isolation |
-| US-PROF-001 | Seven profile styles distinct from garment Style; six need mappings; priority 0/1/2/3; absent versus zero; partial/clear semantics; no inferred persona or current-occasion overwrite | First owner migration and state round-trip; owner-scoped read/revision, public-contract isolation/currentness; transaction rollback and access errors | Competing first setup, competing edits, stale token, canceled/failed update, commit/lost response, rejected access/account switch; measurement outage if an optional producer is approved | Progressive setup/skip/later completion without first-garment quota; current versus unset values; accessible local labels; safe canceled/uncertain revision |
-| US-MEAS-001 | Source trust and event meanings; upload/attempt versus accepted addition; correction versus creation; canonical dedup identity/time; privacy field allowlist; no fabricated benefit | Real Product Measurement persistence/intake and independent transaction; real delivered producers; uniqueness; owner schema/retention; synthetic inspectable examples | Replayed/concurrent producer deliveries; original-time preservation; post-commit intake failure/timeout; process crash-loss limitation; 90-day before/at/after expiry, late replay rejection, interrupted purge/restart | Client exposure/attempt observations distinguished from backend acceptance; missing client reports remain unknown; no private photo/profile contents in evidence |
+| US-PROF-001 | Seven profile styles distinct from garment Style; six need mappings; priority 0/1/2/3; absent versus zero; partial/clear semantics; no inferred persona or current-occasion overwrite | First owner migration and state round-trip; owner-scoped read/revision, public-contract isolation/currentness; transaction rollback and access errors | Competing first setup, competing edits, stale token, canceled/failed update, commit/lost response, rejected access/account switch | Progressive setup/skip/later completion without first-garment quota; current versus unset values; accessible local labels; safe canceled/uncertain revision |
 
 For image validation, test honest formats and adversarial suffix/Content-Type mismatch, truncation, malformed containers, metadata/GPS exposure, orientation, decoder allocation/time limits and temporary-file cleanup. Non-white backgrounds are permitted. Do not invent a lower size limit or claim format support from header inspection alone. A valid input that cannot be processed is a truthful limitation requiring resolution, not silently “unsupported” by new policy.
 
-Known removal behavior can be exercised with deliberate owner-controlled integration fixtures even though no removal endpoint is selected. Such fixtures verify an edit/read precondition; they do not claim a new garment-removal feature. Likewise, fixtures for future producers test contract meaning only and do not implement Wear/ranking.
+Known removal behavior can be exercised with deliberate owner-controlled integration fixtures even though no removal endpoint is selected. Such fixtures verify an edit/read precondition; they do not claim a new garment-removal feature. No future producer or Wear/ranking implementation is selected.
 
 ### 10.2 Regression and shared boundaries
 
@@ -1453,32 +1251,32 @@ Known removal behavior can be exercised with deliberate owner-controlled integra
 
 ### 10.3 Failure evidence and honest limits
 
-Use barriers/latches or equivalent deterministic coordination for races, injected clocks for age/deadline boundaries and deliberate adapter/database faults for partial success. Assertions must inspect persisted business truth and API outcomes, not merely mocks or log messages. Verify interruption before/after each durable media transition and that cleanup eventually resumes without deleting attached media.
+Use barriers/latches or equivalent deterministic coordination for races, injected clocks for media lifecycle/expiry boundaries and deliberate adapter/database faults for partial success. Assertions must inspect persisted business truth and API outcomes, not merely mocks or log messages. Verify interruption before/after each durable media transition and that cleanup eventually resumes without deleting attached media.
 
-The 90-day measurement limit needs physical lifecycle evidence and operational deadline recovery, including retained copies where applicable. It is distinct from the 30-day removed-data obligation and has no effect on matching-engine ranking. No fixed weights, boost, recency penalty, ranking cap or decay is approved by this Sprint.
+Media lifecycle/deletion evidence remains applicable to the selected photo capability. Measurement retention implementation and verification are outside this Sprint; their upstream requirements remain unchanged. No fixed weights, boost, recency penalty, ranking cap or decay is approved by this Sprint.
 
 Capture environment, implemented commit, safe fixture/source IDs, actual results and known limitations in existing PR/test/review evidence. Required real-provider/device evidence remains outstanding until executed; an emulator or backend-only pass is not evidence of a production-ready integrated mobile story.
 
 ## 11. Definition of Done and Completion Evidence
 
-The [existing DoD](../../definition-of-done.md), Sections 3–6, is the completion authority; this section applies it rather than replacing it. Each selected story requires all its applicable source AC and common/triggered conditions. An enabler demonstrates its defined evidence outcome without creating an unnecessary user-facing analytics feature.
+The [existing DoD](../../definition-of-done.md), Sections 3–6, is the completion authority; this section applies it rather than replacing it. Each selected story requires all its applicable source AC and common/triggered conditions.
 
 | DoD area / trigger | Sprint 3 completion evidence |
 | --- | --- |
 | Requirements and business rules | Story-scoped AC mapping with passing behavior and stable source IDs; 13-property authority, optional values, explicit confirmation and current-context meanings preserved |
 | API/service contract changes | Actual OpenAPI/consumer and all-handler contract checks match implemented success, clear/conflict, media, privacy and recovery behavior |
 | Persistence and migrations | Forward owner-specific migrations, supported V8 transition/fresh migration, constraints, coherent set writes and tested rollback; no cross-owner SQL/FK |
-| Authorization and privacy | Real session/owner denial, logout/reset/account-switch tests, purpose-minimal external input, private media and measurement field inspection; no training data use |
+| Authorization and privacy | Real session/owner denial, logout/reset/account-switch tests, purpose-minimal external input, private media and privacy-safe operational evidence; no training data use |
 | Concurrency and uncertainty | Deterministic competing-edit/setup/confirmation tests; original action deduplication; commit/lost-response review and no false success or duplicate action |
 | Required integrations and runtime | Actual storage adapter/decoder and private provider configuration evidence, resumable lifecycle/cleanup and honest unavailable-media behavior; relevant deployment/configuration guidance synchronized |
-| Retention and non-blocking measurement | Linked measurement physically expires/de-identifies by the existing deadline; retries preserve age; measurement failure leaves accepted core truth/response intact; pending media policy resolved and tested |
+| Media lifecycle and outcome integrity | Pending-media TTL policy resolved and lifecycle/cleanup tested; applicable media retention/deletion obligations preserved; optional measurement failure cannot reverse accepted core truth/response, without requiring a measurement implementation |
 | Automation and regression | Relevant unit/real integration/security/contract/architecture tests and full verification pass on the integrated revision; required CI checks actually run and pass |
 | Review and documentation | Appropriate change review, no unresolved blocking behavior/Critical defect, affected contracts/design/configuration and traceability reflect delivered truth; no ceremonial unrelated edits |
 | Client and usable Increment | Supported Vietnamese Android/iOS review/permissions/skip/recovery flows and applicable accessibility evidence; demonstrated integrated behavior with existing access and Wardrobe capabilities |
 
 At review, distinguish **planning complete**, **backend implemented**, **backend verified**, and **whole story Done**. The latter requires actual collaborating client/integration evidence where triggered. No new status workflow or separate evidence document per story is required. Missing required evidence means the corresponding work is not Done; it is not waived by this plan or by later privacy/quality PBIs.
 
-A useful demonstration walks through an authenticated current garment correction, one new private photo-backed confirmed garment, private preference setup/revision and inspectable minimum addition/correction evidence. Repeat with another account, a stale edit, interrupted confirmation and unavailable measurement. Use synthetic data and describe any missing client/provider evidence explicitly. This demonstration is a proposed review scenario, not a claim that it has run.
+A useful demonstration walks through an authenticated current garment correction, one new private photo-backed confirmed garment, and private preference setup/revision. Repeat with another account, a stale edit, interrupted confirmation and unavailable media. Use synthetic data and describe any missing client/provider evidence explicitly. This demonstration is a proposed review scenario, not a claim that it has run.
 
 ## 12. Risks and Open Questions
 
@@ -1487,15 +1285,12 @@ A useful demonstration walks through an authenticated current garment correction
 | Risk / open point | Effect and handling | Owner / relevant decision |
 | --- | --- | --- |
 | HEIC/HEIF deployment feasibility | Native codec/plugin availability, security limits and actual device fixtures must be proven; do not weaken approved input support | Backend Tech Lead; S3-IMG-06 and S3-INT-02 |
-| Pending-upload lifetime is unspecified | Requires an explicit expiry/retention policy before lifecycle completion; no invented TTL | PO/BA; S3-IMG-08 is blocked for this policy |
-| Concrete deployed provider is unselected | Confirm access, private delivery, region/privacy, cost/operations and actual adapter compatibility before adoption | Project Owner/PO with Tech Lead; S3-IMG-01 |
+| Pending-upload lifetime is unspecified | Requires an explicit expiry/retention policy before lifecycle completion; no invented TTL | PO/BA; S3-IMG-08 approach approved, exact pending-media TTL remains unresolved |
+| Approved provider strategy still requires deployment verification | AWS account configuration, private delivery, region/privacy, budget and actual adapter compatibility are not established by strategy approval | Project Owner/PO with Tech Lead; S3-IMG-01 |
 | Lost corrections or accidental clearing | Presence-aware contract, explicit category-dependent correction and revision conflicts require client/backend agreement | PO/BA, Backend/client contributors; S3-GAR-01–05, S3-PROF-03/04 |
 | Orphan/raced or inaccessible media | Durable intent, guarded confirmation/cleanup, immutable identity, safe reread and deletion retry; DB commit is not object atomicity | Backend Tech Lead; S3-IMG-03–05/08 |
-| Measurement loss versus inflated truth | Recommended best-effort post-commit intake can lose evidence; acknowledge gaps and deduplicate accepted logical actions instead of promising guaranteed delivery | PO/BA with Tech Lead; S3-MEAS-01/03/04 |
-| CAT-Q07 metric/cohort definitions | Operational counts/benefits and cohorts need PO/BA/QA agreement before interpretation; minimum typed action evidence can proceed without invented KPI definitions | PO/BA and QA; S3-MEAS-01/06 |
-| Profile measurement is not an explicit current producer requirement | Recommend no profile engagement collection by default; optional minimum fact requires separate PO selection | PO/BA; S3-MEAS-06 |
 | Exact image contract interpretation | MB byte interpretation, multi-image HEIF handling, metadata/original strategy and any user-visible extra resource limit need JIT review; no silent requirement relaxation | Tech Lead with PO for policy effects; S3-IMG-06/08 |
-| Client participation and PBI-002 evidence | Camera/gallery, progressive entry, accessibility and actual privacy proof cannot be established from backend source; identify missing evidence without assuming capacity or selecting extra stories | Developers/QA with PO; Sections 7/10/11 |
+| Client participation and applicable privacy evidence | Camera/gallery, progressive entry, accessibility and actual privacy proof cannot be established from backend source; identify missing evidence without assuming capacity or selecting extra stories | Developers/QA with PO; Sections 7/10/11 |
 | CI may not run for the intended integration path | Current workflow lacks PR target sprint_03; actual branch/PR strategy must trigger the required checks | Developers/Tech Lead; S3-INT-02 |
 
 PRD MVP-Q01–Q10 remain the source for expansion-specific sharing, saved-look, Chat, try-on, catalog/bulk, allocation and engine questions. They do not make those unselected features Sprint 3 prerequisites. Resolve an expansion question here only if a demonstrated dependency affects a selected outcome; do not settle future sharing consent, preview provider or owner allocation through private photo implementation.
@@ -1506,52 +1301,46 @@ These findings are recorded without editing their source files. Newer explicit a
 
 | Finding | Governing interpretation / limitation |
 | --- | --- |
-| Selected story status paragraphs and refinement review Section 10.3 still say Draft/candidate and no Sprint assignment | Historical/current-source status is preserved. The latest user instruction now explicitly selects exactly four for this plan; it does not approve new recommendations or claim software Done |
+| Selected story status paragraphs and refinement review Section 10.3 still say Draft/candidate and no Sprint assignment | Historical/current-source status is preserved. The current PO instruction selects exactly three stories and approves the 18 GAR/IMG/PROF recommended solutions; it does not claim software Done |
 | PBI-008 heading retains “with readiness guidance”; UC-007 Goal and AD-007 review wording retain fragments about readiness/compatibility; UC-009 Section 15 still lists OPQ-012–014 as unresolved | The final property authority, revised BRULE-GAR-003, resolved PRD decisions and actual NOT_EVALUATED contract override stale wording. No readiness/compatibility gate or already-resolved Brand/Price question is reopened |
 | [Product Goal Section 9](../../product-goal.md#9-traceability) has older version labels and some `../01-business` / `../02-product` / `../03-requirements` relative links that do not resolve from its own directory | Use actual canonical BRD/PRD/SRS/rules paths in this plan and current content, not the old labels/links; no source repair is performed |
 | [Backend conventions Section 1](../../../engineering/backend-conventions.md#1-controllers-group-a-cohesive-api) still says only AuthController exists | WardrobeGarmentController demonstrably exists and is reused; the governing cohesive-controller rule is still valid |
 | Data View notes retain an “Identity-only implemented” statement | V8 and actual Wardrobe create/page/detail source prove Wardrobe persistence also exists; conceptual ownership remains valid |
 | Test Strategy Sections 24–26 retain old UC/Activity counts, old source versions and initial preparation/implementation disclaimers | Current catalogue has 31 UC specifications and 21 Activity Diagrams; actual Sprint 1–2 backend exists. Its testing principles remain applicable; obsolete snapshot wording is not a current software claim |
-| Workflow Section 37 contains an illustrative Sprint 3 recommendation roadmap; Section 32 recommends consistent Sprint length | The explicit current four-story selection and flexible planning instruction govern this plan. No Sprint 3 recommendation engine, duration or timing constraint is inferred |
+| Workflow Section 37 contains an illustrative Sprint 3 recommendation roadmap; Section 32 recommends consistent Sprint length | The explicit current three-story selection and flexible planning instruction govern this plan. No Sprint 3 recommendation engine, duration or timing constraint is inferred |
 | CI and CORS configuration do not yet cover all likely Sprint 3 verbs/headers/integration targets | These are confirmed code/configuration limitations to synchronize with implementation, not evidence that future API checks will automatically work |
 
 The inconsistencies do not authorize product-policy changes. Relevant source corrections can be proposed separately when authorized; this task preserves all other artifacts.
 
 ## 13. Consolidated Decision Register
 
-The register contains exactly one row per detailed decision. The three APPROVED entries restate existing scope/ownership/semantics only. New work has 21 proposed recommendations, two technical choices deferred to JIT design and one pending-policy blocker. Approval owners review decisions in context; one person holding multiple roles does not convert a recommendation into approval.
+The register contains exactly 21 entries: 5 GAR, 8 IMG, 5 PROF and 3 INT. All 18 GAR/IMG/PROF recommended solutions are explicitly PO-approved. S3-INT-01 and S3-INT-02 remain proposed and pending PO approval; S3-INT-03 remains deferred to JIT design. S3-IMG-06 approval is limited to the investigation direction, and S3-IMG-08 approval does not select an exact pending-media TTL.
 
 | Decision ID | Related Story | Question | Recommended Option | Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S3-GAR-01](#s3-gar-01--update-semantics-and-optional-clearing) | US-GAR-002 | Update semantics and optional clearing | B — Presence-aware PATCH and explicit clearing | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-GAR-02](#s3-gar-02--concurrent-garment-edits-and-stale-versions) | US-GAR-002 | Concurrent garment edits and stale versions | B — Optimistic expected-revision acceptance | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-GAR-03](#s3-gar-03--category-changes-and-inapplicable-accepted-values) | US-GAR-002 | Category changes and inapplicable accepted values | B — Explicit correction/clearing of incompatibilities | PROPOSED — PENDING PO APPROVAL | Product Owner with BA and Backend Tech Lead |
-| [S3-GAR-04](#s3-gar-04--commit-followed-by-a-lost-update-response) | US-GAR-002 | Commit followed by a lost update response | A — Authenticated reread; original revision on retry | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-GAR-05](#s3-gar-05--validation-and-atomic-garment-revision) | US-GAR-002 | Validation and atomic garment revision | A — Shared validation; atomic owner transaction | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-IMG-01](#s3-img-01--private-storage-provider-and-environment-boundary) | US-GAR-003 | Private storage provider and environment boundary | A — Local S3 compatibility; proposed managed S3 deployment | PROPOSED — PENDING PO APPROVAL | Product Owner / project owner with Backend Tech Lead |
-| [S3-IMG-02](#s3-img-02--upload-transport) | US-GAR-003 | Upload transport | A — Authenticated application-proxied multipart | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-IMG-03](#s3-img-03--upload-versus-explicit-garment-confirmation) | US-GAR-003 | Upload versus explicit garment confirmation | B — Stage privately, then confirm new garment | PROPOSED — PENDING PO APPROVAL | Product Owner with BA and Backend Tech Lead |
-| [S3-IMG-04](#s3-img-04--databaseobject-consistency-and-orphan-recovery) | US-GAR-003 | Database/object consistency and orphan recovery | A — Durable pending coordination and resumable cleanup | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-IMG-05](#s3-img-05--private-image-delivery-under-current-application-authority) | US-GAR-003 | Private image delivery under current application authority | A — Application-authorized private streaming | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead / security reviewer |
-| [S3-IMG-06](#s3-img-06--supported-image-validation-and-safe-decoding) | US-GAR-003 | Supported image validation and safe decoding | B — Investigate bounded decoder; finalize JIT | DEFERRED TO JIT DESIGN | Backend Tech Lead; Product Owner for any user-visible policy or requirement change |
+| [S3-GAR-01](#s3-gar-01--update-semantics-and-optional-clearing) | US-GAR-002 | Update semantics and optional clearing | B — Presence-aware PATCH and explicit clearing | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-GAR-02](#s3-gar-02--concurrent-garment-edits-and-stale-versions) | US-GAR-002 | Concurrent garment edits and stale versions | B — Optimistic expected-revision acceptance | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-GAR-03](#s3-gar-03--category-changes-and-inapplicable-accepted-values) | US-GAR-002 | Category changes and inapplicable accepted values | B — Explicit correction/clearing of incompatibilities | APPROVED | Product Owner with BA and Backend Tech Lead |
+| [S3-GAR-04](#s3-gar-04--commit-followed-by-a-lost-update-response) | US-GAR-002 | Commit followed by a lost update response | A — Authenticated reread; original revision on retry | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-GAR-05](#s3-gar-05--validation-and-atomic-garment-revision) | US-GAR-002 | Validation and atomic garment revision | A — Shared validation; atomic owner transaction | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-IMG-01](#s3-img-01--private-storage-provider-and-environment-boundary) | US-GAR-003 | Private storage provider and environment boundary | A — Local S3 compatibility; proposed managed S3 deployment | APPROVED | Product Owner / project owner with Backend Tech Lead |
+| [S3-IMG-02](#s3-img-02--upload-transport) | US-GAR-003 | Upload transport | A — Authenticated application-proxied multipart | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-IMG-03](#s3-img-03--upload-versus-explicit-garment-confirmation) | US-GAR-003 | Upload versus explicit garment confirmation | B — Stage privately, then confirm new garment | APPROVED | Product Owner with BA and Backend Tech Lead |
+| [S3-IMG-04](#s3-img-04--databaseobject-consistency-and-orphan-recovery) | US-GAR-003 | Database/object consistency and orphan recovery | A — Durable pending coordination and resumable cleanup | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-IMG-05](#s3-img-05--private-image-delivery-under-current-application-authority) | US-GAR-003 | Private image delivery under current application authority | A — Application-authorized private streaming | APPROVED | Product Owner with Backend Tech Lead / security reviewer |
+| [S3-IMG-06](#s3-img-06--supported-image-validation-and-safe-decoding) | US-GAR-003 | Supported image validation and safe decoding | B — Investigate bounded decoder; finalize JIT | APPROVED | Backend Tech Lead; Product Owner for any user-visible policy or requirement change |
 | [S3-IMG-07](#s3-img-07--photo-attachment-scope) | US-GAR-003 | Photo attachment scope | A — New garment only; pre-confirmation replacement | APPROVED | Product Owner — existing story scope authority |
-| [S3-IMG-08](#s3-img-08--pending-media-lifecycle-expiry-and-deletion-policy) | US-GAR-003 | Pending media lifecycle, expiry and deletion policy | A — Recoverable lifecycle; PO selects pending expiry | BLOCKED — REQUIRES PO DECISION | Product Owner / BA for pending retention policy; Backend Tech Lead for implementation |
+| [S3-IMG-08](#s3-img-08--pending-media-lifecycle-expiry-and-deletion-policy) | US-GAR-003 | Pending media lifecycle, expiry and deletion policy | A — Recoverable lifecycle; PO selects pending expiry | APPROVED | Product Owner / BA for pending retention policy; Backend Tech Lead for implementation |
 | [S3-PROF-01](#s3-prof-01--persistence-ownership) | US-PROF-001 | Persistence ownership | A — Personal Context owns persistence | APPROVED | Product Owner / architecture authority — existing selected boundary |
 | [S3-PROF-02](#s3-prof-02--unset-context-canonical-styles-and-explicit-zero) | US-PROF-001 | Unset context, canonical styles and explicit zero | A — Preserve unset, canonical values and explicit zero | APPROVED | Product Owner — existing requirements and business-rule authority |
-| [S3-PROF-03](#s3-prof-03--profile-revision-semantics) | US-PROF-001 | Profile revision semantics | B — Presence-aware partial profile revision | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-PROF-04](#s3-prof-04--concurrent-profile-setup-and-revisions) | US-PROF-001 | Concurrent profile setup and revisions | B — Optimistic revision; guarded first setup | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-PROF-05](#s3-prof-05--published-current-context-integration) | US-PROF-001 | Published current-context integration | A — Minimal published current-context query | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-MEAS-01](#s3-meas-01--minimum-measurement-scope-and-source-of-truth) | US-MEAS-001 | Minimum measurement scope and source of truth | A — Minimum source-distinguished evidence | PROPOSED — PENDING PO APPROVAL | Product Owner / BA with Developers and QA |
-| [S3-MEAS-02](#s3-meas-02--measurement-ownership-and-storage-shape) | US-MEAS-001 | Measurement ownership and storage shape | A — Minimal owner-local PostgreSQL evidence | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead; BA/QA review evidence meaning |
-| [S3-MEAS-03](#s3-meas-03--business-acceptance-survives-measurement-failure) | US-MEAS-001 | Business acceptance survives measurement failure | A — Independent post-commit best-effort intake | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S3-MEAS-04](#s3-meas-04--deduplicating-accepted-logical-actions) | US-MEAS-001 | Deduplicating accepted logical actions | A — Stable producer action/meaning uniqueness | PROPOSED — PENDING PO APPROVAL | Product Owner / BA with Backend Tech Lead |
-| [S3-MEAS-05](#s3-meas-05--enforcing-the-separate-90-day-measurement-limit) | US-MEAS-001 | Enforcing the separate 90-day measurement limit | A — Delete linked evidence within 90 days | PROPOSED — PENDING PO APPROVAL | Product Owner / BA for lifecycle interpretation; Backend Tech Lead for enforcement |
-| [S3-MEAS-06](#s3-meas-06--cross-story-producer-inventory) | US-MEAS-001; all selected producers | Cross-story producer inventory | A — Wardrobe producers; profile metric optional | PROPOSED — PENDING PO APPROVAL | Product Owner / BA with Backend Tech Lead and QA |
-| [S3-INT-01](#s3-int-01--compatible-api-evolution-and-shared-recovery-vocabulary) | All four selected stories | Compatible API evolution and shared recovery vocabulary | A — Compatible contracts and shared recovery meanings | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and client contributor |
-| [S3-INT-02](#s3-int-02--integration-environment-and-executable-evidence) | All four selected stories | Integration environment and executable evidence | A — Isolated real integrations plus provider checks | PROPOSED — PENDING PO APPROVAL | Product Owner / project owner with Backend Tech Lead and QA |
-| [S3-INT-03](#s3-int-03--jit-design-packaging-and-shared-file-coordination) | All four selected stories | JIT design packaging and shared-file coordination | A — Selected-story guides when requested; JIT packaging | DEFERRED TO JIT DESIGN | Backend Tech Lead / Developers; Product Owner for scope or policy changes |
+| [S3-PROF-03](#s3-prof-03--profile-revision-semantics) | US-PROF-001 | Profile revision semantics | B — Presence-aware partial profile revision | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-PROF-04](#s3-prof-04--concurrent-profile-setup-and-revisions) | US-PROF-001 | Concurrent profile setup and revisions | B — Optimistic revision; guarded first setup | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-PROF-05](#s3-prof-05--published-current-context-integration) | US-PROF-001 | Published current-context integration | A — Minimal published current-context query | APPROVED | Product Owner with Backend Tech Lead |
+| [S3-INT-01](#s3-int-01--compatible-api-evolution-and-shared-recovery-vocabulary) | All three selected stories | Compatible API evolution and shared recovery vocabulary | A — Compatible contracts and shared recovery meanings | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and client contributor |
+| [S3-INT-02](#s3-int-02--integration-environment-and-executable-evidence) | All three selected stories | Integration environment and executable evidence | A — Isolated real integrations plus provider checks | PROPOSED — PENDING PO APPROVAL | Product Owner / project owner with Backend Tech Lead and QA |
+| [S3-INT-03](#s3-int-03--jit-design-packaging-and-shared-file-coordination) | All three selected stories | JIT design packaging and shared-file coordination | A — Selected-story guides when requested; JIT packaging | DEFERRED TO JIT DESIGN | Backend Tech Lead / Developers; Product Owner for scope or policy changes |
 
-Review the shared garment/profile update convention together (S3-GAR-01/02/04 and S3-PROF-03/04), then the staged-media package (S3-IMG-01–06/08), then the minimum measurement package (S3-MEAS-01–06). This groups review efficiently without creating additional decisions. S3-IMG-07 and S3-PROF-01/02 remain approved constraints; a proposed provider or mechanism must fit them.
+Use the approved garment/profile and staged-media analyses as the direction for selected-story JIT work. Resolve the exact pending-media TTL and necessary technical details without reopening the approved options. Review S3-INT-01/02 independently and finalize S3-INT-03 during JIT design; their current statuses are unchanged.
 
 ## 14. Requirements Traceability
 
@@ -1604,24 +1393,9 @@ The following tables reproduce the selected stories’ existing traceability wit
 
 **Applicable architecture / decision / AC anchors:** ADA-003/008/009/010/014–018; AR-01–08; S3-PROF-01–05; AC-01–AC-06. Shared cross-story decisions S3-INT-01–03 apply proportionally.
 
-#### 14.1.4. US-MEAS-001
-
-| Source | References |
-| --- | --- |
-| Parent PBI | [PBI-009](../../product-backlog.md#pbi-009--minimum-necessary-measurement-from-first-wardrobe-use); scoped outcome and dependencies |
-| Business | [BRD](../../../01-business/BRD.md): BR-019, BR-021 |
-| Product | [PRD](../../../02-product/PRD.md): FEAT-MET-001 |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-MET-001–FR-MET-003, FR-MET-005–FR-MET-007; DATA-RET-003; NFR-TEST-002; ERR-MET-001 |
-| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-007, BRULE-WEAR-006, BRULE-HIST-003 |
-| Use Cases | [UC-007](../../../03-requirements/use-cases/UC-007-add-garment.md); [UC-013](../../../03-requirements/use-cases/UC-013-provide-outfit-feedback.md); [UC-014](../../../03-requirements/use-cases/UC-014-record-wear-event.md); applicable interaction slices / verification anchors only |
-| Activity Diagrams | No dedicated activity for this slice is required by the current baseline; the linked textual Use Cases govern relevant behavior. |
-| Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
-
-**Applicable architecture / decision / AC anchors:** ADA-003/009/012/014–018; AR-01–08; S3-MEAS-01–06; AC-01–AC-07. Shared cross-story decisions S3-INT-01–03 apply proportionally.
-
 ### 14.2 Cross-cutting quality and evidence chain
 
-All four stories also apply the [catalogue shared quality](../../stories/README.md#2-shared-quality-and-completion): FR-AUTH-008/009, COM-001/002/003, NFR-SEC-001–003, NFR-PRIV-001/002, applicable DATA-INT-001–004 and DATA-RET-001–003, localization/accessibility and source-specific error requirements. Relevant architectural drivers include [ASR](../../../04-architecture/ASR.md) ASR-SEC-001/002, ASR-REL-001/002 and ASR-INT-001, grounded in [Quality Attribute Analysis](../../../04-architecture/quality-attribute-analysis.md).
+All three stories also apply the [catalogue shared quality](../../stories/README.md#2-shared-quality-and-completion): FR-AUTH-008/009, COM-001/002/003, NFR-SEC-001–003, NFR-PRIV-001/002, applicable DATA-INT-001–004 and DATA-RET-001/002, localization/accessibility and source-specific error requirements. Relevant architectural drivers include [ASR](../../../04-architecture/ASR.md) ASR-SEC-001/002, ASR-REL-001/002 and ASR-INT-001, grounded in [Quality Attribute Analysis](../../../04-architecture/quality-attribute-analysis.md).
 
 Traceability continues from **source requirement/rule → existing story AC → S3 decision where needed → selected-story JIT contract/design → implementation and executable check → review/CI/client/provider evidence**. Sections 10–11 identify planned evidence categories; they are not invented test identifiers or links to unexecuted results. Add actual check/result references with implementation rather than fabricating them now.
 
@@ -1629,10 +1403,12 @@ The [Logical](../../../04-architecture/views/logical-view.puml), [Implementation
 
 ## 15. Final Sprint 3 Planning Summary
 
-The proposed Goal is trustworthy, recognizable private wardrobe maintenance and entry, declared personal context and reliable minimum evidence. Exactly US-GAR-002, US-GAR-003, US-PROF-001 and US-MEAS-001 are selected. Recommended order is garment editing → photo-supported creation → private preferences → completed measurement integration, with measurement definitions prepared early and profile preparation able to proceed independently.
+The Sprint Goal connects trustworthy, recognizable private wardrobe maintenance and entry with declared personal context. Exactly US-GAR-002, US-GAR-003 and US-PROF-001 are selected. Recommended order is garment editing → photo-supported creation → private preferences; profile preparation can proceed independently. No measurement implementation is part of this Sprint.
 
-The 27 analyzed questions yield 21 proposed recommendations, three restatements of existing approval, two bounded JIT technical choices and one pending-policy blocker. Key directions are presence-aware partial edits with optimistic protection, authenticated reread after uncertainty, staged private media with durable cleanup coordination, Personal Context ownership with absent/zero distinctions, and minimal post-commit measurement with stable logical-action deduplication and physical 90-day expiry. Deployed storage choice, pending-media policy and other new recommendations are not approved by writing this plan.
+The register has 21 decisions: 18 approved GAR/IMG/PROF solutions, two independent INT recommendations pending PO approval and one INT choice deferred to JIT design. The approved directions remain unchanged: presence-aware partial edits with optimistic protection, authenticated reread after uncertainty, staged private media with durable cleanup coordination, and Personal Context ownership with absent/zero distinctions.
 
-After PO/technical review resolves the relevant decisions, execute each selected story through **JIT design → automated tests plus implementation → refactor/integration verification → PR/CI/review → applicable AC + DoD**. Keep a usable Increment and adapt the plan through learning. Do not complete all Sprint API/schema/sequence/state designs first, add a second design phase, select unlisted stories or implement unrelated expanded-MVP capabilities.
+Approval of S3-IMG-01 selects the provider strategy without claiming AWS configuration, budget, compatibility or deployment verification. S3-IMG-06 approves the bounded-decoder investigation direction; the concrete toolchain and evidence remain JIT work. S3-IMG-08 approves the lifecycle approach; the exact pending-media TTL still requires PO selection. Other necessary API, data, transaction and verification details remain story-specific JIT work.
 
-This planning task changes only this file. It implements no backend behavior, does not run or claim passing backend tests, and establishes no complete mobile-story Done, production readiness or product-benefit result. Plan validation concerns source/AC coverage, register consistency, navigation, Mermaid rendering and repository change isolation; actual software verification remains the implementation evidence defined above.
+Apply the approved solutions and resolve the remaining relevant policy/INT/JIT questions before dependent implementation. Each selected story then follows **JIT design → automated tests plus implementation → refactor/integration verification → PR/CI/review → applicable AC + DoD**. Keep a usable Increment and adapt through learning without a whole-Sprint design gate, a second design phase or unselected feature implementation.
+
+This documentation-only update changes only this file. It implements no backend behavior and executes no backend build or tests. It does not claim Sprint 3 implementation, testing, CI, deployment or complete mobile-story Done. Plan validation covers preserved analysis/recommendations, scope, status/register consistency, navigation, Mermaid rendering and repository change isolation; actual software verification remains future delivery work.
