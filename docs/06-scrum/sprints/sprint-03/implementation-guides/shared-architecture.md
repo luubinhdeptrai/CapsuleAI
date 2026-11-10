@@ -6,6 +6,7 @@
 | Stories | US-GAR-002 → US-GAR-003 → US-PROF-001 (PROF-001 can be prepared independently) |
 | Baseline | `sprint_03` @ `9d158fb` |
 | Status | Implementation guidance only. **No code in this package has been compiled, run or tested.** See [README §2](README.md#2-verification-status--read-this-first). |
+| Decisions | All 21 plan decisions (S3-GAR, S3-IMG, S3-PROF, S3-INT) and the 16 detailed choices OPEN-S3-01–16 are **approved by the Product Owner** (2026-11-11). Their implementation and verification status is tracked in the [decision record](open-questions.md#2-summary-register). |
 | Companion files | [README](README.md) · [open questions](open-questions.md) · [US-GAR-002](US-GAR-002-guide.md) · [US-GAR-003](US-GAR-003-guide.md) · [US-PROF-001](US-PROF-001-guide.md) |
 
 ## 1. Purpose and scope
@@ -43,13 +44,14 @@ The Sprint 1 and 2 guides are used only as **structure and quality references**.
 
 1. **Explicit Product Owner decisions:**
    - the 2026-11-11 approvals of S3-GAR-01–05, S3-IMG-01–08 and S3-PROF-01–05;
+   - the later 2026-11-11 approvals of S3-INT-01–03 (Option A) and of the 16 detailed choices OPEN-S3-01–16 in [open-questions.md](open-questions.md);
    - the 2026-11-07 Brand/Price/Style decisions.
 2. **Garment property authority** (`Initial files/Image to Properties Extraction.md`) and delivery decision DD-007.
 3. **SRS, Business Rules, PRD, BRD.** Newer explicit approvals override older wording.
 4. **Story acceptance criteria** (US-GAR-002 AC-01–08, US-GAR-003 AC-01–07, US-PROF-001 AC-01–06).
 5. **Sprint 3 plan:** analysis, decision register and DoD application.
 6. **Architecture:** ADA-001–018 selections, AR-01–08, ADD and views.
-7. **This package.** Where it chooses something the sources leave open, it says so and points to an `OPEN-S3-xx` entry.
+7. **This package.** Every detail the sources left open points to an `OPEN-S3-xx` entry, all approved. Once a story is implemented, the code, `docs/05-api/openapi.yaml` and the migrations win over guide text (S3-INT-03).
 
 Known stale wording is listed in plan §12.2:
 
@@ -66,8 +68,8 @@ It does not change any rule below.
 | `[ADD]` | The file does not exist at the story's starting point; create it with the full content shown |
 | `[MODIFY]` | The file exists; apply the shown change at the quoted BEFORE anchor, or replace the whole file where the step says so |
 | BEFORE / AFTER | BEFORE is text that must exist exactly once at the starting point; AFTER is the replacement |
-| `OPEN-S3-xx` | Code or values that depend on an unresolved question in [open-questions.md](open-questions.md) |
-| `S3-…` | An approved (or INT) decision in the Sprint 3 plan |
+| `OPEN-S3-xx` | Code or values that implement a detailed choice approved by the Product Owner on 2026-11-11. The entry in [open-questions.md](open-questions.md) holds the alternatives, the remaining verification and the change impact if the PO ever revises it |
+| `S3-…` | An approved decision in the Sprint 3 plan |
 | Starting point | US-GAR-002 starts at `9d158fb`; US-GAR-003 starts after US-GAR-002 is applied; US-PROF-001 starts after US-GAR-003 is applied (or see §21 for independent preparation) |
 
 No guide contains a fabricated commit hash for a later stage. "After US-GAR-002" means "after all US-GAR-002 steps are applied", whatever commit that becomes.
@@ -150,7 +152,7 @@ flowchart LR
 
 ## 8. Revision and optimistic concurrency
 
-S3-GAR-02 and S3-PROF-04 are APPROVED. The token transport is OPEN-S3-04 (provisional: body fields).
+S3-GAR-02 and S3-PROF-04 are APPROVED. The token transport is OPEN-S3-04, also approved: an opaque `revision` string in responses, `expectedRevision` in the PATCH body, `409 REVISION_CONFLICT`.
 
 - **Storage:** a `revision BIGINT NOT NULL CHECK (revision >= 1)` column in the owner's table.
 - **Representation:** in responses, `"revision": "<decimal>"`, an **opaque** string. Clients echo it unchanged as `"expectedRevision"`.
@@ -175,7 +177,7 @@ S3-GAR-02 and S3-PROF-04 are APPROVED. The token transport is OPEN-S3-04 (provis
 
   0 rows → `409 REVISION_CONFLICT`. One owner can have only one profile.
 - **No automatic retry:** a conflict is never retried server-side and never "merged". The client rereads and the user reviews (S3-GAR-04).
-- **No-op edits:** OPEN-S3-06, provisional. Write nothing and return `200` with the unchanged revision, after the precondition has passed.
+- **No-op edits:** OPEN-S3-06, approved. Write nothing and return `200` with the unchanged revision, after the precondition has passed. A stale `expectedRevision` is still `409`, even when nothing would change. Both branches must be tested.
 
 ```mermaid
 sequenceDiagram
@@ -206,7 +208,7 @@ sequenceDiagram
 
 ## 10. Presence-aware partial updates
 
-S3-GAR-01 and S3-PROF-03 are APPROVED; OPEN-S3-05 is provisional.
+S3-GAR-01 and S3-PROF-03 are APPROVED, and so is their encoding, OPEN-S3-05.
 
 Media type: `application/json`.
 
@@ -397,8 +399,17 @@ stateDiagram-v2
   GREATEST(now, created_at + in-flight-fence)
   ```
 
-  The fence (`PT5M`) is longer than the storage call timeout plus the decode timeout, so cleanup cannot delete before a late put lands. An uploader whose final `RECEIVING → READY` update fails also resets `object_deleted_at = NULL` and `next_cleanup_at = now`, which re-queues deletion. Together these prevent late orphans (S3-IMG-04).
+  The fence (`PT5M`) must be longer than the storage call timeout plus twice the decode timeout (checked at startup), so cleanup cannot delete before a late put lands. An uploader whose final `RECEIVING → READY` update fails also resets `object_deleted_at = NULL` and `next_cleanup_at = now`, which re-queues deletion. Together these prevent late orphans (S3-IMG-04).
 - **Attached media** is never selected by expiry or cleanup: both queries require status `RECEIVING`, `READY` or `DISCARDED`.
+- **Pending lifetime.** 24 hours (`PT24H`), approved by the PO (OPEN-S3-07), configurable.
+- **Decoding** (OPEN-S3-08/10/12, approved; verification pending):
+  - JPEG and PNG are decoded in Java ImageIO; HEIC/HEIF by libheif's `heif-info` and `heif-dec` in bounded subprocesses that share one decode deadline.
+  - Only a metadata-free, orientation-corrected JPEG with a long edge of at most 2048 px is stored.
+  - Safety ceilings: 250 MP declared per image, 20 s, 2 concurrent decodes; busy slots give `503`.
+- **Multi-image HEIF** (OPEN-S3-11, approved):
+  - The target is the file's **primary** image, found through `heif-info`'s `, primary` line and `heif-dec`'s matching numbered output (US-GAR-003 §10.9).
+  - Until verification V4/V8 passes, `capsuleai.wardrobe.photo.heif-primary-image-selection=false` keeps the approved temporary fail-closed fallback, `422 PHOTO_MULTIPLE_IMAGES`.
+  - No arbitrary image is ever chosen.
 - **Missing objects.** A missing object for an attached photo gives `404 GARMENT_PHOTO_UNAVAILABLE` on the photo route only. The garment JSON stays readable (AC-06).
 - **Delivery.** Private delivery is application streaming after the owner check (S3-IMG-05), with:
 
@@ -440,10 +451,10 @@ sequenceDiagram
 - **Owner:** `com.capsuleai.personalcontext`, schema `personal_context` (S3-PROF-01, AR-01). It is the module's first persisted state; V11 creates the schema.
 - **Vocabulary:** independent of garment Style.
   - `ProfileStyle`: `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`.
-  - `CommonNeed`: six needs, codes per OPEN-S3-15, each with its SRS §3.14.1 occasion codes.
+  - `CommonNeed`: six needs, codes per OPEN-S3-15 (approved), each with its SRS §3.14.1 occasion codes.
   - `NeedPriority`: `NOT_RELEVANT=0`, `LOW=1`, `MEDIUM=2`, `HIGH=3`.
 - **Absent and zero** (S3-PROF-02): an unset need is absent (`null`); `0` is a declaration and stays `0`. The current request occasion is not stored and never rewrites needs (AC-03).
-- **Published contract** (S3-PROF-05, OPEN-S3-16): `personalcontext.api.CurrentPersonalContext.find(UUID)` returns `Optional<DeclaredPersonalContext>`, containing the revision, style codes and declared needs only. It has no consumer in Sprint 3.
+- **Published contract** (S3-PROF-05, OPEN-S3-16, approved): `personalcontext.api.CurrentPersonalContext.find(UUID)` returns `Optional<DeclaredPersonalContext>`, containing the revision, style codes and declared needs only. It has no consumer in Sprint 3; an integration test and the architecture tests must still prove it.
 
 ## 19. Configuration and environment variables
 
@@ -452,22 +463,24 @@ sequenceDiagram
 | `spring.servlet.multipart.max-file-size` / `max-request-size` | `16MB` / `17MB` | same | GAR-003 | Transport guard only (OPEN-S3-09) |
 | `spring.servlet.multipart.resolve-lazily` | `true` | same | GAR-003 | Size errors reach the scoped Wardrobe handler |
 | `server.tomcat.max-swallow-size` | `20MB` | — | GAR-003 | Clients receive the 422 instead of a reset connection |
-| `capsuleai.wardrobe.photo.maximum-bytes` | `15000000` | same | GAR-003 | OPEN-S3-09 |
+| `capsuleai.wardrobe.photo.maximum-bytes` | `15000000` | same | GAR-003 | OPEN-S3-09 (approved) |
 | `capsuleai.wardrobe.photo.minimum-shortest-side` | `512` | same | GAR-003 | FR-AI-012 |
-| `capsuleai.wardrobe.photo.derivative-long-edge` | `2048` | same | GAR-003 | OPEN-S3-10 |
-| `capsuleai.wardrobe.photo.maximum-declared-pixels` | `250000000` | same | GAR-003 | OPEN-S3-12 |
-| `capsuleai.wardrobe.photo.decode-timeout` | `PT20S` | same | GAR-003 | OPEN-S3-12 |
-| `capsuleai.wardrobe.photo.maximum-concurrent-decodes` | `2` | same | GAR-003 | OPEN-S3-12 |
-| `capsuleai.wardrobe.photo.heif-decoder-command` | `heif-dec` | env `CAPSULE_HEIF_DECODER` | GAR-003 | OPEN-S3-08 |
-| `capsuleai.wardrobe.photo-upload.pending-ttl` | `PT24H` | same | GAR-003 | **OPEN-S3-07, provisional** |
-| `capsuleai.wardrobe.photo-upload.in-flight-fence` | `PT5M` | same | GAR-003 | ≥ storage timeout + decode timeout |
+| `capsuleai.wardrobe.photo.derivative-long-edge` | `2048` | same | GAR-003 | OPEN-S3-10 (approved) |
+| `capsuleai.wardrobe.photo.maximum-declared-pixels` | `250000000` | same | GAR-003 | OPEN-S3-12 (approved; to be measured) |
+| `capsuleai.wardrobe.photo.decode-timeout` | `PT20S` | same | GAR-003 | OPEN-S3-12 (approved; to be measured); shared by `heif-info` and `heif-dec` |
+| `capsuleai.wardrobe.photo.maximum-concurrent-decodes` | `2` | same | GAR-003 | OPEN-S3-12 (approved; to be measured) |
+| `capsuleai.wardrobe.photo.heif-decoder-command` | `heif-dec` | env `CAPSULE_HEIF_DECODER` | GAR-003 | OPEN-S3-08 (approved; V1–V8 pending) |
+| `capsuleai.wardrobe.photo.heif-info-command` | `heif-info` | env `CAPSULE_HEIF_INFO` | GAR-003 | OPEN-S3-08/11: lists top-level images and marks the primary |
+| `capsuleai.wardrobe.photo.heif-primary-image-selection` | `false` | `false` (`HeifDecodingIT` builds both modes itself) | GAR-003 | OPEN-S3-11: `true` is the approved target, set only after V4 and V8 pass for that environment; `false` is the approved temporary fail-closed fallback |
+| `capsuleai.wardrobe.photo-upload.pending-ttl` | `PT24H` | same | GAR-003 | OPEN-S3-07 (approved by the PO) |
+| `capsuleai.wardrobe.photo-upload.in-flight-fence` | `PT5M` | same | GAR-003 | > storage call timeout + 2 × decode timeout (startup check) |
 | `capsuleai.wardrobe.photo-upload.cleanup.enabled` / `initial-delay` / `interval` / `batch-size` / `retry-delay` | `true` / `PT1M` / `PT5M` / `100` / `PT10M` | `false` (tests call the service) | GAR-003 | |
 | `capsuleai.wardrobe.photo-storage.bucket` | `${CAPSULE_PHOTO_BUCKET:}` (required at first use) | `capsuleai-photos-test` | GAR-003 | Private bucket |
 | `capsuleai.wardrobe.photo-storage.region` | `${CAPSULE_PHOTO_REGION:ap-southeast-1}` | `us-east-1` | GAR-003 | Region choice is a deployment decision (S3-IMG-01) |
 | `capsuleai.wardrobe.photo-storage.endpoint` | `${CAPSULE_PHOTO_ENDPOINT:}` (empty = AWS) | dummy, overridden in storage ITs | GAR-003 | Local: `http://localhost:9090` |
 | `capsuleai.wardrobe.photo-storage.access-key-id` / `secret-access-key` | `${CAPSULE_PHOTO_ACCESS_KEY_ID:}` / `${CAPSULE_PHOTO_SECRET_ACCESS_KEY:}` | dummy | GAR-003 | Empty → AWS default credentials chain; never commit real values |
 | `capsuleai.wardrobe.photo-storage.call-timeout` | `PT30S` | same | GAR-003 | SDK `apiCallTimeout` (timeouts are off by default in the SDK) |
-| `capsuleai.wardrobe.photo-storage.conditional-writes` | `true` | per V-S3 result | GAR-003 | OPEN-S3-13 |
+| `capsuleai.wardrobe.photo-storage.conditional-writes` | `true` | per V-S3 result | GAR-003 | OPEN-S3-13 (approved; V-S3 pending) |
 | `capsuleai.wardrobe.photo-storage.path-style` | `false` | `true` | GAR-003 | Local S3Mock needs path-style |
 
 Personal Context adds no configuration property.
@@ -530,12 +543,12 @@ flowchart LR
 | Layer | Pattern (existing) | Sprint 3 use |
 | --- | --- | --- |
 | Domain unit (`*Test`, Surefire) | Pure JUnit 6 + AssertJ | `GarmentTest`, `PhotoUploadTest`, `DeclaredPreferencesTest` |
-| Application unit (`*Test`) | In-memory fakes (`InMemoryGarmentRepository`, `ImmediateWardrobeTransactions`) | `ReviseGarmentServiceTest`, `StagePhotoUploadServiceTest`, `PhotoBackedGarmentCreationTest`, `PhotoUploadCleanupServiceTest`, `RevisePreferencesServiceTest` |
+| Application unit (`*Test`) | In-memory fakes (`InMemoryGarmentRepository`, `ImmediateWardrobeTransactions`) | `ReviseGarmentServiceTest`, `StagePhotoUploadServiceTest`, `PhotoBackedGarmentCreationTest`, `PhotoUploadLifecycleServiceTest`, `RevisePreferencesServiceTest` |
 | Web mapping unit (`*Test`) | Jackson `JsonMapper` | `GarmentRevisionRequestTest`, `PreferencesRevisionRequestTest` |
-| Imaging unit (`*Test`) | Synthetic JPEG/PNG generated in the test with ImageIO; no binary fixtures | `ImageIoPhotoInspectorTest` |
+| Imaging unit (`*Test`) | Synthetic JPEG/PNG generated in the test with ImageIO; no binary fixtures | `ImageIoPhotoInspectorTest`, `HeifDecoderTest` (listing, primary selection and fail-closed rules without libheif) |
 | Integration (`*IT`, Failsafe) | `IdentityIntegrationTestSupport`: real app, real filter chain, PostgreSQL Testcontainers, `MutableClock` | API, schema and concurrency ITs per story |
-| Real storage | Testcontainers `GenericContainer("adobe/s3mock:5.1.0")` | `S3PhotoStorageIT`, `PhotoGarmentEndToEndIT` |
-| Real decoder | Installed libheif; `CAPSULEAI_REQUIRE_HEIF=true` in CI turns a missing tool into a failure | `HeifDecodingIT` |
+| Real storage | Testcontainers `GenericContainer("adobe/s3mock:5.1.0")` | `S3PhotoStorageIT` (API ITs use the in-memory `FaultInjectingPhotoStorage`) |
+| Real decoder | Installed libheif; `CAPSULEAI_REQUIRE_HEIF=true` in CI turns a missing tool into a failure | `HeifDecodingIT`, including primary-image selection when the primary is not the first image |
 | Concurrency | `CountDownLatch`/`CyclicBarrier` with real transactions (existing `ConcurrentGarmentCreationIT` style) | `ConcurrentGarmentRevisionIT`, `ConcurrentPhotoConfirmationIT`, `ConcurrentPreferencesIT` |
 | Contract | `IdentityOpenApiContractIT` (all handlers) | Extended for multipart and binary in GAR-003 |
 | Architecture | `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` | Run unchanged against new code; DatabaseSchemaOwnershipIT also asserts the `personal_context` tables |
@@ -569,19 +582,21 @@ Commands, from `backend`, in Windows PowerShell 5.1 (single quotes keep `-D` arg
 | S3-GAR-03 | APPROVED | GAR-002 `ReviseGarmentService` (validate the resulting profile) |
 | S3-GAR-04 | APPROVED | GAR-002 §10 recovery; this file §11, §16 |
 | S3-GAR-05 | APPROVED | GAR-002 shared validator and transaction |
-| S3-IMG-01 | APPROVED (strategy) | GAR-003 storage adapter; OPEN-S3-13 |
+| S3-IMG-01 | APPROVED (strategy) | GAR-003 storage adapter; OPEN-S3-13 (approved; V-S3 pending) |
 | S3-IMG-02 | APPROVED | GAR-003 multipart controller |
 | S3-IMG-03 | APPROVED | GAR-003 staged upload + `photoUploadId` |
 | S3-IMG-04 | APPROVED | GAR-003 V10, lifecycle, fence; this file §17 |
 | S3-IMG-05 | APPROVED | GAR-003 streaming routes |
-| S3-IMG-06 | APPROVED (investigation direction) | GAR-003 inspector; OPEN-S3-08/09/10/11/12 |
+| S3-IMG-06 | APPROVED (investigation direction); concrete choices OPEN-S3-08/09/10/11/12 approved, toolchain unverified | GAR-003 inspector and `HeifDecoder`, §10.9 |
 | S3-IMG-07 | APPROVED | GAR-003 scope (no attach/replace routes) |
-| S3-IMG-08 | APPROVED (lifecycle; TTL open) | GAR-003 cleanup; OPEN-S3-07 |
+| S3-IMG-08 | APPROVED (lifecycle); TTL `PT24H` approved through OPEN-S3-07 | GAR-003 cleanup |
 | S3-PROF-01 | APPROVED | PROF-001 module and V11 |
 | S3-PROF-02 | APPROVED | PROF-001 domain; OPEN-S3-15 |
 | S3-PROF-03 | APPROVED | PROF-001 PATCH; OPEN-S3-05 |
 | S3-PROF-04 | APPROVED | PROF-001 revision and guarded create |
 | S3-PROF-05 | APPROVED | PROF-001 `api`; OPEN-S3-16 |
-| S3-INT-01 | PROPOSED — PENDING PO APPROVAL | OPEN-S3-01 (provisional Option A everywhere) |
-| S3-INT-02 | PROPOSED — PENDING PO APPROVAL | OPEN-S3-02 |
-| S3-INT-03 | DEFERRED TO JIT DESIGN | OPEN-S3-03 (this package) |
+| S3-INT-01 | APPROVED (Option A) | OPEN-S3-01: all three guides (shared errors §11, CORS, contract test) |
+| S3-INT-02 | APPROVED (Option A); executable evidence pending | OPEN-S3-02: Testcontainers, S3Mock, libheif in CI, `sprint_03` trigger; real-provider check outstanding |
+| S3-INT-03 | APPROVED (Option A); reconcile guides with the implementation during execution | OPEN-S3-03: this package and §21 |
+
+The per-choice traceability for OPEN-S3-01–16 (design sections, production steps, test steps, remaining verification) is in [open-questions.md §3](open-questions.md#3-coverage-and-traceability-matrix).

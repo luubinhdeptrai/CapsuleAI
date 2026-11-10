@@ -5,8 +5,8 @@
 | Story | [US-GAR-002](../../../stories/garment/US-GAR-002-correct-and-enrich-garment-information.md) (Draft v0.4), parent PBI-008 |
 | Sprint | Sprint 3, story 1 of 3 (recommended order GAR-002 → GAR-003 → PROF-001) |
 | Starting point | `sprint_03` @ `9d158fb`, clean tree |
-| Approved decisions applied | S3-GAR-01, S3-GAR-02, S3-GAR-03, S3-GAR-04, S3-GAR-05 |
-| Provisional choices used | OPEN-S3-01 (API evolution), OPEN-S3-02 (CI trigger), OPEN-S3-04 (revision token in body, `409`), OPEN-S3-05 (`application/json` presence rules), OPEN-S3-06 (no-op keeps revision): see [open questions](open-questions.md) |
+| Approved decisions applied | S3-GAR-01, S3-GAR-02, S3-GAR-03, S3-GAR-04, S3-GAR-05; S3-INT-01, S3-INT-02, S3-INT-03 |
+| Approved detailed choices used | All **approved by the Product Owner on 2026-11-11** ([decision record](open-questions.md)): OPEN-S3-01 (compatible API evolution, shared error vocabulary), OPEN-S3-02 (isolated integration evidence; CI for `sprint_03` PRs), OPEN-S3-04 (opaque `revision` string, `expectedRevision` in the body, `409 REVISION_CONFLICT`), OPEN-S3-05 (`application/json` presence rules, Price replaced as a whole), OPEN-S3-06 (a no-op keeps the revision). Approval is not evidence: each is still to be implemented and verified by the tests below |
 | Verification status | **Not compiled, not run, not tested.** Every code block is a proposed future change written against the inspected baseline. See §16 and [README §2](README.md#2-verification-status--read-this-first). |
 | Shared rules | [shared-architecture.md](shared-architecture.md) §8 (revisions), §10 (presence-aware PATCH), §11 (errors), §21 (cumulative file order) |
 
@@ -226,6 +226,8 @@ Architecture and decisions:
 | S3-GAR-03 | Option B — require explicit correction or clearing of every resulting inapplicable value; a client may offer Option A as a visibly confirmed editing aid. | APPROVED |
 | S3-GAR-04 | Option A — recover by authenticated reread and reuse the original expected revision for any uncertain retry; keep durable creation/confirmation idempotency. | APPROVED |
 | S3-GAR-05 | Option A — shared domain/application validation plus appropriate database constraints, within one Wardrobe-owned transaction. | APPROVED |
+
+The cross-story decisions S3-INT-01 (compatible API evolution with one error, revision and recovery convention), S3-INT-02 (isolated integration evidence) and S3-INT-03 (story guides with shared-file coordination) are approved as Option A ([plan §9.4](../sprint-plan.md#94-cross-story-decisions)).
 
 ## 9. Engineering Interpretation
 
@@ -2232,7 +2234,7 @@ AFTER:
       summary: Correct or enrich one owned garment
       description: |
         US-GAR-002 (FR-WAR-003, FR-GAR-001–013, BRULE-GAR-002/005/006/009/010;
-        approved S3-GAR-01–05; provisional OPEN-S3-04/05/06).
+        approved S3-GAR-01–05 and OPEN-S3-04/05/06).
 
         Applies an explicitly confirmed, presence-aware edit to a
         current garment of the authenticated account:
@@ -2520,7 +2522,7 @@ AFTER:
 
 ### Step P22 — [MODIFY] `.github/workflows/backend-ci.yml`
 
-Change 1: PRs into `sprint_03` run CI (OPEN-S3-02, provisional). BEFORE:
+Change 1: PRs into `sprint_03` run CI (S3-INT-02 / OPEN-S3-02, approved). BEFORE:
 
 ```yaml
   pull_request:
@@ -3196,6 +3198,10 @@ class ReviseGarmentServiceTest {
 
         assertThatThrownBy(() -> service.revise(command(tee, "1", new Edit()
                 .set("color", FieldChange.replace("BLUE")))))
+                .isInstanceOf(GarmentRevisionConflictException.class);
+        assertThatThrownBy(() -> service.revise(command(tee, "1", new Edit()
+                .set("color", FieldChange.replace("RED")))))
+                .as("OPEN-S3-06: a stale precondition is a conflict even when nothing would change")
                 .isInstanceOf(GarmentRevisionConflictException.class);
 
         Garment current = garments.findOwned(OWNER, tee.id()).orElseThrow();
@@ -4322,7 +4328,11 @@ Expect `200`.
 | S3-GAR-04 | T7 lost response, creation replay after edit |
 | S3-GAR-05 | P6 shared validator; T8 rollback; T6 CHECK |
 | AR-01–08 | `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`, `ArchitectureDependencyTest` (unchanged) |
-| S3-INT-01 (OPEN-S3-01) | `IdentityOpenApiContractIT` (PATCH documented and enforced), T9 CORS |
+| S3-INT-01 / OPEN-S3-01 | `IdentityOpenApiContractIT` (PATCH documented and enforced), T9 CORS, shared error codes and neutral 503 (P18; T2 `aFailedEditIsRolledBack…`) |
+| S3-INT-02 / OPEN-S3-02 | Real PostgreSQL ITs (T6–T8, T2); P22 adds the `sprint_03` PR trigger and the six reports |
+| OPEN-S3-04 (revision token) | T4 `aMissingOrMalformedExpectedRevision…`, `aStaleRevisionIsAConflict…`; T5; T7 `aStaleRevision…Reread…`; T8 race |
+| OPEN-S3-05 (presence rules, whole Price) | T5 (omitted versus `null`, wrong kinds, Price as one object); T4 `priceIsReplacedOrCleared…`, `anIncompletePrice…`, `nullClears…` |
+| OPEN-S3-06 (no-op) | T4 `anEditThatChangesNothing…` (no write) and `aStaleRevisionIsAConflict…` (a stale no-op is still `409`); T7 `anEditThatChangesNothingKeepsTheRevision` |
 
 ## 16. Definition of Done
 
@@ -4336,10 +4346,10 @@ Statuses: **Planned** (this guide), **Implemented**, **Verified** (tests and CI 
 | Forward migration, V8 transition tested | P1; T6 | Planned |
 | Authorization and privacy | Owner-scoped SQL; 401/404/410 tests | Planned |
 | Concurrency and uncertainty | T7, T8 | Planned |
-| Full `clean verify` and required CI reports | P22; the `sprint_03` trigger depends on OPEN-S3-02 approval | Planned |
+| Full `clean verify` and required CI reports | P22; the `sprint_03` trigger is approved (OPEN-S3-02) but CI must actually run and pass on the PR | Planned |
 | Review, no open blocker or Critical defect | PR review | Not started |
 | Client evidence (review, clear, cancel, conflict, uncertainty UI) | Out of backend scope | **Outstanding** |
-| OPEN-S3-01/04/05/06 resolved or accepted | See [open questions](open-questions.md) | Pending PO / JIT verification |
+| Approved choices OPEN-S3-01/02/04/05/06 implemented as specified | Decisions approved by the PO on 2026-11-11 ([decision record](open-questions.md)); proven only by the tests in §15.2 once they pass | Planned |
 
 **Honesty note.** This guide was written without compiling or running anything. Nothing above is implemented or verified until the steps are applied and `clean verify` passes.
 
@@ -4368,7 +4378,7 @@ Statuses: **Planned** (this guide), **Implemented**, **Verified** (tests and CI 
 - [ ] OpenAPI 0.9.0 renders in the Swagger Editor; the PATCH examples validate.
 - [ ] Manual script §14 run against the local profile; outputs recorded without secrets.
 - [ ] README updated (P23).
-- [ ] OPEN-S3-01/02/04/05/06 statuses re-checked; if a decision changed, apply the "change impact" from [open questions](open-questions.md).
+- [ ] The approved choices OPEN-S3-01/02/04/05/06 are implemented exactly as specified, without reopening them; if the PO later revises one, apply its "change impact" from the [decision record](open-questions.md).
 - [ ] PR opened against `sprint_03` (CI trigger from P22); no commit contains `.env`, tokens or generated output.
 - [ ] Client evidence for AC-01/05/07 requested; the story is **not** marked Done without it.
 

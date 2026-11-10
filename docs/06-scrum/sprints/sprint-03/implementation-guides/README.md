@@ -5,7 +5,8 @@
 | Sprint | Sprint 3: trustworthy and recognizable private wardrobe, declared personal context |
 | Sprint Goal | Enable users to build a more trustworthy and recognizable private wardrobe by correcting accepted garment information, confirming photo-supported additions, and declaring personal style and common needs. |
 | Stories | US-GAR-002, US-GAR-003, US-PROF-001 (exactly these three; US-MEAS-001 is removed from Sprint 3) |
-| Plan | [Sprint 3 plan](../sprint-plan.md) v0.2: 21-entry decision register (18 approved, 2 pending, 1 deferred to JIT) |
+| Plan | [Sprint 3 plan](../sprint-plan.md) v0.3: 21-entry decision register, **all 21 approved** by the Product Owner |
+| Detailed choices | The 16 detailed choices OPEN-S3-01–16 in the [decision record](open-questions.md) were **approved by the Product Owner on 2026-11-11**. Their implementation and verification are still pending |
 | Baseline inspected | Branch `sprint_03`, commit `9d158fb`, clean working tree |
 | Package status | Documentation only. **No code in this package has been compiled, run, tested or deployed.** |
 
@@ -27,8 +28,8 @@ The package does **not** change any Java, test, migration, OpenAPI, configuratio
 | Item | Status |
 | --- | --- |
 | Proposed Java, SQL, YAML and properties | **Not compiled or executed.** They were written against the inspected baseline files (exact class, method and anchor text) and reviewed by reading, not by a build. Expect to fix small compile issues while applying them. |
-| Library facts the design depends on | Checked read-only. **Jackson 3.1.5** (local Maven cache, by bytecode): an absent `JsonNode` creator property is `null` and an explicit JSON `null` is a `NullNode`; `isString()`, `stringValue()`, `properties()`, `isIntegralNumber()` and `canConvertToInt()` exist. **AWS SDK v2**: `PutObjectRequest.ifNoneMatch` returns `412` when the key exists; timeouts are off by default. **libheif `heif-dec`**: decodes all top-level images, applies transforms by default, writes no EXIF/XMP unless asked, keeps security limits unless `--disable-limits`. **MinIO**: community images stopped in October 2025. **Adobe S3Mock 5.1.0**: published June 2026. |
-| Facts still requiring verification | The HEIF toolchain on target OS and CI (OPEN-S3-08, V1–V7); S3Mock and AWS behaviour (OPEN-S3-13, V-S3); decoder resource ceilings (OPEN-S3-12) |
+| Library facts the design depends on | Checked read-only. **Jackson 3.1.5** (local Maven cache, by bytecode): an absent `JsonNode` creator property is `null` and an explicit JSON `null` is a `NullNode`; `isString()`, `stringValue()`, `properties()`, `isIntegralNumber()` and `canConvertToInt()` exist. **AWS SDK v2**: `PutObjectRequest.ifNoneMatch` returns `412` when the key exists; timeouts are off by default. **libheif** (upstream sources read on 2026-11-11): `heif-dec` decodes all top-level images in libheif's top-level order, numbering several outputs from 1. It applies transforms by default, writes no EXIF/XMP unless asked, and keeps security limits unless `--disable-limits`. `heif-info` lists the same top-level images and marks the primary one with `, primary`. libheif keeps file order and does not move the primary image first. `heif-enc` makes its first input primary. **MinIO**: community images stopped in October 2025. **Adobe S3Mock 5.1.0**: published June 2026. |
+| Facts still requiring verification | The HEIF toolchain on the target OS and CI, including the primary-image mapping (OPEN-S3-08/11, V1–V8). S3Mock and AWS behaviour (OPEN-S3-13, V-S3). Decoder resource ceilings (OPEN-S3-12). Approval of a choice does not verify it. |
 | Test counts in CI steps | They equal the `@Test` methods written in each guide; they are not results |
 | Fabricated evidence | None. No stage commit hashes, test results or deployments are claimed. |
 
@@ -104,45 +105,28 @@ Every story guide has the same 18 sections:
 
 Labels (`[ADD]`, `[MODIFY]`, BEFORE/AFTER, `OPEN-S3-xx`, `S3-…`) are defined in [shared architecture §4](shared-architecture.md#4-labels-and-conventions-used-in-the-guides).
 
-## 8. Decisions and open questions
+## 8. Decisions and approved detailed choices
 
-**Approved by the Product Owner on 2026-11-11** (applied, never reopened):
+**Plan decisions approved by the Product Owner on 2026-11-11** (applied, never reopened):
 
 | Story | Decisions |
 | --- | --- |
 | US-GAR-002 | S3-GAR-01 presence-aware PATCH · S3-GAR-02 optimistic revision · S3-GAR-03 explicit correction/clearing · S3-GAR-04 reread and original-revision retry · S3-GAR-05 shared validation and atomic transaction |
 | US-GAR-003 | S3-IMG-01 local S3-compatible + managed S3 (strategy only) · S3-IMG-02 application-proxied multipart · S3-IMG-03 stage then confirm · S3-IMG-04 durable pending coordination · S3-IMG-05 application streaming · S3-IMG-06 bounded decoder (**investigation direction only**) · S3-IMG-07 new garments only · S3-IMG-08 recoverable lifecycle (**TTL not selected**) |
 | US-PROF-001 | S3-PROF-01 Personal Context owns persistence · S3-PROF-02 unset, canonical, explicit zero · S3-PROF-03 presence-aware revision · S3-PROF-04 optimistic revision + guarded create · S3-PROF-05 minimal published context |
+| All three | S3-INT-01 compatible API evolution and one recovery vocabulary · S3-INT-02 isolated integration evidence plus real-provider checks · S3-INT-03 story guides with shared-file coordination (reconciled with the implementation during execution) |
 
-**Not approved:**
+**The 16 detailed choices ([decision record](open-questions.md)) were approved by the Product Owner on 2026-11-11.** Each guide labels the code that implements a choice with its `OPEN-S3-xx` ID. Approval authorizes the direction. It does not show that the code compiles, that the tests pass or that a technology works in the deployment environment.
 
-- S3-INT-01 and S3-INT-02 are *proposed, pending PO approval*;
-- S3-INT-03 is *deferred to JIT design*.
-
-**[Open questions](open-questions.md): 16 unresolved items.** The guides implement each provisional choice and label it with its ID. None is presented as approved.
-
-| Status | Count | IDs |
+| Approved choice | IDs | Implementation / verification still pending |
 | --- | --- | --- |
-| RECOMMENDED — PENDING APPROVAL | 8 | OPEN-S3-01, 02, 04, 05, 09, 10, 14, 15 |
-| TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED | 6 | OPEN-S3-03, 06, 08, 12, 13, 16 |
-| BLOCKED — REQUIRES PO DECISION | 2 | OPEN-S3-07 (pending-media TTL, provisional `PT24H`), OPEN-S3-11 (multi-image HEIF; interim explicit rejection) |
+| Contracts: compatible evolution, opaque `revision` + `expectedRevision` + `409`, `application/json` presence rules with whole-Price replacement, no-op keeps the revision, `/photo-uploads` + `photoUploadId`, `/personal-context/preferences` with six need codes and `revision: null` | OPEN-S3-01, 04, 05, 06, 14, 15 | Implementation and the tests in each guide; client evidence |
+| Policy: 24-hour pending TTL (`PT24H`, configurable); 15,000,000 bytes; metadata-free JPEG ≤ 2048 px, original not kept | OPEN-S3-07, 09, 10 | Implementation and tests |
+| Multi-image HEIF: the **primary** image is the target; explicit `PHOTO_MULTIPLE_IMAGES` rejection is the temporary fail-closed fallback | OPEN-S3-11 | V4/V8 on the deployment image and CI, then `heif-primary-image-selection=true`; until then only the fallback ships |
+| Technology: libheif `heif-info` + `heif-dec` subprocess with ImageIO; ceilings 250 MP / 20 s / 2 decodes; AWS SDK 2.46.13 + S3Mock 5.1.0 | OPEN-S3-08, 12, 13 | V1–V8, measurements on the deployment size, V-S3 against S3Mock and private AWS S3 |
+| Process and evidence: isolated Testcontainers + S3Mock + libheif in CI, `sprint_03` trigger; this guide package; minimal `CurrentPersonalContext` now | OPEN-S3-02, 03, 16 | CI runs; guides reconciled with the implementation; architecture tests for the published contract |
 
-The per-item status is in the [summary register](open-questions.md#2-summary-register).
-
-**Key provisional choices:**
-
-- revision token in the body with `409`;
-- `application/json` presence rules;
-- no-op edits keep the revision;
-- 24-hour pending TTL (configurable, **not approved**);
-- libheif `heif-dec` + ImageIO;
-- 15,000,000 bytes;
-- a normalized JPEG ≤ 2048 px with no original kept;
-- explicit rejection of multi-image HEIF;
-- AWS SDK 2.46.13 + S3Mock 5.1.0;
-- the `/photo-uploads` resource;
-- need codes, with `null` = unset;
-- a minimal published context now.
+The per-item statuses and the traceability matrix are in the [summary register](open-questions.md#2-summary-register) and [§3 of the decision record](open-questions.md#3-coverage-and-traceability-matrix).
 
 ## 9. Prerequisites for implementing
 
@@ -157,7 +141,7 @@ The per-item status is in the [summary register](open-questions.md#2-summary-reg
 ## 10. Per-story workflow
 
 1. Re-check the starting point: `git status --short` and `git log -1`. Confirm the previous guide's changes are present, or use the merge notes.
-2. Re-check open-question statuses. If a decision changed, apply its "change impact" first.
+2. Re-check the [decision record](open-questions.md). The approved choices are not reopened; if the PO later revises one, apply its "change impact" first.
 3. Apply the production steps in order, then the test steps. Run focused tests after each logical group.
 4. Run `.\mvnw.cmd clean verify` and inspect the reports: none missing, failed or skipped.
 5. Run the manual script (§14 of the guide) against the `local` profile.
@@ -170,15 +154,15 @@ The per-item status is in the [summary register](open-questions.md#2-summary-reg
 | --- | --- | --- | --- | --- | --- |
 | Baseline | V1–V8 | 0.8.0 | GET, POST | 69 | — |
 | US-GAR-002 | + V9 | 0.9.0 | + PATCH | 75 | `PATCH /api/v1/wardrobe/garments/{id}` |
-| US-GAR-003 | + V10 | 0.10.0 | + DELETE | 87 | `/api/v1/wardrobe/photo-uploads` (POST, GET, GET content, DELETE); `GET /garments/{id}/photo` |
-| US-PROF-001 | + V11 | 0.11.0 | (PATCH) | 94 | `GET`/`PATCH /api/v1/personal-context/preferences` |
+| US-GAR-003 | + V10 | 0.10.0 | + DELETE | 88 | `/api/v1/wardrobe/photo-uploads` (POST, GET, GET content, DELETE); `GET /garments/{id}/photo` |
+| US-PROF-001 | + V11 | 0.11.0 | (PATCH) | 95 | `GET`/`PATCH /api/v1/personal-context/preferences` |
 
 These are planned states, not observed ones.
 
 ## 12. Continuous integration
 
-- **Trigger.** US-GAR-002 adds `sprint_03` to the PR trigger (OPEN-S3-02, provisional), so PRs into the sprint branch run the full verification.
-- **HEIF in CI.** US-GAR-003 installs libheif on the runner and sets `CAPSULEAI_REQUIRE_HEIF=true`. A missing decoder then fails the build instead of skipping `HeifDecodingIT`.
+- **Trigger.** US-GAR-002 adds `sprint_03` to the PR trigger (S3-INT-02 / OPEN-S3-02, approved), so PRs into the sprint branch run the full verification.
+- **HEIF in CI.** US-GAR-003 installs libheif on the runner and sets `CAPSULEAI_REQUIRE_HEIF=true`. A missing decoder then fails the build instead of skipping `HeifDecodingIT`. Its primary-image tests are the automated part of V4/V8 on the runner.
 - **Required reports.** The guard keeps requiring zero skips. Counts only grow; never lower a count to make a build pass.
 
 ## 13. Branching and pull requests
@@ -198,8 +182,9 @@ These guides do not commit, push, merge or open PRs. When implementing:
   - onboarding skip and return;
   - localization and accessibility.
 - **Real AWS S3 behaviour** (account, region, budget, deployment, conditional writes) is not established; an emulator pass is protocol evidence only.
-- **HEIF** on the target OS, CI and real devices is not verified (V1–V7).
-- **The pending-media TTL and multi-image HEIF policy** need PO decisions before US-GAR-003 can be Done.
+- **HEIF** on the target OS, CI and real devices is not verified (V1–V8).
+- **Multi-image HEIF.** The approved target is the primary image (OPEN-S3-11). It is implemented behind `capsuleai.wardrobe.photo.heif-primary-image-selection`, which stays `false` until V4/V8 pass. Until then such files are rejected explicitly, and the target capability is **not** Done.
+- **Decoder ceilings** (250 MP, 20 s, 2 decodes) are approved safety bounds, but they have not been measured on the deployment size (OPEN-S3-12).
 - **Garment removal and the 30-day physical deletion of removed-garment photos** are not selected (US-GAR-005). The `DISCARDED` lifecycle can be reused then.
 - **Database roles.** A single database role still serves every schema; ownership is enforced by tests, not privileges.
 - **Measurement.** No measurement producer, event or table exists (US-MEAS-001 removed).
@@ -210,7 +195,7 @@ These guides do not commit, push, merge or open PRs. When implementing:
 | --- | --- |
 | [README.md](README.md) | This overview |
 | [shared-architecture.md](shared-architecture.md) | Cross-story conventions: modules, revisions, presence rules, errors, API catalogue, Flyway plan, data model, transactions, idempotency, media lifecycle, Personal Context, configuration, security, cumulative file order, testing |
-| [open-questions.md](open-questions.md) | The 16 unresolved questions (OPEN-S3-01 to OPEN-S3-16) with options, recommendations, statuses and change impact |
+| [open-questions.md](open-questions.md) | Decision record of the 16 detailed choices (OPEN-S3-01 to OPEN-S3-16), all approved on 2026-11-11. It keeps the options, the approved option, the remaining verification, the change impact and the traceability matrix. The file name is kept for stable links |
 | [US-GAR-002-guide.md](US-GAR-002-guide.md) | Garment editing |
 | [US-GAR-003-guide.md](US-GAR-003-guide.md) | Photo-supported garment creation |
 | [US-PROF-001-guide.md](US-PROF-001-guide.md) | Styles and common needs |
@@ -229,9 +214,10 @@ These guides do not commit, push, merge or open PRs. When implementing:
 
 - [x] Exactly six Markdown files in `implementation-guides/`; nothing else created or modified.
 - [x] The three selected stories covered; US-MEAS-001 excluded.
-- [x] All 18 approved decisions applied; the three INT decisions kept at their own statuses.
-- [x] Every provisional choice labelled with an `OPEN-S3-xx` ID; none called approved.
-- [x] The pending TTL has a concrete configurable provisional value (`PT24H`), marked blocked on the PO.
-- [x] The HEIF toolchain is concrete (libheif `heif-dec` + libde265), with verification procedure V1–V7, marked "verification required".
+- [x] All 21 approved plan decisions applied, including S3-INT-01–03.
+- [x] All 16 detailed choices recorded as approved on 2026-11-11, each labelled with its `OPEN-S3-xx` ID, with the implementation and verification status kept separate.
+- [x] The approved pending TTL (`PT24H`) is a configurable default.
+- [x] The HEIF toolchain is concrete (libheif `heif-info` + `heif-dec` + libde265), with verification procedure V1–V8, marked "verification required".
+- [x] Multi-image HEIF: primary-image selection is designed, coded and tested; the explicit rejection is marked as the temporary fallback until V4/V8 pass.
 - [x] Guides are cumulative, with BEFORE anchors from the previous stage. Flyway V9/V10/V11 follow the real next version and schema ownership. No fabricated commit hashes.
 - [x] Proposed code is disclosed as not compiled or executed.

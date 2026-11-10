@@ -1,69 +1,147 @@
-# Sprint 3 — Open Implementation Questions
+# Sprint 3 — Decision Record of the 16 Detailed Choices (OPEN-S3-01 to OPEN-S3-16)
 
 | Field | Value |
 | --- | --- |
 | Sprint | Sprint 3 — trustworthy and recognizable private wardrobe, declared personal context |
 | Stories | US-GAR-002, US-GAR-003, US-PROF-001 |
-| Baseline | Branch `sprint_03`, commit `9d158fb` (working tree clean when inspected) |
+| Baseline | Package written against `sprint_03` @ `9d158fb`; this approval revision recorded on `sprint_03` @ `b7644b1` (working tree clean when inspected) |
 | Decision source | [Sprint 3 plan](../sprint-plan.md) §9 and §13 (21-entry register) |
-| Purpose | The questions that remain genuinely unresolved after the 2026-11-11 Product Owner approvals, with a recommendation and a provisional assumption the guides use |
+| Approval | **2026-11-11: the Product Owner explicitly approved the recommended solution of all 16 entries.** OPEN-S3-11 is approved as described in its entry: Option A is the target and Option B is a temporary fail-closed fallback. |
+| Purpose | Records the 16 detailed contract, policy, integration and technical choices that the plan decisions left to JIT design. For each it keeps the original analysis, the approved option, the remaining implementation and verification work, the guide sections that implement it and the change impact. The file keeps its name `open-questions.md` so existing links stay stable; **no approval question remains open in it.** |
 | Package | [README](README.md) · [shared architecture](shared-architecture.md) · [US-GAR-002](US-GAR-002-guide.md) · [US-GAR-003](US-GAR-003-guide.md) · [US-PROF-001](US-PROF-001-guide.md) |
 
 ## 1. How to read this file
 
-The 18 GAR/IMG/PROF solutions in the plan are **APPROVED**. They are not reopened here. Each entry below is a question that an approved decision deliberately left open: a policy value, a contract detail, a concrete technology, or one of the three cross-story INT decisions that still have their own status.
+All 21 plan decisions are **APPROVED**:
+
+- S3-GAR-01–05, S3-IMG-01–08 and S3-PROF-01–05 on 2026-11-11;
+- S3-INT-01–03 (Option A) later the same day, together with this record.
+
+Each entry below began as a question that an approved decision deliberately left open: a policy value, a contract detail, a concrete technology, or one of the three cross-story INT decisions. On 2026-11-11 the Product Owner approved the recommended solution of every entry.
+
+The original analysis (C–F) is kept unchanged as the decision record. Alternatives stay for reference only; they are not permission to switch away from the approved option.
 
 Every entry has sections A–I:
 
-- **A**: question ID.
+- **A**: question ID and the plan decision it realizes.
 - **B**: related story and requirements.
 - **C**: problem.
 - **D**: context.
 - **E**: options.
-- **F**: recommendation.
-- **G**: status.
-- **H**: provisional assumption used by the guides.
-- **I**: change impact if the decision differs.
+- **F**: recommendation (unchanged; now approved).
+- **G**: decision status, implementation and verification status, and the status the entry had before approval.
+- **H**: the approved direction as the guides implement it, with the guide sections.
+- **I**: change impact, only if the Product Owner later revises the decision.
 
 Status values:
 
-| Status | Meaning |
-| --- | --- |
-| `APPROVED` | Explicit Product Owner approval exists. No entry below has this status. |
-| `RECOMMENDED — PENDING APPROVAL` | A product or contract choice. The guides implement the recommendation, but it is not approved. |
-| `TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED` | A Developer-owned technical choice. It must be proven during JIT implementation before it is relied on. |
-| `BLOCKED — REQUIRES PO DECISION` | Completion (DoD) of the affected capability needs a Product Owner decision. Code can be prepared using the provisional assumption. |
+| Dimension | Value | Meaning |
+| --- | --- | --- |
+| Decision status | `APPROVED BY PRODUCT OWNER` | Explicit Product Owner approval on 2026-11-11. It authorizes the implementation direction. All 16 entries have it. |
+| Implementation / verification status | `PENDING` | The guides specify the code and tests, but nothing has been implemented, compiled, run or deployed. Where G names technical verification, that must also pass before the choice is relied on. All 16 entries have it. |
+| Status before approval | (historical) | The status the entry carried before 2026-11-11, kept for traceability only. |
 
-A provisional assumption is **never** an approval. Each guide labels the code that depends on an entry with its `OPEN-S3-xx` ID, so a different decision changes a known, small set of files.
+**Approval is not evidence.** Approval of these choices does **not** mean any of the following:
+
+- the implementation is complete;
+- the proposed Java code compiles;
+- the automated tests pass;
+- the deployment environment supports the selected technologies;
+- the HEIC/HEIF decoder has passed real tests;
+- S3Mock behaves like Amazon S3;
+- the resource limits have been measured;
+- production has been verified.
+
+Each guide labels the code that implements an entry with its `OPEN-S3-xx` ID, so a later revision changes a known, small set of files.
 
 ## 2. Summary register
 
-| ID | Decision ref | Story | Question | Recommendation (short) | Status |
-| --- | --- | --- | --- | --- | --- |
-| [OPEN-S3-01](#open-s3-01--compatible-api-evolution-and-shared-recovery-vocabulary) | S3-INT-01 | All | Compatible API evolution and shared recovery vocabulary | Option A: evolve existing resources compatibly; one error/revision/recovery convention | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-02](#open-s3-02--integration-environment-and-executable-evidence) | S3-INT-02 | All | Integration environment and executable evidence | Option A: isolated Testcontainers fixtures plus focused real-provider checks; CI runs for `sprint_03` PRs | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-03](#open-s3-03--jit-design-packaging-and-shared-file-coordination) | S3-INT-03 | All | JIT design packaging and shared-file coordination | Option A: this guide package, with living contracts and migrations remaining authoritative | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
-| [OPEN-S3-04](#open-s3-04--revision-token-transport-and-conflict-status) | S3-GAR-02, S3-PROF-04 | GAR-002, PROF-001 | Revision token transport and conflict status | Opaque `revision` string in bodies; `expectedRevision` in PATCH body; `409 REVISION_CONFLICT` | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-05](#open-s3-05--partial-update-media-type-and-presence-encoding) | S3-GAR-01, S3-PROF-03 | GAR-002, PROF-001 | Partial-update media type and presence encoding | `application/json` with documented presence rules; Price replaced as a whole | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-06](#open-s3-06--no-op-revisions) | S3-GAR-04, S3-PROF-04 | GAR-002, PROF-001 | Does an edit that changes nothing create a revision? | No write, revision unchanged, `200` | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
-| [OPEN-S3-07](#open-s3-07--pending-media-ttl) | S3-IMG-08 | GAR-003 | Pending-media TTL | 24 hours (`PT24H`), configurable | BLOCKED — REQUIRES PO DECISION |
-| [OPEN-S3-08](#open-s3-08--heicheif-decoding-toolchain) | S3-IMG-06 | GAR-003 | HEIC/HEIF decoding toolchain | libheif `heif-dec` (libde265 plugin) as a bounded subprocess; JPEG/PNG through Java ImageIO | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
-| [OPEN-S3-09](#open-s3-09--meaning-of-15-mb) | S3-IMG-06 | GAR-003 | Byte meaning of "15 MB" | 15,000,000 bytes (decimal), configurable | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-10](#open-s3-10--original-retention-and-the-stored-derivative) | S3-IMG-06, S3-IMG-08 | GAR-003 | Original retention and the stored derivative | Store only a metadata-free, orientation-corrected JPEG derivative (long edge ≤ 2048 px); do not keep the original | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-11](#open-s3-11--multi-image-heif-files) | S3-IMG-06 | GAR-003 | Multi-image HEIF files | Use the primary image; until decided, reject explicitly with `PHOTO_MULTIPLE_IMAGES` | BLOCKED — REQUIRES PO DECISION |
-| [OPEN-S3-12](#open-s3-12--decoder-resource-ceilings) | S3-IMG-06 | GAR-003 | Decoder resource ceilings | 250 MP declared-pixel safety ceiling, 20 s decode timeout, 2 concurrent decodes | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
-| [OPEN-S3-13](#open-s3-13--storage-sdk-and-local-s3-compatible-fixture) | S3-IMG-01, S3-INT-02 | GAR-003 | Storage SDK and local S3-compatible fixture | AWS SDK for Java v2 `2.46.13`; Adobe S3Mock `5.1.0` locally and in tests (MinIO is no longer an actively supported fixture) | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
-| [OPEN-S3-14](#open-s3-14--photo-api-surface) | S3-IMG-02/03/05, S3-INT-01 | GAR-003 | Photo API surface | `/api/v1/wardrobe/photo-uploads` resource plus optional `photoUploadId` on the existing creation request; `photo` on garment detail | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-15](#open-s3-15--preference-contract-representation) | S3-PROF-02, S3-PROF-03 | PROF-001 | Preference contract representation | `/api/v1/personal-context/preferences`; need codes; every need present, `null` = unset; `revision: null` when nothing declared | RECOMMENDED — PENDING APPROVAL |
-| [OPEN-S3-16](#open-s3-16--published-current-context-contract-timing-and-shape) | S3-PROF-05 | PROF-001 | Published current-context contract timing and shape | Add a minimal `personalcontext.api.CurrentPersonalContext` now, with no consumer | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| ID | Decision ref | Story | Question | Approved option | Decision status | Implementation / verification status | Status before approval |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| [OPEN-S3-01](#open-s3-01--compatible-api-evolution-and-shared-recovery-vocabulary) | S3-INT-01 | All | Compatible API evolution and shared recovery vocabulary | A: evolve existing resources compatibly; one error, revision and recovery convention | APPROVED BY PRODUCT OWNER | PENDING: implementation; contract and CORS tests | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-02](#open-s3-02--integration-environment-and-executable-evidence) | S3-INT-02 | All | Integration environment and executable evidence | A: isolated Testcontainers fixtures with storage and decoder fixtures, real-provider checks, CI for `sprint_03` PRs | APPROVED BY PRODUCT OWNER | PENDING: fixtures, CI runs and the manual real-provider check | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-03](#open-s3-03--jit-design-packaging-and-shared-file-coordination) | S3-INT-03 | All | JIT design packaging and shared-file coordination | A: self-contained story guides, shared architecture, coordinated shared-file changes | APPROVED BY PRODUCT OWNER | PENDING: reconcile guides with the actual implementation during execution | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| [OPEN-S3-04](#open-s3-04--revision-token-transport-and-conflict-status) | S3-GAR-02, S3-PROF-04 | GAR-002, PROF-001 | Revision token transport and conflict status | A: opaque `revision` string in responses; `expectedRevision` in PATCH bodies; `409 REVISION_CONFLICT` | APPROVED BY PRODUCT OWNER | PENDING: implementation and tests | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-05](#open-s3-05--partial-update-media-type-and-presence-encoding) | S3-GAR-01, S3-PROF-03 | GAR-002, PROF-001 | Partial-update media type and presence encoding | A: `application/json` with presence rules; explicit clearing; Price replaced as a whole | APPROVED BY PRODUCT OWNER | PENDING: implementation and tests (including the Jackson absent/null behaviour) | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-06](#open-s3-06--no-op-revisions) | S3-GAR-04, S3-PROF-04 | GAR-002, PROF-001 | Does an edit that changes nothing create a revision? | A: `200`, revision unchanged, nothing written | APPROVED BY PRODUCT OWNER | PENDING: both branches must be tested | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| [OPEN-S3-07](#open-s3-07--pending-media-ttl) | S3-IMG-08 | GAR-003 | Pending-media TTL | B: 24 hours (`PT24H`), configurable | APPROVED BY PRODUCT OWNER | PENDING: lifecycle implementation and tests | BLOCKED — REQUIRES PO DECISION |
+| [OPEN-S3-08](#open-s3-08--heicheif-decoding-toolchain) | S3-IMG-06 | GAR-003 | HEIC/HEIF decoding toolchain | A: bounded libheif subprocess (`heif-info` + `heif-dec`, libde265); Java ImageIO for JPEG/PNG | APPROVED BY PRODUCT OWNER | PENDING: verification V1–V8 on the deployment image and CI | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| [OPEN-S3-09](#open-s3-09--meaning-of-15-mb) | S3-IMG-06 | GAR-003 | Byte meaning of "15 MB" | A: exactly 15,000,000 bytes | APPROVED BY PRODUCT OWNER | PENDING: implementation and boundary tests | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-10](#open-s3-10--original-retention-and-the-stored-derivative) | S3-IMG-06, S3-IMG-08 | GAR-003 | Original retention and the stored derivative | A: only a metadata-free, orientation-corrected JPEG, long edge ≤ 2048 px; original not kept | APPROVED BY PRODUCT OWNER | PENDING: implementation and tests; real-device orientation (V3) | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-11](#open-s3-11--multi-image-heif-files) | S3-IMG-06 | GAR-003 | Multi-image HEIF files | A (target): the actual primary image. B: explicit rejection, **only** as the temporary fail-closed fallback until A is verified | APPROVED BY PRODUCT OWNER | PENDING: V4/V8 on the deployment image and CI, then enable selection; until then only the fallback ships | BLOCKED — REQUIRES PO DECISION |
+| [OPEN-S3-12](#open-s3-12--decoder-resource-ceilings) | S3-IMG-06 | GAR-003 | Decoder resource ceilings | A: 250 MP declared pixels, 20 s timeout, 2 concurrent decodes, all configurable | APPROVED BY PRODUCT OWNER | PENDING: measurement and load testing on the deployment size | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| [OPEN-S3-13](#open-s3-13--storage-sdk-and-local-s3-compatible-fixture) | S3-IMG-01, S3-INT-02 | GAR-003 | Storage SDK and local S3-compatible fixture | A: AWS SDK for Java v2 `2.46.13`; Adobe S3Mock `5.1.0`; real-provider verification | APPROVED BY PRODUCT OWNER | PENDING: V-S3 against S3Mock and a private AWS S3 bucket | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
+| [OPEN-S3-14](#open-s3-14--photo-api-surface) | S3-IMG-02/03/05, S3-INT-01 | GAR-003 | Photo API surface | A: `/photo-uploads` resource; optional `photoUploadId` on the existing creation request | APPROVED BY PRODUCT OWNER | PENDING: implementation and tests | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-15](#open-s3-15--preference-contract-representation) | S3-PROF-02, S3-PROF-03 | PROF-001 | Preference contract representation | A: `/personal-context/preferences`; six need codes; `null` = unset; priorities 0–3; `revision: null` when never declared | APPROVED BY PRODUCT OWNER | PENDING: implementation and tests | RECOMMENDED — PENDING APPROVAL |
+| [OPEN-S3-16](#open-s3-16--published-current-context-contract-timing-and-shape) | S3-PROF-05 | PROF-001 | Published current-context contract timing and shape | A: minimal `personalcontext.api.CurrentPersonalContext` now, no consumer | APPROVED BY PRODUCT OWNER | PENDING: implementation, integration test, architecture tests | TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED |
 
-Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 02, 04, 05, 09, 10, 14, 15), 6 are technical defaults that need JIT verification (03, 06, 08, 12, 13, 16), and 2 are blocked on a Product Owner decision (07, 11). The two blocked items (OPEN-S3-07 and OPEN-S3-11) block **US-GAR-003 Done**, not the preparation of code or the other two stories.
+**Count: 16 entries, all `APPROVED BY PRODUCT OWNER` (2026-11-11).** No entry is pending Product Owner approval and none is blocked on a Product Owner decision.
 
----
+Implementation is pending for all 16. Technical verification beyond each guide's automated tests is required for:
+
+- **OPEN-S3-02:** CI runs and the real-provider check;
+- **OPEN-S3-03:** reconciliation with the implementation;
+- **OPEN-S3-06:** both branches tested;
+- **OPEN-S3-08:** V1–V8;
+- **OPEN-S3-11:** V4/V8 before the target is enabled;
+- **OPEN-S3-12:** measurement;
+- **OPEN-S3-13:** V-S3;
+- **OPEN-S3-16:** integration and architecture tests.
+
+What remains concerns implementation, verification, provider availability, deployment readiness and client evidence ([§4](#4-remaining-work-that-is-not-an-approval-question)), **not** the approval of these 16 choices.
+
+## 3. Coverage and traceability matrix
+
+"P" and "T" steps refer to the story guide named in the row. All steps are proposed future changes; none has been applied.
+
+| Open Question | Approved Option | Affected Documents | Design Section | Production Steps | Test Steps | Remaining Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| OPEN-S3-01 | A: compatible evolution; one error, revision and recovery convention | Plan §9.4 (S3-INT-01); shared §11, §12, §20; all three guides | Shared §11–§12; GAR-002 §10.2; GAR-003 §10.2; PROF-001 §10 | GAR-002 P16 (`revision`), P17, P18 (`409`, neutral `503`), P20 (CORS `PATCH`), P21 (OpenAPI 0.9.0). GAR-003 P44 (`photo`), P45 (`photoUploadId`), P46–P48, P54 (CORS `DELETE`), P58 (0.10.0). PROF-001 P26–P28, P31 (0.11.0) | GAR-002 T7, T9; GAR-003 T16, T17, T20, T21; PROF-001 T8; `IdentityOpenApiContractIT` all-handler checks | Implementation; contract and CORS tests green; client review of additive fields |
+| OPEN-S3-02 | A: isolated fixtures, real-provider checks, CI for `sprint_03` | Plan §9.4 (S3-INT-02); shared §22; README §12; GAR-002, GAR-003, PROF-001 CI steps | Shared §22; GAR-003 §10.8 | GAR-002 P22 (trigger, reports); GAR-003 P57 (S3Mock in compose), P59 (libheif, `CAPSULEAI_REQUIRE_HEIF=true`, reports); PROF-001 P32 | PostgreSQL Testcontainers ITs in all guides; GAR-003 T14 (S3Mock container), T13 (real libheif) | CI must actually run and pass on PRs into `sprint_03` (75 → 88 → 95 report entries); manual private AWS S3 check (V-S3 steps 3–4) with credentials kept outside the repository |
+| OPEN-S3-03 | A: story guides, shared architecture, coordinated shared files | Plan §9.4 (S3-INT-03); this package; README §5; shared §4, §21 | Shared §21 (cumulative order and merge rules) | No code step. It is realized by the package itself: each guide's §11 file matrix, the BEFORE/AFTER anchors and the §21 order | Each guide's §18 checklist and full `clean verify` | Reconcile the guides with the actual implementation as each story lands; afterwards the code, OpenAPI and migrations win |
+| OPEN-S3-04 | A: opaque `revision`, body `expectedRevision`, `409 REVISION_CONFLICT` | Shared §8, §11; GAR-002; PROF-001 | Shared §8; GAR-002 I-5, §10.1–§10.3; PROF-001 I-5, §10 | GAR-002 P1 (V9), P2, P11–P16, P18, P21. PROF-001 P1 (V11 `revision`), P9 (`ExpectedRevision`), P14, P16, P19, P23, P25–P28, P31 | GAR-002 T4, T5, T6, T7, T8; PROF-001 T4, T5, T8, T9 | Implementation and tests |
+| OPEN-S3-05 | A: `application/json` presence rules, explicit clearing, whole Price | Shared §10; GAR-002; PROF-001 | Shared §10; GAR-002 I-2, §10.2; PROF-001 I-4 | GAR-002 P7 (`FieldChange`), P8 (`GarmentChanges`, `PriceInput`), P15 (`GarmentRevisionRequest`). PROF-001 P8 (`ValueChange`), P10, P25 | GAR-002 T5, T4 (`priceIsReplacedOrCleared…`, `anIncompletePrice…`); PROF-001 T5, T4 | Implementation; T5 tests re-verify the Jackson 3 absent/`null` behaviour on the actual dependency |
+| OPEN-S3-06 | A: no-op → `200`, revision unchanged, nothing written | Shared §8; GAR-002; PROF-001 | Shared §8; GAR-002 I-7, §10.1; PROF-001 I-7 | GAR-002 P10 (`changed` flag), P13 (equality after the precondition). PROF-001 P15, P19 | GAR-002 T4 `anEditThatChangesNothing…`, `aStaleRevisionIsAConflict…` (a stale no-op is still `409`), T7 `anEditThatChangesNothingKeepsTheRevision`. PROF-001 T4 `anUnchangedRevision…`, `aStaleRevisionIsAConflict…` | Both branches implemented and passing |
+| OPEN-S3-07 | B: `PT24H`, configurable | Plan §9.2 (S3-IMG-08); shared §17, §19; GAR-003; README | GAR-003 I-6, §10.4; shared §17 | GAR-003 P7 (`expiresAt = created + TTL`), P22, P29, P50, P55 (`pending-ttl=PT24H`), P58 (`expiresAt` text), P60 | GAR-003 T8 `aNewIntentIsReceiving…ExpiresAfterTheTtl`, T11 `anUnconfirmedPhotoExpires…`, T19 (injected TTL and clock) | Implementation; lifecycle and deletion evidence |
+| OPEN-S3-08 | A: bounded libheif subprocess (`heif-info` + `heif-dec`); ImageIO for JPEG/PNG | Plan §9.2 (S3-IMG-06); shared §17, §19; GAR-003; README | GAR-003 §10.9, §10.5 | GAR-003 P38 (`HeifDecoder`), P39, P50, P51, P55, P59 (CI install), P60 | GAR-003 T13, T22, T12 (missing tools → `503`) | V1–V8 on the deployment image and the CI runner; licence and update review (V7) |
+| OPEN-S3-09 | A: 15,000,000 bytes | GAR-003; shared §19 | GAR-003 I-3 | GAR-003 P6, P22, P25 (counted bytes), P48 (multipart guard → `PHOTO_TOO_LARGE`), P55 | GAR-003 T9 `theSizeLimitAcceptsExactly15000000BytesAndRejectsOneMore`, T16 `aPhotoAboveTheSizeLimitIsRejected` | Implementation and tests |
+| OPEN-S3-10 | A: metadata-free, orientation-corrected JPEG ≤ 2048 px; no original | GAR-003; shared §17, §19, §20 | GAR-003 I-4 | GAR-003 P7 (`STORED_CONTENT_TYPE`), P18, P37, P39, P55 (`derivative-long-edge=2048`) | GAR-003 T12 (metadata stripping, orientation, `largePhotosAreDownscaled…2048`), T15, T16 | Implementation and tests; real-device orientation (V3) |
+| OPEN-S3-11 | A target (primary image); B temporary fail-closed fallback | Plan §9.2 (S3-IMG-06); shared §17, §19; GAR-003; README | GAR-003 §10.9, I-14 | GAR-003 P6 (`MULTIPLE_IMAGES` meaning), P38 (selection), P48, P50, P51, P55 (`heif-info-command`, `heif-primary-image-selection=false`), P58, P60 | GAR-003 T13 (rejection while off; primary listed first; primary **not** the first decoded image), T22 (selection and fail-closed rules) | V4 and V8 on the deployment image and CI; then `heif-primary-image-selection=true`. The target is not Done before that |
+| OPEN-S3-12 | A: 250 MP, 20 s, 2 decodes, configurable | GAR-003; shared §17, §19 | GAR-003 §10.9; P39 explanation | GAR-003 P38 (shared deadline, ceiling for every listed image), P39 (header ceiling, watchdog, decode slots), P50, P55 | GAR-003 T12 (`aPhotoDeclaringMorePixels…`, `whenEveryDecodeSlotIsBusy…`), T22 (`everyListedImageMustBeWithin…`), T13 (truncated) | Measure decode time and peak memory with the V3 fixtures on the deployment size; adjust within the approved option |
+| OPEN-S3-13 | A: AWS SDK v2 `2.46.13`, S3Mock `5.1.0`, real-provider verification | Plan §9.2 (S3-IMG-01); shared §19; GAR-003; README | GAR-003 §10.5, §10.7 | GAR-003 P1 (BOM, `s3`), P36, P51, P55, P56, P57 | GAR-003 T14 (put/get/delete, missing object, conditional write) | V-S3 steps 1–4; AWS account, region, budget and production configuration |
+| OPEN-S3-14 | A: `/photo-uploads` + optional `photoUploadId` | Shared §12, §16, §17; GAR-003 | GAR-003 §10.1, §10.2 | GAR-003 P30–P33, P41–P47, P58 | GAR-003 T10, T16, T17, T18, T20 | Implementation and tests; client evidence |
+| OPEN-S3-15 | A: `/personal-context/preferences`, six codes, `null` = unset, 0–3, `revision: null` | Shared §18; PROF-001 | PROF-001 I-1–I-3, I-7, §10 | PROF-001 P1 (V11 CHECKs), P2–P6, P26, P31 | PROF-001 T1, T4, T7, T8 (`aNewAccountHasNoDeclaredContext…`: `revision: null`, all six needs present) | Implementation and tests; clients map the codes to localized labels |
+| OPEN-S3-16 | A: minimal `CurrentPersonalContext` now, no consumer | Shared §5, §18; PROF-001 | PROF-001 §10 (published contract) | PROF-001 P20, P21, P22, P29 | PROF-001 T10 `CurrentPersonalContextIT`; `ArchitectureDependencyTest`; T11 `DatabaseSchemaOwnershipIT` | Implementation; architecture tests pass with the new `api` package; no consumer is built |
+
+## 4. Remaining work that is not an approval question
+
+These items stay open after the approvals. None of them reopens an approved choice, and none needs a new Product Owner approval of a choice. The exception is the AWS account and budget, which S3-IMG-01 already assigns to the project owner.
+
+| Item | Kind | Related | Owner | What it gates |
+| --- | --- | --- | --- | --- |
+| Implement, compile and test all three stories | Implementation | All | Developers | Every DoD row |
+| HEIF verification V1–V8 on the deployment image and the CI runner | Verification | OPEN-S3-08, OPEN-S3-11 | Backend Tech Lead | HEIC/HEIF support in US-GAR-003 Done |
+| Switch `capsuleai.wardrobe.photo.heif-primary-image-selection` to `true` per environment after V4/V8 | Deployment readiness | OPEN-S3-11 | Backend Tech Lead | The approved multi-image target behaviour |
+| Real device HEIC/HEIF (V3) and orientation | Verification, client evidence | OPEN-S3-08, OPEN-S3-10 | Developers / QA | US-GAR-003 Done |
+| Decode time and peak memory with the V3 fixtures | Verification | OPEN-S3-12 | Backend Tech Lead; PO only if ordinary phone photos would be affected | Relying on the ceilings in production |
+| V-S3 against S3Mock (including the conditional write) | Verification | OPEN-S3-13 | Developers | `conditional-writes` setting for the fixture |
+| AWS account, region, budget, private bucket, least-privilege IAM, then V-S3 against real S3 | Provider availability, deployment readiness | S3-IMG-01, OPEN-S3-02, OPEN-S3-13 | Project owner / PO with Backend Tech Lead | Deployed private media |
+| CI runs on PRs into `sprint_03` with all required reports and zero skips | Verification | OPEN-S3-02 | Developers | Every story's DoD |
+| Reconcile the guides with the delivered code after each story | Documentation | OPEN-S3-03 | Developers | Review condition in the DoD |
+| Client evidence on Android/iOS | Client evidence | All stories | Developers / QA with PO | Whole-story Done |
+
+**No genuinely new open question** was found while synchronizing the documentation on 2026-11-11.
+
+Implementing the approved OPEN-S3-11 Option A added two items:
+
+- a dependency on `heif-info`, shipped in the same libheif package;
+- the verification step V8.
+
+Both are implementation details of an approved choice, not new decisions.
 
 ## OPEN-S3-01 — Compatible API evolution and shared recovery vocabulary
 
-**A. Question ID:** OPEN-S3-01 (realizes S3-INT-01, status `PROPOSED — PENDING PO APPROVAL` in the plan).
+**A. Question ID:** OPEN-S3-01. It realizes S3-INT-01, approved as Option A by the Product Owner on 2026-11-11 together with this entry; the status before approval was `PROPOSED — PENDING PO APPROVAL`.
 
 **B. Related story and requirements:** All three stories. COM-001/002, FR-AUTH-008/009, NFR-SEC-001–003, ADA-006/008/009/015/017/018; S3-GAR-01/02/04, S3-PROF-03/04, S3-IMG-03/05.
 
@@ -80,23 +158,31 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. The contract test, the CORS tests and each story's API tests must pass on the implemented code; clients review the additive fields.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
 
-- The guides add `revision` to the garment response (US-GAR-002) and `photo` to the garment response (US-GAR-003).
+**H. Approved direction, as implemented by the guides:**
+
+- `revision` is added to the garment response (US-GAR-002) and `photo` to the garment response (US-GAR-003).
 - `photoUploadId` becomes an optional field of the existing creation request.
 - All three guides use the shared error codes in [shared architecture §11](shared-architecture.md#11-error-model-and-recovery-vocabulary).
 - CORS gains `PATCH` (US-GAR-002) and `DELETE` (US-GAR-003).
 - The 503 wording becomes operation-neutral.
+- Guide sections:
+  - US-GAR-002 §10.2, P16–P18, P20, P21, T7, T9;
+  - US-GAR-003 §10.2, P44–P48, P54, P58, T16, T17, T20, T21;
+  - US-PROF-001 §10, P26–P28, P31, T8.
 
-**I. Change impact:** If Option B is chosen, each guide's web adapter, OpenAPI step and contract-test step move to a `/api/v2` controller. The domain, application and persistence steps are unaffected.
+**I. Change impact (only if the decision is later revised):** If Option B is chosen, each guide's web adapter, OpenAPI step and contract-test step move to a `/api/v2` controller. The domain, application and persistence steps are unaffected.
 
 ---
 
 ## OPEN-S3-02 — Integration environment and executable evidence
 
-**A. Question ID:** OPEN-S3-02 (realizes S3-INT-02, status `PROPOSED — PENDING PO APPROVAL` in the plan).
+**A. Question ID:** OPEN-S3-02. It realizes S3-INT-02, approved as Option A by the Product Owner on 2026-11-11 together with this entry; the status before approval was `PROPOSED — PENDING PO APPROVAL`.
 
 **B. Related story and requirements:** All three stories. Test Strategy real-integration and failure policy; DoD integration/CI/runtime triggers; ADA-006/007/013/014; AR-08.
 
@@ -117,24 +203,29 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. The fixtures and CI changes are specified but not applied. CI must actually run on PRs into `sprint_03` and pass with zero skips. The manual real-provider check against a private AWS S3 bucket is outstanding.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
 
-- **US-GAR-002** step `backend-ci.yml` adds `sprint_03` to `pull_request.branches` and adds its reports.
+**H. Approved direction, as implemented by the guides:**
+
+- **US-GAR-002** step `backend-ci.yml` (P22) adds `sprint_03` to `pull_request.branches` and adds its reports.
 - **US-GAR-003** adds:
-  - an S3Mock container to `compose.yaml` and to its storage integration tests;
-  - a CI step that installs libheif;
+  - an S3Mock container to `compose.yaml` (P57) and to its storage integration tests (T14);
+  - a CI step that installs libheif (P59);
   - `CAPSULEAI_REQUIRE_HEIF=true` in CI, so a missing decoder fails rather than skips.
+- **US-PROF-001** adds its reports (P32).
 - Real AWS evidence remains an explicit, outstanding manual activity. It is never claimed from emulator runs.
 
-**I. Change impact:** Option B replaces the per-test containers with configuration that points at the shared stack. Test classes stay; their support classes change.
+**I. Change impact (only if the decision is later revised):** Option B replaces the per-test containers with configuration that points at the shared stack. Test classes stay; their support classes change.
 
 ---
 
 ## OPEN-S3-03 — JIT design packaging and shared-file coordination
 
-**A. Question ID:** OPEN-S3-03 (realizes S3-INT-03, status `DEFERRED TO JIT DESIGN` in the plan).
+**A. Question ID:** OPEN-S3-03. It realizes S3-INT-03, approved as Option A by the Product Owner on 2026-11-11 together with this entry as the documentation and JIT coordination approach; the status before approval was `DEFERRED TO JIT DESIGN`.
 
 **B. Related story and requirements:** All stories. Workflow Sections 26/27/31–34; DD-006; DoD documentation and review conditions.
 
@@ -151,17 +242,28 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A, as realized by this package. After a story is implemented, the code, OpenAPI and migrations win over any guide text.
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
+**G. Status:**
 
-**H. Provisional assumption:** The guides are cumulative in the order GAR-002 → GAR-003 → PROF-001 ([shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order)). A guide that is applied out of order uses the merge rules in that section.
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. During execution, each story must:
+  - recheck HEAD;
+  - apply its guide in the §21 order (or use the merge rules);
+  - reconcile the guide with the code it actually delivers.
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
-**I. Change impact:** If Option B is chosen, the guides become reference material only. No code changes.
+**H. Approved direction, as implemented by the guides:** The guides are cumulative in the order GAR-002 → GAR-003 → PROF-001 ([shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order)). A guide that is applied out of order uses the merge rules in that section. There is no code step. The approach is realized by:
+
+- the package itself;
+- each guide's §11 file matrix and BEFORE/AFTER anchors;
+- the README workflow (§10).
+
+**I. Change impact (only if the decision is later revised):** If Option B is chosen, the guides become reference material only. No code changes.
 
 ---
 
 ## OPEN-S3-04 — Revision token transport and conflict status
 
-**A. Question ID:** OPEN-S3-04 (refines S3-GAR-02 and S3-PROF-04, both APPROVED; uses S3-INT-01).
+**A. Question ID:** OPEN-S3-04. It refines S3-GAR-02 and S3-PROF-04 (both APPROVED) and uses S3-INT-01 (APPROVED).
 
 **B. Related story and requirements:** US-GAR-002 AC-05/07/08; US-PROF-001 AC-05/06; FR-WAR-003; DATA-INT-004; COM-002.
 
@@ -188,21 +290,29 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 - The token is the decimal text of a positive counter (for example `"3"`). Clients must treat it as opaque and echo it unchanged.
 - One code, `REVISION_CONFLICT`, is used by Wardrobe and Personal Context.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Implementation and the listed tests.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
+
+**H. Approved direction, as implemented by the guides:**
 
 - US-GAR-002 and US-PROF-001 implement Option A.
 - A malformed `expectedRevision` is `400 VALIDATION_FAILED` with field code `INVALID_FORMAT`.
 - A missing one is `REQUIRED`.
+- For preferences, `expectedRevision: null` means "I saw no profile" (the guarded first creation).
+- Guide sections:
+  - US-GAR-002 I-5, §10.1–§10.3, P1, P2, P11–P16, P18, P21, T4–T8;
+  - US-PROF-001 I-5, P1, P9, P14, P16, P19, P23, P25–P28, P31, T4, T5, T8, T9.
 
-**I. Change impact:** Option B changes the PATCH controllers, response construction (headers), CORS configuration and tests, the OpenAPI operations and the contract test. Domain, application and persistence are unchanged, because they already use a `long` revision.
+**I. Change impact (only if the decision is later revised):** Option B changes the PATCH controllers, response construction (headers), CORS configuration and tests, the OpenAPI operations and the contract test. Domain, application and persistence are unchanged, because they already use a `long` revision.
 
 ---
 
 ## OPEN-S3-05 — Partial-update media type and presence encoding
 
-**A. Question ID:** OPEN-S3-05 (refines S3-GAR-01 and S3-PROF-03, both APPROVED).
+**A. Question ID:** OPEN-S3-05. It refines S3-GAR-01 and S3-PROF-03, both APPROVED.
 
 **B. Related story and requirements:** US-GAR-002 AC-01–AC-05; US-PROF-001 AC-01/02/06; FR-WAR-003; FR-PROF-002/003; BRULE-GAR-010.
 
@@ -220,22 +330,30 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A, documented in OpenAPI and [shared architecture §10](shared-architecture.md#10-presence-aware-partial-updates).
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Implementation and tests. The mapping tests (US-GAR-002 T5, US-PROF-001 T5) re-verify the Jackson absent/`null` behaviour on the actual dependency.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
+
+**H. Approved direction, as implemented by the guides:**
 
 - The request records use `tools.jackson.databind.JsonNode` components.
 - A JSON value of the wrong type (for example a number for `subtype`, or a string for `materials`) is rejected for that field with `UNSUPPORTED_VALUE`.
 - PATCH is therefore stricter than the existing POST, which lets Jackson coerce scalars.
+- A `price` object always replaces both parts. A missing part becomes `price: INCOMPLETE_PRICE` during validation; it is never merged with the old value.
 - `commonNeeds: null` is rejected rather than clearing every need. A need must be cleared individually.
+- Guide sections:
+  - US-GAR-002 I-2, §10.2, P7, P8, P15, T4, T5;
+  - US-PROF-001 I-4, P8, P10, P25, T4, T5.
 
-**I. Change impact:** Option B or C replaces the request records and the mapping classes in the web adapters (`GarmentRevisionRequest`, `PreferencesRevisionRequest`). The application `FieldChange` model is unchanged.
+**I. Change impact (only if the decision is later revised):** Option B or C replaces the request records and the mapping classes in the web adapters (`GarmentRevisionRequest`, `PreferencesRevisionRequest`). The application `FieldChange` model is unchanged.
 
 ---
 
 ## OPEN-S3-06 — No-op revisions
 
-**A. Question ID:** OPEN-S3-06 (refines S3-GAR-04 and S3-PROF-04).
+**A. Question ID:** OPEN-S3-06. It refines S3-GAR-04 and S3-PROF-04.
 
 **B. Related story and requirements:** US-GAR-002 AC-05/07; US-PROF-001 AC-06; FR-WAR-006; FR-ANL-014.
 
@@ -256,17 +374,27 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A. A stale `expectedRevision` is still `409`, even when the values would not change. The client then rereads.
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
+**G. Status:**
 
-**H. Provisional assumption:** Both PATCH services return a `changed` flag, and the guides test both branches. For preferences, a create-if-unset that declares nothing writes nothing and leaves `revision: null`.
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Both branches must be implemented and proven by tests: a valid no-op writes nothing and keeps the revision, and a stale no-op is still `409`.
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
-**I. Change impact:** Option B removes the equality short-circuit in `ReviseGarmentService` and `RevisePreferencesService` and adjusts two tests per story.
+**H. Approved direction, as implemented by the guides:**
+
+- Both PATCH services check the precondition first, then compare the result, and return a `changed` flag.
+- For preferences, a create-if-unset that declares nothing writes nothing and leaves `revision: null`.
+- Guide sections:
+  - US-GAR-002 I-7, §10.1, P10, P13; T4 `anEditThatChangesNothingKeepsTheRevisionAndWritesNothing` and `aStaleRevisionIsAConflictAndChangesNothing` (which also asserts a stale no-op); T7 `anEditThatChangesNothingKeepsTheRevision`;
+  - US-PROF-001 I-7, P15, P19; T4 `anUnchangedRevisionAndAnEmptyFirstDeclarationWriteNothing` and `aStaleRevisionIsAConflictAndChangesNothing` (also a stale no-op).
+
+**I. Change impact (only if the decision is later revised):** Option B removes the equality short-circuit in `ReviseGarmentService` and `RevisePreferencesService` and adjusts two tests per story.
 
 ---
 
 ## OPEN-S3-07 — Pending-media TTL
 
-**A. Question ID:** OPEN-S3-07 (S3-IMG-08 APPROVED for the lifecycle; the exact TTL is explicitly not selected).
+**A. Question ID:** OPEN-S3-07. S3-IMG-08 was APPROVED for the lifecycle while leaving the exact TTL unselected. This entry selects it: approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-03/06/07; DATA-RET-002; BRULE-AUTH-007; NFR-PRIV-001.
 
@@ -289,21 +417,27 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option B: `PT24H`, configurable through `capsuleai.wardrobe.photo-upload.pending-ttl`. Cleanup starts at expiry; deletion is retried with backoff until the object is gone.
 
-**G. Status:** BLOCKED — REQUIRES PO DECISION. The plan states that an unresolved TTL blocks lifecycle completion and Done, not preparation.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option B: a configurable pending-media TTL of 24 hours (`PT24H`). This resolves the TTL that the plan said blocked lifecycle completion.
+- **Implementation / verification status:** PENDING. The lifecycle implementation and its tests; operational deletion evidence.
+- **Status before approval:** BLOCKED — REQUIRES PO DECISION.
 
-- The code uses `PT24H` as the default value of a property.
+**H. Approved direction, as implemented by the guides:**
+
+- `PT24H` is the default value of `capsuleai.wardrobe.photo-upload.pending-ttl` (US-GAR-003 P55).
+- Each staged photo records `expires_at = created_at + TTL` (P7).
 - Tests inject the TTL and use a controllable clock, so no test depends on the value.
-- The guide and README call it "provisional, pending Product Owner approval".
+- The README and OpenAPI describe the 24-hour lifetime as the approved policy.
+- Guide sections: US-GAR-003 I-6, §10.4, P7, P22, P29, P50, P55, P58, P60, T8, T11, T19; shared architecture §17, §19.
 
-**I. Change impact:** Changing the value changes only `application.properties` and README text. No code, migration or test changes.
+**I. Change impact (only if the decision is later revised):** Changing the value changes only `application.properties`, the README text and the `expiresAt` description in OpenAPI. No code, migration or test changes.
 
 ---
 
 ## OPEN-S3-08 — HEIC/HEIF decoding toolchain
 
-**A. Question ID:** OPEN-S3-08 (S3-IMG-06 APPROVED as the investigation direction only: a bounded local decoding process behind the Wardrobe media port).
+**A. Question ID:** OPEN-S3-08. S3-IMG-06 was APPROVED as the investigation direction only: a bounded local decoding process behind the Wardrobe media port. This entry selects the concrete toolchain: approved by the Product Owner on 2026-11-11. The toolchain remains unverified.
 
 **B. Related story and requirements:** US-GAR-003 AC-02/07; FR-AI-001/002/012; NFR-PRIV-001/002; ADA-006/007/013.
 
@@ -334,32 +468,41 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 - **Toolchain:** Option A. Preferred packages are libheif ≥ 1.17 with the libde265 plugin, from the deployment OS (Ubuntu 24.04: `libheif-examples` and `libheif-plugin-libde265`).
 - **Executable:** configurable as `capsuleai.wardrobe.photo.heif-decoder-command`, default `heif-dec`. Some distributions name the older binary `heif-convert`.
-- **Verification procedure** (before relying on it; record the results in the PR):
+- **Verification procedure** (before relying on it; record the results in the PR). V1, V4 and V6 were extended and V8 added on 2026-11-11, so the same procedure also verifies the approved OPEN-S3-11 primary-image behaviour. The toolchain choice itself is unchanged.
 
 | # | Verification step | Pass condition |
 | --- | --- | --- |
-| V1 | `heif-dec --version` (or `heif-convert --version`) on the target OS image and the CI runner | Prints a libheif version ≥ 1.17 |
+| V1 | `heif-dec --version` (or `heif-convert --version`) and `heif-info --version` on the target OS image and the CI runner | Both print a libheif version ≥ 1.17 from the same installation |
 | V2 | `heif-dec --list-decoders` (if supported by that version) | Lists an HEVC decoder (libde265) |
 | V3 | Decode a real iPhone HEIC (synthetic subject, no personal content) and a real Android HEIF: `heif-dec in.heic out.png` | Exit code 0, one `out.png`, dimensions match the device's report, orientation correct |
-| V4 | Encode a 2-image HEIF with `heif-enc a.png b.png -o two.heic` and decode it | Two numbered outputs appear; confirms OPEN-S3-11 handling |
+| V4 | Encode a 2-image HEIF with `heif-enc a.png b.png -o two.heic` (a and b of different sizes); run `heif-info two.heic` and `heif-dec two.heic out.png` | `heif-info` lists two `image: WxH (id=N)` lines in input order, the first marked `, primary`. `heif-dec` writes `out-1.png` with a's size and `out-2.png` with b's size. This confirms heif-info's order equals heif-dec's numbering (OPEN-S3-11) |
 | V5 | Decode a truncated HEIC (first 60% of bytes) and a JPEG renamed `.heic` | Non-zero exit or no output, within the timeout |
-| V6 | Run `ImageIoPhotoInspectorIT` and `HeifDecodingIT` locally and in CI with `CAPSULEAI_REQUIRE_HEIF=true` | All pass, none skipped |
+| V6 | Run `HeifDecodingIT` (5 tests) locally and in CI with `CAPSULEAI_REQUIRE_HEIF=true`, and the unit tests `HeifDecoderTest` and `ImageIoPhotoInspectorTest` | All pass, none skipped |
 | V7 | Licence and update review: libheif (LGPL-3.0) and libde265 (LGPL-3.0) as separately installed OS packages invoked as processes; record the security-update channel | Written note in the PR; no static linking into the JAR |
+| V8 | Primary not first: rewrite the `pitm` item of `two.heic` to the second image's id, as `HeifDecodingIT.withSelectionEnabledThePrimaryImageIsUsedWhenItIsNotTheFirstDecodedImage` does, then run `heif-info` and `heif-dec` again | `heif-info` marks the **second** line `, primary` while the order is unchanged; `heif-dec` still writes `out-1.png` (a) and `out-2.png` (b); the test passes with selection enabled. Only after V4 and V8 pass in an environment may `capsuleai.wardrobe.photo.heif-primary-image-selection=true` be set there |
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED. Verification is still required: nothing here has been executed against this repository.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A. The approval selects the toolchain direction.
+- **Implementation / verification status:** PENDING. None of V1–V8 has been executed against this repository, the deployment image or the CI runner. Until they pass, the toolchain is approved but **unverified**.
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
-- US-GAR-003 implements `ImageIoPhotoInspector` with a `HeifDecoder` subprocess helper.
+**H. Approved direction, as implemented by the guides:**
+
+- US-GAR-003 implements `ImageIoPhotoInspector` (P39) with a `HeifDecoder` (P38) that runs `heif-info` and then `heif-dec`.
+  - Both run in a private temporary directory, with relative file names and one shared decode deadline.
+  - `heif-info` is configurable as `capsuleai.wardrobe.photo.heif-info-command` (default `heif-info`, environment `CAPSULE_HEIF_INFO`) and comes from the same libheif package.
 - Integration tests that need HEIF skip only when `CAPSULEAI_REQUIRE_HEIF` is not `true`. CI sets it, so a missing decoder fails the build.
+- A missing tool is `503 TEMPORARILY_UNAVAILABLE`, never "unsupported format".
+- Guide sections: US-GAR-003 §10.5, §10.9, P38, P39, P50, P51, P55, P59, P60, T12, T13, T22.
 
-**I. Change impact:** Option B replaces `HeifDecoder` and parts of `ImageIoPhotoInspector`. The application port `PhotoInspector` and everything above it are unchanged.
+**I. Change impact (only if the decision is later revised):** Option B replaces `HeifDecoder` and parts of `ImageIoPhotoInspector`. The application port `PhotoInspector` and everything above it are unchanged.
 
 ---
 
 ## OPEN-S3-09 — Meaning of "15 MB"
 
-**A. Question ID:** OPEN-S3-09 (S3-IMG-06 lists "MB byte interpretation" as needing review).
+**A. Question ID:** OPEN-S3-09. S3-IMG-06 lists "MB byte interpretation" as needing review; this entry was approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-02; FR-AI-012 ("maximum 15 MB file size … at/beyond 15 MB").
 
@@ -380,21 +523,26 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A. The boundary tests are 15,000,000 (accepted) and 15,000,001 (rejected, `PHOTO_TOO_LARGE`). The limit is configurable as `capsuleai.wardrobe.photo.maximum-bytes`.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A: exactly 15,000,000 bytes.
+- **Implementation / verification status:** PENDING. Implementation and the boundary tests.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
+
+**H. Approved direction, as implemented by the guides:**
 
 - The application enforces the exact limit on counted bytes.
 - The servlet multipart ceiling is set higher (`16MB`, i.e. 16 MiB) only as a transport guard.
 - Anything that exceeds the transport guard is also reported as `PHOTO_TOO_LARGE`.
+- Guide sections: US-GAR-003 I-3, P6, P22, P25, P48, P55; T9 `theSizeLimitAcceptsExactly15000000BytesAndRejectsOneMore`; T16 `aPhotoAboveTheSizeLimitIsRejected`.
 
-**I. Change impact:** Option B changes one property value, the multipart ceiling, two boundary tests and README text.
+**I. Change impact (only if the decision is later revised):** Option B changes one property value, the multipart ceiling, two boundary tests and README text.
 
 ---
 
 ## OPEN-S3-10 — Original retention and the stored derivative
 
-**A. Question ID:** OPEN-S3-10 (S3-IMG-06 and S3-IMG-08 list "original retention/normalization" as needing policy review).
+**A. Question ID:** OPEN-S3-10. S3-IMG-06 and S3-IMG-08 list "original retention/normalization" as needing policy review; this entry was approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-04/07; DATA-GAR-004; DATA-RET-002; NFR-PRIV-001/002; BRULE-AUTH-007.
 
@@ -419,21 +567,29 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL. Product Owner/BA own the retention decision.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A. The Product Owner owns this retention decision.
+- **Implementation / verification status:** PENDING. Implementation and tests; real-device orientation is checked in V3.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
+
+**H. Approved direction, as implemented by the guides:**
 
 - US-GAR-003 stores exactly one object per accepted photo: `image/jpeg`, metadata-free, long edge ≤ `capsuleai.wardrobe.photo.derivative-long-edge` (default `2048`).
 - Validation uses the **original** dimensions (shortest side ≥ 512) read from the image header before any downscaling.
 - The response reports the derivative's dimensions.
+- Guide sections: US-GAR-003 I-4, P7, P18, P37, P39, P55; T12 (metadata stripping, orientation, `largePhotosAreDownscaledSoTheLongEdgeIsAtMost2048`); T15; T16.
 
-**I. Change impact:** Option B adds a second object key column, a second storage write and its cleanup. Option C changes one property and requires an OPEN-S3-12 pixel limit approved by the PO.
+**I. Change impact (only if the decision is later revised):** Option B adds a second object key column, a second storage write and its cleanup. Option C changes one property and requires a PO-approved OPEN-S3-12 pixel limit.
 
 ---
 
 ## OPEN-S3-11 — Multi-image HEIF files
 
-**A. Question ID:** OPEN-S3-11 (S3-IMG-06 lists "multi-image HEIF selection" as needing contract/policy review).
+**A. Question ID:** OPEN-S3-11. S3-IMG-06 lists "multi-image HEIF selection" as needing contract/policy review. On 2026-11-11 the Product Owner approved:
+
+- **Option A as the target product behaviour;**
+- **Option B only as an explicitly documented temporary fail-closed fallback** until primary-image support is verified.
 
 **B. Related story and requirements:** US-GAR-003 AC-02; FR-AI-012.
 
@@ -445,6 +601,14 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 - `heif-dec` decodes every top-level image and has no primary-only option (OPEN-S3-08).
 - Silently picking an arbitrary image is not acceptable.
 
+**Additional context, recorded on 2026-11-11 for the approved Option A** (upstream libheif sources `libheif/context.cc`, `examples/heif_info.cc`, `examples/heif_dec.cc` and `examples/heif_enc.cc`, read on that date):
+
+- libheif builds its top-level image list in **file item order** and does not move the primary image to the front. The primary image is the one the `pitm` box names.
+- `heif-info` walks that list and prints `image: <w>x<h> (id=<item id>)`, followed by `, primary` for the primary image.
+- `heif-dec` walks the same list in the same order and numbers several outputs from 1. It exits at the first image it cannot decode, so the numbering cannot shift.
+- `heif-enc` always makes its first input the primary image and has no option to choose another.
+- These are facts about upstream code, not about an installed version. V4 and V8 (OPEN-S3-08) check them per environment.
+
 **E. Options:**
 
 | Option | Solution | Advantages | Disadvantages / Trade-offs | Complexity | Suitability |
@@ -455,17 +619,46 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A as the product policy. Option B as the explicit interim behaviour until A is approved and verified (V4 in OPEN-S3-08).
 
-**G. Status:** BLOCKED — REQUIRES PO DECISION.
+**G. Status:**
 
-**H. Provisional assumption:** `ImageIoPhotoInspector` rejects HEIF input that decodes to more than one image with reason `MULTIPLE_IMAGES`, reported as `422 PHOTO_MULTIPLE_IMAGES` with replacement and manual-continuation guidance. This is explicit, never silent.
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11).
+  - **Target behaviour:** Option A.
+  - **Temporary fail-closed fallback:** Option B, until primary-image selection is verified.
+  - Option C is not approved.
+- **Implementation / verification status:** PENDING.
+  - Primary-image selection is designed, specified in code and covered by tests (US-GAR-003 §10.9, P38, T13, T22).
+  - It stays **disabled** (`capsuleai.wardrobe.photo.heif-primary-image-selection=false`) until V4 and V8 pass on the deployment image and the CI runner.
+  - Until then the shipped behaviour is the temporary fallback, and the target capability is **not Done**.
+- **Status before approval:** BLOCKED — REQUIRES PO DECISION.
 
-**I. Change impact:** Approving Option A replaces the multi-output branch in `HeifDecoder` with primary-image selection. Two tests change. The API and database are unaffected.
+**H. Approved direction, as implemented by the guides:**
+
+- **Identification.** `HeifDecoder` runs `heif-info`, parses the `image:` lines in order, and requires exactly one `, primary` line. The primary's 0-based position `k` names `heif-dec`'s output `decoded-(k+1).png`. The output set must be exactly `decoded-1.png` … `decoded-N.png`.
+- **Ceiling first.** Every listed image must be within the declared-pixel ceiling before `heif-dec` runs.
+- **Fail-closed.** Any of the following gives `422 PHOTO_MULTIPLE_IMAGES` with replacement and manual-continuation guidance, never a silent choice:
+  - selection is disabled;
+  - there is no primary line;
+  - there are several primary lines;
+  - the outputs do not match the listing.
+- **Temporary fallback label.** The enum Javadoc (P6), the OpenAPI text (P58), the README (P60) and the configuration comment (P55) describe the rejection as temporary.
+- **Tests.**
+  - T13 `withSelectionEnabledThePrimaryImageIsUsedWhenItIsNotTheFirstDecodedImage` rewrites the `pitm` item so that the primary is the second decoded image, and expects that image. Option C would fail this test.
+  - T13 also covers the primary listed first and the rejection while selection is off.
+  - T22 covers the selection and fail-closed rules without libheif.
+- **Guide sections:** US-GAR-003 I-14, §10.9, P6, P38, P48, P50, P51, P55, P58, P60, T13, T22; shared architecture §17, §19.
+
+**I. Change impact (only if the decision is later revised):** If the PO later made Option B the permanent policy:
+
+- remove the selection branch and the `heif-primary-image-selection` property (or keep it `false`);
+- remove the two selection tests in `HeifDecodingIT` and the selection cases in `HeifDecoderTest`.
+
+The API and database are unaffected.
 
 ---
 
 ## OPEN-S3-12 — Decoder resource ceilings
 
-**A. Question ID:** OPEN-S3-12 (S3-IMG-06: "Bound decode memory, pixel allocation, processing time and temporary resources … do not invent numerical limits or silently reject otherwise supported input").
+**A. Question ID:** OPEN-S3-12. S3-IMG-06 says: "Bound decode memory, pixel allocation, processing time and temporary resources … do not invent numerical limits or silently reject otherwise supported input". This entry was approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-02/07; NFR-SEC; ADA-013.
 
@@ -488,9 +681,13 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 
 **F. Recommendation:** Option A. The ceilings are safety bounds, not product policy. Any change that could affect ordinary phone photos goes to the PO.
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED. Measure decode time and peak memory with the V3 fixtures on the deployment size, then adjust.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Measure decode time and peak memory with the V3 fixtures on the deployment size, and load-test concurrent uploads. Adjust the values within Option A if needed. Raise any change that could affect ordinary phone photos with the PO.
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
+
+**H. Approved direction, as implemented by the guides:**
 
 | Property | Default |
 | --- | --- |
@@ -498,15 +695,17 @@ Count: **16 unresolved questions**. 8 are recommended and pending approval (01, 
 | `capsuleai.wardrobe.photo.decode-timeout` | `PT20S` |
 | `capsuleai.wardrobe.photo.maximum-concurrent-decodes` | `2` |
 
-When all decode slots are busy, the request waits up to the decode timeout and then answers `503 TEMPORARILY_UNAVAILABLE` (retryable). It never answers `PHOTO_UNREADABLE` for that case.
+- When all decode slots are busy, the request waits up to the decode timeout and then answers `503 TEMPORARILY_UNAVAILABLE` (retryable). It never answers `PHOTO_UNREADABLE` for that case. US-GAR-003 T12 `whenEveryDecodeSlotIsBusyAPhotoIsTemporarilyUnavailableNotUnreadable` tests this.
+- For HEIF, `heif-info` and `heif-dec` share one decode deadline, and every listed image's declared pixels are checked before `heif-dec` runs (P38, T22).
+- Guide sections: US-GAR-003 §10.9, P38, P39, P50, P55, T12, T13, T22.
 
-**I. Change impact:** Only property values and README text change.
+**I. Change impact (only if the decision is later revised):** Only property values and README text change.
 
 ---
 
 ## OPEN-S3-13 — Storage SDK and local S3-compatible fixture
 
-**A. Question ID:** OPEN-S3-13 (S3-IMG-01 APPROVED: an S3-compatible local service for development and tests, plus private managed Amazon S3 as the proposed deployed target. It says "select an actively supported local fixture and SDK during JIT work").
+**A. Question ID:** OPEN-S3-13. S3-IMG-01 was APPROVED: an S3-compatible local service for development and tests, plus private managed Amazon S3 as the proposed deployed target. It says "select an actively supported local fixture and SDK during JIT work". This entry selects them: approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-04/06/07; DATA-GAR-004; ADA-006/007; S3-INT-02.
 
@@ -541,17 +740,33 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 | 3 | The same three operations plus the conditional put against a private AWS S3 test bucket, with a least-privilege IAM user: `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on one prefix only |
 | 4 | Bucket policy blocks public access |
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED. AWS account, region, budget and production configuration remain outside this package.
+**G. Status:**
 
-**H. Provisional assumption:** US-GAR-003's POM, compose, configuration and test steps use Option A.
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A, with the documented versions and real-provider verification.
+- **Implementation / verification status:** PENDING.
+  - V-S3 steps 1–4 have not been executed.
+  - S3Mock's `If-None-Match` support is unverified, and an S3Mock pass is not evidence about Amazon S3.
+  - AWS account, region, budget and production configuration remain outside this package (S3-IMG-01).
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
-**I. Change impact:** Option B or C changes `compose.yaml`, the container definition in `S3PhotoStorageIT` and `PhotoStorageTestConfiguration`. Production code is unaffected, because only the endpoint changes.
+**H. Approved direction, as implemented by the guides:** US-GAR-003 implements Option A:
+
+- the POM (P1);
+- the storage adapter (P36);
+- the client wiring (P51);
+- the properties (P55, P56);
+- compose (P57);
+- the storage test (T14).
+
+The guide's README text (P60) lists the deployment settings without claiming them.
+
+**I. Change impact (only if the decision is later revised):** Option B or C changes `compose.yaml`, `application-local.properties` and the container definition in `S3PhotoStorageIT`. Production code is unaffected, because only the endpoint changes. (Corrected on 2026-11-11: an earlier text named a `PhotoStorageTestConfiguration`, which no guide defines.)
 
 ---
 
 ## OPEN-S3-14 — Photo API surface
 
-**A. Question ID:** OPEN-S3-14 (realizes S3-IMG-02 multipart proxy, S3-IMG-03 staged upload then explicit confirmation, S3-IMG-05 application-authorized streaming, S3-IMG-07 new garment only; all APPROVED; contract shape uses S3-INT-01).
+**A. Question ID:** OPEN-S3-14. It realizes S3-IMG-02 (multipart proxy), S3-IMG-03 (staged upload then explicit confirmation), S3-IMG-05 (application-authorized streaming) and S3-IMG-07 (new garment only), all APPROVED. The contract shape uses S3-INT-01 (APPROVED). This entry was approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-GAR-003 AC-03/04/06/07; FR-AI-004/008/010; DATA-GAR-004; DATA-INT-004.
 
@@ -573,20 +788,29 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 
 **F. Recommendation:** Option A.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Implementation and tests; client evidence for the two-step flow.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
+
+**H. Approved direction, as implemented by the guides:**
 
 - US-GAR-003 implements Option A.
-- A `photoUploadId` that cannot be used (unknown, another owner's, cancelled, expired, not yet ready, already attached to another garment) never produces an imageless success. It gives `404 PHOTO_UPLOAD_NOT_FOUND` or `409 PHOTO_UPLOAD_NOT_USABLE`.
+- A `photoUploadId` that cannot be used never produces an imageless success. It gives `404 PHOTO_UPLOAD_NOT_FOUND` or `409 PHOTO_UPLOAD_NOT_USABLE`. That covers an upload that is:
+  - unknown or another owner's;
+  - cancelled or expired;
+  - not yet ready;
+  - already attached to another garment.
+- Guide sections: US-GAR-003 §10.1, §10.2, P30–P33, P41–P47, P58, T10, T16, T17, T18, T20.
 
-**I. Change impact:** Option B moves confirmation into `WardrobePhotoUploadController` and a new service. Option C adds one field to `GarmentSummaryResponse`, OpenAPI and the US-WAR-001 tests.
+**I. Change impact (only if the decision is later revised):** Option B moves confirmation into `WardrobePhotoUploadController` and a new service. Option C adds one field to `GarmentSummaryResponse`, OpenAPI and the US-WAR-001 tests.
 
 ---
 
 ## OPEN-S3-15 — Preference contract representation
 
-**A. Question ID:** OPEN-S3-15 (refines S3-PROF-02 and S3-PROF-03, APPROVED).
+**A. Question ID:** OPEN-S3-15. It refines S3-PROF-02 and S3-PROF-03, both APPROVED; this entry was approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-PROF-001 AC-01/02/05/06; FR-PROF-002/003; SRS §3.14.1, §4.10; BRULE-PROF-002; DATA-AUTH-003.
 
@@ -611,15 +835,20 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 
 **F. Recommendation:** Option A.
 
-**G. Status:** RECOMMENDED — PENDING APPROVAL.
+**G. Status:**
 
-**H. Provisional assumption:**
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A, including the six canonical need codes, explicit unset (`null`) versus priority `0`–`3`, and `revision: null` for a never-declared profile.
+- **Implementation / verification status:** PENDING. Implementation and tests; clients map the approved codes to localized labels.
+- **Status before approval:** RECOMMENDED — PENDING APPROVAL.
 
-- **US-PROF-001** implements Option A.
+**H. Approved direction, as implemented by the guides:**
+
+- **US-PROF-001** implements Option A, with all seven profile style codes and the six need codes.
 - **Unset styles and an empty style selection are not distinguished.** Both mean "no declared style context". S3-PROF-02 requires an empty selection to round-trip as `[]`, and it does.
 - **Contract change:** if the PO later wants "never set" to differ from "deliberately none", that is a contract change, described in I.
+- **Guide sections:** US-PROF-001 I-1–I-3, I-7, §10, P1–P6, P26, P31; T1, T4, T7, T8.
 
-**I. Change impact:**
+**I. Change impact (only if the decision is later revised):**
 
 - **Need codes:** renaming them changes the `CommonNeed` enum, the V11 CHECK constraint (before first deployment only) and OpenAPI.
 - **Unset vs. empty styles:** distinguishing them adds a `styles_declared` column and a nullable `styles` response.
@@ -628,7 +857,7 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 
 ## OPEN-S3-16 — Published current-context contract timing and shape
 
-**A. Question ID:** OPEN-S3-16 (S3-PROF-05 APPROVED: "a narrow `personalcontext.api` current-context contract when needed by the selected implementation").
+**A. Question ID:** OPEN-S3-16. S3-PROF-05 was APPROVED: "a narrow `personalcontext.api` current-context contract when needed by the selected implementation". This entry selects "now, minimal": approved by the Product Owner on 2026-11-11.
 
 **B. Related story and requirements:** US-PROF-001 AC-03/05; FR-PROF-004; FR-ANL-014; BRULE-COV-006; ADA-017/018; AR-02–07.
 
@@ -651,22 +880,30 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 
 **F. Recommendation:** Option A, kept minimal. No event, cache or projection.
 
-**G. Status:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
+**G. Status:**
 
-**H. Provisional assumption:** US-PROF-001 adds the `api` package with two types and one service implementation.
+- **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A.
+- **Implementation / verification status:** PENDING. Implement the two `api` types and the service, then prove them:
+  - `CurrentPersonalContextIT` must pass;
+  - `ArchitectureDependencyTest` must pass with the new `api` package (no `domain` or `application` type in it, and no other module reaching past it);
+  - `DatabaseSchemaOwnershipIT` must pass with the new tables.
+  - No consumer is built.
+- **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
-**I. Change impact:** Option B deletes the two `api` types, their implementation, one test class and one configuration bean.
+**H. Approved direction, as implemented by the guides:** US-PROF-001 adds the `api` package with two types and one service implementation. Guide sections: US-PROF-001 §10, P20, P21, P22, P29, T10, T11; shared architecture §5, §18.
+
+**I. Change impact (only if the decision is later revised):** Option B deletes the two `api` types, their implementation, one test class and one configuration bean.
 
 ---
 
-## 3. Items that are not open questions
+## 5. Items that are not open questions
 
 These items were considered and are **not** open. They are recorded so nobody reopens them by accident.
 
 | Item | Why it is settled |
 | --- | --- |
-| Presence-aware PATCH and explicit clearing | S3-GAR-01 and S3-PROF-03 are APPROVED; only the encoding detail is OPEN-S3-05 |
-| Optimistic revision and guarded create-if-unset | S3-GAR-02 and S3-PROF-04 are APPROVED; only token transport is OPEN-S3-04 |
+| Presence-aware PATCH and explicit clearing | S3-GAR-01 and S3-PROF-03 are APPROVED; their encoding, OPEN-S3-05, is approved too |
+| Optimistic revision and guarded create-if-unset | S3-GAR-02 and S3-PROF-04 are APPROVED; token transport, OPEN-S3-04, is approved too |
 | Inapplicable values after a Category change | S3-GAR-03 APPROVED: reject with field errors; never auto-clear |
 | Recovery after a lost edit response | S3-GAR-04 APPROVED: authenticated reread; never resend with a new token automatically |
 | Staged upload, then explicit confirmation; durable pending records; application streaming | S3-IMG-02/03/04/05 APPROVED |

@@ -4,16 +4,22 @@
 
 | Field | Planning baseline |
 | --- | --- |
-| Artifact / version | Sprint 3 Backend Sprint Plan / 0.2 |
-| Status | Updated for explicit Product Owner approvals; independent cross-story review remains open |
-| Repository revision for this update | `sprint_03`, commit `821ee2f` (`add sprint planning for sprint 3`); original backend analysis follows merged PR #4 |
+| Artifact / version | Sprint 3 Backend Sprint Plan / 0.3 |
+| Status | Updated for explicit Product Owner approvals: all 21 register decisions and the 16 detailed implementation choices are approved; implementation and verification have not started |
+| Repository revision for this update | `sprint_03`, commit `b7644b1` (`add implementation guides for sprint 3`); version 0.2 was prepared at `821ee2f`; original backend analysis follows merged PR #4 |
 | Scope authority | Product Owner decision of 2026-11-11: exactly the three stories in Section 5 |
-| Revision note | 2026-11-11: recorded 18 unchanged recommended solutions as PO-approved and deferred US-MEAS-001 to a future, unspecified sprint; no other artifacts changed |
+| Revision note | 2026-11-11 (0.2): recorded 18 unchanged recommended solutions as PO-approved and deferred US-MEAS-001 to a future, unspecified sprint. 2026-11-11 (0.3): recorded PO approval of S3-INT-01, S3-INT-02 and S3-INT-03 (each Option A) and of the 16 detailed choices OPEN-S3-01–16 in the [implementation-guide decision record](implementation-guides/open-questions.md), including the 24-hour pending-media TTL and the multi-image HEIF target policy; synchronized the Sprint 3 implementation guides |
 | Accountability | Product Owner owns product decisions; Developers own implementation planning and technical feasibility; the PO is also the primary backend developer |
 | Planning convention | Flexible capstone Sprint; completion is assessed through outcomes and applicable evidence |
-| Change boundary | This task updates only this plan; requirements, architecture decisions, backlog order, source stories, code, contracts and migrations are unchanged |
+| Change boundary | This revision updates only this plan and the Sprint 3 implementation guides; requirements, architecture decisions, backlog order, source stories, code, contracts and migrations are unchanged |
 
-This plan connects the selected outcomes to the actual Sprint 1–2 backend and current approved requirements. The Product Owner explicitly approved the unchanged recommended solutions for S3-GAR-01–05, S3-IMG-01–08 and S3-PROF-01–05 on 2026-11-11. Section 9 retains their analyses and the three independent cross-story questions; Section 13 contains the matching 21-entry register. Approval of a solution does not establish implementation, verification or deployment completion.
+This plan connects the selected outcomes to the actual Sprint 1–2 backend and current approved requirements. On 2026-11-11 the Product Owner explicitly approved:
+
+- the unchanged recommended solutions for S3-GAR-01–05, S3-IMG-01–08 and S3-PROF-01–05;
+- later the same day, Option A of the three cross-story decisions S3-INT-01–03;
+- the recommended solutions of the 16 detailed implementation choices OPEN-S3-01–16 recorded in the [implementation guides](implementation-guides/open-questions.md).
+
+Section 9 retains all 21 analyses, and Section 13 contains the matching 21-entry register. Approval of a solution does not establish implementation, verification or deployment completion.
 
 The user’s explicit planning convention governs this plan: no fixed duration, start/end dates, capacity assumption, velocity, Story Points, delivery estimates or artificial deadlines are assigned. The current explicit three-story selection supersedes the earlier general preference for roughly four to six related stories. This does not reorder the Product Backlog or authorize additional work.
 
@@ -25,7 +31,7 @@ The [workflow](../../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.
 
 Sprint 2 provides authenticated manual creation, current-wardrobe pages and full garment inspection. Sprint 3 lets users maintain that truth, recognize newly entered clothing through private photos, and establish private context for future advice. Together these outcomes strengthen “Understand My Wardrobe,” preparing later styling without claiming an implemented recommendation engine or measured product benefit.
 
-The selected scope is explicit. The 18 GAR/IMG/PROF recommendations are approved; the three independent INT decisions retain their own statuses, and unresolved policy/JIT details remain visible. Backend delivery alone does not establish complete mobile-story Done.
+The selected scope is explicit. All 21 register decisions and the 16 detailed implementation choices are approved; implementation, technical verification and client evidence remain visible as outstanding work. Backend delivery alone does not establish complete mobile-story Done.
 
 ## 3. Current Repository and Backend Baseline
 
@@ -95,7 +101,7 @@ Architecture analysis and selected decisions already record the baseline. No sta
 | [US-GAR-003 — Add a photo-supported garment with manual confirmation](../../stories/garment/US-GAR-003-add-photo-supported-garment.md) | PBI-012 | Recognize clothing visually without waiting for AI | One private photo supporting a separately confirmed new garment |
 | [US-PROF-001 — Set and revise style preferences and common needs](../../stories/profile/US-PROF-001-set-and-revise-style-and-common-needs.md) | PBI-010 | Prepare relevant future advice and Coverage under user control | Private progressive preference setup and safe revision |
 
-These are the only selected stories. Source document Draft labels are retained; the explicit approval covers the 18 GAR/IMG/PROF recommended solutions, while the INT decisions remain independently reviewable. Parent PBIs can be broader than a selected story: optional body/gender lifecycle, for example, belongs to US-PROF-002 and is not pulled in by selecting PBI-010’s private style/common-needs slice.
+These are the only selected stories. Source document Draft labels are retained; the explicit approvals cover the 18 GAR/IMG/PROF recommended solutions, Option A of the three INT decisions and the 16 detailed implementation choices. Parent PBIs can be broader than a selected story: optional body/gender lifecycle, for example, belongs to US-PROF-002 and is not pulled in by selecting PBI-010’s private style/common-needs slice.
 
 **Deferred scope:** US-MEAS-001 is removed from Sprint 3 and deferred to a future, unspecified sprint. Its upstream requirements and Product Backlog position are unchanged. Sprint 3 includes no measurement producers, intake, persistence, retention job or dedicated measurement verification.
 
@@ -171,9 +177,9 @@ No backlog hard dependency between the three selected stories is invented. Camer
 
 ### 7.2 Recommended delivery sequence
 
-1. **Prepare shared meanings early:** review the recorded approvals, independent INT questions, accepted-action identity, correction-versus-creation meaning and absent/zero context. Investigate actual HEIC/HEIF and private-storage feasibility early; significant uncertainty can justify a bounded technical investigation within the selected work. This is preparation, not implementation of an extra selected story or full-Sprint design.
+1. **Prepare shared meanings early:** review the recorded approvals, including the approved INT conventions and detailed choices, accepted-action identity, correction-versus-creation meaning and absent/zero context. Verify actual HEIC/HEIF (including primary-image selection) and private-storage feasibility early; significant uncertainty can justify a bounded technical investigation within the selected work. This is preparation, not implementation of an extra selected story or full-Sprint design.
 2. **US-GAR-002:** reuse the existing garment model/read path to establish confirmed editing, revision conflicts, shared validation and safe rereading. This gives later photo creation a well-defined accepted profile without making editing a new hard prerequisite.
-3. **US-GAR-003:** add private staged media and new confirmed photo-backed creation using its approved approaches while resolving the remaining TTL policy and necessary JIT details. Reuse garment validation and creation idempotency; retain imageless continuity.
+3. **US-GAR-003:** add private staged media and new confirmed photo-backed creation using its approved approaches, the approved 24-hour pending-media TTL and the approved decoding choices, while completing their technical verification. Reuse garment validation and creation idempotency; retain imageless continuity.
 4. **US-PROF-001:** add the independent Personal Context capability and private published context meaning. Its preparation may proceed alongside media investigation because it does not depend on photo completion.
 5. **Integrate the selected outcomes:** run current-state, privacy, concurrency, cross-resource recovery, lifecycle and regression verification; collect relevant client evidence and review/CI evidence before claiming Done.
 
@@ -228,7 +234,7 @@ Each owner accesses only its own persistence. No Product Measurement implementat
 
 ### 8.3 Cross-resource coordination and recovery
 
-The approved staged approach avoids pretending an object write and a database commit are atomic. Durable owner-scoped pending work and immutable object identity allow recovery; S3-IMG-08 approves the lifecycle approach while leaving the exact pending-media TTL unresolved.
+The approved staged approach avoids pretending an object write and a database commit are atomic. Durable owner-scoped pending work and immutable object identity allow recovery. S3-IMG-08 approves the lifecycle approach, and the Product Owner approved a configurable pending-media TTL of 24 hours (`PT24H`) on 2026-11-11 (OPEN-S3-07).
 
 ```mermaid
 flowchart TD
@@ -258,9 +264,23 @@ Uncertainty review may find no accepted action or still be unavailable; only an 
 
 ## 9. Decision Analysis & Proposed Solutions
 
-**How to read statuses:** `APPROVED` records explicit Product Owner approval of all 18 GAR/IMG/PROF recommended solutions on 2026-11-11, including the three entries that already restated approved constraints. `PROPOSED — PENDING PO APPROVAL` remains the independent status of S3-INT-01/02; `DEFERRED TO JIT DESIGN` remains the independent status of S3-INT-03. No approval of an INT decision is inferred from approval of a related story approach.
+**How to read statuses:** `APPROVED` records explicit Product Owner approval on 2026-11-11:
 
-The Recommended Solution text, alternatives, trade-offs and rationale are retained as the decision record. Historical wording such as “proposed” within an unchanged recommendation does not override its current approved status. Alternatives remain available for future reference, not as permission to switch away from the approved option. Solution approval leaves necessary implementation detail, verification and the exact pending-media TTL unresolved.
+- of all 18 GAR/IMG/PROF recommended solutions, including the three entries that already restated approved constraints;
+- in a separate, later approval the same day, of Option A of S3-INT-01, S3-INT-02 and S3-INT-03.
+
+The INT approvals are explicit; they are not inferred from approval of a related story approach. The status before that approval (`PROPOSED — PENDING PO APPROVAL` for S3-INT-01/02, `DEFERRED TO JIT DESIGN` for S3-INT-03) is kept in each Approval Record.
+
+The Recommended Solution text, alternatives, trade-offs and rationale are retained as the decision record. Historical wording within an unchanged recommendation does not override its current approved status. That includes “proposed”, “JIT design” and “no TTL is approved here”. Alternatives remain available for future reference, not as permission to switch away from the approved option.
+
+The detailed choices that these decisions left to JIT design were approved on 2026-11-11 as OPEN-S3-01–16 in the [implementation-guide decision record](implementation-guides/open-questions.md). They include:
+
+- the pending-media TTL;
+- the decoder toolchain;
+- the multi-image HEIF policy;
+- the storage SDK and fixture.
+
+Approval of a solution or choice does not complete its implementation or verification.
 
 Stable S3 decision IDs are planning references, not new requirement IDs or standalone ADRs. Where two stories share a mechanism, the later entry applies the earlier decision instead of independently selecting another architecture.
 
@@ -532,6 +552,8 @@ APPROVED
 
 2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval selects the provider strategy; AWS account configuration, production deployment, provider compatibility and budget verification remain uncompleted work.
 
+2026-11-11 (follow-up) — Product Owner approved the JIT selection OPEN-S3-13 Option A: AWS SDK for Java v2 (BOM `2.46.13`) and Adobe S3Mock `5.1.0` as the local and test fixture, with real-provider verification. The verification (V-S3 against S3Mock and a private AWS S3 bucket) has not been executed; an emulator pass remains insufficient production evidence.
+
 **Approval Owner**
 
 Product Owner / project owner with Backend Tech Lead
@@ -757,6 +779,16 @@ APPROVED
 
 2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval covers Option B as the investigation direction only; select and verify the concrete decoder/toolchain during JIT design.
 
+2026-11-11 (follow-up) — Product Owner approved the JIT choices in the [implementation-guide decision record](implementation-guides/open-questions.md):
+
+- **OPEN-S3-08:** a bounded libheif `heif-info`/`heif-dec` subprocess for HEIC/HEIF, with Java ImageIO for JPEG/PNG.
+- **OPEN-S3-09:** 15 MB means exactly 15,000,000 bytes.
+- **OPEN-S3-10:** only a metadata-free, orientation-corrected JPEG with a long edge of at most 2048 px is retained, not the original.
+- **OPEN-S3-11:** the primary image of a multi-image HEIF is the target behaviour. Explicit `PHOTO_MULTIPLE_IMAGES` rejection is approved only as a temporary fail-closed fallback until primary-image selection is verified.
+- **OPEN-S3-12:** configurable safety ceilings of 250 MP declared pixels, 20 s and 2 concurrent decodes.
+
+These approvals select the concrete direction. They do not verify it: the toolchain verification V1–V8, real-device fixtures, resource measurements and license/update review remain outstanding, and the verification limits of this decision still apply.
+
 **Approval Owner**
 
 Backend Tech Lead; Product Owner for any user-visible policy or requirement change
@@ -846,7 +878,9 @@ APPROVED
 
 **Approval Record**
 
-2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval covers Option A for the pending-media lifecycle. The exact pending-media TTL still requires an explicit PO decision; no retention period is selected here.
+2026-11-11 — Product Owner explicitly approved the existing recommended solution unchanged. Approval covers Option A for the pending-media lifecycle. The exact pending-media TTL still required an explicit PO decision; no retention period was selected by this approval.
+
+2026-11-11 (follow-up) — Product Owner selected the pending-media TTL: OPEN-S3-07 Option B, a configurable 24 hours (`PT24H`). The TTL no longer blocks lifecycle completion; the lifecycle implementation and its deletion evidence remain to be delivered and verified.
 
 **Approval Owner**
 
@@ -1119,7 +1153,20 @@ Synchronize affected OpenAPI and consumers during implementation; extend Identit
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved Option A unchanged (status before approval: PROPOSED — PENDING PO APPROVAL). The related detailed contract choices were approved at the same time; see the [implementation-guide decision record](implementation-guides/open-questions.md):
+
+- OPEN-S3-01: compatible evolution and the shared error vocabulary;
+- OPEN-S3-04: opaque revision string, `expectedRevision` in the body, `409 REVISION_CONFLICT`;
+- OPEN-S3-05: presence-aware `application/json` PATCH;
+- OPEN-S3-06: no-op updates;
+- OPEN-S3-14: photo API surface;
+- OPEN-S3-15: preference representation.
+
+The synchronized contracts and contract tests remain implementation work.
 
 **Approval Owner**
 
@@ -1160,7 +1207,16 @@ JIT implementation must configure needed storage/decoder fixtures, clock/cleanup
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved Option A unchanged (status before approval: PROPOSED — PENDING PO APPROVAL), with the detailed choice OPEN-S3-02. Approval authorizes the direction, not the evidence. The following remain outstanding:
+
+- the storage and decoder fixtures;
+- the `sprint_03` CI trigger and required reports;
+- the HEIF CI runs;
+- the real-provider check against a private AWS S3 bucket.
 
 **Approval Owner**
 
@@ -1201,7 +1257,19 @@ At guide time, recheck HEAD and relevant sources; identify existing/new/modified
 
 **Decision Status**
 
-DEFERRED TO JIT DESIGN
+APPROVED
+
+**Approval Record**
+
+2026-11-11 — Product Owner explicitly approved Option A as the documentation and JIT coordination approach (status before approval: DEFERRED TO JIT DESIGN), with the detailed choice OPEN-S3-03. The approved packaging is the [Sprint 3 implementation guides](implementation-guides/README.md): self-contained story guides plus shared architecture and a cumulative shared-file order.
+
+During execution, each story must still:
+
+- recheck HEAD;
+- apply its guide in the agreed order (or use the merge rules);
+- reconcile the guide with the code it actually delivers.
+
+Once a story is implemented, its code, OpenAPI and migrations win over guide text.
 
 **Approval Owner**
 
@@ -1225,7 +1293,7 @@ Recheck the concrete deployed versions and provider/codec behavior in JIT design
 
 ## 10. Verification and Testing Strategy
 
-This is planned implementation evidence under the existing Test Strategy, not a report that Sprint 3 tests exist or have passed. Use selective TDD for meaningful policy/race boundaries where useful; tests and implementation evolve together. Verify the approved approaches as implementation proceeds; resolve the independent INT questions, exact TTL policy and necessary JIT details before dependent work.
+This is planned implementation evidence under the existing Test Strategy, not a report that Sprint 3 tests exist or have passed. Use selective TDD for meaningful policy/race boundaries where useful; tests and implementation evolve together. Verify the approved approaches and detailed choices as implementation proceeds, including the outstanding toolchain, provider and resource-limit verification.
 
 ### 10.1 Story verification portfolio
 
@@ -1269,7 +1337,7 @@ The [existing DoD](../../definition-of-done.md), Sections 3–6, is the completi
 | Authorization and privacy | Real session/owner denial, logout/reset/account-switch tests, purpose-minimal external input, private media and privacy-safe operational evidence; no training data use |
 | Concurrency and uncertainty | Deterministic competing-edit/setup/confirmation tests; original action deduplication; commit/lost-response review and no false success or duplicate action |
 | Required integrations and runtime | Actual storage adapter/decoder and private provider configuration evidence, resumable lifecycle/cleanup and honest unavailable-media behavior; relevant deployment/configuration guidance synchronized |
-| Media lifecycle and outcome integrity | Pending-media TTL policy resolved and lifecycle/cleanup tested; applicable media retention/deletion obligations preserved; optional measurement failure cannot reverse accepted core truth/response, without requiring a measurement implementation |
+| Media lifecycle and outcome integrity | Approved 24-hour pending-media TTL (`PT24H`) configured and lifecycle/cleanup tested; applicable media retention/deletion obligations preserved; optional measurement failure cannot reverse accepted core truth/response, without requiring a measurement implementation |
 | Automation and regression | Relevant unit/real integration/security/contract/architecture tests and full verification pass on the integrated revision; required CI checks actually run and pass |
 | Review and documentation | Appropriate change review, no unresolved blocking behavior/Critical defect, affected contracts/design/configuration and traceability reflect delivered truth; no ceremonial unrelated edits |
 | Client and usable Increment | Supported Vietnamese Android/iOS review/permissions/skip/recovery flows and applicable accessibility evidence; demonstrated integrated behavior with existing access and Wardrobe capabilities |
@@ -1284,14 +1352,14 @@ A useful demonstration walks through an authenticated current garment correction
 
 | Risk / open point | Effect and handling | Owner / relevant decision |
 | --- | --- | --- |
-| HEIC/HEIF deployment feasibility | Native codec/plugin availability, security limits and actual device fixtures must be proven; do not weaken approved input support | Backend Tech Lead; S3-IMG-06 and S3-INT-02 |
-| Pending-upload lifetime is unspecified | Requires an explicit expiry/retention policy before lifecycle completion; no invented TTL | PO/BA; S3-IMG-08 approach approved, exact pending-media TTL remains unresolved |
+| HEIC/HEIF deployment feasibility | The approved libheif toolchain (OPEN-S3-08) still needs verification V1–V8: native codec/plugin availability, security limits, actual device fixtures and the primary-image mapping. Do not weaken approved input support | Backend Tech Lead; S3-IMG-06, OPEN-S3-08 and S3-INT-02 |
+| Pending-upload lifetime | Resolved on 2026-11-11: the PO approved a configurable 24-hour TTL (OPEN-S3-07). Remaining: implement and test the lifecycle and deletion | Backend Tech Lead; S3-IMG-08 and OPEN-S3-07 approved |
 | Approved provider strategy still requires deployment verification | AWS account configuration, private delivery, region/privacy, budget and actual adapter compatibility are not established by strategy approval | Project Owner/PO with Tech Lead; S3-IMG-01 |
 | Lost corrections or accidental clearing | Presence-aware contract, explicit category-dependent correction and revision conflicts require client/backend agreement | PO/BA, Backend/client contributors; S3-GAR-01–05, S3-PROF-03/04 |
 | Orphan/raced or inaccessible media | Durable intent, guarded confirmation/cleanup, immutable identity, safe reread and deletion retry; DB commit is not object atomicity | Backend Tech Lead; S3-IMG-03–05/08 |
-| Exact image contract interpretation | MB byte interpretation, multi-image HEIF handling, metadata/original strategy and any user-visible extra resource limit need JIT review; no silent requirement relaxation | Tech Lead with PO for policy effects; S3-IMG-06/08 |
+| Exact image contract interpretation | Approved on 2026-11-11: 15,000,000 bytes (OPEN-S3-09); metadata-free JPEG ≤ 2048 px with no retained original (OPEN-S3-10); the primary image of a multi-image HEIF as the target, with explicit rejection only as a temporary fail-closed fallback (OPEN-S3-11); technical safety ceilings (OPEN-S3-12). Remaining: verify primary-image selection before enabling it, and measure the ceilings. Any further user-visible limit still needs the PO; no silent requirement relaxation | Tech Lead with PO for policy effects; S3-IMG-06/08 |
 | Client participation and applicable privacy evidence | Camera/gallery, progressive entry, accessibility and actual privacy proof cannot be established from backend source; identify missing evidence without assuming capacity or selecting extra stories | Developers/QA with PO; Sections 7/10/11 |
-| CI may not run for the intended integration path | Current workflow lacks PR target sprint_03; actual branch/PR strategy must trigger the required checks | Developers/Tech Lead; S3-INT-02 |
+| CI may not run for the intended integration path | Current workflow lacks PR target sprint_03; the approved direction (S3-INT-02, OPEN-S3-02) adds it with US-GAR-002, and the actual branch/PR strategy must still trigger the required checks | Developers/Tech Lead; S3-INT-02 |
 
 PRD MVP-Q01–Q10 remain the source for expansion-specific sharing, saved-look, Chat, try-on, catalog/bulk, allocation and engine questions. They do not make those unselected features Sprint 3 prerequisites. Resolve an expansion question here only if a demonstrated dependency affects a selected outcome; do not settle future sharing consent, preview provider or owner allocation through private photo implementation.
 
@@ -1301,7 +1369,7 @@ These findings are recorded without editing their source files. Newer explicit a
 
 | Finding | Governing interpretation / limitation |
 | --- | --- |
-| Selected story status paragraphs and refinement review Section 10.3 still say Draft/candidate and no Sprint assignment | Historical/current-source status is preserved. The current PO instruction selects exactly three stories and approves the 18 GAR/IMG/PROF recommended solutions; it does not claim software Done |
+| Selected story status paragraphs and refinement review Section 10.3 still say Draft/candidate and no Sprint assignment | Historical/current-source status is preserved. The current PO instructions select exactly three stories and approve the 21 register decisions and the 16 detailed choices; they do not claim software Done |
 | PBI-008 heading retains “with readiness guidance”; UC-007 Goal and AD-007 review wording retain fragments about readiness/compatibility; UC-009 Section 15 still lists OPQ-012–014 as unresolved | The final property authority, revised BRULE-GAR-003, resolved PRD decisions and actual NOT_EVALUATED contract override stale wording. No readiness/compatibility gate or already-resolved Brand/Price question is reopened |
 | [Product Goal Section 9](../../product-goal.md#9-traceability) has older version labels and some `../01-business` / `../02-product` / `../03-requirements` relative links that do not resolve from its own directory | Use actual canonical BRD/PRD/SRS/rules paths in this plan and current content, not the old labels/links; no source repair is performed |
 | [Backend conventions Section 1](../../../engineering/backend-conventions.md#1-controllers-group-a-cohesive-api) still says only AuthController exists | WardrobeGarmentController demonstrably exists and is reused; the governing cohesive-controller rule is still valid |
@@ -1314,7 +1382,12 @@ The inconsistencies do not authorize product-policy changes. Relevant source cor
 
 ## 13. Consolidated Decision Register
 
-The register contains exactly 21 entries: 5 GAR, 8 IMG, 5 PROF and 3 INT. All 18 GAR/IMG/PROF recommended solutions are explicitly PO-approved. S3-INT-01 and S3-INT-02 remain proposed and pending PO approval; S3-INT-03 remains deferred to JIT design. S3-IMG-06 approval is limited to the investigation direction, and S3-IMG-08 approval does not select an exact pending-media TTL.
+The register contains exactly 21 entries: 5 GAR, 8 IMG, 5 PROF and 3 INT. **All 21 are explicitly PO-approved:**
+
+- the 18 GAR/IMG/PROF recommended solutions;
+- in a later approval on 2026-11-11, Option A of S3-INT-01, S3-INT-02 and S3-INT-03. S3-INT-03 is approved as the documentation and JIT coordination approach; the guides must still be reconciled with the actual implementation.
+
+S3-IMG-06 approval remains limited to the investigation direction. Its concrete choices (OPEN-S3-08–12) were approved separately and remain unverified. The pending-media TTL that S3-IMG-08 left open was approved as 24 hours (OPEN-S3-07). The 16 detailed choices are recorded in the [implementation-guide decision record](implementation-guides/open-questions.md).
 
 | Decision ID | Related Story | Question | Recommended Option | Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
@@ -1336,11 +1409,18 @@ The register contains exactly 21 entries: 5 GAR, 8 IMG, 5 PROF and 3 INT. All 18
 | [S3-PROF-03](#s3-prof-03--profile-revision-semantics) | US-PROF-001 | Profile revision semantics | B — Presence-aware partial profile revision | APPROVED | Product Owner with Backend Tech Lead |
 | [S3-PROF-04](#s3-prof-04--concurrent-profile-setup-and-revisions) | US-PROF-001 | Concurrent profile setup and revisions | B — Optimistic revision; guarded first setup | APPROVED | Product Owner with Backend Tech Lead |
 | [S3-PROF-05](#s3-prof-05--published-current-context-integration) | US-PROF-001 | Published current-context integration | A — Minimal published current-context query | APPROVED | Product Owner with Backend Tech Lead |
-| [S3-INT-01](#s3-int-01--compatible-api-evolution-and-shared-recovery-vocabulary) | All three selected stories | Compatible API evolution and shared recovery vocabulary | A — Compatible contracts and shared recovery meanings | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and client contributor |
-| [S3-INT-02](#s3-int-02--integration-environment-and-executable-evidence) | All three selected stories | Integration environment and executable evidence | A — Isolated real integrations plus provider checks | PROPOSED — PENDING PO APPROVAL | Product Owner / project owner with Backend Tech Lead and QA |
-| [S3-INT-03](#s3-int-03--jit-design-packaging-and-shared-file-coordination) | All three selected stories | JIT design packaging and shared-file coordination | A — Selected-story guides when requested; JIT packaging | DEFERRED TO JIT DESIGN | Backend Tech Lead / Developers; Product Owner for scope or policy changes |
+| [S3-INT-01](#s3-int-01--compatible-api-evolution-and-shared-recovery-vocabulary) | All three selected stories | Compatible API evolution and shared recovery vocabulary | A — Compatible contracts and shared recovery meanings | APPROVED | Product Owner with Backend Tech Lead and client contributor |
+| [S3-INT-02](#s3-int-02--integration-environment-and-executable-evidence) | All three selected stories | Integration environment and executable evidence | A — Isolated real integrations plus provider checks | APPROVED | Product Owner / project owner with Backend Tech Lead and QA |
+| [S3-INT-03](#s3-int-03--jit-design-packaging-and-shared-file-coordination) | All three selected stories | JIT design packaging and shared-file coordination | A — Selected-story guides when requested; JIT packaging | APPROVED | Backend Tech Lead / Developers; Product Owner for scope or policy changes |
 
-Use the approved garment/profile and staged-media analyses as the direction for selected-story JIT work. Resolve the exact pending-media TTL and necessary technical details without reopening the approved options. Review S3-INT-01/02 independently and finalize S3-INT-03 during JIT design; their current statuses are unchanged.
+Use the approved garment/profile, staged-media and cross-story analyses, and the approved detailed choices, as the direction for selected-story implementation. Complete the outstanding technical verification without reopening the approved options:
+
+- the HEIF toolchain and primary-image selection;
+- the S3Mock and Amazon S3 behaviour;
+- the decoder resource limits;
+- CI on PRs into `sprint_03`.
+
+Keep the implementation guides reconciled with the delivered code (S3-INT-03).
 
 ## 14. Requirements Traceability
 
@@ -1405,10 +1485,22 @@ The [Logical](../../../04-architecture/views/logical-view.puml), [Implementation
 
 The Sprint Goal connects trustworthy, recognizable private wardrobe maintenance and entry with declared personal context. Exactly US-GAR-002, US-GAR-003 and US-PROF-001 are selected. Recommended order is garment editing → photo-supported creation → private preferences; profile preparation can proceed independently. No measurement implementation is part of this Sprint.
 
-The register has 21 decisions: 18 approved GAR/IMG/PROF solutions, two independent INT recommendations pending PO approval and one INT choice deferred to JIT design. The approved directions remain unchanged: presence-aware partial edits with optimistic protection, authenticated reread after uncertainty, staged private media with durable cleanup coordination, and Personal Context ownership with absent/zero distinctions.
+The register has 21 decisions, all approved by the Product Owner: 18 GAR/IMG/PROF solutions, and Option A of the three INT decisions (compatible API evolution, isolated integration evidence, story guides with shared-file coordination). The approved directions remain unchanged:
 
-Approval of S3-IMG-01 selects the provider strategy without claiming AWS configuration, budget, compatibility or deployment verification. S3-IMG-06 approves the bounded-decoder investigation direction; the concrete toolchain and evidence remain JIT work. S3-IMG-08 approves the lifecycle approach; the exact pending-media TTL still requires PO selection. Other necessary API, data, transaction and verification details remain story-specific JIT work.
+- presence-aware partial edits with optimistic protection;
+- authenticated reread after uncertainty;
+- staged private media with durable cleanup coordination;
+- Personal Context ownership with absent/zero distinctions.
 
-Apply the approved solutions and resolve the remaining relevant policy/INT/JIT questions before dependent implementation. Each selected story then follows **JIT design → automated tests plus implementation → refactor/integration verification → PR/CI/review → applicable AC + DoD**. Keep a usable Increment and adapt through learning without a whole-Sprint design gate, a second design phase or unselected feature implementation.
+The 16 detailed implementation choices are also approved.
 
-This documentation-only update changes only this file. It implements no backend behavior and executes no backend build or tests. It does not claim Sprint 3 implementation, testing, CI, deployment or complete mobile-story Done. Plan validation covers preserved analysis/recommendations, scope, status/register consistency, navigation, Mermaid rendering and repository change isolation; actual software verification remains future delivery work.
+Approval does not claim verification:
+
+- **S3-IMG-01** selects the provider strategy. OPEN-S3-13 selects the AWS SDK and S3Mock fixture. Neither claims AWS configuration, budget, compatibility or deployment verification.
+- **S3-IMG-06** approves the bounded-decoder investigation direction, and OPEN-S3-08–12 approve the concrete libheif toolchain, the byte limit, the derivative, the multi-image policy and the safety ceilings. The toolchain evidence (V1–V8), real-device fixtures and resource measurements remain outstanding.
+- **Multi-image HEIF:** primary-image selection is the approved target. The explicit rejection is only the temporary fail-closed fallback until that selection is verified.
+- **S3-IMG-08** approves the lifecycle approach, and the PO selected a configurable 24-hour pending-media TTL.
+
+Apply the approved solutions and choices; no policy, INT or detailed JIT choice awaits PO approval. Each selected story then follows **JIT design → automated tests plus implementation → refactor/integration verification → PR/CI/review → applicable AC + DoD**. Keep a usable Increment and adapt through learning without a whole-Sprint design gate, a second design phase or unselected feature implementation.
+
+This documentation-only revision changes only this plan and the six Sprint 3 implementation-guide files. It implements no backend behavior and executes no backend build or tests. It does not claim Sprint 3 implementation, testing, CI, deployment or complete mobile-story Done. Plan validation covers preserved analysis/recommendations, scope, status/register consistency, navigation, Mermaid rendering and repository change isolation; actual software verification remains future delivery work.

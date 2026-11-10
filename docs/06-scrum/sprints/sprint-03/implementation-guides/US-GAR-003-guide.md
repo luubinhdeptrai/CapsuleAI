@@ -5,9 +5,9 @@
 | Story | [US-GAR-003](../../../stories/garment/US-GAR-003-add-photo-supported-garment.md) (Draft v0.4), parent PBI-012 |
 | Sprint | Sprint 3, story 2 of 3 |
 | Starting point | After every US-GAR-002 step is applied (V9, `Garment.revision`, PATCH, OpenAPI 0.9.0). No commit hash is assumed. |
-| Approved decisions applied | S3-IMG-01 (strategy), S3-IMG-02, S3-IMG-03, S3-IMG-04, S3-IMG-05, S3-IMG-06 (investigation direction), S3-IMG-07, S3-IMG-08 (lifecycle) |
-| Provisional choices used | OPEN-S3-01, 02, 07 (TTL 24 h, **blocked on PO**), 08 (libheif `heif-dec`), 09 (15,000,000 bytes), 10 (normalized JPEG only), 11 (multi-image HEIF rejected, **blocked on PO**), 12 (decoder ceilings), 13 (AWS SDK 2.46.13 + S3Mock 5.1.0), 14 (photo API surface) |
-| Verification status | **Not compiled, not run, not tested.** The HEIF toolchain and the S3Mock fixture also need the verification procedures V1–V7 and V-S3 in [open questions](open-questions.md). |
+| Approved decisions applied | S3-IMG-01 (strategy), S3-IMG-02, S3-IMG-03, S3-IMG-04, S3-IMG-05, S3-IMG-06 (investigation direction), S3-IMG-07, S3-IMG-08 (lifecycle); S3-INT-01, S3-INT-02, S3-INT-03 |
+| Approved detailed choices used | All **approved by the Product Owner on 2026-11-11** ([decision record](open-questions.md)): OPEN-S3-01 (API evolution), 02 (integration evidence and CI), 07 (pending TTL `PT24H`), 08 (libheif `heif-info` + `heif-dec` subprocess, ImageIO for JPEG/PNG), 09 (15,000,000 bytes), 10 (normalized JPEG only), 11 (primary image of a multi-image HEIF as the target; explicit rejection as the temporary fail-closed fallback), 12 (decoder ceilings), 13 (AWS SDK 2.46.13 + S3Mock 5.1.0), 14 (photo API surface) |
+| Verification status | **Not compiled, not run, not tested.** Approval selects the direction; it is not evidence. The HEIF toolchain (V1–V8, including primary-image selection), the S3Mock fixture and real Amazon S3 (V-S3) and the decoder ceilings still need the verification procedures in [open questions](open-questions.md). |
 | Shared rules | [shared-architecture.md](shared-architecture.md) §11 (errors), §15 (transactions), §16 (idempotency), §17 (media lifecycle), §19 (configuration), §21 (file order) |
 
 ## 1. Story Overview
@@ -210,9 +210,11 @@ The approved Sprint 3 decisions are quoted in full in [plan §9.2](../sprint-pla
 | S3-IMG-03 | Option B — staged upload with separately confirmed new-garment creation. | APPROVED |
 | S3-IMG-04 | Option A — durable pending media coordination and resumable owner-controlled recovery. | APPROVED |
 | S3-IMG-05 | Option A — authenticated application delivery, rechecking the current owner and permitted pending/accepted media association for each request. | APPROVED |
-| S3-IMG-06 | Option B as the investigation direction — prove a bounded decoder adapter using a maintained HEIF-capable toolchain; finalize the concrete library/runtime in selected-story JIT design. | APPROVED (investigation direction only) |
+| S3-IMG-06 | Option B as the investigation direction — prove a bounded decoder adapter using a maintained HEIF-capable toolchain; finalize the concrete library/runtime in selected-story JIT design. | APPROVED (investigation direction). The concrete JIT choices OPEN-S3-08/09/10/11/12 were approved on 2026-11-11; the toolchain is still **unverified** (V1–V8) |
 | S3-IMG-07 | Option A — preserve new-garment-only photo support. | APPROVED |
-| S3-IMG-08 | Option A — recoverable application-owned lifecycle; request PO selection of the pending retention/expiry policy before the affected lifecycle is finalized. | APPROVED (TTL not selected) |
+| S3-IMG-08 | Option A — recoverable application-owned lifecycle; request PO selection of the pending retention/expiry policy before the affected lifecycle is finalized. | APPROVED. Pending TTL selected by the PO on 2026-11-11: 24 hours, configurable (OPEN-S3-07) |
+
+The cross-story decisions S3-INT-01 (compatible API evolution), S3-INT-02 (isolated integration evidence) and S3-INT-03 (story guides with shared-file coordination) are approved as Option A ([plan §9.4](../sprint-plan.md#94-cross-story-decisions)).
 
 ## 9. Engineering Interpretation
 
@@ -223,7 +225,7 @@ The approved Sprint 3 decisions are quoted in full in [plan §9.2](../sprint-pla
 | I-3 | Size: the received byte count must be ≤ 15,000,000 (OPEN-S3-09). Dimensions: the shortest side of the **original** image must be ≥ 512 pixels (511 rejected, 512 accepted). Background colour is never checked. | AC-02 |
 | I-4 | Stored media is one normalized JPEG: orientation applied, all metadata dropped, long edge ≤ 2048 px (OPEN-S3-10). The original bytes are discarded after inspection. | S3-IMG-06, NFR-PRIV-001 |
 | I-5 | A staged upload is **not** a garment. Garment creation still needs the existing confirmed POST with Category and Color. An upload that cannot be used makes the POST fail; it never falls back to an imageless success. | AC-04, S3-IMG-03 |
-| I-6 | Replacement = stage another photo (new upload key) and optionally `DELETE` the old one. Unconfirmed uploads expire after the pending TTL (OPEN-S3-07, provisional 24 h). | AC-03, FR-AI-004, S3-IMG-08 |
+| I-6 | Replacement = stage another photo (new upload key) and optionally `DELETE` the old one. Unconfirmed uploads expire after the pending TTL: 24 hours, approved by the PO (OPEN-S3-07), configurable as `capsuleai.wardrobe.photo-upload.pending-ttl`. | AC-03, FR-AI-004, S3-IMG-08 |
 | I-7 | Creation idempotency is unchanged for imageless POSTs. For photo POSTs, the fingerprint includes the upload id, so the same key with a different (or no) photo is `422 IDEMPOTENCY_KEY_REUSED`. Replay returns `200` with the existing garment even though the upload is now `ATTACHED`. | AC-06, S3-IMG-04, DATA-INT-004 |
 | I-8 | One upload can attach to at most one garment (`UNIQUE (garment_id)` and the status transition `READY → ATTACHED` under a row lock). | S3-IMG-03 |
 | I-9 | Missing media: if an attached photo's object is gone, only the photo route answers `404 GARMENT_PHOTO_UNAVAILABLE`. Garment JSON (including `photo` metadata) stays readable. | AC-06 |
@@ -231,6 +233,7 @@ The approved Sprint 3 decisions are quoted in full in [plan §9.2](../sprint-pla
 | I-11 | Upload staging is idempotent per `(owner, Idempotency-Key)` with a SHA-256 of the bytes: a retry after a lost response returns the same upload; different bytes under the same key are rejected. | S3-IMG-02 ("dropped upload response is resolved through owner-scoped pending status/retry") |
 | I-12 | "Optional measurement failure does not reverse accepted creation" (AC-07) is satisfied trivially: no measurement producer exists in Sprint 3. Nothing is added. | Plan §5 |
 | I-13 | Editing (US-GAR-002) never changes the photo association. There are no attach or replace routes. | S3-IMG-07 |
+| I-14 | A HEIF file with several top-level images: the approved target is the file's **primary** image, identified by libheif (§10.9). Until primary-image selection is verified on the deployed libheif (V4, V8) and switched on, such a file is rejected explicitly with `422 PHOTO_MULTIPLE_IMAGES` and replacement or manual-continuation guidance. That rejection is the approved **temporary** fail-closed fallback, not the target behaviour. No arbitrary image is ever chosen. | AC-02, FR-AI-012, OPEN-S3-11 |
 
 ## 10. Just-in-Time Detailed Design
 
@@ -266,6 +269,8 @@ sequenceDiagram
 ```
 
 ### 10.2 API contract
+
+The surface below is OPEN-S3-14 Option A, approved by the Product Owner on 2026-11-11: a separate `/photo-uploads` resource, with confirmation through the existing garment-creation endpoint and an optional `photoUploadId`. It follows the compatible-evolution and shared error conventions of S3-INT-01 / OPEN-S3-01.
 
 | Operation | Request | Success | Errors |
 | --- | --- | --- | --- |
@@ -332,7 +337,7 @@ LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status =
 | Two confirmations of one upload (same or different keys) | Both lock the upload row. The second sees `ATTACHED`: with the same key and fingerprint it replays; with a different key it gets `409 PHOTO_UPLOAD_NOT_USABLE`. |
 | Confirmation versus expiry sweep | The sweep uses `FOR UPDATE SKIP LOCKED` and re-checks status, so it skips a row a confirmation holds. A confirmation that locks after the sweep committed sees `DISCARDED` and gets `409`. |
 | Cancel versus confirmation | Same row lock. Whichever commits first wins; the other is explained (`409` for either). |
-| Upload still running when cancelled or expired | `next_cleanup_at ≥ created_at + in-flight fence` (`PT5M` > storage timeout `PT30S` + decode timeout `PT20S`). If the late put lands anyway, its failing `READY` update re-queues deletion. |
+| Upload still running when cancelled or expired | `next_cleanup_at ≥ created_at + in-flight fence` (`PT5M` > storage timeout `PT30S` + 2 × decode timeout `PT20S`, the rule checked at startup in P51). If the late put lands anyway, its failing `READY` update re-queues deletion. |
 | Two uploads with the same key at once | `UNIQUE (owner_account_id, upload_key)`. The loser rereads, compares the SHA-256 and replays or rejects. The loser never stored an object (it puts only after its own intent insert). |
 | Two cleanup workers | `SKIP LOCKED` claims plus a lease (`next_cleanup_at = now + retry-delay`). Deleting twice is harmless (S3 delete is idempotent). |
 
@@ -341,7 +346,7 @@ LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status =
 - **Authorization:** every route is behind the existing filter chain; ownership is in every SQL predicate.
 - **Response headers:** `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff` on image responses.
 - **Temporary files:** a decoder temp directory is created per decode and deleted in `finally`.
-- **Process safety:** the decoder process gets fixed arguments (no shell) and its output is discarded. No filename from the client is ever used.
+- **Process safety:** the libheif processes (`heif-info`, then `heif-dec`) get fixed, relative arguments (no shell) inside the private directory. `heif-dec`'s output is discarded, and `heif-info`'s listing goes to a size-checked file in that directory. No filename from the client is ever used.
 - **Credentials:** storage credentials come only from environment variables; the default AWS credential chain applies when they are absent. Credentials and object keys are never logged.
 
 ### 10.6 Recovery matrix
@@ -368,8 +373,9 @@ See [shared architecture §19](shared-architecture.md#19-configuration-and-envir
 | Application | `StagePhotoUploadServiceTest` | Size boundary, 511/512, replay, key reuse, storage failure, cancelled while uploading |
 | Application | `PhotoBackedGarmentCreationTest` | Confirm, replay, key reuse, not-usable, other owner, imageless path unchanged |
 | Application | `PhotoUploadLifecycleServiceTest` | Cancel, idempotent cancel, attached not cancellable, expiry, cleanup retry, attached never deleted |
-| Imaging | `ImageIoPhotoInspectorTest` | JPEG/PNG genuine decode, suffix and Content-Type mismatch, truncation, orientation, metadata stripping, long-edge bound, pixel ceiling |
-| Imaging | `HeifDecodingIT` | Real libheif: HEIC decode, multi-image rejection, truncated input |
+| Imaging | `ImageIoPhotoInspectorTest` | JPEG/PNG genuine decode, suffix and Content-Type mismatch, truncation, orientation, metadata stripping, long-edge bound, pixel ceiling, busy decode slots → `503` |
+| Imaging | `HeifDecoderTest` | heif-info listing, primary selection (also when the primary is not first), fail-closed cases, pixel ceiling before decoding, output names; no libheif needed |
+| Imaging | `HeifDecodingIT` | Real libheif: HEIC decode; multi-image rejection while selection is disabled; primary image chosen when it is listed first **and** when it is not the first decoded image; truncated input |
 | Storage | `S3PhotoStorageIT` | Put/get/delete against S3Mock, missing object, idempotent delete, conditional write (V-S3) |
 | Schema | `PhotoUploadSchemaIT` | V10 constraints |
 | API | `PhotoUploadApiIT` | Staging boundaries and errors, review content, cancel, privacy, logout |
@@ -378,6 +384,72 @@ See [shared architecture §19](shared-architecture.md#19-configuration-and-envir
 | Lifecycle | `PhotoUploadCleanupIT` | Expiry, fence, delete failure and retry, attached untouched |
 | Contract | `IdentityOpenApiContractIT` (modified) | Multipart and binary operations documented and protected |
 | Security | `CorsSecurityIT` (modified) | `DELETE` preflight |
+
+### 10.9 HEIC/HEIF decoding and multi-image files (OPEN-S3-08, OPEN-S3-11, OPEN-S3-12)
+
+**Approved on 2026-11-11:**
+
+- **Toolchain (OPEN-S3-08):** HEIC/HEIF goes through libheif's command-line tools in bounded subprocesses; JPEG and PNG stay in Java ImageIO.
+- **Multi-image files (OPEN-S3-11):**
+  - Option A, the file's **primary** image, is the target product behaviour.
+  - Option B, explicit rejection, is approved only as a **temporary fail-closed fallback** until primary-image selection is verified.
+- **Ceilings (OPEN-S3-12):** configurable safety limits.
+
+Approval selects this direction. Nothing below has been executed against this repository.
+
+**How the toolchain identifies the primary image:**
+
+1. **libheif's top-level list.** libheif keeps one list of top-level images in file item order. Hidden items, thumbnails, auxiliary images and mask images are excluded, and the primary image is **not** moved to the front.
+2. **`heif-info` marks the primary.** It walks that list and prints one line per image, `image: <width>x<height> (id=<item id>)`. It appends `, primary` to the image libheif marks primary, which comes from the file's `pitm` box.
+3. **`heif-dec` numbers in the same order.** It walks the same list in the same order:
+   - with one image, it writes exactly the output name it was given;
+   - with N images, it writes `<stem>-1.png` … `<stem>-N.png`, numbered from 1;
+   - it exits non-zero at the first image it cannot decode, so the numbering cannot shift.
+4. **Mapping.** The primary's 0-based position `k` in the `heif-info` listing therefore names the `heif-dec` output `decoded-(k+1).png`.
+5. **Fail closed.** `HeifDecoder` requires exactly one primary line, and exactly the expected set of output files. Anything else is rejected; no image is guessed.
+
+Facts 1–3 come from the upstream libheif sources (`libheif/context.cc`, `examples/heif_info.cc`, `examples/heif_dec.cc`), read on 2026-11-11. `examples/heif_enc.cc` (same date) shows that `heif-enc` always makes its first input the primary image and has no option to choose another. They describe upstream code, not the libheif version installed on a server or CI runner. Verification steps V4 and V8 (OPEN-S3-08) check them on each target.
+
+```mermaid
+flowchart TD
+    A["Bytes sniffed as HEIF (ftyp brand)"] --> B["heif-info input.heif<br/>(shared decode deadline)"]
+    B -->|"non-zero exit or timeout"| U["422 PHOTO_UNREADABLE"]
+    B --> C{"Top-level images listed"}
+    C -->|"none"| U
+    C -->|"any image above the pixel ceiling"| U
+    C -->|"exactly one"| D["heif-dec input.heif decoded.png"]
+    C -->|"two or more"| S{"heif-primary-image-selection enabled?"}
+    S -->|"no: default until V4 and V8 pass"| M["422 PHOTO_MULTIPLE_IMAGES<br/>temporary fail-closed fallback"]
+    S -->|"yes: OPEN-S3-11 target"| P{"Exactly one primary line?"}
+    P -->|"no"| M
+    P -->|"yes, at position k"| D
+    D --> O{"Outputs exactly the expected names?"}
+    O -->|"no"| F["Fail closed: PHOTO_MULTIPLE_IMAGES for several images,<br/>PHOTO_UNREADABLE for one"]
+    O -->|"yes"| R["Use decoded.png or decoded-(k+1).png<br/>then the ImageIO normalization path"]
+```
+
+**Design details:**
+
+- **Relative names in a private directory.** Both tools run with the private temporary directory as their working directory and receive only the relative names `input.heif` and `decoded.png`. Older `heif-convert` versions build numbered names from the first `.` in the output path, so a dotted temporary path could otherwise break the numbering. No client file name is ever used.
+- **Bounded resources.**
+  - Both processes share **one** decode deadline, so the native step stays within `decode-timeout`. The HEIF path as a whole stays within two decode timeouts (native step plus ImageIO), which is what the startup fence rule in P51 assumes.
+  - `heif-info` output above 1 MiB is refused.
+  - Every listed image must be within `maximum-declared-pixels` **before** `heif-dec` runs, because `heif-dec` decodes every top-level image, not only the primary one.
+- **The switch.** `capsuleai.wardrobe.photo.heif-primary-image-selection` defaults to `false`.
+  - Enable it in an environment only after V4 and V8 pass there and are recorded in the PR.
+  - While it is `false`, multi-image files get `422 PHOTO_MULTIPLE_IMAGES` with replacement and manual-continuation guidance. That is the approved temporary behaviour, **not** the approved target.
+- **Trade-off.** With selection enabled, a multi-image file costs one decode per top-level image. The shared deadline and the per-image pixel ceiling bound that cost.
+- **Ways of implementing Option A that were not chosen:**
+  - A small C helper calling libheif's primary-image API: more native code to build, ship and patch.
+  - Parsing the `pitm` box in Java: it would still need libheif's top-level order to find `heif-dec`'s output.
+
+**Done criteria.** The approved target behaviour is **Done** only when all of these hold:
+
+- V4 and V8 pass on the deployment image and the CI runner;
+- `HeifDecodingIT` passes with selection enabled, with zero skips;
+- the property is set to `true` for the deployed environment.
+
+Until then, the story can ship only the temporary fallback, and the multi-image capability must be reported as **not done**.
 
 ## 11. File Change Matrix
 
@@ -422,7 +494,7 @@ See [shared architecture §19](shared-architecture.md#19-configuration-and-envir
 | P35 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcPhotoUploadRepository.java` | SQL | P2, P21 |
 | P36 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/storage/S3PhotoStorage.java` | S3 adapter | P1, P17 |
 | P37 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/JpegOrientation.java` | EXIF orientation | — |
-| P38 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoder.java` | Bounded `heif-dec` process | P9, P15 |
+| P38 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoder.java` | Bounded `heif-info` + `heif-dec` processes; primary-image selection with fail-closed fallback | P9, P15 |
 | P39 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/ImageIoPhotoInspector.java` | Sniff, decode, normalize | P37, P38, P19 |
 | P40 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/MultipartReceivedPhoto.java` | `MultipartFile` → `ReceivedPhoto` | P8 |
 | P41 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PhotoUploadResponse.java` | JSON | P7 |
@@ -466,6 +538,7 @@ See [shared architecture §19](shared-architecture.md#19-configuration-and-envir
 | T19 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/PhotoUploadCleanupIT.java` | Lifecycle on PostgreSQL | P29, P35 |
 | T20 | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java` | Multipart and binary | P58 |
 | T21 | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java` | `DELETE` | P54 |
+| T22 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoderTest.java` | Listing, selection and fail-closed rules without libheif | P38 |
 
 ## 12. Complete Production Implementation
 
@@ -799,7 +872,7 @@ public enum PhotoRejectionReason {
     /** The bytes are not a JPEG, PNG or HEIC/HEIF image, whatever the file name or declared type says. */
     UNSUPPORTED_FORMAT,
 
-    /** More than the approved maximum size (provisionally 15,000,000 bytes; OPEN-S3-09). */
+    /** More than the approved maximum size: 15,000,000 bytes (OPEN-S3-09). */
     TOO_LARGE,
 
     /** The shortest side of the original image is below 512 pixels. */
@@ -808,7 +881,11 @@ public enum PhotoRejectionReason {
     /** A supported format that could not be decoded completely and safely within the processing limits. */
     UNREADABLE,
 
-    /** A HEIF file with more than one top-level image (interim behaviour; OPEN-S3-11). */
+    /**
+     * A HEIF file with several top-level images whose primary image is not selected: the approved
+     * temporary fail-closed fallback of OPEN-S3-11, used while primary-image selection is disabled or
+     * when the primary image cannot be identified reliably. Never a silent choice of another image.
+     */
     MULTIPLE_IMAGES
 }
 ```
@@ -1287,10 +1364,10 @@ import java.util.Objects;
 /**
  * Photo rules and lifecycle settings, supplied by configuration (US-GAR-003).
  *
- * @param maximumBytes        FR-AI-012 "15 MB"; provisionally 15,000,000 (OPEN-S3-09)
+ * @param maximumBytes        FR-AI-012 "15 MB": 15,000,000 bytes (OPEN-S3-09, approved)
  * @param minimumShortestSide FR-AI-012: 512 pixels
- * @param pendingTtl          how long an unconfirmed photo stays usable; provisional 24 hours, pending
- *                            Product Owner approval (OPEN-S3-07, S3-IMG-08)
+ * @param pendingTtl          how long an unconfirmed photo stays usable: 24 hours, approved by the Product
+ *                            Owner (OPEN-S3-07, S3-IMG-08); configurable
  * @param inFlightFence       minimum time between staging and deleting an object of a photo discarded while
  *                            still receiving; longer than any store plus decode can take
  * @param cleanupBatchSize    rows handled per expiry or deletion pass
@@ -2702,35 +2779,85 @@ import com.capsuleai.wardrobe.domain.PhotoRejectionReason;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Decodes HEIC/HEIF with libheif's {@code heif-dec} command in a separate, time-bounded process
- * (S3-IMG-06 Option B; toolchain OPEN-S3-08, verification required). A decoder crash or runaway
- * allocation cannot take down the JVM; libheif's default security limits stay enabled (the
- * {@code --disable-limits} option is never passed). Rotation and mirroring are applied by heif-dec
- * by default; EXIF and XMP are not written unless requested, and are not requested.
+ * Decodes HEIC/HEIF with libheif's command-line tools in separate, time-bounded processes
+ * (S3-IMG-06 Option B; toolchain OPEN-S3-08, approved 2026-11-11, verification V1–V8 still required).
+ * A decoder crash or runaway allocation cannot take down the JVM; libheif's default security limits
+ * stay enabled (the {@code --disable-limits} option is never passed). heif-dec applies rotation and
+ * mirroring by default and writes EXIF or XMP only when asked, and it is never asked.
  *
- * <p>heif-dec decodes every top-level image and numbers the outputs when there are several. Until the
- * Product Owner decides OPEN-S3-11, more than one output is rejected explicitly as MULTIPLE_IMAGES.
+ * <p>One decode, inside one private temporary directory and one shared deadline (the decode timeout):
+ * <ol>
+ *   <li>{@code heif-info input.heif} lists the top-level images as {@code image: WxH (id=N)} lines and
+ *       marks the primary image with {@code , primary}.</li>
+ *   <li>Every listed image must be within the declared-pixel ceiling (OPEN-S3-12) before anything is
+ *       decoded, because heif-dec decodes every top-level image.</li>
+ *   <li>The image to use is chosen (OPEN-S3-11, below).</li>
+ *   <li>{@code heif-dec input.heif decoded.png} writes {@code decoded.png} for one top-level image, or
+ *       {@code decoded-1.png} … {@code decoded-N.png} in the same top-level order for N images.</li>
+ * </ol>
+ *
+ * <p>Multi-image files (OPEN-S3-11, approved 2026-11-11). The approved product behaviour is the file's
+ * primary image. heif-info and heif-dec walk the same libheif top-level list, so the position of the
+ * primary line in heif-info's listing names heif-dec's numbered output. That mapping must be verified on
+ * the deployed libheif (V4, V8) before it is relied on. Until then {@code primaryImageSelection} stays
+ * {@code false} and a file with several top-level images is rejected explicitly as MULTIPLE_IMAGES: the
+ * approved temporary fail-closed fallback. With selection enabled, any doubt fails closed the same way
+ * (no primary line, several primary lines, or outputs that do not match the listing). An arbitrary
+ * image is never chosen.
  */
 public final class HeifDecoder {
 
-    private final String command;
-    private final Duration timeout;
+    static final String INPUT = "input.heif";
+    static final String OUTPUT = "decoded.png";
+    private static final String OUTPUT_STEM = "decoded";
+    private static final String LISTING = "heif-info.txt";
+    private static final long MAXIMUM_LISTING_BYTES = 1_048_576;
+    private static final Pattern TOP_LEVEL_IMAGE =
+            Pattern.compile("^image: (\\d{1,9})x(\\d{1,9}) \\(id=(\\d{1,10})\\)(, primary)?\\s*$");
 
-    public HeifDecoder(String command, Duration timeout) {
-        this.command = Objects.requireNonNull(command, "command").strip();
+    private final String decoderCommand;
+    private final String infoCommand;
+    private final Duration timeout;
+    private final long maximumDeclaredPixels;
+    private final boolean primaryImageSelection;
+
+    /**
+     * @param decoderCommand        heif-dec (named heif-convert on some older distributions)
+     * @param infoCommand           heif-info from the same libheif installation
+     * @param timeout               one budget shared by both processes of a decode (OPEN-S3-12)
+     * @param maximumDeclaredPixels technical ceiling applied to every top-level image (OPEN-S3-12)
+     * @param primaryImageSelection OPEN-S3-11 target behaviour; enable only after V4 and V8 pass on the
+     *                              deployed libheif. While false, several top-level images are rejected.
+     */
+    public HeifDecoder(String decoderCommand, String infoCommand, Duration timeout, long maximumDeclaredPixels,
+                       boolean primaryImageSelection) {
+        this.decoderCommand = Objects.requireNonNull(decoderCommand, "decoderCommand").strip();
+        this.infoCommand = Objects.requireNonNull(infoCommand, "infoCommand").strip();
         this.timeout = Objects.requireNonNull(timeout, "timeout");
+        this.maximumDeclaredPixels = maximumDeclaredPixels;
+        this.primaryImageSelection = primaryImageSelection;
+        if (timeout.isNegative() || timeout.isZero() || maximumDeclaredPixels < 1) {
+            throw new IllegalArgumentException("HEIF decoding limits must be positive");
+        }
     }
 
     /** One decoded HEIF image as a PNG file in a private directory, deleted on close. */
@@ -2742,30 +2869,48 @@ public final class HeifDecoder {
         }
     }
 
+    /** One top-level image as heif-info lists it, in libheif's top-level order. */
+    record TopLevelImage(long width, long height, long itemId, boolean primary) {
+    }
+
     /**
-     * @throws PhotoRejectedException              UNREADABLE (corrupt, truncated, too slow) or MULTIPLE_IMAGES
-     * @throws PhotoProcessingUnavailableException if the decoder is not installed or cannot be started
+     * @throws PhotoRejectedException              UNREADABLE (corrupt, truncated, above the pixel ceiling, too
+     *                                             slow) or MULTIPLE_IMAGES (several images, no reliable choice)
+     * @throws PhotoProcessingUnavailableException if a libheif tool is not installed or cannot be started
      */
     public DecodedHeif decode(ReceivedPhoto photo) {
+        long deadline = System.nanoTime() + timeout.toNanos();
         Path directory = privateTemporaryDirectory();
         try {
-            Path input = directory.resolve("input.heif");
             try (InputStream content = photo.openStream()) {
-                Files.copy(content, input, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(content, directory.resolve(INPUT), StandardCopyOption.REPLACE_EXISTING);
             }
-            Path output = directory.resolve("decoded.png");
-            run(List.of(command, input.toString(), output.toString()));
-            List<Path> decoded;
-            try (Stream<Path> files = Files.list(directory)) {
-                decoded = files.filter(file -> file.getFileName().toString().endsWith(".png")).sorted().toList();
-            }
-            if (decoded.isEmpty()) {
+
+            Path listing = directory.resolve(LISTING);
+            run(List.of(infoCommand, INPUT), directory, ProcessBuilder.Redirect.to(listing.toFile()), deadline);
+            if (Files.size(listing) > MAXIMUM_LISTING_BYTES) {
                 throw new PhotoRejectedException(PhotoRejectionReason.UNREADABLE);
             }
-            if (decoded.size() > 1) {
-                throw new PhotoRejectedException(PhotoRejectionReason.MULTIPLE_IMAGES); // OPEN-S3-11 interim
+            List<TopLevelImage> images =
+                    parseTopLevelImages(Files.readAllLines(listing, StandardCharsets.ISO_8859_1));
+            requireDeclaredPixelsWithin(images, maximumDeclaredPixels);
+            int selected = selectImage(images, primaryImageSelection);
+
+            run(List.of(decoderCommand, INPUT, OUTPUT), directory, ProcessBuilder.Redirect.DISCARD, deadline);
+            List<String> expected = expectedOutputNames(images.size());
+            Set<String> produced;
+            try (Stream<Path> files = Files.list(directory)) {
+                produced = files.map(file -> file.getFileName().toString())
+                        .filter(name -> name.endsWith(".png"))
+                        .collect(Collectors.toSet());
             }
-            return new DecodedHeif(directory, decoded.get(0));
+            if (!produced.equals(Set.copyOf(expected))) {
+                // heif-dec did not write exactly the images heif-info listed, so the mapping is not trusted.
+                throw new PhotoRejectedException(images.size() > 1
+                        ? PhotoRejectionReason.MULTIPLE_IMAGES
+                        : PhotoRejectionReason.UNREADABLE);
+            }
+            return new DecodedHeif(directory, directory.resolve(expected.get(selected)));
         } catch (IOException ioFailure) {
             deleteRecursively(directory);
             throw new UncheckedIOException("HEIF decoding workspace failed", ioFailure);
@@ -2775,18 +2920,85 @@ public final class HeifDecoder {
         }
     }
 
-    private void run(List<String> arguments) {
+    /** The heif-info lines that describe top-level images, in listed order; every other line is ignored. */
+    static List<TopLevelImage> parseTopLevelImages(List<String> lines) {
+        List<TopLevelImage> images = new ArrayList<>();
+        for (String line : lines) {
+            Matcher matcher = TOP_LEVEL_IMAGE.matcher(line);
+            if (matcher.matches()) {
+                images.add(new TopLevelImage(Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2)),
+                        Long.parseLong(matcher.group(3)), matcher.group(4) != null));
+            }
+        }
+        return List.copyOf(images);
+    }
+
+    /** heif-dec decodes every top-level image, so each one must be within the ceiling before it runs. */
+    static void requireDeclaredPixelsWithin(List<TopLevelImage> images, long maximumDeclaredPixels) {
+        for (TopLevelImage image : images) {
+            if (image.width() < 1 || image.height() < 1 || image.width() * image.height() > maximumDeclaredPixels) {
+                throw new PhotoRejectedException(PhotoRejectionReason.UNREADABLE);
+            }
+        }
+    }
+
+    /**
+     * The position, in heif-info's listing, of the image to use (OPEN-S3-11).
+     *
+     * @throws PhotoRejectedException UNREADABLE if no image is listed; MULTIPLE_IMAGES if several are listed
+     *                                and selection is disabled, or no single image is marked primary
+     */
+    static int selectImage(List<TopLevelImage> images, boolean primaryImageSelection) {
+        if (images.isEmpty()) {
+            throw new PhotoRejectedException(PhotoRejectionReason.UNREADABLE);
+        }
+        if (images.size() == 1) {
+            return 0;
+        }
+        if (!primaryImageSelection) {
+            // OPEN-S3-11 temporary fail-closed fallback until primary selection is verified (V4, V8).
+            throw new PhotoRejectedException(PhotoRejectionReason.MULTIPLE_IMAGES);
+        }
+        List<Integer> primaries = IntStream.range(0, images.size())
+                .filter(index -> images.get(index).primary())
+                .boxed()
+                .toList();
+        if (primaries.size() != 1) {
+            // The primary image cannot be identified reliably: never guess.
+            throw new PhotoRejectedException(PhotoRejectionReason.MULTIPLE_IMAGES);
+        }
+        return primaries.get(0);
+    }
+
+    /** heif-dec's output names: the given name for one image, numbered from 1 in listed order otherwise. */
+    static List<String> expectedOutputNames(int topLevelImages) {
+        if (topLevelImages == 1) {
+            return List.of(OUTPUT);
+        }
+        return IntStream.rangeClosed(1, topLevelImages)
+                .mapToObj(number -> OUTPUT_STEM + "-" + number + ".png")
+                .toList();
+    }
+
+    /** Runs one libheif tool inside the private directory within what is left of the shared deadline. */
+    private static void run(List<String> arguments, Path workingDirectory, ProcessBuilder.Redirect output,
+                            long deadline) {
+        long remaining = deadline - System.nanoTime();
+        if (remaining <= 0) {
+            throw new PhotoRejectedException(PhotoRejectionReason.UNREADABLE);
+        }
         Process process;
         try {
             process = new ProcessBuilder(arguments)
-                    .redirectErrorStream(true)
-                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .directory(workingDirectory.toFile())
+                    .redirectOutput(output)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
         } catch (IOException notInstalled) {
-            throw new PhotoProcessingUnavailableException("The HEIF decoder could not be started", notInstalled);
+            throw new PhotoProcessingUnavailableException("A libheif tool could not be started", notInstalled);
         }
         try {
-            if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+            if (!process.waitFor(remaining, TimeUnit.NANOSECONDS)) {
                 process.destroyForcibly();
                 throw new PhotoRejectedException(PhotoRejectionReason.UNREADABLE);
             }
@@ -2832,11 +3044,28 @@ public final class HeifDecoder {
 
 **Explanation.**
 
-- **Process invocation.** No shell is involved: arguments are passed directly, so no file name can inject a command (and no client file name is used at all). Output is discarded, so a chatty decoder cannot block on a full pipe.
-- **Decoder missing.** A missing decoder is `503`, not "unsupported format" (S3-IMG-06).
-- **Arguments.** Positional `input output` arguments work for both `heif-dec` and the older `heif-convert` name. No version-specific flag is passed.
+- **Process invocation.**
+  - No shell is involved: arguments are passed directly, so no file name can inject a command, and no client file name is used at all.
+  - Both tools run **inside** the private directory with the relative names `input.heif` and `decoded.png`, so a dot in the temporary path cannot change `heif-dec`'s numbered names (§10.9).
+  - `heif-info` writes its listing to a file in the same directory, so no pipe can fill up and block. Error output is discarded.
+- **Primary image (OPEN-S3-11).**
+  - With one top-level image there is nothing to choose.
+  - With several, the image is chosen only when `primaryImageSelection` is `true` and exactly one line is marked `, primary`. The output must then be exactly `decoded-1.png` … `decoded-N.png`, and the decoder returns `decoded-(k+1).png` for the primary at position `k`.
+  - Every other case is the explicit `MULTIPLE_IMAGES` rejection: the approved temporary fallback, never a silent choice.
+- **Limits (OPEN-S3-12).**
+  - The two processes share one deadline, so the native step never takes longer than the decode timeout.
+  - The declared pixels of **every** listed image are checked before `heif-dec` runs.
+  - A listing above 1 MiB is refused.
+  - `ImageIoPhotoInspector` (P39) checks the decoded PNG's declared size again.
+- **Decoder missing.** If either tool cannot be started, the answer is `503`, not "unsupported format" (S3-IMG-06).
+- **Arguments.** Positional `input output` arguments work for both `heif-dec` and the older `heif-convert` name. `heif-info` takes only the input. No version-specific flag is passed.
+- **Testability.** The parsing, selection, ceiling and naming rules are package-private static methods, unit-tested without libheif in T22 (`HeifDecoderTest`). T13 (`HeifDecodingIT`) runs the same rules against the real tools.
 
-**Common mistake.** Do not add `--disable-limits`; libheif's own help says it is not for production.
+**Common mistakes.**
+
+- Do not add `--disable-limits`; libheif's own help says it is not for production.
+- Do not "fix" a multi-image file by taking the first output. libheif does not put the primary image first, so the first output can be the wrong garment photo.
+- Do not enable `heif-primary-image-selection` in an environment before V4 and V8 have passed there.
 
 ### Step P39 — [ADD] `ImageIoPhotoInspector.java`
 
@@ -2887,8 +3116,9 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
  * <ul>
  *   <li>The format comes from the bytes: JPEG and PNG signatures, or an ISO-BMFF {@code ftyp} box with
  *       an HEVC image brand. File names and declared content types are never consulted.</li>
- *   <li>JPEG and PNG are decoded by Java ImageIO; HEIC/HEIF by {@link HeifDecoder} into a PNG that is
- *       then decoded the same way.</li>
+ *   <li>JPEG and PNG are decoded by Java ImageIO; HEIC/HEIF by {@link HeifDecoder} into a PNG of the
+ *       file's single (or, once selection is enabled, primary) image that is then decoded the same way.
+ *       A multi-image HEIF is otherwise rejected explicitly (OPEN-S3-11).</li>
  *   <li>The declared size is read from the header first; above the technical pixel ceiling the photo
  *       is refused before any pixel is allocated. Decoding subsamples so the long edge of the result is
  *       at most the derivative bound, which bounds memory without rejecting large photos.</li>
@@ -3681,8 +3911,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * US-GAR-003 configuration: {@code capsuleai.wardrobe.photo.*} (photo rules and decoding bounds),
  * {@code capsuleai.wardrobe.photo-upload.*} (pending lifecycle) and
- * {@code capsuleai.wardrobe.photo-storage.*} (private bucket). Values marked provisional in
- * application.properties await approval or verification (OPEN-S3-07/08/09/10/12/13).
+ * {@code capsuleai.wardrobe.photo-storage.*} (private bucket). The values in application.properties
+ * implement choices the Product Owner approved on 2026-11-11 (OPEN-S3-07/08/09/10/11/12/13); the
+ * toolchain, provider and resource limits still need the verification recorded in the open questions.
  */
 @ConfigurationProperties("capsuleai.wardrobe")
 public record WardrobePhotoProperties(Photo photo, Upload photoUpload, Storage photoStorage) {
@@ -3700,11 +3931,14 @@ public record WardrobePhotoProperties(Photo photo, Upload photoUpload, Storage p
             long maximumDeclaredPixels,
             Duration decodeTimeout,
             int maximumConcurrentDecodes,
-            String heifDecoderCommand) {
+            String heifDecoderCommand,
+            String heifInfoCommand,
+            boolean heifPrimaryImageSelection) {
 
         public Photo {
             Objects.requireNonNull(decodeTimeout, "capsuleai.wardrobe.photo.decode-timeout");
             Objects.requireNonNull(heifDecoderCommand, "capsuleai.wardrobe.photo.heif-decoder-command");
+            Objects.requireNonNull(heifInfoCommand, "capsuleai.wardrobe.photo.heif-info-command");
         }
     }
 
@@ -3837,7 +4071,9 @@ public class WardrobePhotoConfiguration {
 
     @Bean
     HeifDecoder heifDecoder(WardrobePhotoProperties properties) {
-        return new HeifDecoder(properties.photo().heifDecoderCommand(), properties.photo().decodeTimeout());
+        WardrobePhotoProperties.Photo photo = properties.photo();
+        return new HeifDecoder(photo.heifDecoderCommand(), photo.heifInfoCommand(), photo.decodeTimeout(),
+                photo.maximumDeclaredPixels(), photo.heifPrimaryImageSelection());
     }
 
     @Bean
@@ -4013,19 +4249,25 @@ spring.servlet.multipart.max-request-size=17MB
 spring.servlet.multipart.resolve-lazily=true
 server.tomcat.max-swallow-size=20MB
 
-# US-GAR-003 photo rules (FR-AI-012). Provisional until approved or verified:
+# US-GAR-003 photo rules (FR-AI-012), approved by the Product Owner on 2026-11-11:
 # maximum-bytes (OPEN-S3-09), derivative-long-edge (OPEN-S3-10), decoding bounds (OPEN-S3-12).
+# The decoding bounds are safety ceilings still to be measured on the deployment size (OPEN-S3-12).
 capsuleai.wardrobe.photo.maximum-bytes=15000000
 capsuleai.wardrobe.photo.minimum-shortest-side=512
 capsuleai.wardrobe.photo.derivative-long-edge=2048
 capsuleai.wardrobe.photo.maximum-declared-pixels=250000000
 capsuleai.wardrobe.photo.decode-timeout=PT20S
 capsuleai.wardrobe.photo.maximum-concurrent-decodes=2
-# OPEN-S3-08: libheif's HEIF decoder (verification required). Some distributions name it heif-convert.
+# OPEN-S3-08 (approved; verification V1-V8 still required): libheif's decoder and its image lister,
+# from the same installation. Some distributions name the decoder heif-convert.
 capsuleai.wardrobe.photo.heif-decoder-command=${CAPSULE_HEIF_DECODER:heif-dec}
+capsuleai.wardrobe.photo.heif-info-command=${CAPSULE_HEIF_INFO:heif-info}
+# OPEN-S3-11 (approved): the target is the primary image of a multi-image HEIF. Keep false (the approved
+# temporary fail-closed fallback: reject such files explicitly) until V4 and V8 pass for this libheif.
+capsuleai.wardrobe.photo.heif-primary-image-selection=false
 
-# US-GAR-003 pending-photo lifecycle (S3-IMG-08). The pending TTL is PROVISIONAL and awaits the
-# Product Owner's decision (OPEN-S3-07). The fence must exceed the storage call timeout plus twice
+# US-GAR-003 pending-photo lifecycle (S3-IMG-08). The pending TTL of 24 hours was approved by the
+# Product Owner on 2026-11-11 (OPEN-S3-07). The fence must exceed the storage call timeout plus twice
 # the decode timeout; startup fails otherwise.
 capsuleai.wardrobe.photo-upload.pending-ttl=PT24H
 capsuleai.wardrobe.photo-upload.in-flight-fence=PT5M
@@ -4554,8 +4796,8 @@ AFTER:
           format: date-time
           description: |
             When an unconfirmed photo stops being usable and is
-            deleted. Provisional pending lifetime 24 hours,
-            awaiting Product Owner approval (OPEN-S3-07).
+            deleted: 24 hours after staging (pending lifetime
+            approved by the Product Owner, OPEN-S3-07).
         garmentId:
           type: [string, "null"]
           format: uuid
@@ -4573,9 +4815,11 @@ Change 10: five new responses. BEFORE `    GarmentNotFound:` (the response, not 
         another photo or continue without one. Codes:
         PHOTO_UNSUPPORTED_FORMAT, PHOTO_TOO_LARGE (above
         15,000,000 bytes), PHOTO_TOO_SMALL (shorter side below 512
-        pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES, and
-        PHOTO_UPLOAD_KEY_REUSED (the Idempotency-Key was used for a
-        different photo).
+        pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES (a HEIF
+        file with several images whose primary image is not
+        selected; temporary until primary-image selection is
+        verified and enabled), and PHOTO_UPLOAD_KEY_REUSED (the
+        Idempotency-Key was used for a different photo).
       content:
         application/problem+json:
           schema:
@@ -4658,13 +4902,14 @@ Change 1: install and verify the HEIF decoder (OPEN-S3-08). BEFORE:
 AFTER:
 
 ```yaml
-      - name: Install the HEIF decoder and encoder used by photo tests (OPEN-S3-08)
+      - name: Install the HEIF decoder, lister and encoder used by photo tests (OPEN-S3-08)
         shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
             libheif-examples libheif-plugin-libde265 libheif-plugin-x265
           (heif-dec --version || heif-convert --version) | head -n 1
+          heif-info --version | head -n 1
 
       - name: Build and run required verification
         env:
@@ -4699,8 +4944,9 @@ AFTER:
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.StagePhotoUploadServiceTest.xml' = 9
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.PhotoBackedGarmentCreationTest.xml' = 8
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.PhotoUploadLifecycleServiceTest.xml' = 7
-            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.out.imaging.ImageIoPhotoInspectorTest.xml' = 10
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.imaging.HeifDecodingIT.xml' = 3
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.out.imaging.ImageIoPhotoInspectorTest.xml' = 11
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.out.imaging.HeifDecoderTest.xml' = 7
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.imaging.HeifDecodingIT.xml' = 5
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.storage.S3PhotoStorageIT.xml' = 4
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.PhotoUploadSchemaIT.xml' = 4
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.PhotoUploadApiIT.xml' = 9
@@ -4712,9 +4958,10 @@ AFTER:
 
 **Explanation.**
 
-- **Report count.** The guard now has 87 entries.
-- **No skips.** `HeifDecodingIT` is required with zero skips. With `CAPSULEAI_REQUIRE_HEIF=true` a missing decoder **fails** instead of skipping, so CI cannot pass without real HEIF evidence.
-- **Encoder.** `libheif-plugin-x265` provides the encoder `heif-enc` uses to create the synthetic HEIC fixtures.
+- **Report count.** The guard now has 88 entries.
+- **No skips.** `HeifDecodingIT` is required with zero skips. With `CAPSULEAI_REQUIRE_HEIF=true` a missing decoder **fails** instead of skipping, so CI cannot pass without real HEIF evidence (S3-INT-02 / OPEN-S3-02, approved).
+- **Primary-image evidence.** `HeifDecodingIT` runs the primary-image tests with selection enabled on the CI runner. A green run is the automated part of verification V4/V8 for that runner (OPEN-S3-11). It does not switch the application property on.
+- **Encoder.** `libheif-plugin-x265` provides the encoder `heif-enc` uses to create the synthetic HEIC fixtures. `libheif-examples` is expected to provide `heif-dec` (or `heif-convert`), `heif-info` and `heif-enc`; V1 confirms it.
 - **Package names.** They are the Ubuntu 24.04 names. Confirm them in the first CI run (verification V1/V2).
 
 ### Step P60 — [MODIFY] `backend/README.md`
@@ -4735,11 +4982,12 @@ US-GAR-003 adds one private photo to a **new** garment in two explicit steps:
 1. `POST /api/v1/wardrobe/photo-uploads`: `multipart/form-data` with the file in the part `photo`, header `Idempotency-Key` (a new UUID per intended upload). The backend checks that the bytes are genuinely JPEG, PNG or HEIC/HEIF (the file name and declared type are ignored), at most 15,000,000 bytes, with the shorter side of the original at least 512 pixels. It stores a normalized JPEG: orientation applied, all metadata including location removed, longer side at most 2048 pixels. The answer is `201` with a staged photo (`status: READY`, `expiresAt`). **Staging creates no garment.**
 2. Review it with `GET /api/v1/wardrobe/photo-uploads/{id}/content`, cancel it with `DELETE /api/v1/wardrobe/photo-uploads/{id}`, or confirm the garment with the usual `POST /api/v1/wardrobe/garments` plus `"photoUploadId": "<id>"`.
 
-Garment detail then shows `photo` (`contentType`, `width`, `height`), and `GET /api/v1/wardrobe/garments/{id}/photo` returns the image. Unconfirmed photos expire after the pending lifetime (**provisionally 24 hours, awaiting Product Owner approval**, `capsuleai.wardrobe.photo-upload.pending-ttl`) and are deleted by an in-process cleanup. Attached photos are never deleted by it.
+Garment detail then shows `photo` (`contentType`, `width`, `height`), and `GET /api/v1/wardrobe/garments/{id}/photo` returns the image. Unconfirmed photos expire after the pending lifetime of 24 hours (approved by the Product Owner; `capsuleai.wardrobe.photo-upload.pending-ttl`) and are deleted by an in-process cleanup. Attached photos are never deleted by it.
 
 | Outcome | Response |
 | --- | --- |
-| Not JPEG/PNG/HEIC/HEIF, above 15,000,000 bytes, shorter side below 512, unreadable, several images in one HEIF | `422 PHOTO_UNSUPPORTED_FORMAT` / `PHOTO_TOO_LARGE` / `PHOTO_TOO_SMALL` / `PHOTO_UNREADABLE` / `PHOTO_MULTIPLE_IMAGES`; nothing stored |
+| Not JPEG/PNG/HEIC/HEIF, above 15,000,000 bytes, shorter side below 512, unreadable | `422 PHOTO_UNSUPPORTED_FORMAT` / `PHOTO_TOO_LARGE` / `PHOTO_TOO_SMALL` / `PHOTO_UNREADABLE`; nothing stored |
+| A HEIF file with several images | The approved target is the file's primary image, but primary-image selection is **off** by default (`capsuleai.wardrobe.photo.heif-primary-image-selection=false`) until it is verified. While it is off: `422 PHOTO_MULTIPLE_IMAGES`, nothing stored |
 | Same upload key, different photo | `422 PHOTO_UPLOAD_KEY_REUSED` |
 | Unknown or another account's staged photo | `404 PHOTO_UPLOAD_NOT_FOUND` |
 | Cancelled, expired, still receiving, or already attached | `409 PHOTO_UPLOAD_NOT_USABLE` (a garment creation with it fails; it never falls back to a garment without a photo) |
@@ -4748,23 +4996,23 @@ Garment detail then shows `photo` (`contentType`, `width`, `height`), and `GET /
 
 Image routes answer `Cache-Control: no-store, private`. Send `Accept: image/jpeg, application/problem+json`.
 
-**Local setup.** `docker compose --env-file .env up -d` now also starts `s3mock` (Adobe S3Mock 5.1.0, development only) on `127.0.0.1:9090`, and the `local` profile points at it. HEIC/HEIF needs libheif's decoder on the PATH as `heif-dec` (or set `CAPSULE_HEIF_DECODER`):
+**Local setup.** `docker compose --env-file .env up -d` now also starts `s3mock` (Adobe S3Mock 5.1.0, development only) on `127.0.0.1:9090`, and the `local` profile points at it. HEIC/HEIF needs libheif's tools on the PATH: `heif-dec` and `heif-info`. Set `CAPSULE_HEIF_DECODER` or `CAPSULE_HEIF_INFO` if yours are named differently.
 
 - Ubuntu 24.04: `sudo apt-get install libheif-examples libheif-plugin-libde265`.
 - Windows: install libheif via MSYS2 (`pacman -S mingw-w64-ucrt-x86_64-libheif`) and add its `bin` to PATH.
 
-Without the decoder, HEIC uploads answer `503`, never "unsupported". The toolchain still needs the verification procedure in the Sprint 3 open questions (OPEN-S3-08).
+Without these tools, HEIC uploads answer `503`, never "unsupported". The toolchain was approved by the Product Owner (OPEN-S3-08) but still needs verification procedure V1–V8 in the Sprint 3 decision record. Enable `capsuleai.wardrobe.photo.heif-primary-image-selection=true` in an environment only after V4 and V8 have passed there (OPEN-S3-11).
 
 **Deployment.** Set `CAPSULE_PHOTO_BUCKET`, `CAPSULE_PHOTO_REGION` and either an IAM role (default credential chain) or `CAPSULE_PHOTO_ACCESS_KEY_ID` / `CAPSULE_PHOTO_SECRET_ACCESS_KEY` for a least-privilege user limited to `s3:PutObject`, `s3:GetObject` and `s3:DeleteObject` on the photo prefix. The bucket must block public access. AWS account, region, budget and production deployment are **not** established by this README.
 
 Focused tests, from `backend`:
 
 ```powershell
-.\mvnw.cmd '-Dtest=PhotoUploadTest,StagePhotoUploadServiceTest,PhotoBackedGarmentCreationTest,PhotoUploadLifecycleServiceTest,ImageIoPhotoInspectorTest' test
+.\mvnw.cmd '-Dtest=PhotoUploadTest,StagePhotoUploadServiceTest,PhotoBackedGarmentCreationTest,PhotoUploadLifecycleServiceTest,ImageIoPhotoInspectorTest,HeifDecoderTest' test
 .\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PhotoUploadApiIT,PhotoGarmentApiIT,ConcurrentPhotoConfirmationIT,PhotoUploadCleanupIT,PhotoUploadSchemaIT,S3PhotoStorageIT,HeifDecodingIT' verify
 ```
 
-`HeifDecodingIT` skips locally when libheif is missing, unless `CAPSULEAI_REQUIRE_HEIF=true` (as in CI).
+`HeifDecodingIT` skips locally when libheif is missing, unless `CAPSULEAI_REQUIRE_HEIF=true` (as in CI). It also runs the primary-image tests with selection enabled, which is the automated part of verification V4/V8 on that machine.
 
 ## 10. Database migrations
 ````
@@ -6024,13 +6272,19 @@ class PhotoUploadLifecycleServiceTest {
 package com.capsuleai.wardrobe.adapter.out.imaging;
 
 import com.capsuleai.wardrobe.application.PhotoRejectedException;
+import com.capsuleai.wardrobe.application.ReceivedPhoto;
 import com.capsuleai.wardrobe.application.ports.InspectedPhoto;
 import com.capsuleai.wardrobe.application.ports.PhotoProcessingUnavailableException;
 import com.capsuleai.wardrobe.domain.PhotoRejectionReason;
 import com.capsuleai.wardrobe.support.TestImages;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -6136,21 +6390,61 @@ class ImageIoPhotoInspectorTest {
         assertRejected(TestImages.isoMediaHeader("avif"), PhotoRejectionReason.UNSUPPORTED_FORMAT);
     }
 
+    /** OPEN-S3-12: busy decode slots are a retryable 503, never a claim that the photo is unreadable. */
+    @Test
+    void whenEveryDecodeSlotIsBusyAPhotoIsTemporarilyUnavailableNotUnreadable() throws Exception {
+        byte[] png = TestImages.png(600, 600);
+        CountDownLatch slotTaken = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ReceivedPhoto heldPhoto = new ReceivedPhoto() {
+            @Override
+            public long sizeBytes() {
+                return png.length;
+            }
+
+            @Override
+            public InputStream openStream() {
+                slotTaken.countDown();
+                try {
+                    release.await(10, TimeUnit.SECONDS);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+                return new ByteArrayInputStream(png);
+            }
+        };
+        HeifDecoder missingTools = new HeifDecoder("capsuleai-missing-heif-decoder", "capsuleai-missing-heif-info",
+                Duration.ofSeconds(5), 250_000_000L, false);
+        try (ImageIoPhotoInspector oneSlot = new ImageIoPhotoInspector(missingTools, 2048, 250_000_000,
+                Duration.ofMillis(300), 1)) {
+            CompletableFuture<InspectedPhoto> holder =
+                    CompletableFuture.supplyAsync(() -> oneSlot.inspectAndNormalize(heldPhoto));
+            assertThat(slotTaken.await(5, TimeUnit.SECONDS)).as("the only slot is taken").isTrue();
+
+            assertThatThrownBy(() -> oneSlot.inspectAndNormalize(TestImages.received(png)))
+                    .isInstanceOf(PhotoProcessingUnavailableException.class);
+
+            release.countDown();
+            holder.exceptionally(failure -> null).get(10, TimeUnit.SECONDS);
+        }
+    }
+
     private void assertRejected(byte[] bytes, PhotoRejectionReason reason) {
         assertThatThrownBy(() -> inspector.inspectAndNormalize(TestImages.received(bytes)))
                 .isInstanceOfSatisfying(PhotoRejectedException.class, rejected ->
                         assertThat(rejected.reason()).isEqualTo(reason));
     }
 
-    /** The decoder command deliberately does not exist, so no test here depends on libheif. */
+    /** The libheif commands deliberately do not exist, so no test here depends on libheif. */
     private static ImageIoPhotoInspector inspector(long maximumDeclaredPixels) {
-        return new ImageIoPhotoInspector(new HeifDecoder("capsuleai-missing-heif-decoder", Duration.ofSeconds(5)),
-                2048, maximumDeclaredPixels, Duration.ofSeconds(20), 2);
+        HeifDecoder missingTools = new HeifDecoder("capsuleai-missing-heif-decoder", "capsuleai-missing-heif-info",
+                Duration.ofSeconds(5), maximumDeclaredPixels, false);
+        return new ImageIoPhotoInspector(missingTools, 2048, maximumDeclaredPixels, Duration.ofSeconds(20), 2);
     }
 }
 ```
 
-**Command:** `.\mvnw.cmd '-Dtest=ImageIoPhotoInspectorTest' test`, expected 10 tests.
+**Command:** `.\mvnw.cmd '-Dtest=ImageIoPhotoInspectorTest' test`, expected 11 tests.
 
 ### Step T13 — [ADD] `HeifDecodingIT.java`
 
@@ -6164,6 +6458,8 @@ import com.capsuleai.wardrobe.application.ports.InspectedPhoto;
 import com.capsuleai.wardrobe.domain.PhotoRejectionReason;
 import com.capsuleai.wardrobe.support.TestImages;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -6177,41 +6473,51 @@ import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * US-GAR-003 (S3-IMG-06, OPEN-S3-08/11): real HEIC/HEIF decoding through libheif. Fixtures are synthetic
+ * US-GAR-003 (S3-IMG-06, OPEN-S3-08/11/12): real HEIC/HEIF decoding through libheif. Fixtures are synthetic
  * images encoded with heif-enc at test time. With CAPSULEAI_REQUIRE_HEIF=true (CI) a missing toolchain
- * fails the build; otherwise these tests are skipped locally. Real device photos remain manual evidence (V3).
+ * fails the build; otherwise these tests are skipped locally. A green run is the automated part of
+ * verification V4/V6/V8 on that machine; real device photos remain manual evidence (V3).
  */
 class HeifDecodingIT {
 
     private static final boolean REQUIRED = "true".equalsIgnoreCase(System.getenv("CAPSULEAI_REQUIRE_HEIF"));
     private static final String DECODER = environment("CAPSULE_HEIF_DECODER", "heif-dec");
+    private static final String INFO = environment("CAPSULE_HEIF_INFO", "heif-info");
     private static final String ENCODER = environment("CAPSULE_HEIF_ENCODER", "heif-enc");
 
-    private static ImageIoPhotoInspector inspector;
+    /** The shipped default: the OPEN-S3-11 temporary fail-closed fallback. */
+    private static ImageIoPhotoInspector rejecting;
+    /** The approved OPEN-S3-11 target: the primary image of a multi-image file. */
+    private static ImageIoPhotoInspector selecting;
 
     @TempDir
     Path work;
 
     @BeforeAll
     static void requireLibheif() {
-        boolean available = starts(DECODER) && starts(ENCODER);
+        boolean available = starts(DECODER) && starts(INFO) && starts(ENCODER);
         if (REQUIRED) {
-            assertThat(available).as("libheif's %s and %s are installed (CAPSULEAI_REQUIRE_HEIF=true)", DECODER, ENCODER)
+            assertThat(available)
+                    .as("libheif's %s, %s and %s are installed (CAPSULEAI_REQUIRE_HEIF=true)", DECODER, INFO, ENCODER)
                     .isTrue();
         } else {
             assumeTrue(available, "libheif is not installed; set CAPSULEAI_REQUIRE_HEIF=true to fail instead");
         }
-        inspector = new ImageIoPhotoInspector(new HeifDecoder(DECODER, Duration.ofSeconds(20)), 2048,
-                250_000_000, Duration.ofSeconds(20), 2);
+        rejecting = inspector(false);
+        selecting = inspector(true);
     }
 
     @AfterAll
-    static void stopInspector() {
-        if (inspector != null) {
-            inspector.close();
+    static void stopInspectors() {
+        if (rejecting != null) {
+            rejecting.close();
+        }
+        if (selecting != null) {
+            selecting.close();
         }
     }
 
@@ -6219,7 +6525,7 @@ class HeifDecodingIT {
     void aRealHeicPhotoIsDecodedNormalizedAndMeasured() throws Exception {
         byte[] heic = encode("single.heic", TestImages.png(640, 800));
 
-        InspectedPhoto photo = inspector.inspectAndNormalize(TestImages.received(heic));
+        InspectedPhoto photo = rejecting.inspectAndNormalize(TestImages.received(heic));
 
         assertThat(photo.sourceFormat()).isEqualTo("HEIF");
         assertThat(photo.originalWidth()).isEqualTo(640);
@@ -6228,21 +6534,55 @@ class HeifDecodingIT {
     }
 
     @Test
-    void aHeifFileWithTwoTopLevelImagesIsRejectedExplicitly() throws Exception {
+    void whileSelectionIsDisabledATwoImageHeifIsRejectedExplicitly() throws Exception {
         byte[] twoImages = encode("two.heic", TestImages.png(640, 800), TestImages.png(800, 640));
 
-        assertThatThrownBy(() -> inspector.inspectAndNormalize(TestImages.received(twoImages)))
+        assertThatThrownBy(() -> rejecting.inspectAndNormalize(TestImages.received(twoImages)))
                 .isInstanceOfSatisfying(PhotoRejectedException.class, rejected ->
                         assertThat(rejected.reason()).isEqualTo(PhotoRejectionReason.MULTIPLE_IMAGES));
+    }
+
+    @Test
+    void withSelectionEnabledThePrimaryImageIsUsedWhenItIsListedFirst() throws Exception {
+        byte[] twoImages = encode("two.heic", TestImages.png(640, 800), TestImages.png(800, 640));
+
+        InspectedPhoto photo = selecting.inspectAndNormalize(TestImages.received(twoImages));
+
+        assertThat(photo.originalWidth()).as("heif-enc makes its first input primary").isEqualTo(640);
+        assertThat(photo.originalHeight()).isEqualTo(800);
+    }
+
+    @Test
+    void withSelectionEnabledThePrimaryImageIsUsedWhenItIsNotTheFirstDecodedImage() throws Exception {
+        Path file = work.resolve("second-primary.heic");
+        Files.write(file, encode("two.heic", TestImages.png(640, 800), TestImages.png(800, 640)));
+        List<HeifDecoder.TopLevelImage> encoded = list(file);
+        assertThat(encoded).extracting(HeifDecoder.TopLevelImage::primary).containsExactly(true, false);
+
+        Files.write(file, withPrimaryItem(Files.readAllBytes(file), encoded.get(1).itemId()));
+
+        assertThat(list(file))
+                .as("libheif keeps file order, so the primary is now the second listed and decoded image")
+                .extracting(HeifDecoder.TopLevelImage::itemId, HeifDecoder.TopLevelImage::primary)
+                .containsExactly(tuple(encoded.get(0).itemId(), false), tuple(encoded.get(1).itemId(), true));
+        InspectedPhoto photo = selecting.inspectAndNormalize(TestImages.received(Files.readAllBytes(file)));
+        assertThat(photo.originalWidth()).as("the primary 800 x 640 image, not the first decoded one").isEqualTo(800);
+        assertThat(photo.originalHeight()).isEqualTo(640);
     }
 
     @Test
     void aTruncatedHeicIsUnreadable() throws Exception {
         byte[] truncated = TestImages.truncated(encode("cut.heic", TestImages.png(640, 800)), 0.6);
 
-        assertThatThrownBy(() -> inspector.inspectAndNormalize(TestImages.received(truncated)))
+        assertThatThrownBy(() -> rejecting.inspectAndNormalize(TestImages.received(truncated)))
                 .isInstanceOfSatisfying(PhotoRejectedException.class, rejected ->
                         assertThat(rejected.reason()).isEqualTo(PhotoRejectionReason.UNREADABLE));
+    }
+
+    private static ImageIoPhotoInspector inspector(boolean primaryImageSelection) {
+        HeifDecoder decoder = new HeifDecoder(DECODER, INFO, Duration.ofSeconds(20), 250_000_000L,
+                primaryImageSelection);
+        return new ImageIoPhotoInspector(decoder, 2048, 250_000_000, Duration.ofSeconds(20), 2);
     }
 
     /** heif-enc [inputs...] -o output; several inputs become several top-level images (first is primary). */
@@ -6260,6 +6600,66 @@ class HeifDecodingIT {
         assertThat(process.waitFor(60, TimeUnit.SECONDS)).as("heif-enc finished").isTrue();
         assertThat(process.exitValue()).as("heif-enc exit code").isZero();
         return Files.readAllBytes(target);
+    }
+
+    /** heif-info's top-level image lines for a file, read with the production parser. */
+    private List<HeifDecoder.TopLevelImage> list(Path heif) throws IOException, InterruptedException {
+        Path listing = work.resolve("listing.txt");
+        Process process = new ProcessBuilder(INFO, heif.toString())
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .redirectOutput(listing.toFile())
+                .start();
+        assertThat(process.waitFor(60, TimeUnit.SECONDS)).as("heif-info finished").isTrue();
+        assertThat(process.exitValue()).as("heif-info exit code").isZero();
+        return HeifDecoder.parseTopLevelImages(Files.readAllLines(listing, StandardCharsets.ISO_8859_1));
+    }
+
+    /**
+     * TEST-ONLY: a copy of a HEIF file whose primary item (the 'pitm' box inside the top-level 'meta'
+     * box) is the given item. The box keeps its size, so every other offset stays valid. heif-enc cannot
+     * produce a file whose primary image is not its first image, so the test builds one this way.
+     */
+    private static byte[] withPrimaryItem(byte[] heif, long itemId) {
+        byte[] patched = heif.clone();
+        ByteBuffer file = ByteBuffer.wrap(patched);
+        int meta = findBox(file, 0, patched.length, "meta");
+        int metaEnd = meta + (int) boxSize(file, meta, patched.length);
+        // 'meta' is a full box: an 8-byte header and 4 bytes of version and flags precede its children.
+        int pitm = findBox(file, meta + 12, metaEnd, "pitm");
+        int version = patched[pitm + 8] & 0xFF;
+        if (version == 0) {
+            assertThat(itemId).as("pitm version 0 stores a 16-bit item id").isLessThanOrEqualTo(0xFFFF);
+            file.putShort(pitm + 12, (short) itemId);
+        } else {
+            file.putInt(pitm + 12, (int) itemId);
+        }
+        return patched;
+    }
+
+    private static int findBox(ByteBuffer file, int from, int to, String type) {
+        int offset = from;
+        while (offset + 8 <= to) {
+            long size = boxSize(file, offset, to);
+            if (type.equals(new String(file.array(), offset + 4, 4, StandardCharsets.US_ASCII))) {
+                return offset;
+            }
+            offset += (int) size;
+        }
+        throw new AssertionError("No '" + type + "' box in the encoded HEIF file");
+    }
+
+    /** ISO-BMFF box size including its header: 1 means a 64-bit size follows, 0 means "to the end". */
+    private static long boxSize(ByteBuffer file, int offset, int end) {
+        long size = Integer.toUnsignedLong(file.getInt(offset));
+        if (size == 1) {
+            size = file.getLong(offset + 8);
+        } else if (size == 0) {
+            size = end - offset;
+        }
+        if (size < 8 || offset + size > end) {
+            throw new AssertionError("Malformed ISO-BMFF box at offset " + offset);
+        }
+        return size;
     }
 
     /** Whether the tool can be started at all (its exit code for --help varies between versions). */
@@ -6284,8 +6684,18 @@ class HeifDecodingIT {
 
 **Explanation.**
 
-- **Encoding assumption.** `heif-enc` stores several inputs as separate top-level images; this is the documented libheif behaviour and is confirmed by verification V4.
-- **Failing V4.** If V4 shows a different result, the second test fails. That is the intended signal for OPEN-S3-11.
+- **Two inspectors.**
+  - `rejecting` uses the shipped default (`primaryImageSelection=false`), the approved temporary fallback.
+  - `selecting` exercises the approved target (OPEN-S3-11).
+- **Primary not first.**
+  - `heif-enc` always makes its first input primary and cannot choose another. The test therefore rewrites the item id in the file's `pitm` box to the second image's id, which keeps the box size and every offset unchanged.
+  - Because libheif keeps the file's item order, the primary is then the **second** listed and decoded image (`decoded-2.png`).
+  - The test checks that `heif-info` reports exactly that, then expects the 800 × 640 image. Taking the first decoded image (rejected Option C) would return 640 × 800 and fail.
+- **Encoding assumption.** `heif-enc` stores several inputs as separate top-level images, with the first one primary. This is the upstream behaviour read on 2026-11-11 and is confirmed per target by verification V4.
+- **A failing primary test** means the installed libheif does not behave as §10.9 describes. That is the signal of a failed V4/V8:
+  - keep `capsuleai.wardrobe.photo.heif-primary-image-selection=false`;
+  - record the result;
+  - do not delete or weaken the test.
 
 **Commands:**
 
@@ -6294,7 +6704,7 @@ class HeifDecodingIT {
 $env:CAPSULEAI_REQUIRE_HEIF = 'true'; .\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=HeifDecodingIT' verify; Remove-Item Env:CAPSULEAI_REQUIRE_HEIF
 ```
 
-Expected: 3 tests (skipped locally without libheif in the first command; must pass in the second).
+Expected: 5 tests (skipped locally without libheif in the first command; must pass in the second).
 
 ### Step T14 — [ADD] `S3PhotoStorageIT.java`
 
@@ -7310,6 +7720,109 @@ AFTER:
 
 **Command:** `.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=CorsSecurityIT,IdentityOpenApiContractIT' verify`, expected 26 and 6 tests.
 
+### Step T22 — [ADD] `HeifDecoderTest.java`
+
+**Path:** `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoderTest.java`
+
+```java
+package com.capsuleai.wardrobe.adapter.out.imaging;
+
+import com.capsuleai.wardrobe.application.PhotoRejectedException;
+import com.capsuleai.wardrobe.domain.PhotoRejectionReason;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/**
+ * US-GAR-003 (OPEN-S3-11, OPEN-S3-12): how HeifDecoder reads heif-info's listing and chooses the image to
+ * use, without libheif. HeifDecodingIT proves the same choices against the real tools.
+ */
+class HeifDecoderTest {
+
+    private static final HeifDecoder.TopLevelImage FIRST = new HeifDecoder.TopLevelImage(640, 800, 1, false);
+    private static final HeifDecoder.TopLevelImage SECOND_PRIMARY = new HeifDecoder.TopLevelImage(800, 640, 2, true);
+
+    @Test
+    void onlyTopLevelImageLinesAreReadInListedOrderWithThePrimaryMarker() {
+        List<HeifDecoder.TopLevelImage> images = HeifDecoder.parseTopLevelImages(List.of(
+                "MIME type: image/heic",
+                "main brand: heic",
+                "compatible brands: mif1, heic",
+                "",
+                "image: 640x800 (id=1)",
+                "  colorspace: YCbCr, 4:2:0",
+                "  thumbnail: 320x400",
+                "image: 800x640 (id=2), primary",
+                "  alpha channel: no"));
+
+        assertThat(images).containsExactly(FIRST, SECOND_PRIMARY);
+    }
+
+    @Test
+    void aSingleTopLevelImageNeedsNoChoice() {
+        HeifDecoder.TopLevelImage only = new HeifDecoder.TopLevelImage(640, 800, 1, true);
+
+        assertThat(HeifDecoder.selectImage(List.of(only), false)).isZero();
+        assertThat(HeifDecoder.selectImage(List.of(only), true)).isZero();
+    }
+
+    @Test
+    void withSelectionEnabledThePrimaryIsChosenEvenWhenItIsNotTheFirstImage() {
+        assertThat(HeifDecoder.selectImage(List.of(FIRST, SECOND_PRIMARY), true)).isEqualTo(1);
+    }
+
+    @Test
+    void withSelectionDisabledSeveralImagesAreRejectedExplicitly() {
+        assertRejected(() -> HeifDecoder.selectImage(List.of(FIRST, SECOND_PRIMARY), false),
+                PhotoRejectionReason.MULTIPLE_IMAGES);
+    }
+
+    @Test
+    void aPrimaryThatIsNotExactlyOneImageFailsClosedInsteadOfGuessing() {
+        HeifDecoder.TopLevelImage secondPlain = new HeifDecoder.TopLevelImage(800, 640, 2, false);
+        HeifDecoder.TopLevelImage firstPrimary = new HeifDecoder.TopLevelImage(640, 800, 1, true);
+
+        assertRejected(() -> HeifDecoder.selectImage(List.of(FIRST, secondPlain), true),
+                PhotoRejectionReason.MULTIPLE_IMAGES);
+        assertRejected(() -> HeifDecoder.selectImage(List.of(firstPrimary, SECOND_PRIMARY), true),
+                PhotoRejectionReason.MULTIPLE_IMAGES);
+        assertRejected(() -> HeifDecoder.selectImage(List.of(), true), PhotoRejectionReason.UNREADABLE);
+    }
+
+    @Test
+    void everyListedImageMustBeWithinThePixelCeilingBeforeDecoding() {
+        HeifDecoder.requireDeclaredPixelsWithin(List.of(FIRST, SECOND_PRIMARY), 640 * 800);
+
+        assertRejected(() -> HeifDecoder.requireDeclaredPixelsWithin(List.of(FIRST, SECOND_PRIMARY), 640 * 800 - 1),
+                PhotoRejectionReason.UNREADABLE);
+    }
+
+    @Test
+    void decoderOutputsAreNamedInListedOrderFromOne() {
+        assertThat(HeifDecoder.expectedOutputNames(1)).containsExactly("decoded.png");
+        assertThat(HeifDecoder.expectedOutputNames(3))
+                .containsExactly("decoded-1.png", "decoded-2.png", "decoded-3.png");
+    }
+
+    private static void assertRejected(Runnable action, PhotoRejectionReason reason) {
+        assertThatThrownBy(action::run).isInstanceOfSatisfying(PhotoRejectedException.class, rejected ->
+                assertThat(rejected.reason()).isEqualTo(reason));
+    }
+}
+```
+
+**Explanation.**
+
+- **No libheif needed.** The rules that decide which image is used are tested deterministically, including:
+  - a primary image that is not the first listed image;
+  - the disabled-selection fallback;
+  - a missing or repeated primary marker, which fails closed instead of guessing.
+- **Sample listing.** The `heif-info` lines follow the format printed by upstream `examples/heif_info.cc`: `image: %dx%d (id=%d)` plus `, primary`. Indented detail lines are ignored. Whether the installed version prints the same format is checked by V4/V8 and by `HeifDecodingIT`, not by this unit test.
+
+**Command:** `.\mvnw.cmd '-Dtest=HeifDecoderTest' test`, expected 7 tests.
+
 ### Full verification
 
 ```powershell
@@ -7325,7 +7838,7 @@ Prerequisites:
 
 - `docker compose --env-file .env up -d` starts PostgreSQL, Mailpit and `s3mock`.
 - Boot runs with the `local` profile.
-- libheif's `heif-dec` is on the PATH for the HEIC part (otherwise expect `503` for HEIC).
+- libheif's `heif-dec` and `heif-info` are on the PATH for the HEIC part (otherwise expect `503` for HEIC). A multi-image HEIC answers `422 PHOTO_MULTIPLE_IMAGES` while `heif-primary-image-selection` keeps its default `false`.
 
 The script uses synthetic images generated with .NET `System.Drawing` (Windows PowerShell 5.1) and never prints a token.
 
@@ -7437,7 +7950,7 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 | AC | Backend evidence (planned tests) | Client / external evidence still required |
 | --- | --- | --- |
 | AC-01 Permitted route | Imageless creation unchanged (T17 `imagelessCreation…`); upload accepts library or camera bytes alike | Camera and library permission flows, denial alternatives, guidance (FR-AI-011, HW-001/002) on Android/iOS |
-| AC-02 Validate supported input | T12 genuine JPEG/PNG, unsupported, truncated, pixel ceiling; T13 real HEIC; T9/T16 15,000,000/15,000,001 and 511/512; T16 file-name/type mismatch | Real device HEIC/HEIF (V3); localized messages |
+| AC-02 Validate supported input | T12 genuine JPEG/PNG, unsupported, truncated, pixel ceiling; T13 real HEIC, multi-image rejection while selection is off, primary image chosen (listed first and not first); T22 selection and fail-closed rules; T9/T16 15,000,000/15,000,001 and 511/512; T16 file-name/type mismatch | Real device HEIC/HEIF (V3); localized messages |
 | AC-03 Review or cancel | T16 review content, cancel, idempotent cancel; T11 cancel lifecycle; T9 cancel while storing | Preview display; replace flow in the client |
 | AC-04 Confirm a useful garment | T10 confirmation attaches; T17 confirmation and photo route; staging creates no garment (T16) | Confirmation UI |
 | AC-05 Authority, NOT_EVALUATED | T17 `NOT_EVALUATED`, Brand kept; shared validator (US-GAR-002 P6) | — |
@@ -7448,7 +7961,7 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 
 | Requirement / decision | Tests |
 | --- | --- |
-| FR-AI-001/002/012 | T12, T13, T16, T9 |
+| FR-AI-001/002/012 | T12, T13, T22, T16, T9 |
 | FR-AI-003 | T17 imageless regression, existing `AddGarmentApiIT` |
 | FR-AI-004/009 | T11, T16 cancel |
 | FR-AI-008/010, DATA-INT-004 | T10, T17, T18 |
@@ -7461,11 +7974,20 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 | S3-IMG-03 | T10, T16, T17 |
 | S3-IMG-04 | T9, T11, T18, T19, T15 |
 | S3-IMG-05 | T16, T17 |
-| S3-IMG-06 | T12, T13; V1–V7 **outstanding** |
+| S3-IMG-06 | T12, T13, T22; V1–V8 **outstanding** |
 | S3-IMG-07 | No attach or replace routes; T17 edit keeps the photo |
-| S3-IMG-08 | T11, T19 (TTL injected; value pending PO) |
+| S3-IMG-08 | T11, T19 (TTL injected through the policy; the approved value `PT24H` is the P55 default) |
 | AR-01–08 | `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`, `ArchitectureDependencyTest` (unchanged) |
-| S3-INT-01 | T20 contract, T21 CORS |
+| S3-INT-01 / OPEN-S3-01 | T20 contract, T21 CORS; shared error codes (P48) |
+| S3-INT-02 / OPEN-S3-02 | T14 (S3Mock container), T13 (real libheif), P59 (CI with `CAPSULEAI_REQUIRE_HEIF=true`); V-S3 real provider **outstanding** |
+| OPEN-S3-07 (24 h TTL) | T11, T19 with an injected TTL and a controllable clock; P55 `pending-ttl=PT24H` |
+| OPEN-S3-08 (libheif subprocess) | T13, T22, T12 (missing tools → `503`); V1–V8 **outstanding** |
+| OPEN-S3-09 (15,000,000 bytes) | T9, T16 (15,000,000 accepted, 15,000,001 rejected) |
+| OPEN-S3-10 (normalized JPEG ≤ 2048) | T12 metadata stripping, orientation, long-edge bound; T16 stored content type |
+| OPEN-S3-11 (primary image; temporary fallback) | T13 primary listed first and not first (selection on), rejection (selection off); T22 fail-closed rules; V4/V8 **outstanding**; target behaviour enabled only after them |
+| OPEN-S3-12 (decoder ceilings) | T12 pixel ceiling (ImageIO), T22 ceiling before `heif-dec`; busy decode slots → `503` (T12); load measurement **outstanding** |
+| OPEN-S3-13 (AWS SDK + S3Mock) | T14 against `adobe/s3mock:5.1.0`, including the conditional write; V-S3 against private AWS S3 **outstanding** |
+| OPEN-S3-14 (photo API surface) | T16, T17, T20 |
 
 ## 16. Definition of Done
 
@@ -7476,10 +7998,11 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 | V10 forward migration verified on a fresh database and on top of V9 | Planned |
 | Real storage adapter evidence (S3Mock, T14) | Planned |
 | **Real provider evidence (V-S3 against private AWS S3)** | **Outstanding: needs an AWS account and bucket; not established by this guide** |
-| **HEIF toolchain verification V1–V7** | **Outstanding** |
-| **Pending-media TTL decided by the PO (OPEN-S3-07)** | **Blocked: lifecycle completion and Done depend on it** |
-| **Multi-image HEIF policy decided (OPEN-S3-11)** | **Blocked: interim explicit rejection in place** |
-| OPEN-S3-09/10/12/13/14 approved or verified | Pending |
+| **HEIF toolchain verification V1–V8 (OPEN-S3-08)** | **Outstanding** |
+| Pending-media TTL (OPEN-S3-07) | Decision **approved** by the PO (24 hours, configurable). Implementation and lifecycle tests: Planned |
+| **Multi-image HEIF target behaviour (OPEN-S3-11)** | Decision **approved** by the PO (primary image). Implementation: Planned. **Not Done** until V4/V8 pass on the deployment image and CI and `heif-primary-image-selection=true` is set for the deployed environment; until then only the temporary fail-closed rejection can ship |
+| **Decoder ceilings measured (OPEN-S3-12)** | Decision approved; decode time and peak memory with the V3 fixtures on the deployment size **outstanding** |
+| OPEN-S3-01/02/09/10/13/14 | Decisions approved by the PO on 2026-11-11; implementation and verification: Planned (OPEN-S3-13 also needs V-S3) |
 | Full `clean verify`, CI with libheif and `CAPSULEAI_REQUIRE_HEIF=true` | Planned |
 | Client evidence (permissions, preview, replace and cancel, device HEIF, cache isolation) | Outstanding |
 | Review with no blocker or Critical defect | Not started |
@@ -7491,9 +8014,11 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Context fails: `in-flight-fence must be longer…` | Fence ≤ storage timeout + 2 × decode timeout | Raise the fence or lower the timeouts |
-| All HEIC uploads → `503` | `heif-dec` not on the PATH | Install libheif (README); or set `CAPSULE_HEIF_DECODER=heif-convert` on older distributions |
+| All HEIC uploads → `503` | `heif-dec` or `heif-info` not on the PATH | Install libheif (README); or set `CAPSULE_HEIF_DECODER=heif-convert` on older distributions and `CAPSULE_HEIF_INFO` if needed |
 | All HEIC uploads → `PHOTO_UNREADABLE` | Decoder plugin missing (no libde265) | Install `libheif-plugin-libde265`; check `heif-dec --list-decoders` (V2) |
-| `HeifDecodingIT` multi-image test fails | heif-enc or heif-dec behaves differently in that libheif version | Record the V4 result and raise OPEN-S3-11 with the PO; do not delete the test |
+| Every multi-image HEIF → `PHOTO_MULTIPLE_IMAGES` | `heif-primary-image-selection=false` (the default) | Intended until V4/V8 pass for that environment; then set the property to `true` and record the evidence in the PR |
+| `HeifDecodingIT` primary-image test fails | That libheif version lists, numbers or marks images differently from §10.9 | Failed V4/V8: keep selection disabled (the fail-closed fallback stays in force), record the result and report it to the PO and Tech Lead; do not delete or weaken the test |
+| A multi-image HEIF is rejected although selection is enabled | `heif-info` printed no single `, primary` line, or `heif-dec` wrote other file names | Fail-closed by design. Inspect the `heif-info` output of a synthetic copy of the file; never fall back to the first image |
 | `S3PhotoStorageIT.aConditionalWrite…` fails only on S3Mock | Fixture ignores `If-None-Match` | Record it (V-S3). Verify against real S3. Keep `conditional-writes=true` in production. Because keys are random and unique in the database, overwrites cannot occur in normal operation |
 | Bucket missing in S3Mock | Initial-bucket environment variable name differs in 5.1.0 | The test creates the bucket itself; for compose, create it with `curl.exe -X PUT http://127.0.0.1:9090/capsuleai-photos-local` |
 | Large uploads get a connection reset instead of `422` | Tomcat swallow limit | Keep `server.tomcat.max-swallow-size=20MB`; a reverse proxy needs a matching body limit |
@@ -7507,14 +8032,15 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 
 - [ ] US-GAR-002 is fully applied first (or merge rules from [shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order) are followed).
 - [ ] V10 is the next free migration version on the branch.
-- [ ] P1–P60 applied; T1–T7 applied before running any test.
-- [ ] Unit tests: `.\mvnw.cmd '-Dtest=PhotoUploadTest,StagePhotoUploadServiceTest,PhotoBackedGarmentCreationTest,PhotoUploadLifecycleServiceTest,ImageIoPhotoInspectorTest,AddGarmentServiceTest,GarmentEntryValidatorTest,GarmentCreationFingerprintTest' test`
-- [ ] Integration tests listed in P59 pass; `HeifDecodingIT` passes with `CAPSULEAI_REQUIRE_HEIF=true`.
+- [ ] P1–P60 applied; T1–T22 applied (T1–T7 before running any test).
+- [ ] Unit tests: `.\mvnw.cmd '-Dtest=PhotoUploadTest,StagePhotoUploadServiceTest,PhotoBackedGarmentCreationTest,PhotoUploadLifecycleServiceTest,ImageIoPhotoInspectorTest,HeifDecoderTest,AddGarmentServiceTest,GarmentEntryValidatorTest,GarmentCreationFingerprintTest' test`
+- [ ] Integration tests listed in P59 pass; `HeifDecodingIT` (5 tests, including both primary-image tests) passes with `CAPSULEAI_REQUIRE_HEIF=true`.
 - [ ] `.\mvnw.cmd clean verify` passes; reports inspected; none skipped.
-- [ ] Verification V1–V7 (HEIF) executed and recorded in the PR.
+- [ ] Verification V1–V8 (HEIF) executed on the deployment image and the CI runner and recorded in the PR.
+- [ ] `capsuleai.wardrobe.photo.heif-primary-image-selection` set to `true` for an environment only after V4 and V8 passed there; otherwise the multi-image capability is reported as **not done** (temporary fallback only).
 - [ ] V-S3 executed against S3Mock and a private AWS test bucket with least-privilege credentials; results recorded without secrets.
-- [ ] OPEN-S3-07 (TTL) and OPEN-S3-11 (multi-image) decided by the PO before claiming Done; config and tests updated if they differ.
-- [ ] OPEN-S3-09/10/12/13/14 statuses re-checked.
+- [ ] Decoder ceilings measured with the V3 fixtures on the deployment size (OPEN-S3-12); any change that could affect ordinary phone photos raised with the PO.
+- [ ] The approved values are in place: `pending-ttl=PT24H` (OPEN-S3-07), `maximum-bytes=15000000` (OPEN-S3-09), `derivative-long-edge=2048` (OPEN-S3-10). If the PO later revises one, apply its change impact from the [decision record](open-questions.md).
 - [ ] Manual script §14 run; HEIC from a real device verified (V3).
 - [ ] README, OpenAPI 0.10.0, compose and CI updated.
 - [ ] No credential, token, object key list or photo is committed; `.env` untouched.

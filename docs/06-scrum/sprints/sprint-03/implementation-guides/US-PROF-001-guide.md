@@ -5,9 +5,9 @@
 | Story | [US-PROF-001](../../../stories/profile/US-PROF-001-set-and-revise-style-and-common-needs.md) (Draft v0.2), parent PBI-010 |
 | Sprint | Sprint 3, story 3 of 3. **Independently preparable**: it shares no code with the two garment stories, only the cumulative files listed in §11. |
 | Starting point | After US-GAR-002 and US-GAR-003 are applied (recommended order). For independent preparation from `9d158fb`, follow the merge notes in §11 and [shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order). |
-| Approved decisions applied | S3-PROF-01, S3-PROF-02, S3-PROF-03, S3-PROF-04, S3-PROF-05 |
-| Provisional choices used | OPEN-S3-01 (API evolution), OPEN-S3-04 (revision token, `409`), OPEN-S3-05 (presence encoding), OPEN-S3-06 (no-op), OPEN-S3-15 (preference representation), OPEN-S3-16 (published contract now) |
-| Verification status | **Not compiled, not run, not tested.** |
+| Approved decisions applied | S3-PROF-01, S3-PROF-02, S3-PROF-03, S3-PROF-04, S3-PROF-05; S3-INT-01, S3-INT-02, S3-INT-03 |
+| Approved detailed choices used | All **approved by the Product Owner on 2026-11-11** ([decision record](open-questions.md)): OPEN-S3-01 (compatible API evolution, shared error vocabulary), OPEN-S3-04 (opaque `revision` string, `expectedRevision` in the body, `409 REVISION_CONFLICT`), OPEN-S3-05 (`application/json` presence rules), OPEN-S3-06 (a no-op keeps the revision), OPEN-S3-15 (`/personal-context/preferences`, six need codes, `null` = unset, priorities 0–3, `revision: null` before the first declaration), OPEN-S3-16 (minimal `personalcontext.api.CurrentPersonalContext` now, no consumer) |
+| Verification status | **Not compiled, not run, not tested.** Approval selects the direction; the tests in §13 must still be written and pass, including the architecture tests for the published contract. |
 
 ## 1. Story Overview
 
@@ -220,6 +220,8 @@ The approved decisions are quoted in full in [plan §9.3](../sprint-plan.md#93-u
 | S3-PROF-03 | Option B — apply the presence-aware revision convention from S3-GAR-01 to this owner's separate profile resource. | APPROVED |
 | S3-PROF-04 | Option B — reuse the optimistic revision and reread conventions of S3-GAR-02/04, including a guarded first creation. | APPROVED |
 | S3-PROF-05 | Option A — a narrow `personalcontext.api` current-context contract when needed by the selected implementation, designed for later owner-authorized consumption. | APPROVED |
+
+The cross-story decisions S3-INT-01 (compatible API evolution with one error, revision and recovery convention), S3-INT-02 (isolated integration evidence) and S3-INT-03 (story guides with shared-file coordination) are approved as Option A ([plan §9.4](../sprint-plan.md#94-cross-story-decisions)).
 
 ## 9. Engineering Interpretation
 
@@ -1960,7 +1962,7 @@ AFTER:
       summary: Set or revise the account's styles and common needs
       description: |
         US-PROF-001 (FR-PROF-002/003, BRULE-PROF-002; approved
-        S3-PROF-02/03/04; provisional OPEN-S3-04/05/06/15).
+        S3-PROF-02/03/04 and OPEN-S3-04/05/06/15).
 
         - styles omitted keeps them; null or [] clears them; an
           array replaces the whole selection (profile style codes
@@ -2139,7 +2141,7 @@ AFTER:
           }
 ```
 
-The guard now has 94 entries. If prepared before the garment stories, append after the last existing entry instead, and add `sprint_03` to the PR trigger (US-GAR-002 P22, change 1).
+The guard now has 95 entries. If prepared before the garment stories, append after the last existing entry instead, and add `sprint_03` to the PR trigger (US-GAR-002 P22, change 1).
 
 ### Step P33 — [MODIFY] `backend/README.md`
 
@@ -2485,6 +2487,10 @@ class RevisePreferencesServiceTest {
 
         assertThatThrownBy(() -> service.revise(command(new ExpectedRevision.At(1), ValueChange.keep(),
                 needs("WORK_PROFESSIONAL", 3))))
+                .isInstanceOf(PreferencesRevisionConflictException.class);
+        assertThatThrownBy(() -> service.revise(command(new ExpectedRevision.At(1), ValueChange.keep(),
+                needs("WORK_PROFESSIONAL", 2))))
+                .as("OPEN-S3-06: a stale precondition is a conflict even when nothing would change")
                 .isInstanceOf(PreferencesRevisionConflictException.class);
         assertThat(profiles.find(OWNER).orElseThrow().preferences().priorityOf(CommonNeed.WORK_PROFESSIONAL))
                 .contains(NeedPriority.MEDIUM);
@@ -3255,7 +3261,12 @@ Expect three tables.
 | S3-PROF-03 | T4, T5, T8 |
 | S3-PROF-04 | T4, T8, T9 |
 | S3-PROF-05 | T10; `ArchitectureDependencyTest` |
-| S3-INT-01 | `IdentityOpenApiContractIT` (two new operations) |
+| S3-INT-01 / OPEN-S3-01 | `IdentityOpenApiContractIT` (two new operations); shared `REVISION_CONFLICT`, `VALIDATION_FAILED` and neutral `503` codes (P28) |
+| OPEN-S3-04 (revision token) | T4 `aMissingOrMalformedExpectedRevision…`, `aStaleRevisionIsAConflict…`; T5 `aRevisionTokenIsAStringOfDigits`; T8 conflict; T9 races |
+| OPEN-S3-05 (presence rules) | T5 (omitted, `null`, values, wrong kinds, `commonNeeds: null` rejected); T4 `omittedStylesAndNeedsKeep…`, `clearingStyles…` |
+| OPEN-S3-06 (no-op) | T4 `anUnchangedRevisionAndAnEmptyFirstDeclarationWriteNothing`, `aStaleRevisionIsAConflict…` (a stale no-op is still `409`) |
+| OPEN-S3-15 (representation) | T1 seven styles, six needs and their mappings, priorities 0–3; T4 explicit zero versus unset, empty styles; T8 `aNewAccountHasNoDeclaredContext…` (`revision: null`), all six needs present; T7 database CHECKs |
+| OPEN-S3-16 (published contract) | T10 `CurrentPersonalContextIT`; `ArchitectureDependencyTest` (no `domain`/`application` types in `api`, no other module reads Personal Context internals); T11 ownership |
 
 ## 16. Definition of Done
 
@@ -3266,7 +3277,7 @@ Expect three tables.
 | Contract synchronized (OpenAPI 0.11.0) | Planned |
 | Concurrency and rollback evidence | Planned |
 | Architecture and ownership tests pass with the new module code | Planned |
-| OPEN-S3-15/16 (and OPEN-S3-01/04/05/06) approved or accepted | Pending |
+| Approved choices OPEN-S3-01/04/05/06/15/16 implemented as specified | Decisions approved by the PO on 2026-11-11 ([decision record](open-questions.md)); proven only by the tests in §15.2 once they pass: Planned |
 | Full `clean verify`; CI reports | Planned |
 | Client evidence (onboarding, skip/return, labels, accessibility, conflict/uncertain UI) | Outstanding |
 
@@ -3295,6 +3306,6 @@ Expect three tables.
 - [ ] Integration tests: `.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PreferencesApiIT,ConcurrentPreferencesIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify`
 - [ ] `.\mvnw.cmd clean verify` passes; reports inspected.
 - [ ] Manual script §14 run.
-- [ ] OPEN-S3-15/16 statuses re-checked; need codes confirmed with the PO and client before the first deployment.
+- [ ] The approved representation is implemented exactly (OPEN-S3-15: six need codes, `null` = unset, `0`–`3`, `[]` styles, `revision: null`; OPEN-S3-16: minimal `CurrentPersonalContext`, no consumer). Clients map the approved codes to localized labels; if the PO later revises a code, apply its change impact before the first deployment.
 - [ ] README and OpenAPI 0.11.0 updated; CI reports added.
 - [ ] Client evidence requested; the story is **not** marked Done without it.
