@@ -3,6 +3,7 @@ package com.capsuleai.wardrobe.adapter.in.web;
 import com.capsuleai.wardrobe.application.GarmentFieldViolation;
 import com.capsuleai.wardrobe.application.GarmentNoLongerCurrentException;
 import com.capsuleai.wardrobe.application.GarmentNotFoundException;
+import com.capsuleai.wardrobe.application.GarmentRevisionConflictException;
 import com.capsuleai.wardrobe.application.GarmentValidationException;
 import com.capsuleai.wardrobe.application.IdempotencyKeyReusedException;
 import java.sql.SQLException;
@@ -80,6 +81,15 @@ public class WardrobeApiExceptionHandler {
                 "This garment is no longer in your current wardrobe. Refresh your wardrobe to see what you own now."));
     }
 
+    /** US-GAR-002 (S3-GAR-02/04): the edit was based on an outdated revision; nothing changed. */
+    @ExceptionHandler(GarmentRevisionConflictException.class)
+    public ResponseEntity<ProblemDetail> handleRevisionConflict(GarmentRevisionConflictException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
+                "This garment changed after you opened it, so your edit was not applied. Reload it, review the "
+                        + "current values and confirm your changes again."));
+    }
+
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
         return respond(problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST",
@@ -119,8 +129,9 @@ public class WardrobeApiExceptionHandler {
 
     private static ResponseEntity<ProblemDetail> outcomeNotConfirmed() {
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
-                "The wardrobe could not be reached, so the outcome is not confirmed. Retry; repeating a garment "
-                        + "addition with the same Idempotency-Key never adds it twice."));
+                "The wardrobe could not be reached, so the outcome is not confirmed. Check the current state before "
+                        + "retrying: an addition repeated with the same Idempotency-Key is never added twice, and an "
+                        + "edit repeated with the same expectedRevision is never applied twice."));
     }
 
     private static ProblemDetail problem(HttpStatus status, String code, String detail) {

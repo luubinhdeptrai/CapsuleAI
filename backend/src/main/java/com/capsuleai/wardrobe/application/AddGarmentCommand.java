@@ -26,4 +26,10 @@ public record AddGarmentCommand(
         String brand,
         String priceAmount,
         String priceCurrency) {
+
+    /** The submitted garment properties, for the shared profile validation (S3-GAR-05). */
+    GarmentValues values() {
+        return new GarmentValues(category, subtype, color, materials, pattern, styles, fit, neckline,
+                sleeveLength, length, silhouette, brand, priceAmount, priceCurrency);
+    }
 }

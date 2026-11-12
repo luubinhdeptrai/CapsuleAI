@@ -96,8 +96,9 @@ public class IdentitySecurityConfiguration {
     UrlBasedCorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(corsProperties.allowedOrigins());
-        corsConfiguration.setAllowedMethods(List.of(HttpMethod.GET.name(), HttpMethod.POST.name()));
-        corsConfiguration.setAllowedHeaders(List.of(
+        // PATCH: US-GAR-002 garment edits (and US-PROF-001 preference revisions); OPEN-S3-01.
+        corsConfiguration.setAllowedMethods(
+                List.of(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PATCH.name()));        corsConfiguration.setAllowedHeaders(List.of(
                 HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT, IDEMPOTENCY_KEY_HEADER));
         corsConfiguration.setAllowCredentials(false);
         corsConfiguration.setMaxAge(CORS_PREFLIGHT_MAX_AGE);

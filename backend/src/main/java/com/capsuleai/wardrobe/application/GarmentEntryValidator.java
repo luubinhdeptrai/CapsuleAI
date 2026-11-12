@@ -27,13 +27,17 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Turns a submitted manual entry into an accepted profile, or reports every
- * problem at once (FR-GAR-002/003/006–010/012/013, BRULE-GAR-004–006/010).
+ * Turns submitted garment values into an accepted profile, or reports every problem at
+ * once (FR-GAR-002/003/006–010/012/013, BRULE-GAR-004–006/010).
  *
- * <p>Nothing is silently replaced, discarded or invented: an unsupported value,
- * a Subtype or Length from another category's list, or a category-specific
- * property supplied for a category it does not apply to is reported for
- * correction or clearing. Blank optional values mean "not supplied".
+ * <p>Nothing is silently replaced, discarded or invented: an unsupported value, a Subtype
+ * or Length from another category's list, or a category-specific property supplied for a
+ * category it does not apply to is reported for correction or clearing. Blank optional
+ * values mean "not supplied".
+ *
+ * <p>Creation (US-GAR-001) validates the logical-action key, the confirmation and the
+ * profile; revision (US-GAR-002) validates the profile that results from applying an edit
+ * to the accepted one, with exactly the same rules (S3-GAR-03, S3-GAR-05).
  */
 final class GarmentEntryValidator {
 
@@ -56,34 +60,60 @@ final class GarmentEntryValidator {
         return new GarmentEntryValidator().validateEntry(command);
     }
 
+    /**
+     * Validates complete garment values as one accepted profile (US-GAR-002: the profile that
+     * results from an edit). Field names in the reported problems are the request field names,
+     * so a previously accepted value that no longer applies is reported against its own field.
+     *
+     * @throws GarmentValidationException listing every problem
+     */
+    static GarmentProfile validateProfile(GarmentValues values) {
+        GarmentEntryValidator validator = new GarmentEntryValidator();
+        Optional<GarmentProfile> profile = validator.profile(values);
+        validator.rejectIfAnyProblem();
+        return profile.orElseThrow();
+    }
+
     private ValidatedGarmentEntry validateEntry(AddGarmentCommand command) {
         UUID creationKey = creationKey(command.idempotencyKey());
         requireConfirmation(command.confirmed());
+        Optional<GarmentProfile> profile = profile(command.values());
+        rejectIfAnyProblem();
+        return new ValidatedGarmentEntry(creationKey, profile.orElseThrow());
+    }
 
-        Optional<GarmentCategory> category = required(GarmentCategory.class, "category", command.category());
-        Optional<GarmentColor> color = required(GarmentColor.class, "color", command.color());
-        Optional<GarmentSubtype> subtype = subtype(command.subtype(), category);
-        Set<GarmentMaterial> materials = distinct(GarmentMaterial.class, "materials", command.materials());
-        Optional<GarmentPattern> pattern = optional(GarmentPattern.class, "pattern", command.pattern());
-        Set<GarmentStyle> styles = distinct(GarmentStyle.class, "styles", command.styles());
+    /** The accepted profile, or empty when any property was rejected (the problems are recorded). */
+    private Optional<GarmentProfile> profile(GarmentValues values) {
+        int problemsBefore = violations.size();
+        Optional<GarmentCategory> category = required(GarmentCategory.class, "category", values.category());
+        Optional<GarmentColor> color = required(GarmentColor.class, "color", values.color());
+        Optional<GarmentSubtype> subtype = subtype(values.subtype(), category);
+        Set<GarmentMaterial> materials = distinct(GarmentMaterial.class, "materials", values.materials());
+        Optional<GarmentPattern> pattern = optional(GarmentPattern.class, "pattern", values.pattern());
+        Set<GarmentStyle> styles = distinct(GarmentStyle.class, "styles", values.styles());
         Optional<GarmentFit> fit = categorySpecific(
-                GarmentFit.class, "fit", command.fit(), CategorySpecificProperty.FIT, category);
+                GarmentFit.class, "fit", values.fit(), CategorySpecificProperty.FIT, category);
         Optional<GarmentNeckline> neckline = categorySpecific(
-                GarmentNeckline.class, "neckline", command.neckline(), CategorySpecificProperty.NECKLINE, category);
+                GarmentNeckline.class, "neckline", values.neckline(), CategorySpecificProperty.NECKLINE, category);
         Optional<GarmentSleeveLength> sleeveLength = categorySpecific(GarmentSleeveLength.class, "sleeveLength",
-                command.sleeveLength(), CategorySpecificProperty.SLEEVE_LENGTH, category);
-        Optional<GarmentLength> length = length(command.length(), category);
+                values.sleeveLength(), CategorySpecificProperty.SLEEVE_LENGTH, category);
+        Optional<GarmentLength> length = length(values.length(), category);
         Optional<GarmentSilhouette> silhouette = categorySpecific(GarmentSilhouette.class, "silhouette",
-                command.silhouette(), CategorySpecificProperty.SILHOUETTE, category);
-        Optional<Brand> brand = brand(command.brand());
-        Optional<PurchasePrice> price = price(command.priceAmount(), command.priceCurrency());
+                values.silhouette(), CategorySpecificProperty.SILHOUETTE, category);
+        Optional<Brand> brand = brand(values.brand());
+        Optional<PurchasePrice> price = price(values.priceAmount(), values.priceCurrency());
 
+        if (violations.size() != problemsBefore) {
+            return Optional.empty();
+        }
+        return Optional.of(new GarmentProfile(category.orElseThrow(), subtype, color.orElseThrow(), materials,
+                pattern, styles, fit, neckline, sleeveLength, length, silhouette, brand, price));
+    }
+
+    private void rejectIfAnyProblem() {
         if (!violations.isEmpty()) {
             throw new GarmentValidationException(violations);
         }
-        GarmentProfile profile = new GarmentProfile(category.orElseThrow(), subtype, color.orElseThrow(), materials,
-                pattern, styles, fit, neckline, sleeveLength, length, silhouette, brand, price);
-        return new ValidatedGarmentEntry(creationKey, profile);
     }
 
     private UUID creationKey(String idempotencyKey) {

@@ -4,17 +4,20 @@ import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.GarmentCreation;
+import com.capsuleai.wardrobe.application.GarmentRevision;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
+import com.capsuleai.wardrobe.application.ReviseGarmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -33,13 +36,16 @@ public class WardrobeGarmentController {
     private final AddGarmentService addGarmentService;
     private final BrowseWardrobeService browseWardrobeService;
     private final InspectGarmentService inspectGarmentService;
+    private final ReviseGarmentService reviseGarmentService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
                                      BrowseWardrobeService browseWardrobeService,
-                                     InspectGarmentService inspectGarmentService) {
+                                     InspectGarmentService inspectGarmentService,
+                                     ReviseGarmentService reviseGarmentService) {
         this.addGarmentService = addGarmentService;
         this.browseWardrobeService = browseWardrobeService;
         this.inspectGarmentService = inspectGarmentService;
+        this.reviseGarmentService = reviseGarmentService;
     }
 
     /**
@@ -80,5 +86,18 @@ public class WardrobeGarmentController {
     public GarmentResponse inspectGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
                                           @PathVariable String garmentId) {
         return GarmentResponse.from(inspectGarmentService.inspect(owner.accountId(), garmentId));
+    }
+
+    /**
+     * US-GAR-002 — applies one explicitly confirmed, presence-aware edit and returns the garment
+     * as it now is (200). A stale expected revision is 409 and changes nothing; the client
+     * rereads with GET /{garmentId} before asking the user to confirm again.
+     */
+    @PatchMapping("/{garmentId}")
+    public GarmentResponse reviseGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                         @PathVariable String garmentId,
+                                         @RequestBody GarmentRevisionRequest request) {
+        GarmentRevision revision = reviseGarmentService.revise(request.toCommand(owner.accountId(), garmentId));
+        return GarmentResponse.from(revision.garment());
     }
 }

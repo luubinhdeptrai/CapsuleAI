@@ -6,6 +6,7 @@ import com.capsuleai.wardrobe.adapter.out.persistence.SpringWardrobeTransactions
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
+import com.capsuleai.wardrobe.application.ReviseGarmentService;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
@@ -45,5 +46,10 @@ public class WardrobeConfiguration {
     @Bean
     InspectGarmentService inspectGarmentService(GarmentRepository garments) {
         return new InspectGarmentService(garments);
+    }
+
+    @Bean
+    ReviseGarmentService reviseGarmentService(GarmentRepository garments, WardrobeTransactions transactions) {
+        return new ReviseGarmentService(garments, transactions);
     }
 }

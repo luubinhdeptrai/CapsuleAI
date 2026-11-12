@@ -19,6 +19,9 @@ import java.util.UUID;
  * eligibility policy is approved, so none is stored or computed (FR-GAR-004).
  * {@code recordedUse} says whether reported-use evidence exists; no Wear
  * capability exists yet, so it is UNAVAILABLE, never zero (US-WAR-002 AC-07).
+ *
+ * <p>{@code revision} is the opaque version of the accepted profile (US-GAR-002, OPEN-S3-04);
+ * an editor sends it back unchanged as {@code expectedRevision}.
  */
 public record GarmentResponse(
         UUID id,
@@ -38,7 +41,8 @@ public record GarmentResponse(
         String provenance,
         String recommendationEligibility,
         RecordedUseResponse recordedUse,
-        String createdAt) {
+        String createdAt,
+        String revision) {
 
     static final String ELIGIBILITY_NOT_EVALUATED = "NOT_EVALUATED";
 
@@ -62,7 +66,8 @@ public record GarmentResponse(
                 garment.provenance().name(),
                 ELIGIBILITY_NOT_EVALUATED,
                 RecordedUseResponse.UNAVAILABLE,
-                garment.createdAt().toString());
+                garment.createdAt().toString(),
+                Long.toString(garment.revision()));
     }
 
     private static String code(Optional<? extends ControlledValue> value) {
