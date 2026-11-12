@@ -314,7 +314,7 @@ A browser lets a page read responses from another origin only if the server gran
 
 Write each entry exactly as the browser sends it, `scheme://host[:port]`: no path, trailing slash, wildcard or default port (`:443`, `:80`). Startup fails on anything else. Native Android/iOS apps send no `Origin` header and need no entry.
 
-A granted origin may use `GET` and `POST` with the `Authorization`, `Content-Type`, `Accept` and `Idempotency-Key` request headers; browsers may cache a granted preflight for 30 minutes. Credentials mode (cookies) stays off: send the access token as `Authorization: Bearer …`. CORS only lets the page *read* responses. Every request is still authenticated exactly as from any other client, and an unlisted origin gets `403 Invalid CORS request` with no grant.
+A granted origin may use `GET`, `POST` and `PATCH` (garment edits, US-GAR-002) with the `Authorization`, `Content-Type`, `Accept` and `Idempotency-Key` request headers; browsers may cache a granted preflight for 30 minutes. Credentials mode (cookies) stays off: send the access token as `Authorization: Bearer …`. CORS only lets the page *read* responses. Every request is still authenticated exactly as from any other client, and an unlisted origin gets `403 Invalid CORS request` with no grant.
 
 To also allow a browser frontend during development, list its real dev-server origin next to the editor in the launching terminal, then start Boot (`5173` is only an example):
 
@@ -324,7 +324,7 @@ $env:CAPSULE_CORS_ALLOWED_ORIGINS = 'https://editor.swagger.io,http://localhost:
 
 In production, set only the deployed web client's origins, for example `https://app.example.com`. Do not list the Swagger Editor or development origins there.
 
-Check a preflight from a second terminal. Expect `200`, `Access-Control-Allow-Origin: https://editor.swagger.io` and `Access-Control-Allow-Methods: GET,POST`; an unlisted origin returns `403` without those headers:
+Check a preflight from a second terminal. Expect `200`, `Access-Control-Allow-Origin: https://editor.swagger.io` and `Access-Control-Allow-Methods: GET,POST,PATCH`; an unlisted origin returns `403` without those headers:
 
 ```powershell
 curl.exe -i -X OPTIONS http://localhost:8080/api/v1/auth/login `
@@ -385,20 +385,52 @@ Focused tests, from `backend` (the second command needs Docker):
 .\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=GarmentDetailApiIT,WardrobeFailureIT,IdentityOpenApiContractIT,WardrobeAccessAfterPasswordResetIT' verify
 ```
 
-Removal itself is not implemented (PBI-016), so the `410` outcome currently arises only from test fixtures. Editing, images and Wear reporting are not implemented either.
+Removal itself is not implemented (PBI-016), so the `410` outcome currently arises only from test fixtures. Images and Wear reporting are not implemented either.
+
+### Editing one garment
+
+`PATCH /api/v1/wardrobe/garments/{garmentId}` (US-GAR-002) applies an explicitly confirmed edit to one current garment of the authenticated account. Send `confirmed: true`, the `expectedRevision` (the `revision` from the last creation, detail or edit response) and only the properties you change:
+
+| In the body | Effect |
+| --- | --- |
+| Property omitted | Kept as accepted |
+| `null` | Clears an optional property, the whole `price`, or `materials`/`styles` |
+| `[]` | Clears `materials` or `styles` |
+| Value | Replaces it; `price` is always replaced as a whole `{amount, currency}` |
+
+Category and Color can be changed but not cleared. The complete resulting garment is validated with the same rules as creation. A value that no longer applies after a Category change (for example a Tops-only `fit` when the category becomes `PANTS`) is reported against its own field, and the same edit must clear or correct it; nothing is cleared automatically.
+
+| Outcome | Response |
+| --- | --- |
+| Accepted | `200` with the garment and a new `revision` |
+| Nothing would change | `200`, `revision` unchanged |
+| Invalid, unconfirmed, missing or malformed `expectedRevision` | `400 VALIDATION_FAILED`, nothing changed |
+| The garment changed since it was read | `409 REVISION_CONFLICT`, nothing changed: reload it, review, confirm again |
+| Unknown, malformed or another account's garment | `404 GARMENT_NOT_FOUND` |
+| This account's removed garment | `410 GARMENT_NO_LONGER_CURRENT` |
+| Database unavailable | `503 TEMPORARILY_UNAVAILABLE`, outcome not confirmed: reload before retrying |
+
+After a lost response, reload the garment. A retry that reuses the original `expectedRevision` can never apply the edit twice. A creation retried with its original `Idempotency-Key` after an edit returns `200` with the current, edited garment.
+
+Focused tests, from `backend` (the second command needs Docker):
+
+```powershell
+.\mvnw.cmd '-Dtest=GarmentTest,ReviseGarmentServiceTest,GarmentRevisionRequestTest' test
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=ReviseGarmentApiIT,ConcurrentGarmentRevisionIT,GarmentRevisionSchemaIT,WardrobeFailureIT,IdentityOpenApiContractIT,CorsSecurityIT' verify
+```
 
 ## 10. Database migrations
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and its two set tables, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and its two set tables, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`. `V9__add_wardrobe_garment_revision.sql` (US-GAR-002) adds the optimistic `revision` column (starting at 1) to `wardrobe.wardrobe_garment`. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
 ```
 
-Expect successful rows for versions `1` to `8`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+Expect successful rows for versions `1` to `9`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
 
 ```powershell
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
@@ -493,7 +525,7 @@ Lifecycle phases include earlier phases. Packaging success does not prove IT exe
 
 ## 13. Continuous integration
 
-Root [backend-ci.yml](../.github/workflows/backend-ci.yml) runs for pushes to `main` and PRs targeting `main`.
+Root [backend-ci.yml](../.github/workflows/backend-ci.yml) runs for pushes to `main` and PRs targeting `main`, `sprint_02` or `sprint_03`.
 
 The `verify` job uses Ubuntu 24.04, Temurin 21 and PowerShell run steps. It checks out source, caches Maven dependencies using the backend POM, checks Docker, then runs `bash ./mvnw --batch-mode --no-transfer-progress clean verify` from `backend`.
 
@@ -524,7 +556,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. It also adds current-wardrobe browsing and garment detail. Garment editing/removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. It also adds current-wardrobe browsing and garment detail. Sprint 3 adds confirmed garment editing with optimistic revisions (US-GAR-002). Garment removal/images and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 

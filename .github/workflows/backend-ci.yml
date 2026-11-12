@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, sprint_02]
+    branches: [main, sprint_02, sprint_03]
 
 permissions:
   contents: read
@@ -99,7 +99,7 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentSchemaIT.xml' = 12
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepositoryIT.xml' = 9
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.AddGarmentApiIT.xml' = 22
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeFailureIT.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeFailureIT.xml' = 6
             'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentCreationIT.xml' = 2
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.BrowseWardrobeServiceTest.xml' = 6
             'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeCursorTest.xml' = 15
@@ -109,6 +109,12 @@ jobs:
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.InspectGarmentServiceTest.xml' = 7
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentDetailApiIT.xml' = 17
             'failsafe-reports/TEST-com.capsuleai.wardrobe.WardrobeAccessAfterPasswordResetIT.xml' = 1
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.ReviseGarmentServiceTest.xml' = 17
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentRevisionRequestTest.xml' = 5
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRevisionSchemaIT.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.ReviseGarmentApiIT.xml' = 13
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentRevisionIT.xml' = 3
           }
 
           foreach ($entry in $required.GetEnumerator()) {

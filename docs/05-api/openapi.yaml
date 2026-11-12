@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.8.0
+  version: 0.9.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -16,6 +16,7 @@ info:
       - US-GAR-001: Add an owned garment manually
       - US-WAR-001: Browse my current wardrobe
       - US-WAR-002: Inspect an owned garment
+      - US-GAR-002: Correct and enrich garment information
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -53,9 +54,14 @@ info:
     image is stored.
 
     This specification does not introduce endpoints for
-    session listing, all-device logout, garment editing or
-    removal, garment images, search, filtering or user
-    profiles.
+    session listing, all-device logout, garment removal,
+    garment images, search, filtering or user profiles.
+
+    Garment editing (US-GAR-002) is a presence-aware PATCH
+    protected by an optimistic revision: every garment
+    response carries an opaque revision, which an edit sends
+    back as expectedRevision; a stale value is 409
+    REVISION_CONFLICT and changes nothing.
 
 servers:
   - url: http://localhost:8080
@@ -839,6 +845,101 @@ paths:
         "503":
           $ref: "#/components/responses/Unavailable"
 
+    patch:
+      tags:
+        - Wardrobe
+      operationId: reviseGarment
+      summary: Correct or enrich one owned garment
+      description: |
+        US-GAR-002 (FR-WAR-003, FR-GAR-001–013, BRULE-GAR-002/005/006/009/010;
+        approved S3-GAR-01–05 and OPEN-S3-04/05/06).
+
+        Applies an explicitly confirmed, presence-aware edit to a
+        current garment of the authenticated account:
+
+        - an omitted property keeps its accepted value;
+        - null clears an optional property or the whole price;
+        - null or [] clears materials or styles; an array replaces
+          the whole set;
+        - price is always replaced as a whole object;
+        - category and color can be changed but never cleared.
+
+        The complete resulting profile is validated. A previously
+        accepted value that no longer applies after a category change
+        is reported against its own field and must be corrected or
+        cleared in the same edit; nothing is cleared automatically.
+
+        expectedRevision must be the revision last read. A stale
+        value is 409 REVISION_CONFLICT and changes nothing: read the
+        garment again, review, and confirm again with the new
+        revision. An edit that would change nothing returns 200 with
+        the same revision. After a lost response or a 503, read the
+        garment before retrying; a retry with the original
+        expectedRevision can never apply the edit twice.
+
+        Recommendation eligibility stays NOT_EVALUATED. Edits never
+        change the garment's id, creation time or provenance.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview or detail.
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentRevisionRequest"
+            examples:
+              correctAndClear:
+                summary: Correct the color, replace the materials, clear the brand
+                value:
+                  confirmed: true
+                  expectedRevision: "1"
+                  color: "NAVY"
+                  materials: ["COTTON", "LINEN"]
+                  brand: null
+              changeCategory:
+                summary: Change Tops to Pants and clear the Tops-only fit in the same edit
+                value:
+                  confirmed: true
+                  expectedRevision: "2"
+                  category: "PANTS"
+                  subtype: "JEANS"
+                  fit: null
+                  silhouette: "WIDE_LEG"
+
+      responses:
+        "200":
+          description: The edit was accepted (or changed nothing); the garment as it now is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "400":
+          $ref: "#/components/responses/GarmentRevisionRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/GarmentNotFound"
+
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
 components:
   parameters:
     IdempotencyKey:
@@ -1248,6 +1349,73 @@ components:
           examples:
             - "VND"
 
+    GarmentRevisionRequest:
+      type: object
+      description: |
+        An explicitly confirmed edit of one garment (US-GAR-002).
+        Omit a property to keep it; send null to clear an optional
+        property, the whole price or a set; send [] to clear a set.
+        A value of the wrong JSON type is rejected for that field.
+        There is no owner field and no media field.
+      required:
+        - confirmed
+        - expectedRevision
+      properties:
+        confirmed:
+          type: boolean
+          description: Must be true. false or missing changes nothing.
+        expectedRevision:
+          type: string
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: The revision of the garment as last read. Opaque; send it unchanged.
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        materials:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/GarmentMaterialCode"
+        pattern:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPatternCode"
+            - type: "null"
+        styles:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
+        fit:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentFitCode"
+            - type: "null"
+        neckline:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentNecklineCode"
+            - type: "null"
+        sleeveLength:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSleeveLengthCode"
+            - type: "null"
+        length:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentLengthCode"
+            - type: "null"
+        silhouette:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSilhouetteCode"
+            - type: "null"
+        brand:
+          type: [string, "null"]
+          description: Kept exactly; blank or null clears it; at most 100 Unicode code points.
+        price:
+          anyOf:
+            - $ref: "#/components/schemas/Price"
+            - type: "null"
+
     Garment:
       type: object
       description: |
@@ -1275,6 +1443,7 @@ components:
         - recommendationEligibility
         - recordedUse
         - createdAt
+        - revision
       properties:
         id:
           type: string
@@ -1342,6 +1511,13 @@ components:
         createdAt:
           type: string
           format: date-time
+        revision:
+          type: string
+          pattern: "^[1-9][0-9]*$"
+          description: |
+            Opaque version of the accepted profile (US-GAR-002,
+            OPEN-S3-04). Send it unchanged as expectedRevision when
+            editing. It changes only when an edit changes the profile.
 
     RecordedUse:
       type: object
@@ -2132,6 +2308,50 @@ components:
                 fieldErrors:
                   - field: "fit"
                     code: "NOT_APPLICABLE"
+
+    GarmentRevisionRejected:
+      description: |
+        The edit was not applied; the accepted garment is unchanged.
+        VALIDATION_FAILED lists every problem: a missing or false
+        confirmation, a missing or malformed expectedRevision, a
+        cleared category or color, unsupported, inapplicable or
+        wrong-type values, an incomplete price or an overlong brand.
+        A previously accepted value that no longer applies after a
+        category change is reported against its own field.
+        MALFORMED_REQUEST means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            staleDetailAfterCategoryChange:
+              summary: A Tops-only fit left in place when the category becomes Pants
+              value:
+                title: "Bad Request"
+                status: 400
+                detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+                instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
+                code: "VALIDATION_FAILED"
+                fieldErrors:
+                  - field: "fit"
+                    code: "NOT_APPLICABLE"
+
+    RevisionConflict:
+      description: |
+        The resource changed after it was read, so the edit was not
+        applied. Read it again, let the user review the current
+        values and confirm again with the new revision. Never resend
+        automatically with the new revision.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This garment changed after you opened it, so your edit was not applied. Reload it, review the current values and confirm your changes again."
+            instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
+            code: "REVISION_CONFLICT"
 
     GarmentNotFound:
       description: |

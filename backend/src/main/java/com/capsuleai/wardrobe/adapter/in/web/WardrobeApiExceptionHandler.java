@@ -89,7 +89,6 @@ public class WardrobeApiExceptionHandler {
                         + "current values and confirm your changes again."));
     }
 
-
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
         return respond(problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST",

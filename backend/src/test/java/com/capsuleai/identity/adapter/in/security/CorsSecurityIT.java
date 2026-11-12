@@ -3,6 +3,7 @@ package com.capsuleai.identity.adapter.in.security;
 import com.capsuleai.identity.support.IdentityIntegrationTestSupport;
 import java.time.Duration;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -32,6 +33,7 @@ import static org.springframework.http.HttpHeaders.VARY;
 import static org.springframework.http.HttpHeaders.WWW_AUTHENTICATE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -64,7 +66,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
         mockMvc.perform(preflight(path, SWAGGER_EDITOR, "POST", "content-type"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, SWAGGER_EDITOR))
-                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, "GET,POST"))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PATCH"))
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_HEADERS, "content-type"))
                 .andExpect(header().string(ACCESS_CONTROL_MAX_AGE, "1800"))
                 .andExpect(header().doesNotExist(ACCESS_CONTROL_ALLOW_CREDENTIALS))
@@ -82,6 +84,21 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, WEB_CLIENT))
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_HEADERS, containsString("idempotency-key")))
                 .andExpect(header().doesNotExist(WWW_AUTHENTICATE));
+    }
+
+    /** US-GAR-002: a browser client may send a garment edit; the actual edit still needs a usable session. */
+    @Test
+    void garmentRevisionPreflightIsGrantedButTheEditStillNeedsAToken() throws Exception {
+        String garment = "/api/v1/wardrobe/garments/" + UUID.randomUUID();
+
+        mockMvc.perform(preflight(garment, WEB_CLIENT, "PATCH", "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, WEB_CLIENT))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, containsString("PATCH")))
+                .andExpect(header().doesNotExist(WWW_AUTHENTICATE));
+
+        expectReadableAuthenticationFailure(mockMvc.perform(patch(garment).header(ORIGIN, WEB_CLIENT)
+                .contentType(MediaType.APPLICATION_JSON).content("{}")), WEB_CLIENT);
     }
 
     @Test
@@ -134,7 +151,6 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
     @CsvSource({
             "DELETE, authorization",
             "PUT, content-type",
-            "PATCH, content-type",
             "POST, x-requested-with"})
     void preflightForAMethodOrHeaderTheApiDoesNotAcceptIsRefused(String method, String requestHeaders)
             throws Exception {
