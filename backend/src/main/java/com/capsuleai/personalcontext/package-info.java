@@ -9,8 +9,9 @@
  * private profile models, application services, or persistence classes.
  * Context ownership and withdrawal rules remain within this module.
  *
- * <p>Persistence: when this module first persists state, its tables go into the
- * PostgreSQL schema {@code personal_context} and are named {@code personal_context_*}.
+ * <p>Persistence: the module's tables are in the PostgreSQL schema
+ * {@code personal_context} (created by the first Personal Context migration,
+ * US-PROF-001) and are named {@code personal_context_*}.
  * No other module reads, writes, joins or references them by foreign key; other
  * modules use this module's published {@code api} (architecture refinement AR-01-AR-04,
  * {@code docs/engineering/backend-conventions.md} Section 2).

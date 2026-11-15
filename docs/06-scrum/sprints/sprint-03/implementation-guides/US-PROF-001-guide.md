@@ -1,13 +1,13 @@
 # US-PROF-001 — Set and Revise Style Preferences and Common Needs: Implementation Guide
 
-| Field | Value |
-| --- | --- |
-| Story | [US-PROF-001](../../../stories/profile/US-PROF-001-set-and-revise-style-and-common-needs.md) (Draft v0.2), parent PBI-010 |
-| Sprint | Sprint 3, story 3 of 3. **Independently preparable**: it shares no code with the two garment stories, only the cumulative files listed in §11. |
-| Starting point | After US-GAR-002 and US-GAR-003 are applied (recommended order). For independent preparation from `9d158fb`, follow the merge notes in §11 and [shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order). |
-| Approved decisions applied | S3-PROF-01, S3-PROF-02, S3-PROF-03, S3-PROF-04, S3-PROF-05; S3-INT-01, S3-INT-02, S3-INT-03 |
+| Field                          | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Story                          | [US-PROF-001](../../../stories/profile/US-PROF-001-set-and-revise-style-and-common-needs.md) (Draft v0.2), parent PBI-010                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Sprint                         | Sprint 3, story 3 of 3. **Independently preparable**: it shares no code with the two garment stories, only the cumulative files listed in §11.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Starting point                 | After US-GAR-002 and US-GAR-003 are applied (recommended order). For independent preparation from `9d158fb`, follow the merge notes in §11 and [shared architecture §21](shared-architecture.md#21-shared-file-ownership-and-cumulative-order).                                                                                                                                                                                                                                                                                                                                      |
+| Approved decisions applied     | S3-PROF-01, S3-PROF-02, S3-PROF-03, S3-PROF-04, S3-PROF-05; S3-INT-01, S3-INT-02, S3-INT-03                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Approved detailed choices used | All **approved by the Product Owner on 2026-11-11** ([decision record](open-questions.md)): OPEN-S3-01 (compatible API evolution, shared error vocabulary), OPEN-S3-04 (opaque `revision` string, `expectedRevision` in the body, `409 REVISION_CONFLICT`), OPEN-S3-05 (`application/json` presence rules), OPEN-S3-06 (a no-op keeps the revision), OPEN-S3-15 (`/personal-context/preferences`, six need codes, `null` = unset, priorities 0–3, `revision: null` before the first declaration), OPEN-S3-16 (minimal `personalcontext.api.CurrentPersonalContext` now, no consumer) |
-| Verification status | **Not compiled, not run, not tested.** Approval selects the direction; the tests in §13 must still be written and pass, including the architecture tests for the published contract. |
+| Verification status            | **Not compiled, not run, not tested.** Approval selects the direction; the tests in §13 must still be written and pass, including the architecture tests for the published contract.                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 1. Story Overview
 
@@ -34,31 +34,31 @@
 
 ## 2. Repository Baseline
 
-| Item | State | Relevance |
-| --- | --- | --- |
-| `com.capsuleai.personalcontext` | Only `package-info.java` (owner of declared preferences, needs, location and context meaning; schema `personal_context`; `api`-only access) | All new code goes here |
-| `BusinessModule.PERSONAL_CONTEXT` | Registered with package `personalcontext` and schema `personal_context` | Architecture and SQL-ownership tests already recognize the owner |
-| Schema `personal_context` | Does not exist ("created only by the migration of the story that first needs it") | V11 creates it |
-| Migrations | V1–V10 after the garment stories; V1–V8 from `9d158fb` | Next free version: V11 in the recommended order |
-| Security | One filter chain; CORS includes `PATCH` once US-GAR-002 is applied | If US-GAR-002 is not applied, add `PATCH` here |
-| Contract test | Checks every `/api` handler | The two new operations must be documented and match their records |
-| OpenAPI | 0.10.0 after the garment stories | → 0.11.0 |
+| Item                              | State                                                                                                                                       | Relevance                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `com.capsuleai.personalcontext`   | Only `package-info.java` (owner of declared preferences, needs, location and context meaning; schema `personal_context`; `api`-only access) | All new code goes here                                            |
+| `BusinessModule.PERSONAL_CONTEXT` | Registered with package `personalcontext` and schema `personal_context`                                                                     | Architecture and SQL-ownership tests already recognize the owner  |
+| Schema `personal_context`         | Does not exist ("created only by the migration of the story that first needs it")                                                           | V11 creates it                                                    |
+| Migrations                        | V1–V10 after the garment stories; V1–V8 from `9d158fb`                                                                                      | Next free version: V11 in the recommended order                   |
+| Security                          | One filter chain; CORS includes `PATCH` once US-GAR-002 is applied                                                                          | If US-GAR-002 is not applied, add `PATCH` here                    |
+| Contract test                     | Checks every `/api` handler                                                                                                                 | The two new operations must be documented and match their records |
+| OpenAPI                           | 0.10.0 after the garment stories                                                                                                            | → 0.11.0                                                          |
 
 ## 3. Original Business Requirements — Verbatim
 
 From [BRD](../../../../01-business/BRD.md):
 
-| ID | Requirement | Rationale | Priority | Goal |
-| --- | --- | --- | --- | --- |
-| BR-010 | Declared style preferences and selected occasion must actively influence initial advice and relevant wardrobe analysis. | Serve the user's actual clothing needs. | Must | BG-02, BG-03, BG-04 |
-| BR-012 | Users must be able to omit or modify body-shape and gender information without restrictive garment eligibility rules. | Provide inclusive assistance and preserve individual choice. | Must | BG-02, BG-03, BG-04 |
+| ID     | Requirement                                                                                                             | Rationale                                                    | Priority | Goal                |
+| ------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------- | ------------------- |
+| BR-010 | Declared style preferences and selected occasion must actively influence initial advice and relevant wardrobe analysis. | Serve the user's actual clothing needs.                      | Must     | BG-02, BG-03, BG-04 |
+| BR-012 | Users must be able to omit or modify body-shape and gender information without restrictive garment eligibility rules.   | Provide inclusive assistance and preserve individual choice. | Must     | BG-02, BG-03, BG-04 |
 
 BR-012 is traced by the story, but body and gender belong to US-PROF-002; nothing about them is implemented here.
 
-| Capability | Name | Description |
-| --- | --- | --- |
-| CAP-01 | Account & Personalization | Maintain a private personal wardrobe context, style preferences, and optional profile information. |
-| CAP-06 | Behavioral Personalization | Use explicit feedback and recorded wear choices to improve relevance and diversity. |
+| Capability | Name                       | Description                                                                                        |
+| ---------- | -------------------------- | -------------------------------------------------------------------------------------------------- |
+| CAP-01     | Account & Personalization  | Maintain a private personal wardrobe context, style preferences, and optional profile information. |
+| CAP-06     | Behavioral Personalization | Use explicit feedback and recorded wear choices to improve relevance and diversity.                |
 
 ## 4. Original Product Requirements — Verbatim
 
@@ -93,9 +93,9 @@ From PRD §11.1 FEAT-PROF-001:
 
 From PRD §11.3:
 
-> | Vocabulary | Initial Canonical Values |
-> |---|---|
-> | Style | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
+> | Vocabulary                         | Initial Canonical Values                                                                                    |
+> | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+> | Style                              | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`                            |
 > | Current/common occasion vocabulary | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
 >
 > The **Personalized Everyday Capsule** is one model, not separate Student, Professional, Minimalist, or Fashion capsule profiles. Its initial need dimensions are: Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active.
@@ -106,45 +106,45 @@ From PRD §11.3:
 
 From [SRS](../../../../03-requirements/SRS.md):
 
-| ID | Requirement | Verification |
-| --- | --- | --- |
-| FR-PROF-001 | The system shall provide the progressive sequence Welcome → Register/Login → Style Preferences → Common Occasion Needs → Optional Personal Context → Location → recommended First Garment → Today/Wardrobe. | D: first-use journey. |
-| FR-PROF-002 | The system shall allow users to select and revise style preferences from the controlled vocabulary in Section 4.10. | T: every defined style choice. |
-| FR-PROF-003 | The system shall allow users to revise common capsule need priorities using Not Relevant=0, Low=1, Medium=2 and High=3 and the need-to-occasion mapping in Section 3.14.1. | T: every priority and need mapping; differing request/common occasion. |
-| FR-PROF-004 | The system shall keep the current recommendation occasion distinct from ongoing common needs so a request occasion does not automatically overwrite those priorities. | T: differing current/common context. |
-| FR-PROF-008 | The system shall allow skipped optional setup to be completed later and make first-garment creation a recommended action rather than an access or garment-quota gate. | D: skip and return. |
-| FR-AUTH-011 | The system shall allow authenticated product entry without body/gender, device-location permission, first garment, or Display Name. | T: omitted optional information. |
-| DATA-AUTH-003 | The system shall retain the user's current declared styles/common priorities and distinguish them from request-specific occasion. | T/I: independent context values. |
-| UI-002 | The system shall present the progressive onboarding flow with optional context and non-blocking first-garment guidance. | D: onboarding skip/return. |
-| FR-ANL-014 | The system shall reevaluate or mark coverage outdated after relevant wardrobe, needs, context or applicable validity-rule changes. | T: changed priority, garment attributes and applicable rule version. |
+| ID            | Requirement                                                                                                                                                                                                 | Verification                                                           |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| FR-PROF-001   | The system shall provide the progressive sequence Welcome → Register/Login → Style Preferences → Common Occasion Needs → Optional Personal Context → Location → recommended First Garment → Today/Wardrobe. | D: first-use journey.                                                  |
+| FR-PROF-002   | The system shall allow users to select and revise style preferences from the controlled vocabulary in Section 4.10.                                                                                         | T: every defined style choice.                                         |
+| FR-PROF-003   | The system shall allow users to revise common capsule need priorities using Not Relevant=0, Low=1, Medium=2 and High=3 and the need-to-occasion mapping in Section 3.14.1.                                  | T: every priority and need mapping; differing request/common occasion. |
+| FR-PROF-004   | The system shall keep the current recommendation occasion distinct from ongoing common needs so a request occasion does not automatically overwrite those priorities.                                       | T: differing current/common context.                                   |
+| FR-PROF-008   | The system shall allow skipped optional setup to be completed later and make first-garment creation a recommended action rather than an access or garment-quota gate.                                       | D: skip and return.                                                    |
+| FR-AUTH-011   | The system shall allow authenticated product entry without body/gender, device-location permission, first garment, or Display Name.                                                                         | T: omitted optional information.                                       |
+| DATA-AUTH-003 | The system shall retain the user's current declared styles/common priorities and distinguish them from request-specific occasion.                                                                           | T/I: independent context values.                                       |
+| UI-002        | The system shall present the progressive onboarding flow with optional context and non-blocking first-garment guidance.                                                                                     | D: onboarding skip/return.                                             |
+| FR-ANL-014    | The system shall reevaluate or mark coverage outdated after relevant wardrobe, needs, context or applicable validity-rule changes.                                                                          | T: changed priority, garment attributes and applicable rule version.   |
 
 SRS §3.14.1 (excerpt):
 
-> | Capsule Need | Relevant Occasion Codes |
-> |---|---|
-> | Everyday / Casual | EVERYDAY, DATE, SOCIAL_EVENT |
-> | Work / Professional | WORK |
-> | School / University | SCHOOL_UNIVERSITY |
-> | Formal / Special Event | FORMAL_EVENT |
-> | Travel | TRAVEL |
-> | Sport / Active | SPORT_ACTIVITY |
+> | Capsule Need           | Relevant Occasion Codes      |
+> | ---------------------- | ---------------------------- |
+> | Everyday / Casual      | EVERYDAY, DATE, SOCIAL_EVENT |
+> | Work / Professional    | WORK                         |
+> | School / University    | SCHOOL_UNIVERSITY            |
+> | Formal / Special Event | FORMAL_EVENT                 |
+> | Travel                 | TRAVEL                       |
+> | Sport / Active         | SPORT_ACTIVITY               |
 >
 > | Need Priority | Weight |
-> |---|---|
-> | Not Relevant | 0 |
-> | Low | 1 |
-> | Medium | 2 |
-> | High | 3 |
+> | ------------- | ------ |
+> | Not Relevant  | 0      |
+> | Low           | 1      |
+> | Medium        | 2      |
+> | High          | 3      |
 
 SRS §4.10 (excerpt):
 
 > Profile Style preferences and Occasion/request context are separate from garment Style; they do not add garment properties:
 >
-> | Context Vocabulary | Existing Values |
-> |---|---|
-> | Profile Style preference | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
-> | Request Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
-> | Capsule Need Dimensions | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
+> | Context Vocabulary       | Existing Values                                                                                              |
+> | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+> | Profile Style preference | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`                             |
+> | Request Occasion         | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY`  |
+> | Capsule Need Dimensions  | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
 
 ## 6. Original Business Rules — Verbatim
 
@@ -213,30 +213,30 @@ Architecture:
 
 The approved decisions are quoted in full in [plan §9.3](../sprint-plan.md#93-us-prof-001-decisions):
 
-| ID | Recommended solution (verbatim) | Status |
-| --- | --- | --- |
-| S3-PROF-01 | Option A — `com.capsuleai.personalcontext`, owning `personal_context` state. | APPROVED |
-| S3-PROF-02 | Option A — preserve absent context, canonical choices and explicit-zero semantics. | APPROVED |
-| S3-PROF-03 | Option B — apply the presence-aware revision convention from S3-GAR-01 to this owner's separate profile resource. | APPROVED |
-| S3-PROF-04 | Option B — reuse the optimistic revision and reread conventions of S3-GAR-02/04, including a guarded first creation. | APPROVED |
+| ID         | Recommended solution (verbatim)                                                                                                                                 | Status   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| S3-PROF-01 | Option A — `com.capsuleai.personalcontext`, owning `personal_context` state.                                                                                    | APPROVED |
+| S3-PROF-02 | Option A — preserve absent context, canonical choices and explicit-zero semantics.                                                                              | APPROVED |
+| S3-PROF-03 | Option B — apply the presence-aware revision convention from S3-GAR-01 to this owner's separate profile resource.                                               | APPROVED |
+| S3-PROF-04 | Option B — reuse the optimistic revision and reread conventions of S3-GAR-02/04, including a guarded first creation.                                            | APPROVED |
 | S3-PROF-05 | Option A — a narrow `personalcontext.api` current-context contract when needed by the selected implementation, designed for later owner-authorized consumption. | APPROVED |
 
 The cross-story decisions S3-INT-01 (compatible API evolution with one error, revision and recovery convention), S3-INT-02 (isolated integration evidence) and S3-INT-03 (story guides with shared-file coordination) are approved as Option A ([plan §9.4](../sprint-plan.md#94-cross-story-decisions)).
 
 ## 9. Engineering Interpretation
 
-| # | Interpretation | Source |
-| --- | --- | --- |
-| I-1 | Need codes are `EVERYDAY_CASUAL`, `WORK_PROFESSIONAL`, `SCHOOL_UNIVERSITY`, `FORMAL_SPECIAL_EVENT`, `TRAVEL`, `SPORT_ACTIVE`. Each carries its SRS §3.14.1 occasion codes as data for future consumers; nothing computes with them now. | OPEN-S3-15, SRS §3.14.1 |
-| I-2 | Priorities are JSON integers `0`–`3`, stored as `SMALLINT` with a CHECK. An absent need has **no row**. `0` has a row with priority `0`. | S3-PROF-02 |
-| I-3 | Styles are a set of the seven profile codes. Garment Style codes (`STREET`, `MINIMALIST`, …) are rejected even where a name looks similar. `[]` is a valid declaration of "no particular style" and round-trips as `[]`; unset and empty are the same state (OPEN-S3-15). | S3-PROF-02, BRULE-GAR-004 |
-| I-4 | PATCH semantics: `styles` absent → keep; `null` or `[]` → clear; array → replace. `commonNeeds` absent → keep all; object → per need: absent → keep, `null` → unset, integer → set. `commonNeeds: null` is rejected (no mass clearing). | S3-PROF-03, OPEN-S3-05 |
-| I-5 | `expectedRevision` is required. `null` means "I saw no profile" (guarded create); a string token means "the revision I read". Mismatch either way → `409 REVISION_CONFLICT`. | S3-PROF-04, OPEN-S3-04 |
-| I-6 | Submitting is the confirmation (UC-005 step 5); there is no separate `confirmed` flag. Cancel = not submitting (A5). | AC-06 |
-| I-7 | A revision whose result equals the current declaration writes nothing and keeps the revision. A first declaration that declares nothing creates nothing (`revision` stays `null`). | OPEN-S3-06 |
-| I-8 | The current request occasion is not part of this resource and is never written by anything in this story. | AC-03, FR-PROF-004 |
-| I-9 | AC-05 "affected prior assessments are refreshed or marked outdated": no assessments exist yet. The published contract exposes `revision` so future consumers can detect a changed basis (S3-PROF-05). | AC-05, FR-ANL-014 |
-| I-10 | AC-04 progressive entry: nothing in Identity or Wardrobe depends on preferences, so entry, browsing and garment creation work with an unset profile. A regression test proves it. | AC-04, FR-AUTH-011 |
+| #    | Interpretation                                                                                                                                                                                                                                                            | Source                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| I-1  | Need codes are `EVERYDAY_CASUAL`, `WORK_PROFESSIONAL`, `SCHOOL_UNIVERSITY`, `FORMAL_SPECIAL_EVENT`, `TRAVEL`, `SPORT_ACTIVE`. Each carries its SRS §3.14.1 occasion codes as data for future consumers; nothing computes with them now.                                   | OPEN-S3-15, SRS §3.14.1   |
+| I-2  | Priorities are JSON integers `0`–`3`, stored as `SMALLINT` with a CHECK. An absent need has **no row**. `0` has a row with priority `0`.                                                                                                                                  | S3-PROF-02                |
+| I-3  | Styles are a set of the seven profile codes. Garment Style codes (`STREET`, `MINIMALIST`, …) are rejected even where a name looks similar. `[]` is a valid declaration of "no particular style" and round-trips as `[]`; unset and empty are the same state (OPEN-S3-15). | S3-PROF-02, BRULE-GAR-004 |
+| I-4  | PATCH semantics: `styles` absent → keep; `null` or `[]` → clear; array → replace. `commonNeeds` absent → keep all; object → per need: absent → keep, `null` → unset, integer → set. `commonNeeds: null` is rejected (no mass clearing).                                   | S3-PROF-03, OPEN-S3-05    |
+| I-5  | `expectedRevision` is required. `null` means "I saw no profile" (guarded create); a string token means "the revision I read". Mismatch either way → `409 REVISION_CONFLICT`.                                                                                              | S3-PROF-04, OPEN-S3-04    |
+| I-6  | Submitting is the confirmation (UC-005 step 5); there is no separate `confirmed` flag. Cancel = not submitting (A5).                                                                                                                                                      | AC-06                     |
+| I-7  | A revision whose result equals the current declaration writes nothing and keeps the revision. A first declaration that declares nothing creates nothing (`revision` stays `null`).                                                                                        | OPEN-S3-06                |
+| I-8  | The current request occasion is not part of this resource and is never written by anything in this story.                                                                                                                                                                 | AC-03, FR-PROF-004        |
+| I-9  | AC-05 "affected prior assessments are refreshed or marked outdated": no assessments exist yet. The published contract exposes `revision` so future consumers can detect a changed basis (S3-PROF-05).                                                                     | AC-05, FR-ANL-014         |
+| I-10 | AC-04 progressive entry: nothing in Identity or Wardrobe depends on preferences, so entry, browsing and garment creation work with an unset profile. A regression test proves it.                                                                                         | AC-04, FR-AUTH-011        |
 
 ## 10. Just-in-Time Detailed Design
 
@@ -245,29 +245,105 @@ The cross-story decisions S3-INT-01 (compatible API evolution with one error, re
 ```mermaid
 sequenceDiagram
     autonumber
-    participant C as Client
+    actor C as Client
     participant W as PersonalContextPreferencesController
-    participant M as PreferencesRevisionRequest (JsonNode → changes)
+    participant M as PreferencesRevisionRequest
     participant S as RevisePreferencesService
     participant R as JdbcPreferenceProfileRepository
-    participant DB as PostgreSQL (personal_context)
+    participant DB as PostgreSQL
+
     C->>W: PATCH /api/v1/personal-context/preferences
-    W->>M: toCommand(owner)
-    M-->>S: RevisePreferencesCommand
-    S->>S: shape checks (expectedRevision, styles, commonNeeds) → 400
-    S->>R: find(owner)
-    S->>S: precondition (null ⇔ no profile; token ⇔ revision) → 409
-    S->>S: apply + validate → 400
-    alt result == current (or nothing declared)
-        S-->>W: unchanged
-    else no profile yet
-        S->>R: tx: INSERT … ON CONFLICT DO NOTHING (+ children)
-        R-->>S: false → 409
-    else profile exists
-        S->>R: tx: UPDATE … WHERE revision = :expected (+ replace children)
-        R-->>S: false → 409
+    W->>M: toCommand(ownerId)
+    M-->>W: RevisePreferencesCommand
+    W->>S: revise(command)
+
+    %% 1. REQUEST VALIDATION
+    S->>S: Validate expectedRevision, styles, commonNeeds
+
+    alt Invalid request shape
+        S-->>W: ValidationException
+        W-->>C: 400 VALIDATION_FAILED
+
+    else Valid request
+        %% 2. LOAD CURRENT PROFILE
+        S->>R: find(ownerId)
+        R->>DB: SELECT profile and preferences WHERE owner_id = ?
+        DB-->>R: Profile or null
+        R-->>S: Current profile or null
+
+        %% 3. OPTIMISTIC CONCURRENCY PRECONDITION
+        S->>S: Check expectedRevision against current profile
+
+        alt Precondition mismatch
+            Note over S: No profile requires null expectedRevision
+            Note over S: Existing profile requires matching revision
+            S-->>W: RevisionConflictException
+            W-->>C: 409 CONFLICT
+
+        else Precondition satisfied
+            %% 4. APPLY PATCH
+            S->>S: Apply declared changes to current preferences
+            S->>S: Validate resulting preferences
+
+            alt Resulting preferences invalid
+                S-->>W: ValidationException
+                W-->>C: 400 VALIDATION_FAILED
+
+            else Resulting preferences valid
+                alt No effective changes
+                    Note over S: Keep existing revision unchanged
+                    S-->>W: Unchanged preferences
+                    W-->>C: 200 OK - Preferences
+
+                else No profile exists
+                    %% 5A. CREATE NEW PROFILE
+                    S->>R: createIfAbsent(ownerId, preferences)
+                    R->>DB: BEGIN TRANSACTION
+                    R->>DB: INSERT profile ON CONFLICT DO NOTHING RETURNING id
+                    DB-->>R: New profile ID or no row
+
+                    alt Concurrent insert conflict
+                        R->>DB: ROLLBACK
+                        R-->>S: Conflict
+                        S-->>W: RevisionConflictException
+                        W-->>C: 409 CONFLICT
+
+                    else Profile inserted
+                        R->>DB: INSERT style and commonNeeds rows
+                        DB-->>R: Child rows persisted
+                        R->>DB: COMMIT
+                        DB-->>R: Commit successful
+                        R-->>S: Saved preferences with initial revision
+                        S-->>W: Created preferences
+                        W-->>C: 200 OK - Preferences
+                    end
+
+                else Existing profile
+                    %% 5B. UPDATE WITH REVISION CHECK
+                    S->>R: updateIfRevisionMatches(ownerId, expectedRevision, preferences)
+                    R->>DB: BEGIN TRANSACTION
+                    R->>DB: UPDATE profile SET revision = revision + 1 WHERE owner_id = ? AND revision = ? RETURNING revision
+                    DB-->>R: Updated revision or no row
+
+                    alt Concurrent modification detected
+                        R->>DB: ROLLBACK
+                        R-->>S: Conflict
+                        S-->>W: RevisionConflictException
+                        W-->>C: 409 CONFLICT
+
+                    else Profile updated
+                        R->>DB: Replace affected preference child rows
+                        DB-->>R: Child rows persisted
+                        R->>DB: COMMIT
+                        DB-->>R: Commit successful
+                        R-->>S: Saved preferences with new revision
+                        S-->>W: Updated preferences
+                        W-->>C: 200 OK - Preferences
+                    end
+                end
+            end
+        end
     end
-    W-->>C: 200 Preferences
 ```
 
 ### 10.2 API contract
@@ -279,8 +355,12 @@ sequenceDiagram
   "revision": null,
   "styles": [],
   "commonNeeds": {
-    "EVERYDAY_CASUAL": null, "WORK_PROFESSIONAL": null, "SCHOOL_UNIVERSITY": null,
-    "FORMAL_SPECIAL_EVENT": null, "TRAVEL": null, "SPORT_ACTIVE": null
+    "EVERYDAY_CASUAL": null,
+    "WORK_PROFESSIONAL": null,
+    "SCHOOL_UNIVERSITY": null,
+    "FORMAL_SPECIAL_EVENT": null,
+    "TRAVEL": null,
+    "SPORT_ACTIVE": null
   },
   "updatedAt": null
 }
@@ -302,13 +382,13 @@ Response: `200 Preferences`, for example:
 - `styles` in catalogue order;
 - `WORK_PROFESSIONAL: 3`, `SPORT_ACTIVE: 0`, the others `null`.
 
-| Status | `code` | When |
-| --- | --- | --- |
-| 400 | `VALIDATION_FAILED` | `expectedRevision` missing (`REQUIRED`) or malformed (`INVALID_FORMAT`); unsupported style (`styles[i]`), unknown need (`commonNeeds`), bad priority (`commonNeeds.<NEED>`), wrong JSON kinds (`styles`, `commonNeeds`) |
-| 400 | `MALFORMED_REQUEST` | Not JSON |
-| 401 | `AUTHENTICATION_REQUIRED` | No usable session |
-| 409 | `REVISION_CONFLICT` | Precondition failed (stale token, or a profile already exists for `null`) |
-| 503 | `TEMPORARILY_UNAVAILABLE` | Database unavailable; outcome not confirmed |
+| Status | `code`                    | When                                                                                                                                                                                                                    |
+| ------ | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_FAILED`       | `expectedRevision` missing (`REQUIRED`) or malformed (`INVALID_FORMAT`); unsupported style (`styles[i]`), unknown need (`commonNeeds`), bad priority (`commonNeeds.<NEED>`), wrong JSON kinds (`styles`, `commonNeeds`) |
+| 400    | `MALFORMED_REQUEST`       | Not JSON                                                                                                                                                                                                                |
+| 401    | `AUTHENTICATION_REQUIRED` | No usable session                                                                                                                                                                                                       |
+| 409    | `REVISION_CONFLICT`       | Precondition failed (stale token, or a profile already exists for `null`)                                                                                                                                               |
+| 503    | `TEMPORARILY_UNAVAILABLE` | Database unavailable; outcome not confirmed                                                                                                                                                                             |
 
 ### 10.3 SQL
 
@@ -353,10 +433,10 @@ then delete and re-insert both child sets.
 
 ### 10.6 Recovery
 
-| Situation | Client action |
-| --- | --- |
-| `400` | Keep the draft; correct the named fields |
-| `409` | `GET` the preferences, show the current values, let the user re-submit with the new `revision` |
+| Situation              | Client action                                                                                                                                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`                  | Keep the draft; correct the named fields                                                                                                                                                                        |
+| `409`                  | `GET` the preferences, show the current values, let the user re-submit with the new `revision`                                                                                                                  |
 | `503` or lost response | `GET` the preferences. If they match the intent, treat the change as accepted. Otherwise retry with the **original** `expectedRevision` (a committed change makes the retry `409`, never a double application). |
 
 ### 10.7 Configuration
@@ -365,67 +445,67 @@ None.
 
 ### 10.8 Testing plan
 
-| Level | Class | Focus |
-| --- | --- | --- |
-| Domain | `DeclaredPreferencesTest` | Vocabulary, need mapping, priorities, absent versus zero, immutability |
-| Application | `RevisePreferencesServiceTest` | Presence semantics, zero, clearing, validation, precondition, guarded create, no-op, write-time conflict |
-| Web mapping | `PreferencesRevisionRequestTest` | `JsonNode` presence mapping |
-| Schema | `PreferencesSchemaIT` | V11 placement and constraints |
-| API | `PreferencesApiIT` | End-to-end behaviour, privacy, conflicts, garment-style separation, progressive entry |
-| Concurrency | `ConcurrentPreferencesIT` | Competing first creations and revisions, rollback |
-| Published contract | `CurrentPersonalContextIT` | Absent and current semantics through `personalcontext.api` |
-| Architecture | `DatabaseSchemaOwnershipIT` (modified) | The `personal_context` tables live in their schema |
+| Level              | Class                                  | Focus                                                                                                    |
+| ------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Domain             | `DeclaredPreferencesTest`              | Vocabulary, need mapping, priorities, absent versus zero, immutability                                   |
+| Application        | `RevisePreferencesServiceTest`         | Presence semantics, zero, clearing, validation, precondition, guarded create, no-op, write-time conflict |
+| Web mapping        | `PreferencesRevisionRequestTest`       | `JsonNode` presence mapping                                                                              |
+| Schema             | `PreferencesSchemaIT`                  | V11 placement and constraints                                                                            |
+| API                | `PreferencesApiIT`                     | End-to-end behaviour, privacy, conflicts, garment-style separation, progressive entry                    |
+| Concurrency        | `ConcurrentPreferencesIT`              | Competing first creations and revisions, rollback                                                        |
+| Published contract | `CurrentPersonalContextIT`             | Absent and current semantics through `personalcontext.api`                                               |
+| Architecture       | `DatabaseSchemaOwnershipIT` (modified) | The `personal_context` tables live in their schema                                                       |
 
 ## 11. File Change Matrix
 
 `…/pc` = `backend/src/main/java/com/capsuleai/personalcontext`.
 
-| Order | Action | Exact Repository Path | Purpose | Dependencies |
-| --- | --- | --- | --- | --- |
-| P1 | ADD | `backend/src/main/resources/db/migration/V11__create_personal_context_preferences.sql` | First Personal Context schema and tables (renumber to the next free version if needed) | V10 (or V8/V9 if prepared earlier) |
-| P2 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/ProfileStyle.java` | Seven styles | — |
-| P3 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/CommonNeed.java` | Six needs + occasion mapping | — |
-| P4 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/NeedPriority.java` | 0–3 | — |
-| P5 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/DeclaredPreferences.java` | Styles + declared needs | P2–P4 |
-| P6 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/PreferenceProfile.java` | Owner, preferences, revision | P5 |
-| P7 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/domain/PreferenceValueProblem.java` | Field error codes | — |
-| P8 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/ValueChange.java` | Keep/Clear/Replace/Malformed | — |
-| P9 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/ExpectedRevision.java` | Missing/Unset/At/Malformed | — |
-| P10 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferenceChanges.java` | Requested changes | P8 |
-| P11 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/RevisePreferencesCommand.java` | Command | P9, P10 |
-| P12 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferenceFieldViolation.java` | Field error | P7 |
-| P13 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesValidationException.java` | `400` | P12 |
-| P14 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesRevisionConflictException.java` | `409` | — |
-| P15 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesRevision.java` | Outcome | P6 |
-| P16 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/ports/PreferenceProfileRepository.java` | Port | P6 |
-| P17 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/ports/PersonalContextTransactions.java` | Port | — |
-| P18 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/ViewPreferencesService.java` | Read | P16 |
-| P19 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/RevisePreferencesService.java` | Revise | P8–P17 |
-| P20 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/api/DeclaredPersonalContext.java` | Published value | — |
-| P21 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/api/CurrentPersonalContext.java` | Published query | P20 |
-| P22 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/application/CurrentPersonalContextService.java` | Implements P21 | P16, P21 |
-| P23 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/out/persistence/JdbcPreferenceProfileRepository.java` | SQL | P1, P16 |
-| P24 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/out/persistence/SpringPersonalContextTransactions.java` | `TransactionTemplate` | P17 |
-| P25 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesRevisionRequest.java` | PATCH body | P10, P11 |
-| P26 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesResponse.java` | JSON | P6 |
-| P27 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PersonalContextPreferencesController.java` | Routes | P18, P19, P25, P26 |
-| P28 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PersonalContextApiExceptionHandler.java` | Problem Details | P13, P14 |
-| P29 | ADD | `backend/src/main/java/com/capsuleai/personalcontext/configuration/PersonalContextConfiguration.java` | Wiring | P18–P24 |
-| P30 | MODIFY | `backend/src/main/java/com/capsuleai/personalcontext/package-info.java` | Note the persisted state | P1 |
-| P31 | MODIFY | `docs/05-api/openapi.yaml` | 0.11.0 | P25–P28 |
-| P32 | MODIFY | `.github/workflows/backend-ci.yml` | Reports | T-steps |
-| P33 | MODIFY | `backend/README.md` | Preferences section | — |
-| T1 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/domain/DeclaredPreferencesTest.java` | Domain | P2–P5 |
-| T2 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/application/InMemoryPreferenceProfileRepository.java` | Fake | P16 |
-| T3 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/application/ImmediatePersonalContextTransactions.java` | Fake | P17 |
-| T4 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/application/RevisePreferencesServiceTest.java` | Application | P19 |
-| T5 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesRevisionRequestTest.java` | Mapping | P25 |
-| T6 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/support/PersonalContextIntegrationTestSupport.java` | IT base | P1 |
-| T7 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/adapter/out/persistence/PreferencesSchemaIT.java` | Schema | P1 |
-| T8 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesApiIT.java` | API | P27–P29 |
-| T9 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/application/ConcurrentPreferencesIT.java` | Races | P19, P23 |
-| T10 | ADD | `backend/src/test/java/com/capsuleai/personalcontext/application/CurrentPersonalContextIT.java` | Published contract | P22 |
-| T11 | MODIFY | `backend/src/test/java/com/capsuleai/architecture/DatabaseSchemaOwnershipIT.java` | Assert the new tables | P1 |
+| Order | Action | Exact Repository Path                                                                                                | Purpose                                                                                | Dependencies                       |
+| ----- | ------ | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| P1    | ADD    | `backend/src/main/resources/db/migration/V11__create_personal_context_preferences.sql`                               | First Personal Context schema and tables (renumber to the next free version if needed) | V10 (or V8/V9 if prepared earlier) |
+| P2    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/ProfileStyle.java`                                       | Seven styles                                                                           | —                                  |
+| P3    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/CommonNeed.java`                                         | Six needs + occasion mapping                                                           | —                                  |
+| P4    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/NeedPriority.java`                                       | 0–3                                                                                    | —                                  |
+| P5    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/DeclaredPreferences.java`                                | Styles + declared needs                                                                | P2–P4                              |
+| P6    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/PreferenceProfile.java`                                  | Owner, preferences, revision                                                           | P5                                 |
+| P7    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/domain/PreferenceValueProblem.java`                             | Field error codes                                                                      | —                                  |
+| P8    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/ValueChange.java`                                   | Keep/Clear/Replace/Malformed                                                           | —                                  |
+| P9    | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/ExpectedRevision.java`                              | Missing/Unset/At/Malformed                                                             | —                                  |
+| P10   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferenceChanges.java`                             | Requested changes                                                                      | P8                                 |
+| P11   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/RevisePreferencesCommand.java`                      | Command                                                                                | P9, P10                            |
+| P12   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferenceFieldViolation.java`                      | Field error                                                                            | P7                                 |
+| P13   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesValidationException.java`                | `400`                                                                                  | P12                                |
+| P14   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesRevisionConflictException.java`          | `409`                                                                                  | —                                  |
+| P15   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/PreferencesRevision.java`                           | Outcome                                                                                | P6                                 |
+| P16   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/ports/PreferenceProfileRepository.java`             | Port                                                                                   | P6                                 |
+| P17   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/ports/PersonalContextTransactions.java`             | Port                                                                                   | —                                  |
+| P18   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/ViewPreferencesService.java`                        | Read                                                                                   | P16                                |
+| P19   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/RevisePreferencesService.java`                      | Revise                                                                                 | P8–P17                             |
+| P20   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/api/DeclaredPersonalContext.java`                               | Published value                                                                        | —                                  |
+| P21   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/api/CurrentPersonalContext.java`                                | Published query                                                                        | P20                                |
+| P22   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/application/CurrentPersonalContextService.java`                 | Implements P21                                                                         | P16, P21                           |
+| P23   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/out/persistence/JdbcPreferenceProfileRepository.java`   | SQL                                                                                    | P1, P16                            |
+| P24   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/out/persistence/SpringPersonalContextTransactions.java` | `TransactionTemplate`                                                                  | P17                                |
+| P25   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesRevisionRequest.java`                 | PATCH body                                                                             | P10, P11                           |
+| P26   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesResponse.java`                        | JSON                                                                                   | P6                                 |
+| P27   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PersonalContextPreferencesController.java`       | Routes                                                                                 | P18, P19, P25, P26                 |
+| P28   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/PersonalContextApiExceptionHandler.java`         | Problem Details                                                                        | P13, P14                           |
+| P29   | ADD    | `backend/src/main/java/com/capsuleai/personalcontext/configuration/PersonalContextConfiguration.java`                | Wiring                                                                                 | P18–P24                            |
+| P30   | MODIFY | `backend/src/main/java/com/capsuleai/personalcontext/package-info.java`                                              | Note the persisted state                                                               | P1                                 |
+| P31   | MODIFY | `docs/05-api/openapi.yaml`                                                                                           | 0.11.0                                                                                 | P25–P28                            |
+| P32   | MODIFY | `.github/workflows/backend-ci.yml`                                                                                   | Reports                                                                                | T-steps                            |
+| P33   | MODIFY | `backend/README.md`                                                                                                  | Preferences section                                                                    | —                                  |
+| T1    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/domain/DeclaredPreferencesTest.java`                            | Domain                                                                                 | P2–P5                              |
+| T2    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/application/InMemoryPreferenceProfileRepository.java`           | Fake                                                                                   | P16                                |
+| T3    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/application/ImmediatePersonalContextTransactions.java`          | Fake                                                                                   | P17                                |
+| T4    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/application/RevisePreferencesServiceTest.java`                  | Application                                                                            | P19                                |
+| T5    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesRevisionRequestTest.java`             | Mapping                                                                                | P25                                |
+| T6    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/support/PersonalContextIntegrationTestSupport.java`             | IT base                                                                                | P1                                 |
+| T7    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/adapter/out/persistence/PreferencesSchemaIT.java`               | Schema                                                                                 | P1                                 |
+| T8    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/adapter/in/web/PreferencesApiIT.java`                           | API                                                                                    | P27–P29                            |
+| T9    | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/application/ConcurrentPreferencesIT.java`                       | Races                                                                                  | P19, P23                           |
+| T10   | ADD    | `backend/src/test/java/com/capsuleai/personalcontext/application/CurrentPersonalContextIT.java`                      | Published contract                                                                     | P22                                |
+| T11   | MODIFY | `backend/src/test/java/com/capsuleai/architecture/DatabaseSchemaOwnershipIT.java`                                    | Assert the new tables                                                                  | P1                                 |
 
 **Independent-preparation merge notes:**
 
@@ -1870,48 +1950,48 @@ Change 1. BEFORE `  version: 0.10.0`, AFTER `  version: 0.11.0`.
 Change 2. BEFORE:
 
 ```yaml
-      - US-GAR-003: Add a photo-supported garment with manual confirmation
+- US-GAR-003: Add a photo-supported garment with manual confirmation
 ```
 
 AFTER:
 
 ```yaml
-      - US-GAR-003: Add a photo-supported garment with manual confirmation
-      - US-PROF-001: Set and revise style preferences and common needs
+- US-GAR-003: Add a photo-supported garment with manual confirmation
+- US-PROF-001: Set and revise style preferences and common needs
 ```
 
 Change 3. BEFORE:
 
 ```yaml
-    confirmed photo, search, filtering or user profiles.
+confirmed photo, search, filtering or user profiles.
 ```
 
 AFTER:
 
 ```yaml
-    confirmed photo, search, filtering, body or gender
-    profiles, location, or public profiles.
+confirmed photo, search, filtering, body or gender
+profiles, location, or public profiles.
 
-    Personal preferences (US-PROF-001) are the account's own
-    declared profile styles and common-need priorities. Unset
-    needs are null; 0 means Not Relevant. They are never
-    derived from garments or from a request occasion.
+Personal preferences (US-PROF-001) are the account's own
+declared profile styles and common-need priorities. Unset
+needs are null; 0 means Not Relevant. They are never
+derived from garments or from a request occasion.
 ```
 
 Change 4. BEFORE:
 
 ```yaml
-  - name: Wardrobe
-    description: The authenticated user's own confirmed garments
+- name: Wardrobe
+  description: The authenticated user's own confirmed garments
 ```
 
 AFTER:
 
 ```yaml
-  - name: Wardrobe
-    description: The authenticated user's own confirmed garments
-  - name: PersonalContext
-    description: The authenticated user's own declared preferences
+- name: Wardrobe
+  description: The authenticated user's own confirmed garments
+- name: PersonalContext
+  description: The authenticated user's own declared preferences
 ```
 
 Change 5: the path, inserted before `components:`. BEFORE (end of the last path from US-GAR-003):
@@ -2022,95 +2102,104 @@ components:
 Change 6: schemas. BEFORE:
 
 ```yaml
-    FieldError:
+FieldError:
 ```
 
 AFTER:
 
 ```yaml
-    PreferencesRevisionRequest:
+PreferencesRevisionRequest:
+  type: object
+  description: |
+    A presence-aware change of the account's declared
+    preferences (US-PROF-001). There is no owner field.
+  required:
+    - expectedRevision
+  properties:
+    expectedRevision:
+      type: [string, "null"]
+      pattern: "^[1-9][0-9]{0,17}$"
+      description: null for the first declaration; otherwise the revision last read (opaque).
+    styles:
+      type: [array, "null"]
+      items:
+        $ref: "#/components/schemas/ProfileStyleCode"
+    commonNeeds:
       type: object
-      description: |
-        A presence-aware change of the account's declared
-        preferences (US-PROF-001). There is no owner field.
-      required:
-        - expectedRevision
-      properties:
-        expectedRevision:
-          type: [string, "null"]
-          pattern: "^[1-9][0-9]{0,17}$"
-          description: null for the first declaration; otherwise the revision last read (opaque).
-        styles:
-          type: [array, "null"]
-          items:
-            $ref: "#/components/schemas/ProfileStyleCode"
-        commonNeeds:
-          type: object
-          description: Only the needs to change. null unsets one need; 0–3 sets it.
-          additionalProperties:
-            type: [integer, "null"]
-            minimum: 0
-            maximum: 3
-          propertyNames:
-            $ref: "#/components/schemas/CommonNeedCode"
+      description: Only the needs to change. null unsets one need; 0–3 sets it.
+      additionalProperties:
+        type: [integer, "null"]
+        minimum: 0
+        maximum: 3
+      propertyNames:
+        $ref: "#/components/schemas/CommonNeedCode"
 
-    Preferences:
+Preferences:
+  type: object
+  description: |
+    The account's declaration. Every field is always present.
+    revision and updatedAt are null while nothing is declared.
+  required:
+    - revision
+    - styles
+    - commonNeeds
+    - updatedAt
+  properties:
+    revision:
+      type: [string, "null"]
+      pattern: "^[1-9][0-9]*$"
+      description: Opaque; send it back as expectedRevision.
+    styles:
+      type: array
+      description: Declared profile styles in catalogue order; [] means none.
+      items:
+        $ref: "#/components/schemas/ProfileStyleCode"
+    commonNeeds:
       type: object
-      description: |
-        The account's declaration. Every field is always present.
-        revision and updatedAt are null while nothing is declared.
+      description: All six needs, always present. null = unset; 0 Not Relevant, 1 Low, 2 Medium, 3 High.
       required:
-        - revision
-        - styles
-        - commonNeeds
-        - updatedAt
+        - EVERYDAY_CASUAL
+        - WORK_PROFESSIONAL
+        - SCHOOL_UNIVERSITY
+        - FORMAL_SPECIAL_EVENT
+        - TRAVEL
+        - SPORT_ACTIVE
       properties:
-        revision:
-          type: [string, "null"]
-          pattern: "^[1-9][0-9]*$"
-          description: Opaque; send it back as expectedRevision.
-        styles:
-          type: array
-          description: Declared profile styles in catalogue order; [] means none.
-          items:
-            $ref: "#/components/schemas/ProfileStyleCode"
-        commonNeeds:
-          type: object
-          description: All six needs, always present. null = unset; 0 Not Relevant, 1 Low, 2 Medium, 3 High.
-          required:
-            - EVERYDAY_CASUAL
-            - WORK_PROFESSIONAL
-            - SCHOOL_UNIVERSITY
-            - FORMAL_SPECIAL_EVENT
-            - TRAVEL
-            - SPORT_ACTIVE
-          properties:
-            EVERYDAY_CASUAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
-            WORK_PROFESSIONAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
-            SCHOOL_UNIVERSITY: { type: [integer, "null"], minimum: 0, maximum: 3 }
-            FORMAL_SPECIAL_EVENT: { type: [integer, "null"], minimum: 0, maximum: 3 }
-            TRAVEL: { type: [integer, "null"], minimum: 0, maximum: 3 }
-            SPORT_ACTIVE: { type: [integer, "null"], minimum: 0, maximum: 3 }
-        updatedAt:
-          type: [string, "null"]
-          format: date-time
+        EVERYDAY_CASUAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        WORK_PROFESSIONAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        SCHOOL_UNIVERSITY: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        FORMAL_SPECIAL_EVENT:
+          { type: [integer, "null"], minimum: 0, maximum: 3 }
+        TRAVEL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        SPORT_ACTIVE: { type: [integer, "null"], minimum: 0, maximum: 3 }
+    updatedAt:
+      type: [string, "null"]
+      format: date-time
 
-    ProfileStyleCode:
-      type: string
-      description: Profile style preference (SRS 4.10); not a garment Style.
-      enum: [MINIMAL, CASUAL, SMART_CASUAL, CLASSIC, STREETWEAR, SPORTY, FORMAL]
+ProfileStyleCode:
+  type: string
+  description: Profile style preference (SRS 4.10); not a garment Style.
+  enum: [MINIMAL, CASUAL, SMART_CASUAL, CLASSIC, STREETWEAR, SPORTY, FORMAL]
 
-    CommonNeedCode:
-      type: string
-      description: |
-        Common-need dimension (SRS 3.14.1; codes per OPEN-S3-15):
-        EVERYDAY_CASUAL (EVERYDAY, DATE, SOCIAL_EVENT),
-        WORK_PROFESSIONAL (WORK), SCHOOL_UNIVERSITY
-        (SCHOOL_UNIVERSITY), FORMAL_SPECIAL_EVENT (FORMAL_EVENT),
-        TRAVEL (TRAVEL), SPORT_ACTIVE (SPORT_ACTIVITY).
-      enum: [EVERYDAY_CASUAL, WORK_PROFESSIONAL, SCHOOL_UNIVERSITY, FORMAL_SPECIAL_EVENT, TRAVEL, SPORT_ACTIVE]
+CommonNeedCode:
+  type: string
+  description: |
+    Common-need dimension (SRS 3.14.1; codes per OPEN-S3-15):
+    EVERYDAY_CASUAL (EVERYDAY, DATE, SOCIAL_EVENT),
+    WORK_PROFESSIONAL (WORK), SCHOOL_UNIVERSITY
+    (SCHOOL_UNIVERSITY), FORMAL_SPECIAL_EVENT (FORMAL_EVENT),
+    TRAVEL (TRAVEL), SPORT_ACTIVE (SPORT_ACTIVITY).
+  enum:
+    [
+      EVERYDAY_CASUAL,
+      WORK_PROFESSIONAL,
+      SCHOOL_UNIVERSITY,
+      FORMAL_SPECIAL_EVENT,
+      TRAVEL,
+      SPORT_ACTIVE,
+    ]
 
-    FieldError:
+FieldError:
 ```
 
 **Explanation.**
@@ -2161,11 +2250,11 @@ US-PROF-001 adds the account's own declared profile styles and common-need prior
 - `GET /api/v1/personal-context/preferences`: always `200`. Nothing declared yet means `revision: null`, `styles: []` and every need `null`. That is absent context, not a default persona.
 - `PATCH /api/v1/personal-context/preferences`: send `expectedRevision` (`null` for the first declaration, otherwise the `revision` last read) and only what changes.
 
-| In the body | Effect |
-| --- | --- |
-| `styles` omitted / `null` or `[]` / array | Keep / clear / replace (codes `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`) |
-| `commonNeeds` omitted | Keep every need |
-| `commonNeeds.<NEED>`: `null` / `0`–`3` | Unset / Not Relevant, Low, Medium, High (`EVERYDAY_CASUAL`, `WORK_PROFESSIONAL`, `SCHOOL_UNIVERSITY`, `FORMAL_SPECIAL_EVENT`, `TRAVEL`, `SPORT_ACTIVE`) |
+| In the body                               | Effect                                                                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `styles` omitted / `null` or `[]` / array | Keep / clear / replace (codes `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`)                                         |
+| `commonNeeds` omitted                     | Keep every need                                                                                                                                         |
+| `commonNeeds.<NEED>`: `null` / `0`–`3`    | Unset / Not Relevant, Low, Medium, High (`EVERYDAY_CASUAL`, `WORK_PROFESSIONAL`, `SCHOOL_UNIVERSITY`, `FORMAL_SPECIAL_EVENT`, `TRAVEL`, `SPORT_ACTIVE`) |
 
 An explicit `0` stays `0`; it is never replaced by a default. Garment Style codes are not profile styles. A stale `expectedRevision`, or a second first declaration, is `409 REVISION_CONFLICT`: reload, review and submit again. After a lost response, reload before retrying; a retry with the original `expectedRevision` is never applied twice. Nothing else (wardrobe access, garment creation) depends on preferences.
 
@@ -3236,65 +3325,65 @@ Expect three tables.
 
 ### 15.1 AC to evidence
 
-| AC | Backend evidence | Client evidence still required |
-| --- | --- | --- |
-| AC-01 Set or revisit | T8 unset GET, first declaration, revision; T4 first declaration | Onboarding and profile screens |
-| AC-02 Canonical choices | T1 vocabularies, mapping and priorities; T4/T8 unsupported values; T8 garment styles rejected; T7 DB checks | Localized labels |
-| AC-03 Common versus current context | No request occasion exists or is written (I-8); T1 mapping kept as data | Current occasion UI (future) |
-| AC-04 Progressive entry | T8 unset profile does not block garment creation; nothing else depends on preferences | Skip and return flow |
-| AC-05 Reflect accepted changes | T10 published context reflects the latest revision, explicit 0 kept | Future consumers mark assessments outdated using `revision` |
-| AC-06 Cancel or recover | T8 conflict, lost-response retry, privacy, logout; T9 rollback | "Not saved" and outcome review UI |
+| AC                                  | Backend evidence                                                                                            | Client evidence still required                              |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| AC-01 Set or revisit                | T8 unset GET, first declaration, revision; T4 first declaration                                             | Onboarding and profile screens                              |
+| AC-02 Canonical choices             | T1 vocabularies, mapping and priorities; T4/T8 unsupported values; T8 garment styles rejected; T7 DB checks | Localized labels                                            |
+| AC-03 Common versus current context | No request occasion exists or is written (I-8); T1 mapping kept as data                                     | Current occasion UI (future)                                |
+| AC-04 Progressive entry             | T8 unset profile does not block garment creation; nothing else depends on preferences                       | Skip and return flow                                        |
+| AC-05 Reflect accepted changes      | T10 published context reflects the latest revision, explicit 0 kept                                         | Future consumers mark assessments outdated using `revision` |
+| AC-06 Cancel or recover             | T8 conflict, lost-response retry, privacy, logout; T9 rollback                                              | "Not saved" and outcome review UI                           |
 
 ### 15.2 Requirement to test
 
-| Requirement / decision | Tests |
-| --- | --- |
-| FR-PROF-002 | T1, T4, T8 |
-| FR-PROF-003, BRULE-COV-002 | T1 priorities, T4 zero/unset, T8 |
-| FR-PROF-004, BRULE-PROF-002 | No occasion write path (design); T1 mapping |
-| FR-PROF-008, FR-AUTH-011 | T8 progressive entry |
-| DATA-AUTH-003 | T7, T8, T10 |
-| FR-ANL-014, BRULE-COV-006 | `revision` in the published contract (T10) |
-| BRULE-GAR-004 | T1, T8 garment styles rejected |
-| S3-PROF-01 | V11 schema; T7; T11; `PersistenceOwnershipSqlTest` |
-| S3-PROF-02 | T1, T4, T8 |
-| S3-PROF-03 | T4, T5, T8 |
-| S3-PROF-04 | T4, T8, T9 |
-| S3-PROF-05 | T10; `ArchitectureDependencyTest` |
-| S3-INT-01 / OPEN-S3-01 | `IdentityOpenApiContractIT` (two new operations); shared `REVISION_CONFLICT`, `VALIDATION_FAILED` and neutral `503` codes (P28) |
-| OPEN-S3-04 (revision token) | T4 `aMissingOrMalformedExpectedRevision…`, `aStaleRevisionIsAConflict…`; T5 `aRevisionTokenIsAStringOfDigits`; T8 conflict; T9 races |
-| OPEN-S3-05 (presence rules) | T5 (omitted, `null`, values, wrong kinds, `commonNeeds: null` rejected); T4 `omittedStylesAndNeedsKeep…`, `clearingStyles…` |
-| OPEN-S3-06 (no-op) | T4 `anUnchangedRevisionAndAnEmptyFirstDeclarationWriteNothing`, `aStaleRevisionIsAConflict…` (a stale no-op is still `409`) |
-| OPEN-S3-15 (representation) | T1 seven styles, six needs and their mappings, priorities 0–3; T4 explicit zero versus unset, empty styles; T8 `aNewAccountHasNoDeclaredContext…` (`revision: null`), all six needs present; T7 database CHECKs |
-| OPEN-S3-16 (published contract) | T10 `CurrentPersonalContextIT`; `ArchitectureDependencyTest` (no `domain`/`application` types in `api`, no other module reads Personal Context internals); T11 ownership |
+| Requirement / decision          | Tests                                                                                                                                                                                                           |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-PROF-002                     | T1, T4, T8                                                                                                                                                                                                      |
+| FR-PROF-003, BRULE-COV-002      | T1 priorities, T4 zero/unset, T8                                                                                                                                                                                |
+| FR-PROF-004, BRULE-PROF-002     | No occasion write path (design); T1 mapping                                                                                                                                                                     |
+| FR-PROF-008, FR-AUTH-011        | T8 progressive entry                                                                                                                                                                                            |
+| DATA-AUTH-003                   | T7, T8, T10                                                                                                                                                                                                     |
+| FR-ANL-014, BRULE-COV-006       | `revision` in the published contract (T10)                                                                                                                                                                      |
+| BRULE-GAR-004                   | T1, T8 garment styles rejected                                                                                                                                                                                  |
+| S3-PROF-01                      | V11 schema; T7; T11; `PersistenceOwnershipSqlTest`                                                                                                                                                              |
+| S3-PROF-02                      | T1, T4, T8                                                                                                                                                                                                      |
+| S3-PROF-03                      | T4, T5, T8                                                                                                                                                                                                      |
+| S3-PROF-04                      | T4, T8, T9                                                                                                                                                                                                      |
+| S3-PROF-05                      | T10; `ArchitectureDependencyTest`                                                                                                                                                                               |
+| S3-INT-01 / OPEN-S3-01          | `IdentityOpenApiContractIT` (two new operations); shared `REVISION_CONFLICT`, `VALIDATION_FAILED` and neutral `503` codes (P28)                                                                                 |
+| OPEN-S3-04 (revision token)     | T4 `aMissingOrMalformedExpectedRevision…`, `aStaleRevisionIsAConflict…`; T5 `aRevisionTokenIsAStringOfDigits`; T8 conflict; T9 races                                                                            |
+| OPEN-S3-05 (presence rules)     | T5 (omitted, `null`, values, wrong kinds, `commonNeeds: null` rejected); T4 `omittedStylesAndNeedsKeep…`, `clearingStyles…`                                                                                     |
+| OPEN-S3-06 (no-op)              | T4 `anUnchangedRevisionAndAnEmptyFirstDeclarationWriteNothing`, `aStaleRevisionIsAConflict…` (a stale no-op is still `409`)                                                                                     |
+| OPEN-S3-15 (representation)     | T1 seven styles, six needs and their mappings, priorities 0–3; T4 explicit zero versus unset, empty styles; T8 `aNewAccountHasNoDeclaredContext…` (`revision: null`), all six needs present; T7 database CHECKs |
+| OPEN-S3-16 (published contract) | T10 `CurrentPersonalContextIT`; `ArchitectureDependencyTest` (no `domain`/`application` types in `api`, no other module reads Personal Context internals); T11 ownership                                        |
 
 ## 16. Definition of Done
 
-| DoD item | Status at writing |
-| --- | --- |
-| AC mapped; tests written and passing | Planned |
-| First owner migration verified (fresh and on top of V10) | Planned |
-| Contract synchronized (OpenAPI 0.11.0) | Planned |
-| Concurrency and rollback evidence | Planned |
-| Architecture and ownership tests pass with the new module code | Planned |
-| Approved choices OPEN-S3-01/04/05/06/15/16 implemented as specified | Decisions approved by the PO on 2026-11-11 ([decision record](open-questions.md)); proven only by the tests in §15.2 once they pass: Planned |
-| Full `clean verify`; CI reports | Planned |
-| Client evidence (onboarding, skip/return, labels, accessibility, conflict/uncertain UI) | Outstanding |
+| DoD item                                                                                | Status at writing                                                                                                                            |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC mapped; tests written and passing                                                    | Planned                                                                                                                                      |
+| First owner migration verified (fresh and on top of V10)                                | Planned                                                                                                                                      |
+| Contract synchronized (OpenAPI 0.11.0)                                                  | Planned                                                                                                                                      |
+| Concurrency and rollback evidence                                                       | Planned                                                                                                                                      |
+| Architecture and ownership tests pass with the new module code                          | Planned                                                                                                                                      |
+| Approved choices OPEN-S3-01/04/05/06/15/16 implemented as specified                     | Decisions approved by the PO on 2026-11-11 ([decision record](open-questions.md)); proven only by the tests in §15.2 once they pass: Planned |
+| Full `clean verify`; CI reports                                                         | Planned                                                                                                                                      |
+| Client evidence (onboarding, skip/return, labels, accessibility, conflict/uncertain UI) | Outstanding                                                                                                                                  |
 
 **Honesty note.** Nothing here has been compiled or executed.
 
 ## 17. Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `PersistenceOwnershipSqlTest`: V11 changes several schemas | A table outside `personal_context` | Keep every object in `personal_context` |
-| Flyway: version already used | A garment migration took V11 | Use the next free version; never renumber an applied migration |
-| `ArchitectureDependencyTest` fails for `personalcontext.api` | An `api` type imports `domain`/`application` | Keep `DeclaredPersonalContext` as codes and primitives only |
-| `IdentityOpenApiContractIT`: response fields differ | `Preferences` schema versus `PreferencesResponse` components | Exactly `revision`, `styles`, `commonNeeds`, `updatedAt` |
-| `RevisionConflict` response missing from OpenAPI | US-GAR-002 not applied | Add it (US-GAR-002 P21, change 8) |
-| A browser PATCH preflight is refused | CORS without `PATCH` | Apply US-GAR-002 P20 and T9 |
-| `PreferencesRevisionRequestTest` first test fails | Jackson absent/null behaviour changed | See US-GAR-002 §17 (same fallback) |
-| `"commonNeeds":{"TRAVEL":2.0}` rejected | Only integers are priorities | Send `2`, not `2.0` |
+| Symptom                                                      | Likely cause                                                 | Fix                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------- |
+| `PersistenceOwnershipSqlTest`: V11 changes several schemas   | A table outside `personal_context`                           | Keep every object in `personal_context`                        |
+| Flyway: version already used                                 | A garment migration took V11                                 | Use the next free version; never renumber an applied migration |
+| `ArchitectureDependencyTest` fails for `personalcontext.api` | An `api` type imports `domain`/`application`                 | Keep `DeclaredPersonalContext` as codes and primitives only    |
+| `IdentityOpenApiContractIT`: response fields differ          | `Preferences` schema versus `PreferencesResponse` components | Exactly `revision`, `styles`, `commonNeeds`, `updatedAt`       |
+| `RevisionConflict` response missing from OpenAPI             | US-GAR-002 not applied                                       | Add it (US-GAR-002 P21, change 8)                              |
+| A browser PATCH preflight is refused                         | CORS without `PATCH`                                         | Apply US-GAR-002 P20 and T9                                    |
+| `PreferencesRevisionRequestTest` first test fails            | Jackson absent/null behaviour changed                        | See US-GAR-002 §17 (same fallback)                             |
+| `"commonNeeds":{"TRAVEL":2.0}` rejected                      | Only integers are priorities                                 | Send `2`, not `2.0`                                            |
 
 ## 18. Final Implementation Checklist
 

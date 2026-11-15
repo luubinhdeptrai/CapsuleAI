@@ -458,18 +458,40 @@ Focused tests, from `backend`:
 
 `HeifDecodingIT` skips locally when libheif is missing, unless `CAPSULEAI_REQUIRE_HEIF=true` (as in CI). It also runs the primary-image tests with selection enabled, which is the automated part of verification V4/V8 on that machine. Without a local libheif, run it in an Ubuntu 24.04 container with `libheif-examples`, `libheif-plugin-libde265` and `libheif-plugin-x265` installed, `CAPSULE_HEIF_DECODER=heif-convert` and `CAPSULEAI_REQUIRE_HEIF=true`.
 
+### Personal preferences
+
+US-PROF-001 adds the account's own declared profile styles and common-need priorities:
+
+- `GET /api/v1/personal-context/preferences`: always `200`. Nothing declared yet means `revision: null`, `styles: []` and every need `null`. That is absent context, not a default persona.
+- `PATCH /api/v1/personal-context/preferences`: send `expectedRevision` (`null` for the first declaration, otherwise the `revision` last read) and only what changes.
+
+| In the body | Effect |
+| --- | --- |
+| `styles` omitted / `null` or `[]` / array | Keep / clear / replace (codes `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL`) |
+| `commonNeeds` omitted | Keep every need |
+| `commonNeeds.<NEED>`: `null` / `0`–`3` | Unset / Not Relevant, Low, Medium, High (`EVERYDAY_CASUAL`, `WORK_PROFESSIONAL`, `SCHOOL_UNIVERSITY`, `FORMAL_SPECIAL_EVENT`, `TRAVEL`, `SPORT_ACTIVE`) |
+
+An explicit `0` stays `0`; it is never replaced by a default. Garment Style codes are not profile styles. A stale `expectedRevision`, or a second first declaration, is `409 REVISION_CONFLICT`: reload, review and submit again. After a lost response, reload before retrying; a retry with the original `expectedRevision` is never applied twice. Nothing else (wardrobe access, garment creation) depends on preferences.
+
+Focused tests, from `backend`:
+
+```powershell
+.\mvnw.cmd '-Dtest=DeclaredPreferencesTest,RevisePreferencesServiceTest,PreferencesRevisionRequestTest' test
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PreferencesApiIT,ConcurrentPreferencesIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
+```
+
 ## 10. Database migrations
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.
 
-`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and its two set tables, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`. `V9__add_wardrobe_garment_revision.sql` (US-GAR-002) adds the optimistic `revision` column (starting at 1) to `wardrobe.wardrobe_garment`. `V10__create_wardrobe_photo_upload.sql` (US-GAR-003) creates `wardrobe.wardrobe_photo_upload`, the staged-photo lifecycle table. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
+`V1__foundation.sql` establishes migration plumbing. V2–V5 create and evolve the Identity tables `identity_account`, `identity_session` and `identity_refresh_token` in Flyway's default schema. `V6__move_identity_tables_into_identity_schema.sql` moves those three tables, with all their rows, indexes and constraints, into the `identity` schema (AR-01); it copies and drops nothing. `V7__create_identity_password_reset.sql` (US-AUTH-005) adds `identity.identity_password_reset`, its attempt counters `identity.identity_password_reset_attempt` and the `PASSWORD_RESET` session-revocation reason. `V8__create_wardrobe_garment.sql` (US-GAR-001) creates the `wardrobe` schema with `wardrobe.wardrobe_garment` and its two set tables, `wardrobe.wardrobe_garment_material` and `wardrobe.wardrobe_garment_style`. `V9__add_wardrobe_garment_revision.sql` (US-GAR-002) adds the optimistic `revision` column (starting at 1) to `wardrobe.wardrobe_garment`. `V10__create_wardrobe_photo_upload.sql` (US-GAR-003) creates `wardrobe.wardrobe_photo_upload`, the staged-photo lifecycle table. `V11__create_personal_context_preferences.sql` (US-PROF-001) creates the `personal_context` schema with `personal_context.personal_context_preferences` and its two set tables. Flyway maintains `flyway_schema_history`, which stays in the default schema. After successful startup, inspect it from root:
 
 ```powershell
 Set-Location 'D:\CapsuleAI'
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c 'SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
 ```
 
-Expect successful rows for versions `1` to `10`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
+Expect successful rows for versions `1` to `11`. Restart Boot using the same settings and confirm each remains applied once. List the Identity tables in their schema:
 
 ```powershell
 docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_dev -c '\dt identity.*'
@@ -595,7 +617,7 @@ Stage with `git add -- <actual-intended-path>` before inspecting the staged chan
 
 ## 15. Current limitations and next steps
 
-Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. It also adds current-wardrobe browsing and garment detail. Sprint 3 adds confirmed garment editing with optimistic revisions (US-GAR-002). It also adds private photos for new garments (US-GAR-003; real AWS deployment not verified). Garment removal, photos for existing garments and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
+Production source contains Identity's Sprint 1 authentication: registration, login, JWT plus persistent session authority on every protected request, refresh rotation and current-session logout. Sprint 2 adds email password recovery with account-wide session revocation. It also adds manual garment creation. It also adds current-wardrobe browsing and garment detail. Sprint 3 adds confirmed garment editing with optimistic revisions (US-GAR-002). It also adds private photos for new garments (US-GAR-003; real AWS deployment not verified) and the account's declared styles and common needs (US-PROF-001). Garment removal, photos for existing garments and all other business endpoints, Python/media/provider integrations and production deployment remain unimplemented; recovery has been verified against Mailpit, not against a chosen production email provider, and real delivery evidence is still required before release.
 
 Architecture tests protect module boundaries, SQL ownership and schema placement at build time; database privileges do not separate schemas at runtime. The local-password fallback noted in Section 9 remains a configuration caveat; explicitly supply private credentials and check setup on each actual environment.
 

@@ -36,7 +36,7 @@ class DatabaseSchemaOwnershipIT extends IdentityIntegrationTestSupport {
         List<String> schemas = jdbc.sql("SELECT n.nspname FROM pg_namespace n WHERE " + SYSTEM_SCHEMAS)
                 .query(String.class).list();
 
-        assertThat(schemas).isSubsetOf(allowed).contains("identity");
+        assertThat(schemas).isSubsetOf(allowed).contains("identity", "wardrobe", "personal_context");
     }
 
     @Test
@@ -67,7 +67,10 @@ class DatabaseSchemaOwnershipIT extends IdentityIntegrationTestSupport {
                 .as("owner of %s.%s", table.get("schema_name"), table.get("table_name"))
                 .contains((String) table.get("schema_name")));
         assertThat(tables).extracting(table -> table.get("schema_name") + "." + table.get("table_name"))
-                .contains("identity.identity_account", "identity.identity_session", "identity.identity_refresh_token");
+                .contains("identity.identity_account", "identity.identity_session", "identity.identity_refresh_token",
+                        "personal_context.personal_context_preferences",
+                        "personal_context.personal_context_preferred_style",
+                        "personal_context.personal_context_common_need");
     }
 
     @Test

@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.10.0
+  version: 0.11.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -18,6 +18,7 @@ info:
       - US-WAR-002: Inspect an owned garment
       - US-GAR-002: Correct and enrich garment information
       - US-GAR-003: Add a photo-supported garment with manual confirmation
+      - US-PROF-001: Set and revise style preferences and common needs
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -60,7 +61,13 @@ info:
     This specification does not introduce endpoints for
     session listing, all-device logout, garment removal,
     attaching a photo to an existing garment, replacing a
-    confirmed photo, search, filtering or user profiles.
+    confirmed photo, search, filtering, body or gender
+    profiles, location, or public profiles.
+
+    Personal preferences (US-PROF-001) are the account's own
+    declared profile styles and common-need priorities. Unset
+    needs are null; 0 means Not Relevant. They are never
+    derived from garments or from a request occasion.
 
     Garment editing (US-GAR-002) is a presence-aware PATCH
     protected by an optimistic revision: every garment
@@ -77,6 +84,8 @@ tags:
     description: Account registration and authentication lifecycle
   - name: Wardrobe
     description: The authenticated user's own confirmed garments
+  - name: PersonalContext
+    description: The authenticated user's own declared preferences
 
 # Every endpoint requires bearer authentication unless it
 # explicitly overrides this requirement with security: [].
@@ -1138,6 +1147,89 @@ paths:
           $ref: "#/components/responses/PhotoUploadNotFound"
         "409":
           $ref: "#/components/responses/PhotoUploadNotUsable"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/personal-context/preferences:
+    get:
+      tags:
+        - PersonalContext
+      operationId: viewPreferences
+      summary: The account's declared styles and common needs
+      description: |
+        US-PROF-001 AC-01 (FR-PROF-002/003, DATA-AUTH-003). Always
+        200: an account that declared nothing has revision null,
+        styles [] and every need null. Absent context is not a
+        persona and never a default.
+      responses:
+        "200":
+          description: The current declaration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    patch:
+      tags:
+        - PersonalContext
+      operationId: revisePreferences
+      summary: Set or revise the account's styles and common needs
+      description: |
+        US-PROF-001 (FR-PROF-002/003, BRULE-PROF-002; approved
+        S3-PROF-02/03/04 and OPEN-S3-04/05/06/15).
+
+        - styles omitted keeps them; null or [] clears them; an
+          array replaces the whole selection (profile style codes
+          only, never garment Style codes).
+        - commonNeeds omitted keeps every need. In the object, an
+          omitted need is kept, null makes it unset, and 0–3 sets
+          it (0 = Not Relevant). commonNeeds: null is rejected.
+        - expectedRevision is required: null for the first
+          declaration (only one can be created), otherwise the
+          revision last read. A mismatch is 409 REVISION_CONFLICT
+          and changes nothing.
+
+        A change that would change nothing returns 200 with the
+        same revision. A request occasion never changes these
+        values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesRevisionRequest"
+            examples:
+              firstDeclaration:
+                summary: First declaration
+                value:
+                  expectedRevision: null
+                  styles: ["MINIMAL", "SMART_CASUAL"]
+                  commonNeeds:
+                    WORK_PROFESSIONAL: 3
+                    SPORT_ACTIVE: 0
+              revision:
+                summary: Raise Travel, unset School, keep everything else
+                value:
+                  expectedRevision: "1"
+                  commonNeeds:
+                    TRAVEL: 2
+                    SCHOOL_UNIVERSITY: null
+      responses:
+        "200":
+          description: The change was accepted (or changed nothing); the declaration as it now is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
         "503":
           $ref: "#/components/responses/Unavailable"
 
@@ -2418,6 +2510,88 @@ components:
           title: "Bootcut"
         - const: WIDE_LEG
           title: "Wide-leg"
+
+    PreferencesRevisionRequest:
+      type: object
+      description: |
+        A presence-aware change of the account's declared
+        preferences (US-PROF-001). There is no owner field.
+      required:
+        - expectedRevision
+      properties:
+        expectedRevision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: null for the first declaration; otherwise the revision last read (opaque).
+        styles:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/ProfileStyleCode"
+        commonNeeds:
+          type: object
+          description: Only the needs to change. null unsets one need; 0–3 sets it.
+          additionalProperties:
+            type: [integer, "null"]
+            minimum: 0
+            maximum: 3
+          propertyNames:
+            $ref: "#/components/schemas/CommonNeedCode"
+
+    Preferences:
+      type: object
+      description: |
+        The account's declaration. Every field is always present.
+        revision and updatedAt are null while nothing is declared.
+      required:
+        - revision
+        - styles
+        - commonNeeds
+        - updatedAt
+      properties:
+        revision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]*$"
+          description: Opaque; send it back as expectedRevision.
+        styles:
+          type: array
+          description: Declared profile styles in catalogue order; [] means none.
+          items:
+            $ref: "#/components/schemas/ProfileStyleCode"
+        commonNeeds:
+          type: object
+          description: All six needs, always present. null = unset; 0 Not Relevant, 1 Low, 2 Medium, 3 High.
+          required:
+            - EVERYDAY_CASUAL
+            - WORK_PROFESSIONAL
+            - SCHOOL_UNIVERSITY
+            - FORMAL_SPECIAL_EVENT
+            - TRAVEL
+            - SPORT_ACTIVE
+          properties:
+            EVERYDAY_CASUAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            WORK_PROFESSIONAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            SCHOOL_UNIVERSITY: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            FORMAL_SPECIAL_EVENT: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            TRAVEL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            SPORT_ACTIVE: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        updatedAt:
+          type: [string, "null"]
+          format: date-time
+
+    ProfileStyleCode:
+      type: string
+      description: Profile style preference (SRS 4.10); not a garment Style.
+      enum: [MINIMAL, CASUAL, SMART_CASUAL, CLASSIC, STREETWEAR, SPORTY, FORMAL]
+
+    CommonNeedCode:
+      type: string
+      description: |
+        Common-need dimension (SRS 3.14.1; codes per OPEN-S3-15):
+        EVERYDAY_CASUAL (EVERYDAY, DATE, SOCIAL_EVENT),
+        WORK_PROFESSIONAL (WORK), SCHOOL_UNIVERSITY
+        (SCHOOL_UNIVERSITY), FORMAL_SPECIAL_EVENT (FORMAL_EVENT),
+        TRAVEL (TRAVEL), SPORT_ACTIVE (SPORT_ACTIVITY).
+      enum: [EVERYDAY_CASUAL, WORK_PROFESSIONAL, SCHOOL_UNIVERSITY, FORMAL_SPECIAL_EVENT, TRAVEL, SPORT_ACTIVE]
 
     FieldError:
       type: object
