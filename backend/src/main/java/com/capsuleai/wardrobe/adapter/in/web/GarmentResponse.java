@@ -42,7 +42,8 @@ public record GarmentResponse(
         String recommendationEligibility,
         RecordedUseResponse recordedUse,
         String createdAt,
-        String revision) {
+        String revision,
+        GarmentPhotoResponse photo) {
 
     static final String ELIGIBILITY_NOT_EVALUATED = "NOT_EVALUATED";
 
@@ -67,7 +68,8 @@ public record GarmentResponse(
                 ELIGIBILITY_NOT_EVALUATED,
                 RecordedUseResponse.UNAVAILABLE,
                 garment.createdAt().toString(),
-                Long.toString(garment.revision()));
+                Long.toString(garment.revision()),
+                garment.photo().map(GarmentPhotoResponse::from).orElse(null));
     }
 
     private static String code(Optional<? extends ControlledValue> value) {

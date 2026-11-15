@@ -2,19 +2,20 @@ package com.capsuleai.wardrobe.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * One confirmed garment owned by one account (DATA-GAR-001, BRULE-GAR-001).
- * Only accepted creation produces a Garment; drafts never do.
+ * Only accepted creation produces a Garment; drafts and staged photos never do.
  *
  * <p>{@code removedAt} is null while the garment is in the owner's current
  * wardrobe. Ownership is independent of optional properties and of
  * recommendation eligibility, which is not evaluated (DATA-GAR-005).
  *
- * <p>{@code revision} identifies the accepted profile version (US-GAR-002, S3-GAR-02):
- * {@link #FIRST_REVISION} on creation, one more after each accepted edit that changes the
- * profile. It is concurrency metadata, not one of the 13 garment properties.
+ * <p>{@code revision} identifies the accepted profile version (US-GAR-002, S3-GAR-02).
+ * {@code photo} is the private photo attached at confirmation, if any (US-GAR-003); it is
+ * metadata, not a garment property, and edits never change it (S3-IMG-07).
  */
 public record Garment(
         UUID id,
@@ -23,7 +24,8 @@ public record Garment(
         ValueProvenance provenance,
         Instant createdAt,
         Instant removedAt,
-        long revision) {
+        long revision,
+        Optional<GarmentPhoto> photo) {
 
     /** The revision of a newly accepted garment. */
     public static final long FIRST_REVISION = 1;
@@ -34,6 +36,7 @@ public record Garment(
         Objects.requireNonNull(profile, "profile");
         Objects.requireNonNull(provenance, "provenance");
         Objects.requireNonNull(createdAt, "createdAt");
+        Objects.requireNonNull(photo, "photo must be Optional.empty() when absent");
         if (removedAt != null && removedAt.isBefore(createdAt)) {
             throw new IllegalArgumentException("A garment cannot be removed before it was created");
         }
@@ -42,21 +45,33 @@ public record Garment(
         }
     }
 
-    /** A garment at its first revision. */
+    /** A garment without a photo. */
     public Garment(UUID id, UUID ownerAccountId, GarmentProfile profile, ValueProvenance provenance,
-                   Instant createdAt, Instant removedAt) {
-        this(id, ownerAccountId, profile, provenance, createdAt, removedAt, FIRST_REVISION);
+                   Instant createdAt, Instant removedAt, long revision) {
+        this(id, ownerAccountId, profile, provenance, createdAt, removedAt, revision, Optional.empty());
     }
 
-    /** A newly confirmed manual entry: user-entered values, currently owned. */
+    /** A garment at its first revision, without a photo. */
+    public Garment(UUID id, UUID ownerAccountId, GarmentProfile profile, ValueProvenance provenance,
+                   Instant createdAt, Instant removedAt) {
+        this(id, ownerAccountId, profile, provenance, createdAt, removedAt, FIRST_REVISION, Optional.empty());
+    }
+
+    /** A newly confirmed manual entry: user-entered values, currently owned, no photo. */
     public static Garment confirmManualEntry(UUID id, UUID ownerAccountId, GarmentProfile profile, Instant createdAt) {
         return new Garment(id, ownerAccountId, profile, ValueProvenance.USER_ENTERED, createdAt, null);
     }
 
+    /** A newly confirmed manual entry with the reviewed photo attached (US-GAR-003 AC-04). */
+    public static Garment confirmWithPhoto(UUID id, UUID ownerAccountId, GarmentProfile profile, Instant createdAt,
+                                           GarmentPhoto photo) {
+        return new Garment(id, ownerAccountId, profile, ValueProvenance.USER_ENTERED, createdAt, null,
+                FIRST_REVISION, Optional.of(photo));
+    }
+
     /**
      * The same garment with an accepted revised profile (US-GAR-002). Identity, owner,
-     * provenance, creation time and removal state are kept; the revision advances by one.
-     * Only a current garment can be revised (AC-08).
+     * provenance, creation time, removal state and photo are kept; the revision advances by one.
      */
     public Garment withRevisedProfile(GarmentProfile revisedProfile) {
         Objects.requireNonNull(revisedProfile, "revisedProfile");
@@ -64,7 +79,7 @@ public record Garment(
             throw new IllegalStateException("Only a garment in the current wardrobe can be revised");
         }
         return new Garment(id, ownerAccountId, revisedProfile, provenance, createdAt, removedAt,
-                Math.addExact(revision, 1));
+                Math.addExact(revision, 1), photo);
     }
 
     public boolean isCurrent() {

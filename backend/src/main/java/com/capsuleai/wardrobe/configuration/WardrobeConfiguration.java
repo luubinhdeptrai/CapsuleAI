@@ -2,12 +2,14 @@ package com.capsuleai.wardrobe.configuration;
 
 
 import com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepository;
+import com.capsuleai.wardrobe.adapter.out.persistence.JdbcPhotoUploadRepository;
 import com.capsuleai.wardrobe.adapter.out.persistence.SpringWardrobeTransactions;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
 import com.capsuleai.wardrobe.application.ReviseGarmentService;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
+import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
@@ -34,8 +36,14 @@ public class WardrobeConfiguration {
     }
 
     @Bean
-    AddGarmentService addGarmentService(GarmentRepository garments, WardrobeTransactions transactions, Clock clock) {
-        return new AddGarmentService(garments, transactions, clock);
+    PhotoUploadRepository photoUploadRepository(JdbcClient jdbcClient) {
+        return new JdbcPhotoUploadRepository(jdbcClient);
+    }
+
+    @Bean
+    AddGarmentService addGarmentService(GarmentRepository garments, PhotoUploadRepository photoUploads,
+                                        WardrobeTransactions transactions, Clock clock) {
+        return new AddGarmentService(garments, photoUploads, transactions, clock);
     }
 
     @Bean

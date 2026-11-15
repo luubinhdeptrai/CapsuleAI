@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -25,6 +26,15 @@ final class GarmentCreationFingerprint {
     }
 
     static String of(GarmentProfile profile) {
+        return of(profile, Optional.empty());
+    }
+
+    /**
+     * US-GAR-003 (S3-IMG-04): a photo-backed addition also fingerprints the staged photo it attaches,
+     * so one key cannot create garments with different photos, or with and without one. Without a
+     * photo the fingerprint is exactly the Sprint 2 one, so earlier imageless additions still replay.
+     */
+    static String of(GarmentProfile profile, Optional<UUID> photoUploadId) {
         String canonical = String.join("|",
                 "category=" + profile.category().name(),
                 "subtype=" + code(profile.subtype()),
@@ -39,7 +49,8 @@ final class GarmentCreationFingerprint {
                 "silhouette=" + code(profile.silhouette()),
                 // Length-prefixed, so brand text containing '|' cannot be confused with another field.
                 "brand=" + profile.brand().map(Brand::value).map(value -> value.length() + ":" + value).orElse(""),
-                "price=" + profile.price().map(price -> price.amountText() + " " + price.currencyCode()).orElse(""));
+                "price=" + profile.price().map(price -> price.amountText() + " " + price.currencyCode()).orElse(""))
+                + photoUploadId.map(photo -> "|photo=" + photo).orElse("");
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(canonical.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);

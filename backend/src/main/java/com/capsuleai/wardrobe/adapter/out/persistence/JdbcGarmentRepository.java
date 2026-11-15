@@ -12,6 +12,7 @@ import com.capsuleai.wardrobe.domain.GarmentFit;
 import com.capsuleai.wardrobe.domain.GarmentLength;
 import com.capsuleai.wardrobe.domain.GarmentMaterial;
 import com.capsuleai.wardrobe.domain.GarmentNeckline;
+import com.capsuleai.wardrobe.domain.GarmentPhoto;
 import com.capsuleai.wardrobe.domain.GarmentPattern;
 import com.capsuleai.wardrobe.domain.GarmentProfile;
 import com.capsuleai.wardrobe.domain.GarmentSilhouette;
@@ -47,8 +48,11 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                    g.brand, g.price_amount, g.price_currency, g.value_provenance, g.created_at, g.removed_at,
                    g.revision,
                    ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials,
-                   ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles
+                   ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles,
+                   p.id AS photo_id, p.content_type AS photo_content_type, p.width AS photo_width,
+                   p.height AS photo_height
             FROM wardrobe.wardrobe_garment g
+            LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status = 'ATTACHED'
             """;
 
     /**
@@ -238,7 +242,18 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 ValueProvenance.valueOf(row.getString("value_provenance")),
                 fromDatabase(row, "created_at"),
                 fromDatabase(row, "removed_at"),
-                row.getLong("revision"));
+                row.getLong("revision"),
+                photo(row));
+    }
+
+    /** US-GAR-003: the attached photo's metadata, if any. */
+    private static Optional<GarmentPhoto> photo(ResultSet row) throws SQLException {
+        UUID photoId = row.getObject("photo_id", UUID.class);
+        if (photoId == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new GarmentPhoto(photoId, row.getString("photo_content_type"),
+                row.getInt("photo_width"), row.getInt("photo_height")));
     }
 
     /** The distinct stored codes of a multi-valued property (Materials, Styles) as a catalogue-ordered set. */

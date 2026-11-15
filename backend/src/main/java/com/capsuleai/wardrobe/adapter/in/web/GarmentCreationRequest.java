@@ -23,12 +23,14 @@ public record GarmentCreationRequest(
         String length,
         String silhouette,
         String brand,
-        PriceRequest price) {
+        PriceRequest price,
+        String photoUploadId) {
 
     AddGarmentCommand toCommand(UUID ownerAccountId, String idempotencyKey) {
         return new AddGarmentCommand(ownerAccountId, idempotencyKey, confirmed, category, subtype, color,
                 materials, pattern, styles, fit, neckline, sleeveLength, length, silhouette, brand,
                 price == null ? null : price.amount(),
-                price == null ? null : price.currency());
+                price == null ? null : price.currency(),
+                photoUploadId);
     }
 }

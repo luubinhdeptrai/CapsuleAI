@@ -51,8 +51,8 @@ final class GarmentEntryValidator {
     private GarmentEntryValidator() {
     }
 
-    /** A validated logical-action key and the accepted profile. */
-    record ValidatedGarmentEntry(UUID creationKey, GarmentProfile profile) {
+    /** A validated logical-action key, the accepted profile and the staged photo to attach, if any. */
+    record ValidatedGarmentEntry(UUID creationKey, GarmentProfile profile, Optional<UUID> photoUploadId) {
     }
 
     /** @throws GarmentValidationException listing every problem; nothing was stored */
@@ -77,9 +77,10 @@ final class GarmentEntryValidator {
     private ValidatedGarmentEntry validateEntry(AddGarmentCommand command) {
         UUID creationKey = creationKey(command.idempotencyKey());
         requireConfirmation(command.confirmed());
+        Optional<UUID> photoUploadId = photoUploadId(command.photoUploadId());
         Optional<GarmentProfile> profile = profile(command.values());
         rejectIfAnyProblem();
-        return new ValidatedGarmentEntry(creationKey, profile.orElseThrow());
+        return new ValidatedGarmentEntry(creationKey, profile.orElseThrow(), photoUploadId);
     }
 
     /** The accepted profile, or empty when any property was rejected (the problems are recorded). */
@@ -137,6 +138,18 @@ final class GarmentEntryValidator {
         }
     }
 
+    /** US-GAR-003: the optional staged photo to attach, named by its id; blank means "no photo". */
+    private Optional<UUID> photoUploadId(String photoUploadId) {
+        if (isBlank(photoUploadId)) {
+            return Optional.empty();
+        }
+        if (!CANONICAL_UUID.matcher(photoUploadId).matches()) {
+            reject("photoUploadId", GarmentValueProblem.INVALID_FORMAT);
+            return Optional.empty();
+        }
+        return Optional.of(UUID.fromString(photoUploadId));
+    }
+    
     private <E extends Enum<E> & ControlledValue> Optional<E> required(Class<E> vocabulary, String field, String code) {
         if (isBlank(code)) {
             reject(field, GarmentValueProblem.REQUIRED);

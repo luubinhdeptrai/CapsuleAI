@@ -1,14 +1,14 @@
 # US-GAR-003 — Add a Photo-Supported Garment with Manual Confirmation: Implementation Guide
 
-| Field | Value |
-| --- | --- |
-| Story | [US-GAR-003](../../../stories/garment/US-GAR-003-add-photo-supported-garment.md) (Draft v0.4), parent PBI-012 |
-| Sprint | Sprint 3, story 2 of 3 |
-| Starting point | After every US-GAR-002 step is applied (V9, `Garment.revision`, PATCH, OpenAPI 0.9.0). No commit hash is assumed. |
-| Approved decisions applied | S3-IMG-01 (strategy), S3-IMG-02, S3-IMG-03, S3-IMG-04, S3-IMG-05, S3-IMG-06 (investigation direction), S3-IMG-07, S3-IMG-08 (lifecycle); S3-INT-01, S3-INT-02, S3-INT-03 |
+| Field                          | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Story                          | [US-GAR-003](../../../stories/garment/US-GAR-003-add-photo-supported-garment.md) (Draft v0.4), parent PBI-012                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Sprint                         | Sprint 3, story 2 of 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Starting point                 | After every US-GAR-002 step is applied (V9, `Garment.revision`, PATCH, OpenAPI 0.9.0). No commit hash is assumed.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Approved decisions applied     | S3-IMG-01 (strategy), S3-IMG-02, S3-IMG-03, S3-IMG-04, S3-IMG-05, S3-IMG-06 (investigation direction), S3-IMG-07, S3-IMG-08 (lifecycle); S3-INT-01, S3-INT-02, S3-INT-03                                                                                                                                                                                                                                                                                                                                           |
 | Approved detailed choices used | All **approved by the Product Owner on 2026-11-11** ([decision record](open-questions.md)): OPEN-S3-01 (API evolution), 02 (integration evidence and CI), 07 (pending TTL `PT24H`), 08 (libheif `heif-info` + `heif-dec` subprocess, ImageIO for JPEG/PNG), 09 (15,000,000 bytes), 10 (normalized JPEG only), 11 (primary image of a multi-image HEIF as the target; explicit rejection as the temporary fail-closed fallback), 12 (decoder ceilings), 13 (AWS SDK 2.46.13 + S3Mock 5.1.0), 14 (photo API surface) |
-| Verification status | **Not compiled, not run, not tested.** Approval selects the direction; it is not evidence. The HEIF toolchain (V1–V8, including primary-image selection), the S3Mock fixture and real Amazon S3 (V-S3) and the decoder ceilings still need the verification procedures in [open questions](open-questions.md). |
-| Shared rules | [shared-architecture.md](shared-architecture.md) §11 (errors), §15 (transactions), §16 (idempotency), §17 (media lifecycle), §19 (configuration), §21 (file order) |
+| Verification status            | **Not compiled, not run, not tested.** Approval selects the direction; it is not evidence. The HEIF toolchain (V1–V8, including primary-image selection), the S3Mock fixture and real Amazon S3 (V-S3) and the decoder ceilings still need the verification procedures in [open questions](open-questions.md).                                                                                                                                                                                                     |
+| Shared rules                   | [shared-architecture.md](shared-architecture.md) §11 (errors), §15 (transactions), §16 (idempotency), §17 (media lifecycle), §19 (configuration), §21 (file order)                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 1. Story Overview
 
@@ -23,6 +23,7 @@
    - returns a pending upload that expires.
 
    **No garment is created.**
+
 2. **Review or cancel.** The client reviews the staged photo (`GET …/content`) and can cancel it (`DELETE`) or stage a replacement.
 3. **Confirm.** The user explicitly confirms the garment through the **existing** `POST /api/v1/wardrobe/garments`, adding `photoUploadId`. One database transaction claims the upload, creates the garment and attaches the photo. Replay with the same `Idempotency-Key` never creates a second garment.
 4. **Show the photo.** Garment detail shows `photo` metadata, and `GET /api/v1/wardrobe/garments/{id}/photo` streams it after the current owner check.
@@ -41,36 +42,36 @@
 
 At the starting point, US-GAR-002 has been applied on top of `9d158fb`.
 
-| Item | State | Relevance |
-| --- | --- | --- |
-| `Garment` | `(id, ownerAccountId, profile, provenance, createdAt, removedAt, revision)` + 6-argument constructor | Gains `Optional<GarmentPhoto> photo`; the 6- and 7-argument constructors stay |
-| `AddGarmentService` | Creation idempotency (`addIfCreationKeyUnused`, `findCreation`, fingerprint) | Gains the photo-backed path inside one transaction |
-| `AddGarmentCommand`, `GarmentCreationRequest` | 17 / 14 components, no media | + `photoUploadId` |
-| `GarmentCreationFingerprint` | SHA-256 of the 13 accepted values | + `photo=<id>` **only when present**, so existing fingerprints are unchanged |
-| `JdbcGarmentRepository` | `SELECT_GARMENT` reads the profile, sets and revision | + LEFT JOIN of the attached photo |
-| Media infrastructure | None: no SDK, no storage, no decoder, no compose service | All new |
-| Migrations | V1–V9 | V10 adds `wardrobe.wardrobe_photo_upload` |
-| CORS | `GET, POST, PATCH` | + `DELETE` (cancel) |
-| Contract test | Understands only JSON bodies and JSON responses | Must learn multipart requests and `image/jpeg` responses |
-| CI | 75 required reports, `sprint_03` trigger | + libheif install, `CAPSULEAI_REQUIRE_HEIF=true`, new reports |
+| Item                                          | State                                                                                                | Relevance                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `Garment`                                     | `(id, ownerAccountId, profile, provenance, createdAt, removedAt, revision)` + 6-argument constructor | Gains `Optional<GarmentPhoto> photo`; the 6- and 7-argument constructors stay |
+| `AddGarmentService`                           | Creation idempotency (`addIfCreationKeyUnused`, `findCreation`, fingerprint)                         | Gains the photo-backed path inside one transaction                            |
+| `AddGarmentCommand`, `GarmentCreationRequest` | 17 / 14 components, no media                                                                         | + `photoUploadId`                                                             |
+| `GarmentCreationFingerprint`                  | SHA-256 of the 13 accepted values                                                                    | + `photo=<id>` **only when present**, so existing fingerprints are unchanged  |
+| `JdbcGarmentRepository`                       | `SELECT_GARMENT` reads the profile, sets and revision                                                | + LEFT JOIN of the attached photo                                             |
+| Media infrastructure                          | None: no SDK, no storage, no decoder, no compose service                                             | All new                                                                       |
+| Migrations                                    | V1–V9                                                                                                | V10 adds `wardrobe.wardrobe_photo_upload`                                     |
+| CORS                                          | `GET, POST, PATCH`                                                                                   | + `DELETE` (cancel)                                                           |
+| Contract test                                 | Understands only JSON bodies and JSON responses                                                      | Must learn multipart requests and `image/jpeg` responses                      |
+| CI                                            | 75 required reports, `sprint_03` trigger                                                             | + libheif install, `CAPSULEAI_REQUIRE_HEIF=true`, new reports                 |
 
 ## 3. Original Business Requirements — Verbatim
 
 From [BRD](../../../../01-business/BRD.md) (traceability BG-01, BR-001, BR-004, CAP-02, CAP-03):
 
-| ID | Goal | Problem | Desired outcome | Capabilities |
-| --- | --- | --- | --- | --- |
+| ID    | Goal                                | Problem                                               | Desired outcome                                                           | Capabilities  |
+| ----- | ----------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------- | ------------- |
 | BG-01 | Reduce Wardrobe Digitization Effort | Manual setup delays access to useful wardrobe advice. | Faster access to a trustworthy digital closet with less repetitive entry. | CAP-01–CAP-04 |
 
-| ID | Requirement | Rationale | Priority | Goal |
-| --- | --- | --- | --- | --- |
-| BR-001 | Users must be able to create a digital representation of owned clothing with minimal manual effort through AI-assisted garment understanding. | Reduce setup friction and time to value. | Must | BG-01 |
-| BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually. | Preserve value when automation is unavailable or inaccurate. | Must | BG-01 |
+| ID     | Requirement                                                                                                                                   | Rationale                                                    | Priority | Goal  |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------- | ----- |
+| BR-001 | Users must be able to create a digital representation of owned clothing with minimal manual effort through AI-assisted garment understanding. | Reduce setup friction and time to value.                     | Must     | BG-01 |
+| BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually.                          | Preserve value when automation is unavailable or inaccurate. | Must     | BG-01 |
 
-| Capability | Name | Description |
-| --- | --- | --- |
-| CAP-02 | AI Digital Closet | Convert captured or selected garment images into usable wardrobe entries with less manual effort. |
-| CAP-03 | Wardrobe Management | Keep the wardrobe current and discoverable through maintenance, browsing, search, and filtering. |
+| Capability | Name                | Description                                                                                       |
+| ---------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| CAP-02     | AI Digital Closet   | Convert captured or selected garment images into usable wardrobe entries with less manual effort. |
+| CAP-03     | Wardrobe Management | Keep the wardrobe current and discoverable through maintenance, browsing, search, and filtering.  |
 
 ## 4. Original Product Requirements — Verbatim
 
@@ -78,8 +79,8 @@ From [PRD](../../../../02-product/PRD.md) §8.2 JRN-02:
 
 > 1. From Today or Wardrobe, the user captures an image, selects one from the gallery, or chooses manual entry.
 > 2. Image guidance helps avoid unclear garment photos; processing shows progress rather than a completed entry.
-> …
-> 5. With confirmed Category and one approved Color, save while omitting optional fields and preserving all supplied applicable values. Recommendation eligibility is not evaluated.
+>    …
+> 3. With confirmed Category and one approved Color, save while omitting optional fields and preserving all supplied applicable values. Recommendation eligibility is not evaluated.
 >
 > **Recovery:** Poor images support replacement; AI failure supports retry or manual continuation. Low confidence never silently becomes authoritative data. Canceling a draft does not create a confirmed garment.
 
@@ -88,10 +89,11 @@ Steps 3–4 (processed preview and AI proposals) belong to US-GAR-004 and are no
 From PRD §12.1 FEAT-AI-001:
 
 > **Product behavior:**
+>
 > 1. Offer capture and gallery selection with concise guidance about lighting, garment visibility, and avoiding confusing backgrounds.
 > 2. Show the selected image and allow replacement/cancel before confirmation.
-> …
-> 5. Direct the user to review, retry, or manual continuation without creating a confirmed garment automatically.
+>    …
+> 3. Direct the user to review, retry, or manual continuation without creating a confirmed garment automatically.
 >
 > **Failure / fallback:** Explain capture/permission/image/analysis problems; allow another available image route or manual entry. An unusable processed preview must not block manual creation when the original image is useful.
 >
@@ -110,24 +112,24 @@ From PRD §12.2 FEAT-AI-002:
 
 From [SRS](../../../../03-requirements/SRS.md):
 
-| ID | Requirement | Verification |
-| --- | --- | --- |
-| FR-AI-001 | The system shall allow permitted camera garment input in JPEG/JPG, PNG, and HEIC/HEIF formats subject to Section 3.4.1 image limits. | T: supported capture inputs and size/dimension boundaries. |
-| FR-AI-002 | The system shall allow permitted photo-library garment input in JPEG/JPG, PNG, and HEIC/HEIF subject to the image limits in Section 3.4.1, without requiring a plain/white background. | T: all formats; valid non-plain backgrounds and limit boundaries. |
-| FR-AI-003 | The system shall provide manual garment entry without requiring an image or successful automated analysis. | T: imageless/manual completion. |
-| FR-AI-004 | The system shall allow replacement or cancellation of the selected image before garment confirmation. | T: replace/cancel selected image. |
-| FR-AI-008 | The system shall create a confirmed wardrobe entry only after explicit user confirmation of the saveable minimum. | T: confirm versus draft. |
-| FR-AI-009 | The system shall leave no confirmed entry from canceled preconfirmation work. | T: canceled draft absent. |
-| FR-AI-010 | The system shall acknowledge a successful addition distinctly from pending/failed work without manufacturing duplicate entries on retry. | T: successful/failed-save retry. |
-| FR-AI-011 | The system shall provide capture/selection guidance about lighting, garment visibility, and avoiding confusing backgrounds. | I/D: image-entry guidance. |
-| FR-AI-012 | The system shall validate garment-image input against supported formats, maximum 15 MB file size, and shortest dimension of at least 512 pixels, explaining unsupported/out-of-limit input with replacement or manual continuation. | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
-| DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | T: imageless and image entry. |
-| DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions. | T: interrupted additions/Wear actions. |
-| DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary, while a removed garment's original image and nonessential personal data are physically deleted within 30 days. | T/I |
-| HW-001 | The system shall request camera access for the selected capture action and offer other permitted image routes or manual entry when unavailable/denied. | T: camera denial alternatives. |
-| HW-002 | The system shall use a permitted photo-library selection without requiring camera access or successful analysis for manual entry. | T: library/manual alternatives. |
-| ERR-AI-001 | Input violates image limits/format support, is unsuitable, or analysis cannot complete. → The system shall explain unsupported formats, file-size/dimension violations, unsuitable images or unavailable/failed analysis with replacement/manual/retry recovery while preserving confirmed profiles. Recovery: Manual entry remains usable; no garment is added from an unconfirmed failed attempt. | |
-| COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions. | T |
+| ID           | Requirement                                                                                                                                                                                                                                                                                                                                                                                         | Verification                                                            |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| FR-AI-001    | The system shall allow permitted camera garment input in JPEG/JPG, PNG, and HEIC/HEIF formats subject to Section 3.4.1 image limits.                                                                                                                                                                                                                                                                | T: supported capture inputs and size/dimension boundaries.              |
+| FR-AI-002    | The system shall allow permitted photo-library garment input in JPEG/JPG, PNG, and HEIC/HEIF subject to the image limits in Section 3.4.1, without requiring a plain/white background.                                                                                                                                                                                                              | T: all formats; valid non-plain backgrounds and limit boundaries.       |
+| FR-AI-003    | The system shall provide manual garment entry without requiring an image or successful automated analysis.                                                                                                                                                                                                                                                                                          | T: imageless/manual completion.                                         |
+| FR-AI-004    | The system shall allow replacement or cancellation of the selected image before garment confirmation.                                                                                                                                                                                                                                                                                               | T: replace/cancel selected image.                                       |
+| FR-AI-008    | The system shall create a confirmed wardrobe entry only after explicit user confirmation of the saveable minimum.                                                                                                                                                                                                                                                                                   | T: confirm versus draft.                                                |
+| FR-AI-009    | The system shall leave no confirmed entry from canceled preconfirmation work.                                                                                                                                                                                                                                                                                                                       | T: canceled draft absent.                                               |
+| FR-AI-010    | The system shall acknowledge a successful addition distinctly from pending/failed work without manufacturing duplicate entries on retry.                                                                                                                                                                                                                                                            | T: successful/failed-save retry.                                        |
+| FR-AI-011    | The system shall provide capture/selection guidance about lighting, garment visibility, and avoiding confusing backgrounds.                                                                                                                                                                                                                                                                         | I/D: image-entry guidance.                                              |
+| FR-AI-012    | The system shall validate garment-image input against supported formats, maximum 15 MB file size, and shortest dimension of at least 512 pixels, explaining unsupported/out-of-limit input with replacement or manual continuation.                                                                                                                                                                 | T: JPEG/JPG, PNG, HEIC/HEIF; at/beyond 15 MB; 511/512 pixels; fallback. |
+| DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries.                                                                                                                                                                                                                                         | T: imageless and image entry.                                           |
+| DATA-INT-004 | The system shall keep failed/pending mutations distinct from accepted state, preventing duplicates of the same logical action without collapsing separate explicit Wear intentions.                                                                                                                                                                                                                 | T: interrupted additions/Wear actions.                                  |
+| DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary, while a removed garment's original image and nonessential personal data are physically deleted within 30 days.                                                                                                        | T/I                                                                     |
+| HW-001       | The system shall request camera access for the selected capture action and offer other permitted image routes or manual entry when unavailable/denied.                                                                                                                                                                                                                                              | T: camera denial alternatives.                                          |
+| HW-002       | The system shall use a permitted photo-library selection without requiring camera access or successful analysis for manual entry.                                                                                                                                                                                                                                                                   | T: library/manual alternatives.                                         |
+| ERR-AI-001   | Input violates image limits/format support, is unsuitable, or analysis cannot complete. → The system shall explain unsupported formats, file-size/dimension violations, unsuitable images or unavailable/failed analysis with replacement/manual/retry recovery while preserving confirmed profiles. Recovery: Manual entry remains usable; no garment is added from an unconfirmed failed attempt. |                                                                         |
+| COM-002      | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions.                                                                                                                                                                                             | T                                                                       |
 
 Excerpts from NFR-PRIV-001 and NFR-PRIV-002:
 
@@ -203,37 +205,37 @@ Architecture:
 
 The approved Sprint 3 decisions are quoted in full in [plan §9.2](../sprint-plan.md#92-us-gar-003-decisions):
 
-| ID | Recommended solution (verbatim) | Status |
-| --- | --- | --- |
-| S3-IMG-01 | Option A — isolated S3-compatible local development/testing, with private managed Amazon S3 as the proposed deployed target. | APPROVED (strategy; AWS configuration, deployment, compatibility and budget unverified) |
-| S3-IMG-02 | Option A — proxy bounded multipart photo uploads through the existing authenticated application. | APPROVED |
-| S3-IMG-03 | Option B — staged upload with separately confirmed new-garment creation. | APPROVED |
-| S3-IMG-04 | Option A — durable pending media coordination and resumable owner-controlled recovery. | APPROVED |
-| S3-IMG-05 | Option A — authenticated application delivery, rechecking the current owner and permitted pending/accepted media association for each request. | APPROVED |
+| ID        | Recommended solution (verbatim)                                                                                                                                                          | Status                                                                                                                                                         |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S3-IMG-01 | Option A — isolated S3-compatible local development/testing, with private managed Amazon S3 as the proposed deployed target.                                                             | APPROVED (strategy; AWS configuration, deployment, compatibility and budget unverified)                                                                        |
+| S3-IMG-02 | Option A — proxy bounded multipart photo uploads through the existing authenticated application.                                                                                         | APPROVED                                                                                                                                                       |
+| S3-IMG-03 | Option B — staged upload with separately confirmed new-garment creation.                                                                                                                 | APPROVED                                                                                                                                                       |
+| S3-IMG-04 | Option A — durable pending media coordination and resumable owner-controlled recovery.                                                                                                   | APPROVED                                                                                                                                                       |
+| S3-IMG-05 | Option A — authenticated application delivery, rechecking the current owner and permitted pending/accepted media association for each request.                                           | APPROVED                                                                                                                                                       |
 | S3-IMG-06 | Option B as the investigation direction — prove a bounded decoder adapter using a maintained HEIF-capable toolchain; finalize the concrete library/runtime in selected-story JIT design. | APPROVED (investigation direction). The concrete JIT choices OPEN-S3-08/09/10/11/12 were approved on 2026-11-11; the toolchain is still **unverified** (V1–V8) |
-| S3-IMG-07 | Option A — preserve new-garment-only photo support. | APPROVED |
-| S3-IMG-08 | Option A — recoverable application-owned lifecycle; request PO selection of the pending retention/expiry policy before the affected lifecycle is finalized. | APPROVED. Pending TTL selected by the PO on 2026-11-11: 24 hours, configurable (OPEN-S3-07) |
+| S3-IMG-07 | Option A — preserve new-garment-only photo support.                                                                                                                                      | APPROVED                                                                                                                                                       |
+| S3-IMG-08 | Option A — recoverable application-owned lifecycle; request PO selection of the pending retention/expiry policy before the affected lifecycle is finalized.                              | APPROVED. Pending TTL selected by the PO on 2026-11-11: 24 hours, configurable (OPEN-S3-07)                                                                    |
 
 The cross-story decisions S3-INT-01 (compatible API evolution), S3-INT-02 (isolated integration evidence) and S3-INT-03 (story guides with shared-file coordination) are approved as Option A ([plan §9.4](../sprint-plan.md#94-cross-story-decisions)).
 
 ## 9. Engineering Interpretation
 
-| # | Interpretation | Source |
-| --- | --- | --- |
-| I-1 | Camera/library choice, permissions, guidance (FR-AI-011, HW-001/002) and preview display are **client** responsibilities. The backend only receives bytes and never sees whether they came from a camera. | AC-01, AC-03 |
-| I-2 | Format is decided by **content sniffing and a genuine decode**, never by filename or client `Content-Type`. JPEG (`FF D8 FF`), PNG (8-byte signature), HEIF (`ftyp` box with an HEVC brand). Anything else is `PHOTO_UNSUPPORTED_FORMAT`. AVIF and other ISO-BMFF images are not approved formats. | AC-02, FR-AI-012, S3-IMG-06 |
-| I-3 | Size: the received byte count must be ≤ 15,000,000 (OPEN-S3-09). Dimensions: the shortest side of the **original** image must be ≥ 512 pixels (511 rejected, 512 accepted). Background colour is never checked. | AC-02 |
-| I-4 | Stored media is one normalized JPEG: orientation applied, all metadata dropped, long edge ≤ 2048 px (OPEN-S3-10). The original bytes are discarded after inspection. | S3-IMG-06, NFR-PRIV-001 |
-| I-5 | A staged upload is **not** a garment. Garment creation still needs the existing confirmed POST with Category and Color. An upload that cannot be used makes the POST fail; it never falls back to an imageless success. | AC-04, S3-IMG-03 |
-| I-6 | Replacement = stage another photo (new upload key) and optionally `DELETE` the old one. Unconfirmed uploads expire after the pending TTL: 24 hours, approved by the PO (OPEN-S3-07), configurable as `capsuleai.wardrobe.photo-upload.pending-ttl`. | AC-03, FR-AI-004, S3-IMG-08 |
-| I-7 | Creation idempotency is unchanged for imageless POSTs. For photo POSTs, the fingerprint includes the upload id, so the same key with a different (or no) photo is `422 IDEMPOTENCY_KEY_REUSED`. Replay returns `200` with the existing garment even though the upload is now `ATTACHED`. | AC-06, S3-IMG-04, DATA-INT-004 |
-| I-8 | One upload can attach to at most one garment (`UNIQUE (garment_id)` and the status transition `READY → ATTACHED` under a row lock). | S3-IMG-03 |
-| I-9 | Missing media: if an attached photo's object is gone, only the photo route answers `404 GARMENT_PHOTO_UNAVAILABLE`. Garment JSON (including `photo` metadata) stays readable. | AC-06 |
-| I-10 | Every media route rechecks the current session and owner. Unknown, other-owner and malformed upload ids give the same `404`. Responses are `private, no-store`. No presigned or public URL exists. | AC-07, S3-IMG-05 |
-| I-11 | Upload staging is idempotent per `(owner, Idempotency-Key)` with a SHA-256 of the bytes: a retry after a lost response returns the same upload; different bytes under the same key are rejected. | S3-IMG-02 ("dropped upload response is resolved through owner-scoped pending status/retry") |
-| I-12 | "Optional measurement failure does not reverse accepted creation" (AC-07) is satisfied trivially: no measurement producer exists in Sprint 3. Nothing is added. | Plan §5 |
-| I-13 | Editing (US-GAR-002) never changes the photo association. There are no attach or replace routes. | S3-IMG-07 |
-| I-14 | A HEIF file with several top-level images: the approved target is the file's **primary** image, identified by libheif (§10.9). Until primary-image selection is verified on the deployed libheif (V4, V8) and switched on, such a file is rejected explicitly with `422 PHOTO_MULTIPLE_IMAGES` and replacement or manual-continuation guidance. That rejection is the approved **temporary** fail-closed fallback, not the target behaviour. No arbitrary image is ever chosen. | AC-02, FR-AI-012, OPEN-S3-11 |
+| #    | Interpretation                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Source                                                                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| I-1  | Camera/library choice, permissions, guidance (FR-AI-011, HW-001/002) and preview display are **client** responsibilities. The backend only receives bytes and never sees whether they came from a camera.                                                                                                                                                                                                                                                                       | AC-01, AC-03                                                                                |
+| I-2  | Format is decided by **content sniffing and a genuine decode**, never by filename or client `Content-Type`. JPEG (`FF D8 FF`), PNG (8-byte signature), HEIF (`ftyp` box with an HEVC brand). Anything else is `PHOTO_UNSUPPORTED_FORMAT`. AVIF and other ISO-BMFF images are not approved formats.                                                                                                                                                                              | AC-02, FR-AI-012, S3-IMG-06                                                                 |
+| I-3  | Size: the received byte count must be ≤ 15,000,000 (OPEN-S3-09). Dimensions: the shortest side of the **original** image must be ≥ 512 pixels (511 rejected, 512 accepted). Background colour is never checked.                                                                                                                                                                                                                                                                 | AC-02                                                                                       |
+| I-4  | Stored media is one normalized JPEG: orientation applied, all metadata dropped, long edge ≤ 2048 px (OPEN-S3-10). The original bytes are discarded after inspection.                                                                                                                                                                                                                                                                                                            | S3-IMG-06, NFR-PRIV-001                                                                     |
+| I-5  | A staged upload is **not** a garment. Garment creation still needs the existing confirmed POST with Category and Color. An upload that cannot be used makes the POST fail; it never falls back to an imageless success.                                                                                                                                                                                                                                                         | AC-04, S3-IMG-03                                                                            |
+| I-6  | Replacement = stage another photo (new upload key) and optionally `DELETE` the old one. Unconfirmed uploads expire after the pending TTL: 24 hours, approved by the PO (OPEN-S3-07), configurable as `capsuleai.wardrobe.photo-upload.pending-ttl`.                                                                                                                                                                                                                             | AC-03, FR-AI-004, S3-IMG-08                                                                 |
+| I-7  | Creation idempotency is unchanged for imageless POSTs. For photo POSTs, the fingerprint includes the upload id, so the same key with a different (or no) photo is `422 IDEMPOTENCY_KEY_REUSED`. Replay returns `200` with the existing garment even though the upload is now `ATTACHED`.                                                                                                                                                                                        | AC-06, S3-IMG-04, DATA-INT-004                                                              |
+| I-8  | One upload can attach to at most one garment (`UNIQUE (garment_id)` and the status transition `READY → ATTACHED` under a row lock).                                                                                                                                                                                                                                                                                                                                             | S3-IMG-03                                                                                   |
+| I-9  | Missing media: if an attached photo's object is gone, only the photo route answers `404 GARMENT_PHOTO_UNAVAILABLE`. Garment JSON (including `photo` metadata) stays readable.                                                                                                                                                                                                                                                                                                   | AC-06                                                                                       |
+| I-10 | Every media route rechecks the current session and owner. Unknown, other-owner and malformed upload ids give the same `404`. Responses are `private, no-store`. No presigned or public URL exists.                                                                                                                                                                                                                                                                              | AC-07, S3-IMG-05                                                                            |
+| I-11 | Upload staging is idempotent per `(owner, Idempotency-Key)` with a SHA-256 of the bytes: a retry after a lost response returns the same upload; different bytes under the same key are rejected.                                                                                                                                                                                                                                                                                | S3-IMG-02 ("dropped upload response is resolved through owner-scoped pending status/retry") |
+| I-12 | "Optional measurement failure does not reverse accepted creation" (AC-07) is satisfied trivially: no measurement producer exists in Sprint 3. Nothing is added.                                                                                                                                                                                                                                                                                                                 | Plan §5                                                                                     |
+| I-13 | Editing (US-GAR-002) never changes the photo association. There are no attach or replace routes.                                                                                                                                                                                                                                                                                                                                                                                | S3-IMG-07                                                                                   |
+| I-14 | A HEIF file with several top-level images: the approved target is the file's **primary** image, identified by libheif (§10.9). Until primary-image selection is verified on the deployed libheif (V4, V8) and switched on, such a file is rejected explicitly with `422 PHOTO_MULTIPLE_IMAGES` and replacement or manual-continuation guidance. That rejection is the approved **temporary** fail-closed fallback, not the target behaviour. No arbitrary image is ever chosen. | AC-02, FR-AI-012, OPEN-S3-11                                                                |
 
 ## 10. Just-in-Time Detailed Design
 
@@ -242,44 +244,79 @@ The lifecycle state diagram, staging sequence and transaction table are in [shar
 ### 10.1 Confirmation and recovery sequence
 
 ```mermaid
+
 sequenceDiagram
     autonumber
+
     participant C as Client
     participant G as AddGarmentService
     participant DB as PostgreSQL
-    C->>G: POST /garments {confirmed, category, color, photoUploadId} + Idempotency-Key K
-    G->>G: validate entry (incl. photoUploadId format); fingerprint(profile, photo)
-    G->>DB: BEGIN
-    G->>DB: SELECT upload WHERE id AND owner FOR UPDATE
-    alt upload missing / other owner
-        G-->>C: 404 PHOTO_UPLOAD_NOT_FOUND (rollback)
+
+    C->>G: POST /garments with Idempotency-Key K
+    Note over C,G: Body: confirmed, category, color, photoUploadId
+
+    G->>G: Validate request and photoUploadId
+    G->>G: Compute fingerprint F
+    G->>DB: BEGIN TRANSACTION
+
+    G->>DB: SELECT upload by ID and owner FOR UPDATE
+    DB-->>G: Upload record or no row
+
+    alt Upload missing or belongs to another owner
+        G->>DB: ROLLBACK
+        G-->>C: 404 PHOTO_UPLOAD_NOT_FOUND
+    else Upload found
+        G->>DB: findCreation(owner, K)
+        DB-->>G: Existing garment or none
+
+        alt Idempotency key already used
+            G->>G: Compare stored fingerprint with F
+
+            alt Fingerprints match
+                G->>DB: COMMIT
+                G-->>C: 200 OK - Existing garment
+            else Fingerprints differ
+                G->>DB: ROLLBACK
+                G-->>C: 422 IDEMPOTENCY_KEY_REUSED
+            end
+
+        else Idempotency key unused
+            G->>G: Check upload is READY and not expired
+
+            alt Upload not usable
+                G->>DB: ROLLBACK
+                G-->>C: 409 PHOTO_UPLOAD_NOT_USABLE
+
+            else Upload usable
+                G->>DB: INSERT garment and sets ON CONFLICT DO NOTHING
+                DB-->>G: Insert result
+
+                G->>DB: UPDATE upload SET status=ATTACHED, garment_id
+                DB-->>G: Update result
+
+                G->>DB: COMMIT
+                G-->>C: 201 Created - Garment with photo metadata
+            end
+        end
     end
-    G->>DB: findCreation(owner, K)
-    alt K already used
-        G-->>C: same fingerprint → 200 existing garment; different → 422 IDEMPOTENCY_KEY_REUSED
-    end
-    alt upload not READY or expired
-        G-->>C: 409 PHOTO_UPLOAD_NOT_USABLE (rollback)
-    end
-    G->>DB: INSERT garment + sets (ON CONFLICT DO NOTHING)
-    G->>DB: UPDATE upload SET status=ATTACHED, garment_id WHERE status=READY
-    G->>DB: COMMIT
-    G-->>C: 201 Garment {photo: {contentType, width, height}}
-    Note over C,G: Lost response → repeat the same POST with K → 200 with the same garment
+
+    Note over C,G: If success response is lost, retry with same key K
+    Note over C,G: Matching fingerprint returns the existing garment
+
 ```
 
 ### 10.2 API contract
 
 The surface below is OPEN-S3-14 Option A, approved by the Product Owner on 2026-11-11: a separate `/photo-uploads` resource, with confirmation through the existing garment-creation endpoint and an optional `photoUploadId`. It follows the compatible-evolution and shared error conventions of S3-INT-01 / OPEN-S3-01.
 
-| Operation | Request | Success | Errors |
-| --- | --- | --- | --- |
-| `POST /api/v1/wardrobe/photo-uploads` | `multipart/form-data`, part `photo` (the file); header `Idempotency-Key` (UUID) | `201` new / `200` replay: `PhotoUpload` | `400 VALIDATION_FAILED` (`photo` or `Idempotency-Key` missing/invalid), `400 MALFORMED_REQUEST` (not multipart), `401`, `409 PHOTO_UPLOAD_NOT_USABLE` (cancelled or expired while uploading), `422 PHOTO_*` or `PHOTO_UPLOAD_KEY_REUSED`, `503` |
-| `GET /api/v1/wardrobe/photo-uploads/{photoUploadId}` | — | `200 PhotoUpload` | `401`, `404 PHOTO_UPLOAD_NOT_FOUND`, `503` |
-| `GET /api/v1/wardrobe/photo-uploads/{photoUploadId}/content` | Send `Accept: image/jpeg, application/problem+json` | `200 image/jpeg` | `401`, `404`, `409 PHOTO_UPLOAD_NOT_USABLE` (not `READY`), `503` |
-| `DELETE /api/v1/wardrobe/photo-uploads/{photoUploadId}` | — | `204` (also when already cancelled or expired) | `401`, `404`, `409 PHOTO_UPLOAD_NOT_USABLE` (already attached), `503` |
-| `POST /api/v1/wardrobe/garments` | Existing body + optional `photoUploadId` | `201`/`200 Garment` with `photo` | Existing errors + `400` (`photoUploadId: INVALID_FORMAT`), `404 PHOTO_UPLOAD_NOT_FOUND`, `409 PHOTO_UPLOAD_NOT_USABLE` |
-| `GET /api/v1/wardrobe/garments/{garmentId}/photo` | — | `200 image/jpeg` | `401`, `404 GARMENT_NOT_FOUND`, `404 GARMENT_PHOTO_UNAVAILABLE`, `410`, `503` |
+| Operation                                                    | Request                                                                         | Success                                        | Errors                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/wardrobe/photo-uploads`                        | `multipart/form-data`, part `photo` (the file); header `Idempotency-Key` (UUID) | `201` new / `200` replay: `PhotoUpload`        | `400 VALIDATION_FAILED` (`photo` or `Idempotency-Key` missing/invalid), `400 MALFORMED_REQUEST` (not multipart), `401`, `409 PHOTO_UPLOAD_NOT_USABLE` (cancelled or expired while uploading), `422 PHOTO_*` or `PHOTO_UPLOAD_KEY_REUSED`, `503` |
+| `GET /api/v1/wardrobe/photo-uploads/{photoUploadId}`         | —                                                                               | `200 PhotoUpload`                              | `401`, `404 PHOTO_UPLOAD_NOT_FOUND`, `503`                                                                                                                                                                                                      |
+| `GET /api/v1/wardrobe/photo-uploads/{photoUploadId}/content` | Send `Accept: image/jpeg, application/problem+json`                             | `200 image/jpeg`                               | `401`, `404`, `409 PHOTO_UPLOAD_NOT_USABLE` (not `READY`), `503`                                                                                                                                                                                |
+| `DELETE /api/v1/wardrobe/photo-uploads/{photoUploadId}`      | —                                                                               | `204` (also when already cancelled or expired) | `401`, `404`, `409 PHOTO_UPLOAD_NOT_USABLE` (already attached), `503`                                                                                                                                                                           |
+| `POST /api/v1/wardrobe/garments`                             | Existing body + optional `photoUploadId`                                        | `201`/`200 Garment` with `photo`               | Existing errors + `400` (`photoUploadId: INVALID_FORMAT`), `404 PHOTO_UPLOAD_NOT_FOUND`, `409 PHOTO_UPLOAD_NOT_USABLE`                                                                                                                          |
+| `GET /api/v1/wardrobe/garments/{garmentId}/photo`            | —                                                                               | `200 image/jpeg`                               | `401`, `404 GARMENT_NOT_FOUND`, `404 GARMENT_PHOTO_UNAVAILABLE`, `410`, `503`                                                                                                                                                                   |
 
 `PhotoUpload` (every field always present):
 
@@ -311,18 +348,18 @@ The overview summary is unchanged (OPEN-S3-14).
 
 The complete V10 is in Step P2. Key statements (all in `JdbcPhotoUploadRepository`):
 
-| Purpose | Statement (abridged) |
-| --- | --- |
-| Intent | `INSERT … ON CONFLICT (owner_account_id, upload_key) DO NOTHING` |
-| Ready | `UPDATE … SET status='READY', content_type, width, height, ready_at WHERE id=:id AND status='RECEIVING'` |
-| Failed put | `UPDATE … SET status='DISCARDED', discarded_at=:now, next_cleanup_at=GREATEST(:now, created_at + :fence) WHERE id=:id AND status='RECEIVING'` |
-| Late-write requeue | `UPDATE … SET object_deleted_at=NULL, next_cleanup_at=:now WHERE id=:id AND status='DISCARDED'` |
-| Lock for confirmation | `SELECT … WHERE id=:id AND owner_account_id=:owner FOR UPDATE` |
-| Attach | `UPDATE … SET status='ATTACHED', garment_id=:garmentId, attached_at=:now WHERE id=:id AND status='READY'` |
-| Cancel | `UPDATE … SET status='DISCARDED', … WHERE id=:id AND owner_account_id=:owner AND status IN ('RECEIVING','READY')` |
-| Expire batch | `UPDATE … WHERE id IN (SELECT id … WHERE status IN ('RECEIVING','READY') AND expires_at <= :now ORDER BY expires_at LIMIT :n FOR UPDATE SKIP LOCKED) AND status IN ('RECEIVING','READY')` |
-| Claim cleanup | `UPDATE … SET next_cleanup_at=:retryAt, cleanup_attempts=cleanup_attempts+1 WHERE id IN (SELECT … status='DISCARDED' AND object_deleted_at IS NULL AND next_cleanup_at <= :now … FOR UPDATE SKIP LOCKED) RETURNING id, object_key` |
-| Deleted | `UPDATE … SET object_deleted_at=:now WHERE id=:id AND status='DISCARDED' AND object_deleted_at IS NULL` |
+| Purpose               | Statement (abridged)                                                                                                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Intent                | `INSERT … ON CONFLICT (owner_account_id, upload_key) DO NOTHING`                                                                                                                                                                   |
+| Ready                 | `UPDATE … SET status='READY', content_type, width, height, ready_at WHERE id=:id AND status='RECEIVING'`                                                                                                                           |
+| Failed put            | `UPDATE … SET status='DISCARDED', discarded_at=:now, next_cleanup_at=GREATEST(:now, created_at + :fence) WHERE id=:id AND status='RECEIVING'`                                                                                      |
+| Late-write requeue    | `UPDATE … SET object_deleted_at=NULL, next_cleanup_at=:now WHERE id=:id AND status='DISCARDED'`                                                                                                                                    |
+| Lock for confirmation | `SELECT … WHERE id=:id AND owner_account_id=:owner FOR UPDATE`                                                                                                                                                                     |
+| Attach                | `UPDATE … SET status='ATTACHED', garment_id=:garmentId, attached_at=:now WHERE id=:id AND status='READY'`                                                                                                                          |
+| Cancel                | `UPDATE … SET status='DISCARDED', … WHERE id=:id AND owner_account_id=:owner AND status IN ('RECEIVING','READY')`                                                                                                                  |
+| Expire batch          | `UPDATE … WHERE id IN (SELECT id … WHERE status IN ('RECEIVING','READY') AND expires_at <= :now ORDER BY expires_at LIMIT :n FOR UPDATE SKIP LOCKED) AND status IN ('RECEIVING','READY')`                                          |
+| Claim cleanup         | `UPDATE … SET next_cleanup_at=:retryAt, cleanup_attempts=cleanup_attempts+1 WHERE id IN (SELECT … status='DISCARDED' AND object_deleted_at IS NULL AND next_cleanup_at <= :now … FOR UPDATE SKIP LOCKED) RETURNING id, object_key` |
+| Deleted               | `UPDATE … SET object_deleted_at=:now WHERE id=:id AND status='DISCARDED' AND object_deleted_at IS NULL`                                                                                                                            |
 
 The garment read gains:
 
@@ -332,14 +369,14 @@ LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status =
 
 ### 10.4 Transactions and concurrency
 
-| Race | Resolution |
-| --- | --- |
-| Two confirmations of one upload (same or different keys) | Both lock the upload row. The second sees `ATTACHED`: with the same key and fingerprint it replays; with a different key it gets `409 PHOTO_UPLOAD_NOT_USABLE`. |
-| Confirmation versus expiry sweep | The sweep uses `FOR UPDATE SKIP LOCKED` and re-checks status, so it skips a row a confirmation holds. A confirmation that locks after the sweep committed sees `DISCARDED` and gets `409`. |
-| Cancel versus confirmation | Same row lock. Whichever commits first wins; the other is explained (`409` for either). |
-| Upload still running when cancelled or expired | `next_cleanup_at ≥ created_at + in-flight fence` (`PT5M` > storage timeout `PT30S` + 2 × decode timeout `PT20S`, the rule checked at startup in P51). If the late put lands anyway, its failing `READY` update re-queues deletion. |
-| Two uploads with the same key at once | `UNIQUE (owner_account_id, upload_key)`. The loser rereads, compares the SHA-256 and replays or rejects. The loser never stored an object (it puts only after its own intent insert). |
-| Two cleanup workers | `SKIP LOCKED` claims plus a lease (`next_cleanup_at = now + retry-delay`). Deleting twice is harmless (S3 delete is idempotent). |
+| Race                                                     | Resolution                                                                                                                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two confirmations of one upload (same or different keys) | Both lock the upload row. The second sees `ATTACHED`: with the same key and fingerprint it replays; with a different key it gets `409 PHOTO_UPLOAD_NOT_USABLE`.                                                                    |
+| Confirmation versus expiry sweep                         | The sweep uses `FOR UPDATE SKIP LOCKED` and re-checks status, so it skips a row a confirmation holds. A confirmation that locks after the sweep committed sees `DISCARDED` and gets `409`.                                         |
+| Cancel versus confirmation                               | Same row lock. Whichever commits first wins; the other is explained (`409` for either).                                                                                                                                            |
+| Upload still running when cancelled or expired           | `next_cleanup_at ≥ created_at + in-flight fence` (`PT5M` > storage timeout `PT30S` + 2 × decode timeout `PT20S`, the rule checked at startup in P51). If the late put lands anyway, its failing `READY` update re-queues deletion. |
+| Two uploads with the same key at once                    | `UNIQUE (owner_account_id, upload_key)`. The loser rereads, compares the SHA-256 and replays or rejects. The loser never stored an object (it puts only after its own intent insert).                                              |
+| Two cleanup workers                                      | `SKIP LOCKED` claims plus a lease (`next_cleanup_at = now + retry-delay`). Deleting twice is harmless (S3 delete is idempotent).                                                                                                   |
 
 ### 10.5 Security
 
@@ -351,15 +388,15 @@ LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status =
 
 ### 10.6 Recovery matrix
 
-| Interruption point | State | Recovery |
-| --- | --- | --- |
-| Before the intent insert | Nothing durable | Retry with the same key → normal staging |
+| Interruption point                                 | State                        | Recovery                                                                                                                         |
+| -------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Before the intent insert                           | Nothing durable              | Retry with the same key → normal staging                                                                                         |
 | After the intent, before the put completes (crash) | `RECEIVING`, maybe an object | A retry with the same key returns `RECEIVING` (`200`). Expiry later discards it, and cleanup deletes any object after the fence. |
-| Put failed | `DISCARDED`, cleanup queued | `503`; the client stages again with a **new** key (a replay of the old key returns `DISCARDED`) |
-| After `READY`, response lost | `READY` | Retry with the same key → `200` with the same upload |
-| Confirmation committed, response lost | `ATTACHED`, garment exists | Retry the same POST and key → `200` with the same garment |
-| Confirmation rolled back (DB failure) | `READY` unchanged | `503`; retry the same POST → `201` |
-| Attached object deleted externally | `ATTACHED`, object missing | Photo route `404 GARMENT_PHOTO_UNAVAILABLE`; garment unaffected |
+| Put failed                                         | `DISCARDED`, cleanup queued  | `503`; the client stages again with a **new** key (a replay of the old key returns `DISCARDED`)                                  |
+| After `READY`, response lost                       | `READY`                      | Retry with the same key → `200` with the same upload                                                                             |
+| Confirmation committed, response lost              | `ATTACHED`, garment exists   | Retry the same POST and key → `200` with the same garment                                                                        |
+| Confirmation rolled back (DB failure)              | `READY` unchanged            | `503`; retry the same POST → `201`                                                                                               |
+| Attached object deleted externally                 | `ATTACHED`, object missing   | Photo route `404 GARMENT_PHOTO_UNAVAILABLE`; garment unaffected                                                                  |
 
 ### 10.7 Configuration
 
@@ -367,23 +404,23 @@ See [shared architecture §19](shared-architecture.md#19-configuration-and-envir
 
 ### 10.8 Testing plan
 
-| Level | Class | Focus |
-| --- | --- | --- |
-| Domain | `PhotoUploadTest` | Status invariants, usability, key format |
-| Application | `StagePhotoUploadServiceTest` | Size boundary, 511/512, replay, key reuse, storage failure, cancelled while uploading |
-| Application | `PhotoBackedGarmentCreationTest` | Confirm, replay, key reuse, not-usable, other owner, imageless path unchanged |
-| Application | `PhotoUploadLifecycleServiceTest` | Cancel, idempotent cancel, attached not cancellable, expiry, cleanup retry, attached never deleted |
-| Imaging | `ImageIoPhotoInspectorTest` | JPEG/PNG genuine decode, suffix and Content-Type mismatch, truncation, orientation, metadata stripping, long-edge bound, pixel ceiling, busy decode slots → `503` |
-| Imaging | `HeifDecoderTest` | heif-info listing, primary selection (also when the primary is not first), fail-closed cases, pixel ceiling before decoding, output names; no libheif needed |
-| Imaging | `HeifDecodingIT` | Real libheif: HEIC decode; multi-image rejection while selection is disabled; primary image chosen when it is listed first **and** when it is not the first decoded image; truncated input |
-| Storage | `S3PhotoStorageIT` | Put/get/delete against S3Mock, missing object, idempotent delete, conditional write (V-S3) |
-| Schema | `PhotoUploadSchemaIT` | V10 constraints |
-| API | `PhotoUploadApiIT` | Staging boundaries and errors, review content, cancel, privacy, logout |
-| API | `PhotoGarmentApiIT` | Confirmation, replay, detail photo, photo route, missing object, imageless regression |
-| Concurrency | `ConcurrentPhotoConfirmationIT` | Same-upload confirmations, sweep versus confirmation |
-| Lifecycle | `PhotoUploadCleanupIT` | Expiry, fence, delete failure and retry, attached untouched |
-| Contract | `IdentityOpenApiContractIT` (modified) | Multipart and binary operations documented and protected |
-| Security | `CorsSecurityIT` (modified) | `DELETE` preflight |
+| Level       | Class                                  | Focus                                                                                                                                                                                      |
+| ----------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Domain      | `PhotoUploadTest`                      | Status invariants, usability, key format                                                                                                                                                   |
+| Application | `StagePhotoUploadServiceTest`          | Size boundary, 511/512, replay, key reuse, storage failure, cancelled while uploading                                                                                                      |
+| Application | `PhotoBackedGarmentCreationTest`       | Confirm, replay, key reuse, not-usable, other owner, imageless path unchanged                                                                                                              |
+| Application | `PhotoUploadLifecycleServiceTest`      | Cancel, idempotent cancel, attached not cancellable, expiry, cleanup retry, attached never deleted                                                                                         |
+| Imaging     | `ImageIoPhotoInspectorTest`            | JPEG/PNG genuine decode, suffix and Content-Type mismatch, truncation, orientation, metadata stripping, long-edge bound, pixel ceiling, busy decode slots → `503`                          |
+| Imaging     | `HeifDecoderTest`                      | heif-info listing, primary selection (also when the primary is not first), fail-closed cases, pixel ceiling before decoding, output names; no libheif needed                               |
+| Imaging     | `HeifDecodingIT`                       | Real libheif: HEIC decode; multi-image rejection while selection is disabled; primary image chosen when it is listed first **and** when it is not the first decoded image; truncated input |
+| Storage     | `S3PhotoStorageIT`                     | Put/get/delete against S3Mock, missing object, idempotent delete, conditional write (V-S3)                                                                                                 |
+| Schema      | `PhotoUploadSchemaIT`                  | V10 constraints                                                                                                                                                                            |
+| API         | `PhotoUploadApiIT`                     | Staging boundaries and errors, review content, cancel, privacy, logout                                                                                                                     |
+| API         | `PhotoGarmentApiIT`                    | Confirmation, replay, detail photo, photo route, missing object, imageless regression                                                                                                      |
+| Concurrency | `ConcurrentPhotoConfirmationIT`        | Same-upload confirmations, sweep versus confirmation                                                                                                                                       |
+| Lifecycle   | `PhotoUploadCleanupIT`                 | Expiry, fence, delete failure and retry, attached untouched                                                                                                                                |
+| Contract    | `IdentityOpenApiContractIT` (modified) | Multipart and binary operations documented and protected                                                                                                                                   |
+| Security    | `CorsSecurityIT` (modified)            | `DELETE` preflight                                                                                                                                                                         |
 
 ### 10.9 HEIC/HEIF decoding and multi-image files (OPEN-S3-08, OPEN-S3-11, OPEN-S3-12)
 
@@ -455,90 +492,90 @@ Until then, the story can ship only the temporary fallback, and the multi-image 
 
 `…/wardrobe` = `backend/src/main/java/com/capsuleai/wardrobe`.
 
-| Order | Action | Exact Repository Path | Purpose | Dependencies |
-| --- | --- | --- | --- | --- |
-| P1 | MODIFY | `backend/pom.xml` | AWS SDK v2 BOM + `s3` | — |
-| P2 | ADD | `backend/src/main/resources/db/migration/V10__create_wardrobe_photo_upload.sql` | Pending media table | V9 |
-| P3 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentPhoto.java` | Photo metadata | — |
-| P4 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/domain/Garment.java` | `photo` component | P3 |
-| P5 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoUploadStatus.java` | Lifecycle states | — |
-| P6 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoRejectionReason.java` | Rejection reasons | — |
-| P7 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoUpload.java` | Upload aggregate | P5 |
-| P8 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ReceivedPhoto.java` | Uploaded bytes abstraction | — |
-| P9 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoRejectedException.java` | `422` | P6 |
-| P10 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadNotFoundException.java` | `404` | — |
-| P11 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadNotUsableException.java` | `409` | — |
-| P12 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadKeyReusedException.java` | `422` | — |
-| P13 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentPhotoUnavailableException.java` | `404` | — |
-| P14 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoStorageUnavailableException.java` | `503` | — |
-| P15 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoProcessingUnavailableException.java` | `503` | — |
-| P16 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/StoredPhoto.java` | Stream + length | — |
-| P17 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoStorage.java` | Storage port | P14, P16 |
-| P18 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/InspectedPhoto.java` | Inspection result | — |
-| P19 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoInspector.java` | Decoder port | P8, P18 |
-| P20 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoCleanupTarget.java` | Claimed cleanup row | — |
-| P21 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoUploadRepository.java` | Persistence port | P7, P20 |
-| P22 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadPolicy.java` | Policy values | — |
-| P23 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/StagePhotoCommand.java` | Command | P8 |
-| P24 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/StagedPhoto.java` | Outcome | P7 |
-| P25 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/StagePhotoUploadService.java` | Staging use case | P8–P24 |
-| P26 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/ViewPhotoUploadService.java` | Status and pending content | P21, P17 |
-| P27 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/CancelPhotoUploadService.java` | Cancel | P21 |
-| P28 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentPhotoContentService.java` | Attached photo stream | P21, P17 |
-| P29 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadCleanupService.java` | Expiry + deletion | P21, P17 |
-| P30 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentCommand.java` | `photoUploadId` | — |
-| P31 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentEntryValidator.java` | `photoUploadId` format | P30 |
-| P32 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprint.java` | Photo in fingerprint | — |
-| P33 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java` | Photo-backed creation | P21, P31, P32 |
-| P34 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepository.java` | Photo join | P2, P4 |
-| P35 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcPhotoUploadRepository.java` | SQL | P2, P21 |
-| P36 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/storage/S3PhotoStorage.java` | S3 adapter | P1, P17 |
-| P37 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/JpegOrientation.java` | EXIF orientation | — |
-| P38 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoder.java` | Bounded `heif-info` + `heif-dec` processes; primary-image selection with fail-closed fallback | P9, P15 |
-| P39 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/ImageIoPhotoInspector.java` | Sniff, decode, normalize | P37, P38, P19 |
-| P40 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/MultipartReceivedPhoto.java` | `MultipartFile` → `ReceivedPhoto` | P8 |
-| P41 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PhotoUploadResponse.java` | JSON | P7 |
-| P42 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentPhotoResponse.java` | JSON | P3 |
-| P43 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PhotoResponses.java` | Image response helper | P16 |
-| P44 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentResponse.java` | `photo` | P42 |
-| P45 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentCreationRequest.java` | `photoUploadId` | P30 |
-| P46 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobePhotoUploadController.java` | Upload routes | P25–P27, P40–P43 |
-| P47 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeGarmentController.java` | Garment photo route | P28, P43 |
-| P48 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java` | Photo errors | P9–P15 |
-| P49 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/scheduling/PhotoUploadCleanupJob.java` | Scheduled cleanup | P29 |
-| P50 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoProperties.java` | `capsuleai.wardrobe.photo*` | — |
-| P51 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoConfiguration.java` | Media beans | P35–P39, P50 |
-| P52 | ADD | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoCleanupConfiguration.java` | Scheduling switch | P49 |
-| P53 | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobeConfiguration.java` | `AddGarmentService` wiring | P33, P51 |
-| P54 | MODIFY | `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java` | CORS `DELETE` | — |
-| P55 | MODIFY | `backend/src/main/resources/application.properties` | Multipart, photo, storage | P50 |
-| P56 | MODIFY | `backend/src/main/resources/application-local.properties` | Local S3Mock | P55 |
-| P57 | MODIFY | `compose.yaml` | S3Mock service | — |
-| P58 | MODIFY | `docs/05-api/openapi.yaml` | 0.10.0 | P41–P48 |
-| P59 | MODIFY | `.github/workflows/backend-ci.yml` | libheif, env, reports | T-steps |
-| P60 | MODIFY | `backend/README.md` | Photos section | — |
-| T1 | MODIFY | `backend/src/test/resources/application-test.properties` | Test storage and cleanup | P55 |
-| T2 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/support/FaultInjectingPhotoStorage.java` | In-memory storage with faults | P17 |
-| T3 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/support/TestImages.java` | Synthetic images | — |
-| T4 | MODIFY | `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java` | `@Primary` test storage | T2 |
-| T5 | MODIFY | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java` | Truncate, photo helpers | T2, T3 |
-| T6 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/InMemoryPhotoUploadRepository.java` | Fake repository | P21 |
-| T7 | MODIFY | `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java` | New constructor | P33, T6 |
-| T8 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/domain/PhotoUploadTest.java` | Domain | P7 |
-| T9 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/StagePhotoUploadServiceTest.java` | Staging | P25 |
-| T10 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/PhotoBackedGarmentCreationTest.java` | Confirmation | P33 |
-| T11 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/PhotoUploadLifecycleServiceTest.java` | Cancel, cleanup | P27, P29 |
-| T12 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/ImageIoPhotoInspectorTest.java` | Imaging | P39 |
-| T13 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecodingIT.java` | Real libheif | P38, P39 |
-| T14 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/storage/S3PhotoStorageIT.java` | Real S3 protocol | P36 |
-| T15 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/PhotoUploadSchemaIT.java` | V10 | P2 |
-| T16 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/PhotoUploadApiIT.java` | Upload API | P46 |
-| T17 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/PhotoGarmentApiIT.java` | Confirmation API | P47 |
-| T18 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentPhotoConfirmationIT.java` | Races | P33, P35 |
-| T19 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/PhotoUploadCleanupIT.java` | Lifecycle on PostgreSQL | P29, P35 |
-| T20 | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java` | Multipart and binary | P58 |
-| T21 | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java` | `DELETE` | P54 |
-| T22 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoderTest.java` | Listing, selection and fail-closed rules without libheif | P38 |
+| Order | Action | Exact Repository Path                                                                                     | Purpose                                                                                       | Dependencies     |
+| ----- | ------ | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------- |
+| P1    | MODIFY | `backend/pom.xml`                                                                                         | AWS SDK v2 BOM + `s3`                                                                         | —                |
+| P2    | ADD    | `backend/src/main/resources/db/migration/V10__create_wardrobe_photo_upload.sql`                           | Pending media table                                                                           | V9               |
+| P3    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/domain/GarmentPhoto.java`                                   | Photo metadata                                                                                | —                |
+| P4    | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/domain/Garment.java`                                        | `photo` component                                                                             | P3               |
+| P5    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoUploadStatus.java`                              | Lifecycle states                                                                              | —                |
+| P6    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoRejectionReason.java`                           | Rejection reasons                                                                             | —                |
+| P7    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/domain/PhotoUpload.java`                                    | Upload aggregate                                                                              | P5               |
+| P8    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ReceivedPhoto.java`                             | Uploaded bytes abstraction                                                                    | —                |
+| P9    | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoRejectedException.java`                    | `422`                                                                                         | P6               |
+| P10   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadNotFoundException.java`              | `404`                                                                                         | —                |
+| P11   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadNotUsableException.java`             | `409`                                                                                         | —                |
+| P12   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadKeyReusedException.java`             | `422`                                                                                         | —                |
+| P13   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentPhotoUnavailableException.java`          | `404`                                                                                         | —                |
+| P14   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoStorageUnavailableException.java`    | `503`                                                                                         | —                |
+| P15   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoProcessingUnavailableException.java` | `503`                                                                                         | —                |
+| P16   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/StoredPhoto.java`                         | Stream + length                                                                               | —                |
+| P17   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoStorage.java`                        | Storage port                                                                                  | P14, P16         |
+| P18   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/InspectedPhoto.java`                      | Inspection result                                                                             | —                |
+| P19   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoInspector.java`                      | Decoder port                                                                                  | P8, P18          |
+| P20   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoCleanupTarget.java`                  | Claimed cleanup row                                                                           | —                |
+| P21   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ports/PhotoUploadRepository.java`               | Persistence port                                                                              | P7, P20          |
+| P22   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadPolicy.java`                         | Policy values                                                                                 | —                |
+| P23   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/StagePhotoCommand.java`                         | Command                                                                                       | P8               |
+| P24   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/StagedPhoto.java`                               | Outcome                                                                                       | P7               |
+| P25   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/StagePhotoUploadService.java`                   | Staging use case                                                                              | P8–P24           |
+| P26   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/ViewPhotoUploadService.java`                    | Status and pending content                                                                    | P21, P17         |
+| P27   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/CancelPhotoUploadService.java`                  | Cancel                                                                                        | P21              |
+| P28   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentPhotoContentService.java`                | Attached photo stream                                                                         | P21, P17         |
+| P29   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/application/PhotoUploadCleanupService.java`                 | Expiry + deletion                                                                             | P21, P17         |
+| P30   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentCommand.java`                         | `photoUploadId`                                                                               | —                |
+| P31   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentEntryValidator.java`                     | `photoUploadId` format                                                                        | P30              |
+| P32   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/GarmentCreationFingerprint.java`                | Photo in fingerprint                                                                          | —                |
+| P33   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java`                         | Photo-backed creation                                                                         | P21, P31, P32    |
+| P34   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcGarmentRepository.java`         | Photo join                                                                                    | P2, P4           |
+| P35   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcPhotoUploadRepository.java`     | SQL                                                                                           | P2, P21          |
+| P36   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/storage/S3PhotoStorage.java`                    | S3 adapter                                                                                    | P1, P17          |
+| P37   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/JpegOrientation.java`                   | EXIF orientation                                                                              | —                |
+| P38   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoder.java`                       | Bounded `heif-info` + `heif-dec` processes; primary-image selection with fail-closed fallback | P9, P15          |
+| P39   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/imaging/ImageIoPhotoInspector.java`             | Sniff, decode, normalize                                                                      | P37, P38, P19    |
+| P40   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/MultipartReceivedPhoto.java`                 | `MultipartFile` → `ReceivedPhoto`                                                             | P8               |
+| P41   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PhotoUploadResponse.java`                    | JSON                                                                                          | P7               |
+| P42   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentPhotoResponse.java`                   | JSON                                                                                          | P3               |
+| P43   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/PhotoResponses.java`                         | Image response helper                                                                         | P16              |
+| P44   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentResponse.java`                        | `photo`                                                                                       | P42              |
+| P45   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/GarmentCreationRequest.java`                 | `photoUploadId`                                                                               | P30              |
+| P46   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobePhotoUploadController.java`          | Upload routes                                                                                 | P25–P27, P40–P43 |
+| P47   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeGarmentController.java`              | Garment photo route                                                                           | P28, P43         |
+| P48   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java`            | Photo errors                                                                                  | P9–P15           |
+| P49   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/scheduling/PhotoUploadCleanupJob.java`           | Scheduled cleanup                                                                             | P29              |
+| P50   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoProperties.java`                 | `capsuleai.wardrobe.photo*`                                                                   | —                |
+| P51   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoConfiguration.java`              | Media beans                                                                                   | P35–P39, P50     |
+| P52   | ADD    | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobePhotoCleanupConfiguration.java`       | Scheduling switch                                                                             | P49              |
+| P53   | MODIFY | `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobeConfiguration.java`                   | `AddGarmentService` wiring                                                                    | P33, P51         |
+| P54   | MODIFY | `backend/src/main/java/com/capsuleai/identity/configuration/IdentitySecurityConfiguration.java`           | CORS `DELETE`                                                                                 | —                |
+| P55   | MODIFY | `backend/src/main/resources/application.properties`                                                       | Multipart, photo, storage                                                                     | P50              |
+| P56   | MODIFY | `backend/src/main/resources/application-local.properties`                                                 | Local S3Mock                                                                                  | P55              |
+| P57   | MODIFY | `compose.yaml`                                                                                            | S3Mock service                                                                                | —                |
+| P58   | MODIFY | `docs/05-api/openapi.yaml`                                                                                | 0.10.0                                                                                        | P41–P48          |
+| P59   | MODIFY | `.github/workflows/backend-ci.yml`                                                                        | libheif, env, reports                                                                         | T-steps          |
+| P60   | MODIFY | `backend/README.md`                                                                                       | Photos section                                                                                | —                |
+| T1    | MODIFY | `backend/src/test/resources/application-test.properties`                                                  | Test storage and cleanup                                                                      | P55              |
+| T2    | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/support/FaultInjectingPhotoStorage.java`                    | In-memory storage with faults                                                                 | P17              |
+| T3    | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/support/TestImages.java`                                    | Synthetic images                                                                              | —                |
+| T4    | MODIFY | `backend/src/test/java/com/capsuleai/identity/support/IdentityTestConfiguration.java`                     | `@Primary` test storage                                                                       | T2               |
+| T5    | MODIFY | `backend/src/test/java/com/capsuleai/wardrobe/support/WardrobeIntegrationTestSupport.java`                | Truncate, photo helpers                                                                       | T2, T3           |
+| T6    | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/application/InMemoryPhotoUploadRepository.java`             | Fake repository                                                                               | P21              |
+| T7    | MODIFY | `backend/src/test/java/com/capsuleai/wardrobe/application/AddGarmentServiceTest.java`                     | New constructor                                                                               | P33, T6          |
+| T8    | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/domain/PhotoUploadTest.java`                                | Domain                                                                                        | P7               |
+| T9    | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/application/StagePhotoUploadServiceTest.java`               | Staging                                                                                       | P25              |
+| T10   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/application/PhotoBackedGarmentCreationTest.java`            | Confirmation                                                                                  | P33              |
+| T11   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/application/PhotoUploadLifecycleServiceTest.java`           | Cancel, cleanup                                                                               | P27, P29         |
+| T12   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/ImageIoPhotoInspectorTest.java`         | Imaging                                                                                       | P39              |
+| T13   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecodingIT.java`                    | Real libheif                                                                                  | P38, P39         |
+| T14   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/storage/S3PhotoStorageIT.java`                  | Real S3 protocol                                                                              | P36              |
+| T15   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/PhotoUploadSchemaIT.java`           | V10                                                                                           | P2               |
+| T16   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/PhotoUploadApiIT.java`                       | Upload API                                                                                    | P46              |
+| T17   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/PhotoGarmentApiIT.java`                      | Confirmation API                                                                              | P47              |
+| T18   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentPhotoConfirmationIT.java`             | Races                                                                                         | P33, P35         |
+| T19   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/persistence/PhotoUploadCleanupIT.java`          | Lifecycle on PostgreSQL                                                                       | P29, P35         |
+| T20   | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/web/IdentityOpenApiContractIT.java`              | Multipart and binary                                                                          | P58              |
+| T21   | MODIFY | `backend/src/test/java/com/capsuleai/identity/adapter/in/security/CorsSecurityIT.java`                    | `DELETE`                                                                                      | P54              |
+| T22   | ADD    | `backend/src/test/java/com/capsuleai/wardrobe/adapter/out/imaging/HeifDecoderTest.java`                   | Listing, selection and fail-closed rules without libheif                                      | P38              |
 
 ## 12. Complete Production Implementation
 
@@ -4354,21 +4391,21 @@ Change 1. BEFORE `  version: 0.9.0`, AFTER `  version: 0.10.0`.
 Change 2. BEFORE:
 
 ```yaml
-      - US-GAR-002: Correct and enrich garment information
+- US-GAR-002: Correct and enrich garment information
 ```
 
 AFTER:
 
 ```yaml
-      - US-GAR-002: Correct and enrich garment information
-      - US-GAR-003: Add a photo-supported garment with manual confirmation
+- US-GAR-002: Correct and enrich garment information
+- US-GAR-003: Add a photo-supported garment with manual confirmation
 ```
 
 Change 3. BEFORE:
 
 ```yaml
-    eligibility is not evaluated in this release, and no garment
-    image is stored.
+eligibility is not evaluated in this release, and no garment
+image is stored.
 ```
 
 AFTER:
@@ -4384,16 +4421,16 @@ AFTER:
 Change 4. BEFORE:
 
 ```yaml
-    session listing, all-device logout, garment removal,
-    garment images, search, filtering or user profiles.
+session listing, all-device logout, garment removal,
+garment images, search, filtering or user profiles.
 ```
 
 AFTER:
 
 ```yaml
-    session listing, all-device logout, garment removal,
-    attaching a photo to an existing garment, replacing a
-    confirmed photo, search, filtering or user profiles.
+session listing, all-device logout, garment removal,
+attaching a photo to an existing garment, replacing a
+confirmed photo, search, filtering or user profiles.
 ```
 
 Change 5: the creation example and responses. BEFORE:
@@ -4424,27 +4461,27 @@ AFTER:
 BEFORE:
 
 ```yaml
-        "422":
-          $ref: "#/components/responses/IdempotencyKeyReused"
+"422":
+  $ref: "#/components/responses/IdempotencyKeyReused"
 
-        "503":
-          $ref: "#/components/responses/Unavailable"
+"503":
+  $ref: "#/components/responses/Unavailable"
 ```
 
 AFTER:
 
 ```yaml
-        "404":
-          $ref: "#/components/responses/PhotoUploadNotFound"
+"404":
+  $ref: "#/components/responses/PhotoUploadNotFound"
 
-        "409":
-          $ref: "#/components/responses/PhotoUploadNotUsable"
+"409":
+  $ref: "#/components/responses/PhotoUploadNotUsable"
 
-        "422":
-          $ref: "#/components/responses/IdempotencyKeyReused"
+"422":
+  $ref: "#/components/responses/IdempotencyKeyReused"
 
-        "503":
-          $ref: "#/components/responses/Unavailable"
+"503":
+  $ref: "#/components/responses/Unavailable"
 ```
 
 Change 6: four new paths, inserted before `components:`. BEFORE (end of the PATCH operation from US-GAR-002):
@@ -4672,7 +4709,6 @@ components:
       schema:
         type: string
         format: uuid
-
 ```
 
 Change 8: `photoUploadId` in the creation request. BEFORE:
@@ -4809,74 +4845,74 @@ AFTER:
 Change 10: five new responses. BEFORE `    GarmentNotFound:` (the response, not the schema), AFTER:
 
 ```yaml
-    PhotoRejected:
-      description: |
-        The photo was not accepted and nothing was stored. Choose
-        another photo or continue without one. Codes:
-        PHOTO_UNSUPPORTED_FORMAT, PHOTO_TOO_LARGE (above
-        15,000,000 bytes), PHOTO_TOO_SMALL (shorter side below 512
-        pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES (a HEIF
-        file with several images whose primary image is not
-        selected; temporary until primary-image selection is
-        verified and enabled), and PHOTO_UPLOAD_KEY_REUSED (the
-        Idempotency-Key was used for a different photo).
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            title: "Unprocessable Content"
-            status: 422
-            detail: "This photo is too small: its shorter side must be at least 512 pixels. Choose another photo or continue without one; nothing was saved."
-            instance: "/api/v1/wardrobe/photo-uploads"
-            code: "PHOTO_TOO_SMALL"
+PhotoRejected:
+  description: |
+    The photo was not accepted and nothing was stored. Choose
+    another photo or continue without one. Codes:
+    PHOTO_UNSUPPORTED_FORMAT, PHOTO_TOO_LARGE (above
+    15,000,000 bytes), PHOTO_TOO_SMALL (shorter side below 512
+    pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES (a HEIF
+    file with several images whose primary image is not
+    selected; temporary until primary-image selection is
+    verified and enabled), and PHOTO_UPLOAD_KEY_REUSED (the
+    Idempotency-Key was used for a different photo).
+  content:
+    application/problem+json:
+      schema:
+        $ref: "#/components/schemas/Problem"
+      example:
+        title: "Unprocessable Content"
+        status: 422
+        detail: "This photo is too small: its shorter side must be at least 512 pixels. Choose another photo or continue without one; nothing was saved."
+        instance: "/api/v1/wardrobe/photo-uploads"
+        code: "PHOTO_TOO_SMALL"
 
-    PhotoUploadNotFound:
-      description: |
-        No staged photo with this id belongs to the account (unknown,
-        another account's or malformed; indistinguishable).
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            title: "Not Found"
-            status: 404
-            detail: "This photo is not among your staged photos. Choose the photo again."
-            code: "PHOTO_UPLOAD_NOT_FOUND"
+PhotoUploadNotFound:
+  description: |
+    No staged photo with this id belongs to the account (unknown,
+    another account's or malformed; indistinguishable).
+  content:
+    application/problem+json:
+      schema:
+        $ref: "#/components/schemas/Problem"
+      example:
+        title: "Not Found"
+        status: 404
+        detail: "This photo is not among your staged photos. Choose the photo again."
+        code: "PHOTO_UPLOAD_NOT_FOUND"
 
-    PhotoUploadNotUsable:
-      description: |
-        The staged photo cannot be used for this action: still being
-        received, cancelled, expired or already attached to a
-        garment. Nothing changed. Check its status with
-        GET /api/v1/wardrobe/photo-uploads/{photoUploadId}.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            title: "Conflict"
-            status: 409
-            detail: "This photo can no longer be used here: it was cancelled, expired, is still being received or already belongs to a garment. Check the photo's status or choose it again."
-            code: "PHOTO_UPLOAD_NOT_USABLE"
+PhotoUploadNotUsable:
+  description: |
+    The staged photo cannot be used for this action: still being
+    received, cancelled, expired or already attached to a
+    garment. Nothing changed. Check its status with
+    GET /api/v1/wardrobe/photo-uploads/{photoUploadId}.
+  content:
+    application/problem+json:
+      schema:
+        $ref: "#/components/schemas/Problem"
+      example:
+        title: "Conflict"
+        status: 409
+        detail: "This photo can no longer be used here: it was cancelled, expired, is still being received or already belongs to a garment. Check the photo's status or choose it again."
+        code: "PHOTO_UPLOAD_NOT_USABLE"
 
-    GarmentPhotoUnavailable:
-      description: |
-        GARMENT_NOT_FOUND: no such garment in the account's wardrobe.
-        GARMENT_PHOTO_UNAVAILABLE: the garment has no photo, or its
-        photo is missing; the garment's information is unchanged.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            title: "Not Found"
-            status: 404
-            detail: "No photo can be shown for this garment. Its information is unchanged."
-            code: "GARMENT_PHOTO_UNAVAILABLE"
+GarmentPhotoUnavailable:
+  description: |
+    GARMENT_NOT_FOUND: no such garment in the account's wardrobe.
+    GARMENT_PHOTO_UNAVAILABLE: the garment has no photo, or its
+    photo is missing; the garment's information is unchanged.
+  content:
+    application/problem+json:
+      schema:
+        $ref: "#/components/schemas/Problem"
+      example:
+        title: "Not Found"
+        status: 404
+        detail: "No photo can be shown for this garment. Its information is unchanged."
+        code: "GARMENT_PHOTO_UNAVAILABLE"
 
-    GarmentNotFound:
+GarmentNotFound:
 ```
 
 **Explanation.** T20 extends `IdentityOpenApiContractIT` so that:
@@ -4895,26 +4931,26 @@ The `400` of `stagePhoto` reuses the existing `BadRequest` response (`VALIDATION
 Change 1: install and verify the HEIF decoder (OPEN-S3-08). BEFORE:
 
 ```yaml
-      - name: Build and run required verification
-        run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
+- name: Build and run required verification
+  run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
 ```
 
 AFTER:
 
 ```yaml
-      - name: Install the HEIF decoder, lister and encoder used by photo tests (OPEN-S3-08)
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends \
-            libheif-examples libheif-plugin-libde265 libheif-plugin-x265
-          (heif-dec --version || heif-convert --version) | head -n 1
-          heif-info --version | head -n 1
+- name: Install the HEIF decoder, lister and encoder used by photo tests (OPEN-S3-08)
+  shell: bash
+  run: |
+    sudo apt-get update
+    sudo apt-get install --yes --no-install-recommends \
+      libheif-examples libheif-plugin-libde265 libheif-plugin-x265
+    (heif-dec --version || heif-convert --version) | head -n 1
+    heif-info --version | head -n 1
 
-      - name: Build and run required verification
-        env:
-          CAPSULEAI_REQUIRE_HEIF: "true"
-        run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
+- name: Build and run required verification
+  env:
+    CAPSULEAI_REQUIRE_HEIF: "true"
+  run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
 ```
 
 Change 2: required reports. BEFORE:
@@ -4984,15 +5020,15 @@ US-GAR-003 adds one private photo to a **new** garment in two explicit steps:
 
 Garment detail then shows `photo` (`contentType`, `width`, `height`), and `GET /api/v1/wardrobe/garments/{id}/photo` returns the image. Unconfirmed photos expire after the pending lifetime of 24 hours (approved by the Product Owner; `capsuleai.wardrobe.photo-upload.pending-ttl`) and are deleted by an in-process cleanup. Attached photos are never deleted by it.
 
-| Outcome | Response |
-| --- | --- |
-| Not JPEG/PNG/HEIC/HEIF, above 15,000,000 bytes, shorter side below 512, unreadable | `422 PHOTO_UNSUPPORTED_FORMAT` / `PHOTO_TOO_LARGE` / `PHOTO_TOO_SMALL` / `PHOTO_UNREADABLE`; nothing stored |
-| A HEIF file with several images | The approved target is the file's primary image, but primary-image selection is **off** by default (`capsuleai.wardrobe.photo.heif-primary-image-selection=false`) until it is verified. While it is off: `422 PHOTO_MULTIPLE_IMAGES`, nothing stored |
-| Same upload key, different photo | `422 PHOTO_UPLOAD_KEY_REUSED` |
-| Unknown or another account's staged photo | `404 PHOTO_UPLOAD_NOT_FOUND` |
-| Cancelled, expired, still receiving, or already attached | `409 PHOTO_UPLOAD_NOT_USABLE` (a garment creation with it fails; it never falls back to a garment without a photo) |
-| Garment without a photo, or its photo is missing | `404 GARMENT_PHOTO_UNAVAILABLE`; garment detail still works |
-| Storage, decoder or database unavailable | `503 TEMPORARILY_UNAVAILABLE`; outcome not confirmed |
+| Outcome                                                                            | Response                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Not JPEG/PNG/HEIC/HEIF, above 15,000,000 bytes, shorter side below 512, unreadable | `422 PHOTO_UNSUPPORTED_FORMAT` / `PHOTO_TOO_LARGE` / `PHOTO_TOO_SMALL` / `PHOTO_UNREADABLE`; nothing stored                                                                                                                                           |
+| A HEIF file with several images                                                    | The approved target is the file's primary image, but primary-image selection is **off** by default (`capsuleai.wardrobe.photo.heif-primary-image-selection=false`) until it is verified. While it is off: `422 PHOTO_MULTIPLE_IMAGES`, nothing stored |
+| Same upload key, different photo                                                   | `422 PHOTO_UPLOAD_KEY_REUSED`                                                                                                                                                                                                                         |
+| Unknown or another account's staged photo                                          | `404 PHOTO_UPLOAD_NOT_FOUND`                                                                                                                                                                                                                          |
+| Cancelled, expired, still receiving, or already attached                           | `409 PHOTO_UPLOAD_NOT_USABLE` (a garment creation with it fails; it never falls back to a garment without a photo)                                                                                                                                    |
+| Garment without a photo, or its photo is missing                                   | `404 GARMENT_PHOTO_UNAVAILABLE`; garment detail still works                                                                                                                                                                                           |
+| Storage, decoder or database unavailable                                           | `503 TEMPORARILY_UNAVAILABLE`; outcome not confirmed                                                                                                                                                                                                  |
 
 Image routes answer `Cache-Control: no-store, private`. Send `Accept: image/jpeg, application/problem+json`.
 
@@ -7947,86 +7983,86 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 
 ### 15.1 AC to evidence
 
-| AC | Backend evidence (planned tests) | Client / external evidence still required |
-| --- | --- | --- |
-| AC-01 Permitted route | Imageless creation unchanged (T17 `imagelessCreation…`); upload accepts library or camera bytes alike | Camera and library permission flows, denial alternatives, guidance (FR-AI-011, HW-001/002) on Android/iOS |
-| AC-02 Validate supported input | T12 genuine JPEG/PNG, unsupported, truncated, pixel ceiling; T13 real HEIC, multi-image rejection while selection is off, primary image chosen (listed first and not first); T22 selection and fail-closed rules; T9/T16 15,000,000/15,000,001 and 511/512; T16 file-name/type mismatch | Real device HEIC/HEIF (V3); localized messages |
-| AC-03 Review or cancel | T16 review content, cancel, idempotent cancel; T11 cancel lifecycle; T9 cancel while storing | Preview display; replace flow in the client |
-| AC-04 Confirm a useful garment | T10 confirmation attaches; T17 confirmation and photo route; staging creates no garment (T16) | Confirmation UI |
-| AC-05 Authority, NOT_EVALUATED | T17 `NOT_EVALUATED`, Brand kept; shared validator (US-GAR-002 P6) | — |
-| AC-06 Recover safely | T10/T17 replay; T17 missing object affects only the photo route; T18 races; T19 lifecycle; T9 storage failure | "Unconfirmed outcome" UI and outcome review |
-| AC-07 Protect private media | T16 other account → 404, logout → 401; T17 foreign photo → 404; `private, no-store`; no presigned URLs | Client cache clearing on logout or account switch |
+| AC                             | Backend evidence (planned tests)                                                                                                                                                                                                                                                        | Client / external evidence still required                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| AC-01 Permitted route          | Imageless creation unchanged (T17 `imagelessCreation…`); upload accepts library or camera bytes alike                                                                                                                                                                                   | Camera and library permission flows, denial alternatives, guidance (FR-AI-011, HW-001/002) on Android/iOS |
+| AC-02 Validate supported input | T12 genuine JPEG/PNG, unsupported, truncated, pixel ceiling; T13 real HEIC, multi-image rejection while selection is off, primary image chosen (listed first and not first); T22 selection and fail-closed rules; T9/T16 15,000,000/15,000,001 and 511/512; T16 file-name/type mismatch | Real device HEIC/HEIF (V3); localized messages                                                            |
+| AC-03 Review or cancel         | T16 review content, cancel, idempotent cancel; T11 cancel lifecycle; T9 cancel while storing                                                                                                                                                                                            | Preview display; replace flow in the client                                                               |
+| AC-04 Confirm a useful garment | T10 confirmation attaches; T17 confirmation and photo route; staging creates no garment (T16)                                                                                                                                                                                           | Confirmation UI                                                                                           |
+| AC-05 Authority, NOT_EVALUATED | T17 `NOT_EVALUATED`, Brand kept; shared validator (US-GAR-002 P6)                                                                                                                                                                                                                       | —                                                                                                         |
+| AC-06 Recover safely           | T10/T17 replay; T17 missing object affects only the photo route; T18 races; T19 lifecycle; T9 storage failure                                                                                                                                                                           | "Unconfirmed outcome" UI and outcome review                                                               |
+| AC-07 Protect private media    | T16 other account → 404, logout → 401; T17 foreign photo → 404; `private, no-store`; no presigned URLs                                                                                                                                                                                  | Client cache clearing on logout or account switch                                                         |
 
 ### 15.2 Requirement to test
 
-| Requirement / decision | Tests |
-| --- | --- |
-| FR-AI-001/002/012 | T12, T13, T22, T16, T9 |
-| FR-AI-003 | T17 imageless regression, existing `AddGarmentApiIT` |
-| FR-AI-004/009 | T11, T16 cancel |
-| FR-AI-008/010, DATA-INT-004 | T10, T17, T18 |
-| DATA-GAR-004 | T10, T17 photo association |
-| DATA-RET-002 | Not triggered (no removal); lifecycle deletion of unconfirmed media: T11, T19 |
-| COM-002 | T17 replay; T16 upload replay; status route |
-| NFR-PRIV-001/002, BRULE-AUTH-007 | T12 metadata stripping; no logging of content (code review) |
-| S3-IMG-01 | T14 (protocol); V-S3 real-provider check **outstanding** |
-| S3-IMG-02 | T16 multipart, size guard |
-| S3-IMG-03 | T10, T16, T17 |
-| S3-IMG-04 | T9, T11, T18, T19, T15 |
-| S3-IMG-05 | T16, T17 |
-| S3-IMG-06 | T12, T13, T22; V1–V8 **outstanding** |
-| S3-IMG-07 | No attach or replace routes; T17 edit keeps the photo |
-| S3-IMG-08 | T11, T19 (TTL injected through the policy; the approved value `PT24H` is the P55 default) |
-| AR-01–08 | `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`, `ArchitectureDependencyTest` (unchanged) |
-| S3-INT-01 / OPEN-S3-01 | T20 contract, T21 CORS; shared error codes (P48) |
-| S3-INT-02 / OPEN-S3-02 | T14 (S3Mock container), T13 (real libheif), P59 (CI with `CAPSULEAI_REQUIRE_HEIF=true`); V-S3 real provider **outstanding** |
-| OPEN-S3-07 (24 h TTL) | T11, T19 with an injected TTL and a controllable clock; P55 `pending-ttl=PT24H` |
-| OPEN-S3-08 (libheif subprocess) | T13, T22, T12 (missing tools → `503`); V1–V8 **outstanding** |
-| OPEN-S3-09 (15,000,000 bytes) | T9, T16 (15,000,000 accepted, 15,000,001 rejected) |
-| OPEN-S3-10 (normalized JPEG ≤ 2048) | T12 metadata stripping, orientation, long-edge bound; T16 stored content type |
+| Requirement / decision                         | Tests                                                                                                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FR-AI-001/002/012                              | T12, T13, T22, T16, T9                                                                                                                                                   |
+| FR-AI-003                                      | T17 imageless regression, existing `AddGarmentApiIT`                                                                                                                     |
+| FR-AI-004/009                                  | T11, T16 cancel                                                                                                                                                          |
+| FR-AI-008/010, DATA-INT-004                    | T10, T17, T18                                                                                                                                                            |
+| DATA-GAR-004                                   | T10, T17 photo association                                                                                                                                               |
+| DATA-RET-002                                   | Not triggered (no removal); lifecycle deletion of unconfirmed media: T11, T19                                                                                            |
+| COM-002                                        | T17 replay; T16 upload replay; status route                                                                                                                              |
+| NFR-PRIV-001/002, BRULE-AUTH-007               | T12 metadata stripping; no logging of content (code review)                                                                                                              |
+| S3-IMG-01                                      | T14 (protocol); V-S3 real-provider check **outstanding**                                                                                                                 |
+| S3-IMG-02                                      | T16 multipart, size guard                                                                                                                                                |
+| S3-IMG-03                                      | T10, T16, T17                                                                                                                                                            |
+| S3-IMG-04                                      | T9, T11, T18, T19, T15                                                                                                                                                   |
+| S3-IMG-05                                      | T16, T17                                                                                                                                                                 |
+| S3-IMG-06                                      | T12, T13, T22; V1–V8 **outstanding**                                                                                                                                     |
+| S3-IMG-07                                      | No attach or replace routes; T17 edit keeps the photo                                                                                                                    |
+| S3-IMG-08                                      | T11, T19 (TTL injected through the policy; the approved value `PT24H` is the P55 default)                                                                                |
+| AR-01–08                                       | `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT`, `ArchitectureDependencyTest` (unchanged)                                                                     |
+| S3-INT-01 / OPEN-S3-01                         | T20 contract, T21 CORS; shared error codes (P48)                                                                                                                         |
+| S3-INT-02 / OPEN-S3-02                         | T14 (S3Mock container), T13 (real libheif), P59 (CI with `CAPSULEAI_REQUIRE_HEIF=true`); V-S3 real provider **outstanding**                                              |
+| OPEN-S3-07 (24 h TTL)                          | T11, T19 with an injected TTL and a controllable clock; P55 `pending-ttl=PT24H`                                                                                          |
+| OPEN-S3-08 (libheif subprocess)                | T13, T22, T12 (missing tools → `503`); V1–V8 **outstanding**                                                                                                             |
+| OPEN-S3-09 (15,000,000 bytes)                  | T9, T16 (15,000,000 accepted, 15,000,001 rejected)                                                                                                                       |
+| OPEN-S3-10 (normalized JPEG ≤ 2048)            | T12 metadata stripping, orientation, long-edge bound; T16 stored content type                                                                                            |
 | OPEN-S3-11 (primary image; temporary fallback) | T13 primary listed first and not first (selection on), rejection (selection off); T22 fail-closed rules; V4/V8 **outstanding**; target behaviour enabled only after them |
-| OPEN-S3-12 (decoder ceilings) | T12 pixel ceiling (ImageIO), T22 ceiling before `heif-dec`; busy decode slots → `503` (T12); load measurement **outstanding** |
-| OPEN-S3-13 (AWS SDK + S3Mock) | T14 against `adobe/s3mock:5.1.0`, including the conditional write; V-S3 against private AWS S3 **outstanding** |
-| OPEN-S3-14 (photo API surface) | T16, T17, T20 |
+| OPEN-S3-12 (decoder ceilings)                  | T12 pixel ceiling (ImageIO), T22 ceiling before `heif-dec`; busy decode slots → `503` (T12); load measurement **outstanding**                                            |
+| OPEN-S3-13 (AWS SDK + S3Mock)                  | T14 against `adobe/s3mock:5.1.0`, including the conditional write; V-S3 against private AWS S3 **outstanding**                                                           |
+| OPEN-S3-14 (photo API surface)                 | T16, T17, T20                                                                                                                                                            |
 
 ## 16. Definition of Done
 
-| DoD item | Status at writing |
-| --- | --- |
-| AC mapped; tests written and passing | Planned |
-| Contract synchronized (OpenAPI 0.10.0, contract test extended) | Planned |
-| V10 forward migration verified on a fresh database and on top of V9 | Planned |
-| Real storage adapter evidence (S3Mock, T14) | Planned |
-| **Real provider evidence (V-S3 against private AWS S3)** | **Outstanding: needs an AWS account and bucket; not established by this guide** |
-| **HEIF toolchain verification V1–V8 (OPEN-S3-08)** | **Outstanding** |
-| Pending-media TTL (OPEN-S3-07) | Decision **approved** by the PO (24 hours, configurable). Implementation and lifecycle tests: Planned |
-| **Multi-image HEIF target behaviour (OPEN-S3-11)** | Decision **approved** by the PO (primary image). Implementation: Planned. **Not Done** until V4/V8 pass on the deployment image and CI and `heif-primary-image-selection=true` is set for the deployed environment; until then only the temporary fail-closed rejection can ship |
-| **Decoder ceilings measured (OPEN-S3-12)** | Decision approved; decode time and peak memory with the V3 fixtures on the deployment size **outstanding** |
-| OPEN-S3-01/02/09/10/13/14 | Decisions approved by the PO on 2026-11-11; implementation and verification: Planned (OPEN-S3-13 also needs V-S3) |
-| Full `clean verify`, CI with libheif and `CAPSULEAI_REQUIRE_HEIF=true` | Planned |
-| Client evidence (permissions, preview, replace and cancel, device HEIF, cache isolation) | Outstanding |
-| Review with no blocker or Critical defect | Not started |
+| DoD item                                                                                 | Status at writing                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC mapped; tests written and passing                                                     | Planned                                                                                                                                                                                                                                                                          |
+| Contract synchronized (OpenAPI 0.10.0, contract test extended)                           | Planned                                                                                                                                                                                                                                                                          |
+| V10 forward migration verified on a fresh database and on top of V9                      | Planned                                                                                                                                                                                                                                                                          |
+| Real storage adapter evidence (S3Mock, T14)                                              | Planned                                                                                                                                                                                                                                                                          |
+| **Real provider evidence (V-S3 against private AWS S3)**                                 | **Outstanding: needs an AWS account and bucket; not established by this guide**                                                                                                                                                                                                  |
+| **HEIF toolchain verification V1–V8 (OPEN-S3-08)**                                       | **Outstanding**                                                                                                                                                                                                                                                                  |
+| Pending-media TTL (OPEN-S3-07)                                                           | Decision **approved** by the PO (24 hours, configurable). Implementation and lifecycle tests: Planned                                                                                                                                                                            |
+| **Multi-image HEIF target behaviour (OPEN-S3-11)**                                       | Decision **approved** by the PO (primary image). Implementation: Planned. **Not Done** until V4/V8 pass on the deployment image and CI and `heif-primary-image-selection=true` is set for the deployed environment; until then only the temporary fail-closed rejection can ship |
+| **Decoder ceilings measured (OPEN-S3-12)**                                               | Decision approved; decode time and peak memory with the V3 fixtures on the deployment size **outstanding**                                                                                                                                                                       |
+| OPEN-S3-01/02/09/10/13/14                                                                | Decisions approved by the PO on 2026-11-11; implementation and verification: Planned (OPEN-S3-13 also needs V-S3)                                                                                                                                                                |
+| Full `clean verify`, CI with libheif and `CAPSULEAI_REQUIRE_HEIF=true`                   | Planned                                                                                                                                                                                                                                                                          |
+| Client evidence (permissions, preview, replace and cancel, device HEIF, cache isolation) | Outstanding                                                                                                                                                                                                                                                                      |
+| Review with no blocker or Critical defect                                                | Not started                                                                                                                                                                                                                                                                      |
 
 **Honesty note.** Nothing in this guide has been compiled, run or deployed. Storage, codec and deployment claims become evidence only after the steps and verification procedures are executed and recorded.
 
 ## 17. Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| Context fails: `in-flight-fence must be longer…` | Fence ≤ storage timeout + 2 × decode timeout | Raise the fence or lower the timeouts |
-| All HEIC uploads → `503` | `heif-dec` or `heif-info` not on the PATH | Install libheif (README); or set `CAPSULE_HEIF_DECODER=heif-convert` on older distributions and `CAPSULE_HEIF_INFO` if needed |
-| All HEIC uploads → `PHOTO_UNREADABLE` | Decoder plugin missing (no libde265) | Install `libheif-plugin-libde265`; check `heif-dec --list-decoders` (V2) |
-| Every multi-image HEIF → `PHOTO_MULTIPLE_IMAGES` | `heif-primary-image-selection=false` (the default) | Intended until V4/V8 pass for that environment; then set the property to `true` and record the evidence in the PR |
-| `HeifDecodingIT` primary-image test fails | That libheif version lists, numbers or marks images differently from §10.9 | Failed V4/V8: keep selection disabled (the fail-closed fallback stays in force), record the result and report it to the PO and Tech Lead; do not delete or weaken the test |
-| A multi-image HEIF is rejected although selection is enabled | `heif-info` printed no single `, primary` line, or `heif-dec` wrote other file names | Fail-closed by design. Inspect the `heif-info` output of a synthetic copy of the file; never fall back to the first image |
-| `S3PhotoStorageIT.aConditionalWrite…` fails only on S3Mock | Fixture ignores `If-None-Match` | Record it (V-S3). Verify against real S3. Keep `conditional-writes=true` in production. Because keys are random and unique in the database, overwrites cannot occur in normal operation |
-| Bucket missing in S3Mock | Initial-bucket environment variable name differs in 5.1.0 | The test creates the bucket itself; for compose, create it with `curl.exe -X PUT http://127.0.0.1:9090/capsuleai-photos-local` |
-| Large uploads get a connection reset instead of `422` | Tomcat swallow limit | Keep `server.tomcat.max-swallow-size=20MB`; a reverse proxy needs a matching body limit |
-| Image routes answer `406` on errors | Client `Accept: image/jpeg` only | Send `Accept: image/jpeg, application/problem+json` |
-| A CMYK or 12-bit JPEG → `PHOTO_UNREADABLE` | The JDK JPEG decoder lacks those variants | A known limitation (phones produce 8-bit YCbCr). Raise it with the PO if real users hit it |
-| PNG with `eXIf` orientation shows rotated | PNG orientation is not applied (P37 note) | A known limitation; phones store JPEG/HEIC |
-| `IdentityOpenApiContractIT` fails on the photo routes | Missing `image/jpeg` content or the wrong handler return type | Return `ResponseEntity<Resource>`; document `image/jpeg` |
-| `PersistenceOwnershipSqlTest` flags SQL | Unqualified `wardrobe_photo_upload` | Qualify every table with `wardrobe.` |
+| Symptom                                                      | Likely cause                                                                         | Fix                                                                                                                                                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context fails: `in-flight-fence must be longer…`             | Fence ≤ storage timeout + 2 × decode timeout                                         | Raise the fence or lower the timeouts                                                                                                                                                   |
+| All HEIC uploads → `503`                                     | `heif-dec` or `heif-info` not on the PATH                                            | Install libheif (README); or set `CAPSULE_HEIF_DECODER=heif-convert` on older distributions and `CAPSULE_HEIF_INFO` if needed                                                           |
+| All HEIC uploads → `PHOTO_UNREADABLE`                        | Decoder plugin missing (no libde265)                                                 | Install `libheif-plugin-libde265`; check `heif-dec --list-decoders` (V2)                                                                                                                |
+| Every multi-image HEIF → `PHOTO_MULTIPLE_IMAGES`             | `heif-primary-image-selection=false` (the default)                                   | Intended until V4/V8 pass for that environment; then set the property to `true` and record the evidence in the PR                                                                       |
+| `HeifDecodingIT` primary-image test fails                    | That libheif version lists, numbers or marks images differently from §10.9           | Failed V4/V8: keep selection disabled (the fail-closed fallback stays in force), record the result and report it to the PO and Tech Lead; do not delete or weaken the test              |
+| A multi-image HEIF is rejected although selection is enabled | `heif-info` printed no single `, primary` line, or `heif-dec` wrote other file names | Fail-closed by design. Inspect the `heif-info` output of a synthetic copy of the file; never fall back to the first image                                                               |
+| `S3PhotoStorageIT.aConditionalWrite…` fails only on S3Mock   | Fixture ignores `If-None-Match`                                                      | Record it (V-S3). Verify against real S3. Keep `conditional-writes=true` in production. Because keys are random and unique in the database, overwrites cannot occur in normal operation |
+| Bucket missing in S3Mock                                     | Initial-bucket environment variable name differs in 5.1.0                            | The test creates the bucket itself; for compose, create it with `curl.exe -X PUT http://127.0.0.1:9090/capsuleai-photos-local`                                                          |
+| Large uploads get a connection reset instead of `422`        | Tomcat swallow limit                                                                 | Keep `server.tomcat.max-swallow-size=20MB`; a reverse proxy needs a matching body limit                                                                                                 |
+| Image routes answer `406` on errors                          | Client `Accept: image/jpeg` only                                                     | Send `Accept: image/jpeg, application/problem+json`                                                                                                                                     |
+| A CMYK or 12-bit JPEG → `PHOTO_UNREADABLE`                   | The JDK JPEG decoder lacks those variants                                            | A known limitation (phones produce 8-bit YCbCr). Raise it with the PO if real users hit it                                                                                              |
+| PNG with `eXIf` orientation shows rotated                    | PNG orientation is not applied (P37 note)                                            | A known limitation; phones store JPEG/HEIC                                                                                                                                              |
+| `IdentityOpenApiContractIT` fails on the photo routes        | Missing `image/jpeg` content or the wrong handler return type                        | Return `ResponseEntity<Resource>`; document `image/jpeg`                                                                                                                                |
+| `PersistenceOwnershipSqlTest` flags SQL                      | Unqualified `wardrobe_photo_upload`                                                  | Qualify every table with `wardrobe.`                                                                                                                                                    |
 
 ## 18. Final Implementation Checklist
 
