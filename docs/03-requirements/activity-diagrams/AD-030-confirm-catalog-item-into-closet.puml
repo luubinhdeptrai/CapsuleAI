@@ -1,0 +1,56 @@
+@startuml
+' AD-030; source ../use-cases/UC-030-confirm-catalog-item-into-closet.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-CAT-002; BR-030; CAP-14; PBI-047; US-CAT-002 AC.
+' SRS: FR-CAT-005, FR-CAT-006, FR-CAT-007, FR-CAT-008; DATA-CAT-001.
+' Business Rules: BRULE-CAT-001/002; BRULE-GAR-001/002/005/006/010; BRULE-AUTH-001/007.
+' Open policy: MVP-Q07, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-030 - Confirm a catalog item into the owned closet
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-030;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|CapsuleAI|
+:Present selected catalog source information for review;
+|User|
+:Correct / supply actual garment information;
+|CapsuleAI|
+if (Category and one Color confirmed;
+supplied optional values valid / applicable?) then (Yes)
+  |User|
+  if (Explicitly confirm owned addition?) then (Yes)
+    |CapsuleAI|
+    :Attempt one logical confirmed addition;
+    if (Acceptance established?) then (Yes)
+      :Show distinct owner-controlled garment;
+      :Preserve accepted values and source provenance;
+    else (Failed / uncertain)
+      :Show actual failed or unconfirmed outcome;
+      :Review accepted outcome before safe same-action retry;
+    endif
+  else (Cancel)
+    |CapsuleAI|
+    :Create no garment from canceled intention;
+  endif
+else (Needs correction)
+  :Explain supplied input error / missing minimum;
+  :Offer manual correction or cancel; no automatic add;
+endif
+note right
+  Exactly 13 properties; optional Materials / Styles sets.
+  Catalog asking price is not personal purchase Price.
+  Later source changes cannot overwrite confirmed data.
+  Eligibility remains NOT_EVALUATED.
+end note
+
+stop
+@enduml

@@ -8,7 +8,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-GAR-002 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-008](../../product-backlog.md#pbi-008--correct-and-enrich-garment-information-with-readiness-guidance) |
@@ -17,6 +17,8 @@
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Trustworthy Wardrobe Understanding |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
 | Product revision | 2026-11-05: Synchronized approved garment taxonomy and optional-property authority; no new Sprint selection or AI implementation. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -28,27 +30,27 @@ Keep garment knowledge trustworthy and help users supply the information needed 
 
 ## 3. Scope
 
-Use all applicable properties and complete approved vocabularies from the [source authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material supports zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
+Use all applicable properties and complete approved vocabularies from the [source authority](../../../../Initial%20files/Image%20to%20Properties%20Extraction.md). Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new schema field. The implemented Sprint 2 API reports `recommendationEligibility: NOT_EVALUATED`; preserve its existing contracts and truthful unevaluated meaning.
 
-All applicable property input is already included in Sprint 2 manual creation; this story retains only its separate future editing, photo or AI-assisted outcome. Future suggestions require explicit acceptance and cannot overwrite confirmed values; Price never comes from appearance. Metadata/media are separate, not extra properties.
+All applicable property input is already included in Sprint 2 manual creation; this story covers later correction/editing only. Photo, AI-assisted creation and bulk import retain their separate stories. Future suggestions require explicit acceptance and cannot overwrite confirmed values; Price never comes from appearance. Metadata/media are separate, not extra properties.
 
 ## 4. Preconditions
 
-- The user has authorized access to an existing current owned garment, or to its applicable review before confirmation.
+- The user has authorized access to the selected existing current owned garment. Initial creation review remains US-GAR-001/003/004 or its separate approved entry workflow.
 
 ## 5. Acceptance Criteria
 
 ### AC-01 — Review bounded information
 
-Present accepted/proposed/missing information distinctly and support all applicable approved properties for correction or clearing, using the complete source lists: Category, Subtype, one Color, distinct Materials, Pattern, Style, category-specific details, Brand and purchase Price.
+Present accepted/proposed/missing information distinctly and support all applicable approved properties for correction or clearing, using the complete source lists: Category, Subtype, one Color, distinct Materials, Pattern, distinct Styles, category-specific details, Brand and purchase Price.
 
 The optional-property and classification rules in Section 3 apply to this accepted outcome, including preservation of valid supplied values and correction/clearing of invalid category/subtype or incomplete Price pairs.
 
 ### AC-02 — Apply supported consistency
 
-Reject unsupported or inapplicable values without changing accepted information. Use the complete source lists, require one approved Color, preserve distinct Materials, and never silently substitute a value or accept Etc as Style.
+Reject unsupported or inapplicable values without changing accepted information. Use the complete source lists, require one approved Color, preserve distinct Materials and Styles, and never silently substitute a value or accept Etc as Style.
 
 ### AC-03 — Preserve saving validity and unevaluated eligibility
 
@@ -85,7 +87,7 @@ Apply the [shared quality and completion conditions](../README.md#2-shared-quali
 
 ## 8. Out of Scope
 
-Minimum-only creation is [US-GAR-001](../garment/US-GAR-001-add-garment-manually.md); photo/AI routes are [US-GAR-003](../garment/US-GAR-003-add-photo-supported-garment.md)/004; removal is [US-GAR-005](../garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md). No new descriptors, universal completeness requirement or recommendation algorithm is added.
+Initial manual creation supporting all 13 applicable properties is [US-GAR-001](../garment/US-GAR-001-add-garment-manually.md); photo/AI routes are [US-GAR-003](../garment/US-GAR-003-add-photo-supported-garment.md)/004; removal is [US-GAR-005](../garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md). No new descriptors, universal completeness requirement or recommendation algorithm is added.
 
 ## 9. Traceability
 
@@ -94,15 +96,15 @@ Minimum-only creation is [US-GAR-001](../garment/US-GAR-001-add-garment-manually
 | Parent PBI | [PBI-008](../../product-backlog.md#pbi-008--correct-and-enrich-garment-information-with-readiness-guidance); scoped outcome and dependencies |
 | Business | [BRD](../../../01-business/BRD.md): BR-003, BR-002, CAP-04 |
 | Product | [PRD](../../../02-product/PRD.md): JRN-02, JRN-03, FEAT-GAR-001, FEAT-WAR-002 |
-| SRS | [SRS](../../../03-requirements/SRS.md): FR-GAR-001–FR-GAR-011; FR-WAR-003, FR-WAR-006; DATA-GAR-002, DATA-GAR-003, DATA-GAR-005; DATA-INT-001; ERR-GAR-001, ERR-GAR-002; COM-002 |
-| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-GAR-001–BRULE-GAR-006, BRULE-GAR-008, BRULE-GAR-009 |
+| SRS | [SRS](../../../03-requirements/SRS.md): FR-GAR-001–FR-GAR-013 (FR-GAR-005 superseded); FR-WAR-003, FR-WAR-006; DATA-GAR-002, DATA-GAR-003, DATA-GAR-005; DATA-INT-001; ERR-GAR-001, ERR-GAR-002; COM-002 |
+| Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-GAR-001–BRULE-GAR-006, BRULE-GAR-008, BRULE-GAR-009, BRULE-GAR-010 |
 | Use Cases | [UC-007](../../../03-requirements/use-cases/UC-007-add-garment.md); [UC-009](../../../03-requirements/use-cases/UC-009-edit-garment.md); applicable interaction slices / verification anchors only |
 | Activity Diagrams | [AD-007](../../../03-requirements/activity-diagrams/AD-007-add-garment.puml); applicable branches only |
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
 
 ## 10. Open Refinement Notes
 
-PRD OPQ-015 resolves property/vocabulary scope and eligibility deferral. OPQ-013 retains genuine validation details; optional absence never authorizes fabricated values or eligibility claims.
+PRD OPQ-015 resolves property/vocabulary scope and eligibility deferral; OPQ-013 was resolved on 2026-11-07. Brand is at most 100 Unicode code points, blank means absent and accepted text is exact. Price is an optional original amount paid with explicit upper-case ISO 4217 currency; zero is valid, negatives invalid, at most 12 integer digits, currency-minor-unit precision, excess rejected without rounding. OPQ-016 supports multiple distinct Styles. Optional absence never permits fabrication or an eligibility gate.
 
 No new behavior decision is required by the current sources. Supported controls, contracts and concurrent-edit mechanics remain selected-story JIT detail; Developers still assess delivery feasibility and size.
 

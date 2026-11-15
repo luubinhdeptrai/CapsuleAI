@@ -48,7 +48,7 @@ Verified at Stage 0. Java 21, Spring Boot 4.1.1, Spring Security 7.1.1, Spring J
 | Tests: `support/IdentityIntegrationTestSupport.java`, `support/IdentityTestConfiguration.java`, `support/MutableClock.java` | Real app + filter chain + Testcontainers PostgreSQL + controllable clock; the fixture reset truncates every table of the `identity` schema | Reused by every new integration test; the new reset table is cleared automatically. |
 | `backend/src/main/resources/db/migration/V6__move_identity_tables_into_identity_schema.sql` | The `identity` schema holding `identity_account`, `identity_session` and `identity_refresh_token`; all Identity SQL is written `identity.<table>` | The reset table joins the same schema; **V7** is the next free version (AR-01). |
 | `foundation/IsolatedMigrationDatabase.java` (test) | A separate empty database on the test server, migrated to any version | `PasswordResetSchemaIT` upgrades Sprint 1 data from V6 to V7 on it. |
-| `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` (test package `com.capsuleai.architecture`) | Enforce AR-01–AR-08: other modules use only a module's `api`; production SQL names only its own schema, always qualified; each migration after V6 changes one owner schema; on the migrated database every table is in its owner's schema and no foreign key crosses schemas. This story's code and migrations must pass them unchanged. |
+| `ArchitectureDependencyTest`, `PersistenceOwnershipSqlTest`, `DatabaseSchemaOwnershipIT` (test package `com.capsuleai.architecture`) | Enforce AR-01–AR-08: other modules use only a module's `api`; production SQL names only its own schema, always qualified; each migration after V6 changes one owner schema; on the migrated database every table is in its owner's schema and no foreign key crosses schemas. | This story's code and migrations must pass them unchanged. |
 
 **State that matters for this story.** The Identity tables are in the `identity` schema; Flyway's history stays in the default schema (`public`), which holds no business table. There is no reset table, no reset code and no email infrastructure. `AccountRepository` cannot change a password. `SessionRepository` revokes one session at a time. The [OpenAPI contract](../../../../05-api/openapi.yaml) (v0.4.1) explicitly lists password reset as not introduced. `.github/workflows/backend-ci.yml` runs only for pushes to `main` and pull requests targeting `main`; this story proposes adding pull requests into `sprint_02` (REVIEW-CI option A, TD-S2-30). No scheduling is enabled anywhere in the application.
 
@@ -763,7 +763,7 @@ The complete story file, including its metadata, every Acceptance Criterion with
 >
 > ## 16. Focused Use Case Diagram
 >
-> [Focused Use Case Diagram](../../../../03-requirements/use-cases/diagrams/UC-004-reset-password.puml)
+> [Focused Use Case Diagram](../../../../03-requirements/use-cases/use-case-diagram.puml)
 >
 > This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
 >
@@ -5528,12 +5528,12 @@ docker compose --env-file .env exec postgres psql -U capsuleai_dev -d capsuleai_
 ```
 ````
 
-**Change 6 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 435. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
+**Change 6 of 7** — Stage 0 (corrected Sprint 1 baseline), starting at line 435. Unique anchor in the current file: `Stage with 'git add -- <actual-intended-path>' before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.`
 
 BEFORE
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 
@@ -5547,7 +5547,7 @@ After normal foundation handoff, follow **Backlog Refinement → Sprint Planning
 AFTER
 
 ```markdown
-Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../docs/06-scrum/definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
+Stage with `git add -- <actual-intended-path>` before inspecting the staged change. Exclude private .env, generated target output and secrets. Story AC plus the [Definition of Done](../../../definition-of-done.md) govern completion; foundation completion does not mark product stories Done.
 
 ## 15. Current limitations and next steps
 

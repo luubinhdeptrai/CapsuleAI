@@ -8,9 +8,9 @@
 |---|---|
 | Document Name | CapsuleAI — Business Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.6 |
+| Version | 0.8 |
 | Status | Baseline Draft |
-| Last Updated | 2026-11-05 |
+| Last Updated | 2026-11-09 |
 | Primary Owner / Role | Business Analyst / Product; accountable to the Product Owner |
 | Approval Authority | Product Owner / Product Decision Authority |
 | Reviewers / Stakeholders | Founding / Product Team, end-user representatives, UX/Product Design, Tech Lead, AI/ML Engineering, QA/Testing |
@@ -41,6 +41,8 @@ The [Scrum development workflow](../../Initial%20files/CapsuleAI_Scrum_Developme
 | SRC-11 | User-approved eight-category/property request and explicit purchase-price/currency approval, recorded November 5, 2026 | Supersedes earlier category scope and adds optional Brand/Price. Product details and open follow-ups are in PRD Sections 13/34.1. |
 | SRC-12 | Final Product Owner 13-property/vocabulary and Sprint 2 decision, 2026-11-05; [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) | All listed values approved; obsolete properties/readiness rules superseded; all applicable properties in selected Sprint 2 stories. |
 
+PR #4 (`9e10cbb`, merging `648638d` and `cd49c79`) and [DD-007](../06-scrum/delivery-decisions.md#dd-007--mvp-scope-outfit-inspiration-feed-chat-try-on-catalog-bulk-and-store-only-feedback) are the later approved scope and feedback authority. Scope approval is distinct from document review status, Sprint selection and implementation.
+
 The repository provides Markdown versions of the proposal, outline, and PRD referenced by DOCX name in earlier documents. These versions and the then-available Business Analysis DOCX were reviewed during baseline authoring. Some historical sources are no longer present, as marked above. At baseline authoring, the README identified the product only and no separate architecture reference documents were present; current architecture artifacts are maintained separately. SRC-08 was reviewed for visual organization and supporting explanations only; its domain requirements are not transferred to CapsuleAI.
 
 Conflicts are resolved in this order: SRC-02 and the later approved business clarifications in SRC-10/SRC-11; other later explicit CapsuleAI decisions; the most detailed internally consistent product specification; earlier proposals. The Baseline Decision Summary records the resulting decisions. In particular, active behavioral personalization, the richer garment profile, inclusive optional profile fields, and the contextual Wardrobe Coverage Score supersede narrower earlier descriptions. The 90% recognition and 3–5 second processing targets also match SRC-04 Sections 15.2–15.3. Earlier growth projections and exploratory marketing ideas are not baseline commitments. Legacy competitor observations are not treated as verified current market evidence.
@@ -58,6 +60,7 @@ Stable IDs in this BRD identify business intent. Subsequent artifacts must refer
 | 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.6 | 2026-11-07 | Product Owner decision: Style is a set of zero or more distinct approved values, like Material (property table synchronized with the garment-property authority); no change to business scope or IDs. |
 | 0.7 | 2026-11-09 | Founder override (branch `danh/docs`): community feed browse, AI chat stylist, generic-model try-on preview, internal catalog search and bulk import are in MVP scope; Like/Wear stored as events with no fixed +1/+2 weights or decay; Dislike is AI-generated targets only (Today + chat suggestions), never community posts. Existing IDs retained; superseded weight/decay/exclusion text marked below. |
+| 0.8 | 2026-11-09 | Propagated approved merged PR #4 / DD-007 into business outcomes, capabilities, conceptual concepts and scope interpretation; existing IDs and unrelated decisions preserved. |
 
 ### 1.4 Business Visualization Policy
 
@@ -108,7 +111,7 @@ The longer-term direction is a trusted wardrobe companion that improves as users
 | Pillar | Value Delivered | Connection to the Value Loop |
 |---|---|---|
 | AI Digital Closet | Reduce entry effort and create a reliable wardrobe representation through assisted understanding and user confirmation. | Confirmed garment intelligence provides the foundation for styling and analysis. |
-| Context-Aware Styling | Future owned-wardrobe advice with relevant context and personalization, under an explicitly approved engine policy; property-based eligibility is deferred. |
+| Context-Aware Styling | Owned-wardrobe advice with relevant context and personalization under an approved engine policy; eligibility is deferred. | Feed inspiration, a conversational stylist and generic-model previews support user decisions without establishing garment ownership. |
 | Wardrobe Intelligence & Strategic Shopping | Explain unmet clothing needs and assess candidate purchases by incremental outfit utility. | Coverage, gaps, and simulated expansion support deliberate wardrobe improvement. |
 
 The differentiation is the connection between reliable garment data, daily recommendations, behavioral feedback, and marginal purchase utility. A recommendation is evaluated against the user's wardrobe and needs rather than presented as a generic product promotion. Wardrobe improvement can result from rediscovering existing clothing; a purchase is optional.
@@ -177,14 +180,16 @@ flowchart LR
     Partner["Affiliate / Retail Partner<br/>(future)"]
 
     User -->|"Wardrobe, preferences, feedback"| Capsule
+    User -->|"Chosen shared outfits, Chat, entry intents"| Capsule
     Capsule -->|"Outfits, insights, shopping advice"| User
+    Capsule -->|"Shared looks, Chat, generic previews, entry review"| User
     Capsule -->|"Selected location"| Weather
     Weather -->|"Environmental context"| Capsule
     Capsule -->|"Optional shopping navigation"| Retailer
     Partner -.->|"Future catalog / referral information"| Capsule
 ```
 
-The user supplies and confirms personal wardrobe information and remains the decision maker. External navigation leaves CapsuleAI's business boundary; the retailer handles purchasing independently. The dashed partner relationship is a future possibility, not an established integration or MVP dependency. This context supports BR-007, BR-013, BR-018–BR-019, BR-021, and BR-024.
+The user supplies and confirms personal wardrobe information and remains the decision maker. External navigation leaves CapsuleAI's business boundary; the retailer handles purchasing independently. The dashed partner relationship is a future possibility, not an established integration or MVP dependency. Community creators are CapsuleAI Users within the same boundary. Catalog and AI assistance remain business capabilities here; their unselected suppliers are not invented external integrations. This context supports BR-007, BR-013, BR-018–BR-019, BR-021, BR-024 and BR-025–BR-031.
 
 ### 9.2 External System Descriptions
 
@@ -236,6 +241,13 @@ classDiagram
     class CandidateGarment["Candidate Garment"]
     class WardrobeMultiplier["Wardrobe Multiplier"]
     class ShoppingRecommendation["Shopping Recommendation"]
+    class CommunityPost["Community Outfit Post"]
+    class SavedLook["Saved Look"]
+    class OutfitDraft["Outfit Draft"]
+    class StylistConversation["Stylist Conversation"]
+    class TryOnPreview["Generic-Model Preview"]
+    class CatalogItem["Catalog Item"]
+    class ImportBatch["Import Batch"]
 
     User --> Wardrobe : owns
     User --> PersonalizationProfile : maintains
@@ -245,7 +257,21 @@ classDiagram
     OutfitRecommendation --> Outfit : proposes
     Outfit --> Garment : combines owned garments
     User --> Feedback : provides
-    Feedback --> OutfitRecommendation : evaluates
+    Feedback --> OutfitRecommendation : evaluates AI suggestion
+    Feedback --> CommunityPost : Like only
+    User --> CommunityPost : explicitly shares
+    User --> User : follows creator
+    CommunityPost --> Outfit : presents shared look
+    User --> SavedLook : saves
+    SavedLook --> Outfit : retains look interest
+    CommunityPost --> OutfitDraft : copied independently
+    User --> StylistConversation : consults single thread
+    StylistConversation --> OutfitRecommendation : offers AI suggestions
+    TryOnPreview --> Outfit : illustrates selected look
+    User --> TryOnPreview : requests generic model
+    CatalogItem ..> Garment : separate confirmed addition
+    User --> ImportBatch : reviews
+    ImportBatch ..> Garment : confirmed accepted entries
     User --> WearHistory : records
     WearHistory --> Outfit : logs selected wear
     Wardrobe --> WardrobeCoverage : assessed through
@@ -258,7 +284,7 @@ classDiagram
     ShoppingRecommendation --> WardrobeMultiplier : explains utility
 ```
 
-A Garment is an owned wardrobe item; a Candidate Garment is a possible addition evaluated hypothetically. Wardrobe Gaps express underserved needs, and a Shopping Recommendation offers one possible response. Garment Profile means the user-confirmed representation, while Wear History records user-reported wear events. Multiple events can occur within a day; they do not prove observed physical wear. The diagram omits attributes, methods, and physical cardinalities; the descriptions below retain the business meaning needed for CAP-01–CAP-10 and BR-002, BR-006–BR-017.
+A Garment is an owned wardrobe item; a Candidate Garment is a possible addition evaluated hypothetically. Wardrobe Gaps express underserved needs, and a Shopping Recommendation offers one possible response. Garment Profile means the user-confirmed representation, while Wear History records user-reported wear events. Multiple events can occur within a day; they do not prove observed physical wear. The diagram omits attributes, methods, and physical cardinalities; the descriptions below retain the business meaning needed for CAP-01–CAP-15 and BR-002, BR-006–BR-017.
 
 ### 12.2 Business Object Descriptions
 
@@ -271,13 +297,20 @@ A Garment is an owned wardrobe item; a Candidate Garment is a possible addition 
 | Garment Profile | The authoritative user-confirmed description of a garment, supported by confidence-aware AI predictions or manual entry. | Describes a Garment and supports compatibility, context, coverage, and utilization understanding. |
 | Outfit | A meaningful combination of clothing assessed for compatibility and context. | Daily outfits combine owned Garments; hypothetical previews may also include a Candidate Garment. |
 | Outfit Recommendation | Advice proposing a valid outfit for the user's current context, ordered by personalized relevance. | Proposes an Outfit to a User and can receive Feedback or a recorded wear selection. |
-| Feedback | Explicit Like/Dislike assessments and meaningful behavioral signals used to improve advice. | Comes from the User, relates to recommended outfits, and informs future personalized ranking. |
+| Feedback | Revisable user-expressed Like/Dislike state retained for engine use without fixed weights or aging. | Targets AI Today/Chat suggestions, or Like-only Community posts; does not create Wear or ownership. |
 | Wear History | The record of user-reported wear activity, including multiple wear events within a day; it is not automatic verification of physical wear. | Connects the User to reported Outfits and associated garment use and informs utilization, preference, diversity, and recency. |
 | Wardrobe Coverage | The contextual assessment of how well the wardrobe meets the user's clothing needs, expressed through an explainable Wardrobe Coverage Score. | Evaluates the Wardrobe using relevant needs and context and may reveal Wardrobe Gaps. |
 | Wardrobe Gap | An underserved clothing capability rather than an obligation to buy a particular product. | Arises from coverage analysis and leads to possible Candidate Garments. |
 | Candidate Garment | A hypothetical addition with attributes relevant to a wardrobe gap. | Can address a Wardrobe Gap, be evaluated through Wardrobe Multiplier, and appear in a Shopping Recommendation or preview. |
 | Wardrobe Multiplier | The incremental number of unique valid outfits enabled by adding a particular candidate to the current wardrobe under a consistent context. | Connects Candidate Garment evaluation to the Wardrobe baseline and provides evidence for a Shopping Recommendation. |
 | Shopping Recommendation | Explainable advice about a potentially useful addition, with utility evidence and an optional external destination. | Relates a Candidate Garment to a gap, Wardrobe Multiplier, and hypothetical Outfit previews for the User to assess. |
+| Community Outfit Post | A deliberately shared outfit representation attributed to its creator; not the creator's private inventory. | Receives Like, can be saved, previewed or independently duplicated; sharing audience/fields remain to be approved. |
+| Saved Look | A user's retained interest in a look, separate from preference feedback, ownership and reported wear. | Refers to a selected look; reference-versus-snapshot and source withdrawal behavior remain open. |
+| Outfit Draft | The user's independently editable copy of inspiration. | Does not change the original post or create owned Garments. |
+| Stylist Conversation | The user's single AI stylist thread, containing text and supported guidance cards/chips. | Uses authorized relevant context and routes attached photos to Add Garment. |
+| Generic-Model Preview | An illustration of the selected outfit on a generic model. | Can lead to Save look or a separately validated Wear action; does not prove fit or ownership. |
+| Catalog Item | Descriptive garment information available for discovery, distinct from an owned item or a gap-based recommendation. | Can inform a candidate or a separately reviewed and confirmed Garment addition. |
+| Import Batch | A group of photo-entry attempts with individually understandable review and save outcomes. | Only user-confirmed accepted entries become owned Garments; limits/processing remain open. |
 
 ## 13. Core Business Capabilities
 
@@ -295,6 +328,11 @@ A Garment is an owned wardrobe item; a Candidate Garment is a possible addition 
 | CAP-08 | Gap Analysis | Identify underserved clothing needs rather than missing items on a universal checklist. |
 | CAP-09 | Wardrobe Multiplier | Estimate the additional valid outfits enabled by a candidate garment. |
 | CAP-10 | Strategic Shopping | Present utility-based recommendations, hypothetical previews, optional external links, and interaction evidence. |
+| CAP-11 | Outfit Inspiration Community | Browse, Like, Follow, explicitly share, duplicate and Save selected looks without exposing private wardrobes. |
+| CAP-12 | AI Chat Stylist | Single-thread text and card-based guidance with supported feedback and Add Garment photo routing. |
+| CAP-13 | Generic-Model Try-On | Preview a selected outfit on a generic model with distinct Save/Wear entry points. |
+| CAP-14 | Internal Catalog | Discover catalog items and deliberately confirm their addition to the owned wardrobe. |
+| CAP-15 | Bulk Garment Import | Review and confirm multiple photo-backed entries without automatic ownership. |
 
 ### 13.2 Garment Intelligence and User Authority
 
@@ -326,7 +364,7 @@ Exact approved vocabulary labels are maintained in the property authority. Futur
 
 The business intent remains validity before personalized ranking. Composition, compatibility and sufficient-evidence policy are deferred to recommendation-engine development; the old fixed roles and removed-property rules are superseded. User-profile style, request occasion/weather and behavioral evidence remain relevant context without creating garment properties.
 
-Style and occasion actively inform the initial recommendations. **Wear This Today** is a strong positive behavioral signal; **Like** is explicit positive feedback; **Dislike** is explicit negative feedback. Wear history can support long-term preferences, utilization, diversity, and short-term recency considerations. These signals influence the product experience in the MVP rather than only appear in a history display. Wear This Today records distinct user-reported wear events; multiple events may occur within a day, including separate intentional uses of the same outfit. Wear history supports utilization and lightweight personalization, while accidental or artificial repetition must not disproportionately distort advice. Recorded wear is not automatic proof of physical wear.
+Style and occasion inform relevant advice. Like is positive preference on AI-generated Today/Chat outfit targets and Community posts; Dislike is negative preference only on AI-generated Today/Chat suggestions, never Community posts. Accepted feedback remains revisable or clearable. Store this evidence and distinct user-reported Wear Events for history and future Matching Engine use. No fixed contribution weights, ranking decay, recency penalties, overlooked-item boosts or same-outfit/day preference-increment cap are business obligations. Hard validity precedes ranking. Multiple intentional Wear Events, including the same outfit in one local day, remain separate; retries of one logical action do not create another event. Recorded wear does not prove physical wear. Functional feedback/history retention and user-linked measurement retention have separate purposes.
 
 Body shape and gender are optional, editable context. Body shape may contribute softly; neither field creates discriminatory eligibility restrictions. Actual wardrobe contents and stated preferences take precedence. Location supports environmental context; permission is optional and manual city/location selection remains available.
 
@@ -399,13 +437,13 @@ flowchart TD
     Choice -->|"Like"| Positive["Record Like"]
     Choice -->|"Dislike"| Negative["Record Dislike"]
     Choice -->|"Wear This Today"| Wear["Record Wear This Today"]
-    Positive --> Learn["Inform future relevance and diversity"]
+    Positive --> Learn["Store evidence for future engine use"]
     Negative --> Learn
     Wear --> Learn
     Learn -.->|"Next recommendation"| Context
 ```
 
-Personalized ranking cannot make an invalid outfit eligible. Shuffle Item preserves the other selections and requires a compatible replacement; if none exists, explain the limitation and retain the current choice. Present at least three distinct valid options when the wardrobe permits, and explain limited choice otherwise. Wear This Today, Like, and Dislike meaningfully influence subsequent advice; no interaction is compulsory. This process supports BG-02–BG-03, BR-006–BR-013, and CAP-05–CAP-06.
+Personalized ranking cannot make an invalid outfit eligible. Shuffle Item preserves the other selections and requires a compatible replacement; if none exists, explain the limitation and retain the current choice. Present at least three distinct valid options when the wardrobe permits, and explain limited choice otherwise. Supported feedback and Wear remain distinct stored evidence for future engine use; no fixed ranking effect or interaction is compulsory. This process supports BG-02–BG-03, BR-006–BR-013, and CAP-05–CAP-06.
 
 ### 14.3 Wardrobe Coverage and Gap Analysis
 
@@ -462,7 +500,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 |---|---|---|---|---|
 | BR-001 | Users must be able to create a digital representation of owned clothing with minimal manual effort through AI-assisted garment understanding. | Reduce setup friction and time to value. | Must | BG-01 |
 | BR-002 | Users must retain final authority over garment information through review, confirmation, correction, and manual entry, with prediction confidence and provenance distinguished conceptually. | Reliable advice depends on trusted wardrobe information. | Must | BG-01, BG-02, BG-03, BG-04 |
-| BR-003 | Wardrobe understanding must support exactly the 13 approved properties and category applicability in Section 13.2, including optional multiple Materials, Brand and original purchase Price with explicit currency, without an image or recommendation gate. | Styling and utility assessment need richer context than basic tags. | Must | BG-01, BG-02, BG-03, BG-04 |
+| BR-003 | Wardrobe understanding must support exactly the 13 approved properties and category applicability in Section 13.2, including optional multiple Materials and Styles, Brand and original purchase Price with explicit currency, without an image or recommendation gate. | Styling and utility assessment need richer context than basic tags. | Must | BG-01, BG-02, BG-03, BG-04 |
 | BR-004 | AI prediction failure or uncertainty must not prevent users from creating and maintaining wardrobe entries manually. | Preserve value when automation is unavailable or inaccurate. | Must | BG-01 |
 | BR-005 | Users must be able to maintain, browse, search, and filter an accurate current wardrobe, including adding, changing, and removing garments. | Decisions must reflect accessible, current possessions. | Must | BG-01, BG-02, BG-03 |
 | BR-006 | Users must be able to understand recorded garment use and discover overlooked clothing and combinations. | Encourage greater value from items already owned. | Must | BG-03 |
@@ -475,7 +513,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 | BR-008 | Users must receive several distinct valid options, targeting at least three when compatible wardrobe data permits, and be able to replace an individual item while retaining other choices. | Provide practical choice and control without starting over. | Must | BG-02, BG-03 |
 | BR-009 | Recommendations must distinguish invalid combinations from the personalized ranking of valid outfits. | Prevent attractive scores from overriding incompatibility and support consistent utility assessment. | Must | BG-02, BG-03, BG-04 |
 | BR-010 | Declared style preferences and selected occasion must actively influence initial advice and relevant wardrobe analysis. | Serve the user's actual clothing needs. | Must | BG-02, BG-03, BG-04 |
-| BR-011 | Wear This Today, Like, Dislike, and wear history must have meaningful effects on lightweight personalization, utilization understanding, and recommendation variety. | Adapt advice to expressed preferences and reduce repetition. | Must | BG-02, BG-03 |
+| BR-011 | Store Like/Dislike state and distinct user-reported Wear Events for history, utilization and future Matching Engine use under its approved rules; Like applies to AI and Community targets, Dislike only to AI Today/Chat suggestions. No fixed ranking contribution, decay or recency policy is prescribed. | Adapt advice to expressed preferences and reduce repetition. | Must | BG-02, BG-03 |
 | BR-012 | Users must be able to omit or modify body-shape and gender information without restrictive garment eligibility rules. | Provide inclusive assistance and preserve individual choice. | Must | BG-02, BG-03, BG-04 |
 | BR-013 | Users must be able to obtain location-based environmental context without granting device location permission, using manual location selection. | Support relevance without making location access a condition of participation. | Must | BG-02, BG-04 |
 
@@ -500,6 +538,22 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 | BR-023 | The initial product must serve Android and iOS users in Vietnam while preserving compatibility with future regions, garment categories, and personalization approaches. | Deliver a viable initial experience with room for continued development. | Must | BG-01, BG-02, BG-03, BG-04 |
 | BR-024 | Core advice must prioritize wardrobe utility and remain useful independently of purchases, affiliate participation, or monetization. | Align commercial direction with user interests. | Must | BG-03, BG-04 |
 
+### 15.5 Approved MVP Inspiration and Entry Extensions
+
+These business outcomes elaborate PR #4 / DD-007; they introduce no new business goals or approval status.
+
+| ID | Requirement | Business Rationale | Priority | Related Goals |
+|---|---|---|---|---|
+| BR-025 | Users must be able to browse shared outfit inspiration, Like posts, Follow creators and Save looks, with generic-model Try-On entry. Community posts never support Dislike. | Discover useful outfit ideas. | Must | BG-02, BG-03 |
+| BR-026 | Users must be able to explicitly share selected outfits and make an independently editable duplicate of shared inspiration, without sharing an entire wardrobe or changing the creator's original. | Reuse inspiration while preserving user authority and privacy. | Must | BG-02, BG-03 |
+| BR-027 | Users must be able to consult a single-thread AI Chat Stylist using text, outfit/item cards and suggestion chips, route attached garment photos into Add Garment, and Dislike AI-generated chat suggestions. | Obtain understandable styling guidance and an entry path to wardrobe creation. | Must | BG-01, BG-02 |
+| BR-028 | Users must be able to preview a selected outfit on a generic model and reach Save look and Wear Today from the preview, preserving confirmed-ownership and Wear rules. | Evaluate a look without creating a personal avatar. | Must | BG-02, BG-03 |
+| BR-029 | Users must be able to search an internal garment catalog separately from searching their owned wardrobe. | Discover relevant garment information without implying ownership. | Must | BG-01, BG-04 |
+| BR-030 | Users must be able to select catalog items for Add-to-Closet through review and explicit confirmation of the owned garment profile. | Reduce entry effort without fabricating ownership or personal purchase information. | Must | BG-01 |
+| BR-031 | Users must be able to select multiple garment photos, review a batch queue and confirm accepted garments, with individual failures/uncertain outcomes distinguished. Upload alone must not create a confirmed garment. | Reduce repetitive entry while keeping each accepted profile authoritative. | Must | BG-01 |
+
+Sharing audiences/consent, saved-look lifecycle, Chat retention, preview integration, catalog sourcing and batch limits remain refinement questions in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions). They cannot be silently chosen by a diagram or implementation.
+
 ## 16. Business Scope
 
 ### 16.1 In Scope
@@ -509,7 +563,7 @@ Wardrobe Multiplier counts newly enabled unique valid outfits; it is neither a c
 | Account & Personalization | Registration/login; personal profile; actively used style preferences and occasion; optional editable gender/body profile; location/weather context with manual location selection. |
 | AI Digital Closet | Capture or select garment images; background removal; attribute extraction; confidence-aware predictions; user review/confirmation/correction; manual creation when AI is unavailable; bulk import (multi-photo select → batch queue → review & save). |
 | Wardrobe Management & Intelligence | Garment creation, viewing, updating, and deletion; browsing/search/filtering of owned wardrobe; internal catalog search and add-to-closet; the structured garment-intelligence direction in Section 13.2; recorded wear/utilization information. |
-| Context-Aware Styling | Future owned-wardrobe advice with relevant context and personalization, under an explicitly approved engine policy; property-based eligibility is deferred. |
+| Context-Aware Styling | Owned-wardrobe advice with relevant context under an approved future engine policy; feed inspiration, Chat and generic previews are separate decision-support entry points, never automatic ownership. |
 | Interaction & Learning | Shuffle Item; Wear This Today (logged to history, no fixed ranking weight); Like on AI and community outfits and Dislike on AI-generated targets only (Today strip + chat suggestions, never community posts); outfit history; Like/Wear stored as events for the matching engine's own rules — no fixed contributions, recency bands, or decay in business scope. |
 | Community Feed (outfit inspiration) | Home feed of shared outfits for inspiration (not a complete social network); MVP actions: Like, Follow creator, outfit sharing, Edit-as-duplicate (copy to own outfit view as editable draft), Save look, generic-model Try-On. No comments, no messaging, no wardrobe sharing in MVP. |
 | AI Chat Stylist | Single-thread conversational stylist; text + outfit/item cards, suggestion chips, attach photo routing into Add flow. Chat-suggested outfits support Dislike. No multi-thread history in MVP. |
@@ -542,6 +596,8 @@ The MVP is the minimum coherent experience that demonstrates all three pillars a
 6. Review explainable coverage and gaps based on the relevant capsule profile.
 7. Inspect candidate additions, their Wardrobe Multiplier, and hypothetical newly enabled outfits.
 8. Optionally follow an external purchasing link; wardrobe value remains available without shopping.
+
+The approved MVP also includes bounded Community inspiration/sharing, single-thread AI Chat, generic-model Try-On with Save/Wear entry, internal catalog discovery/confirmed addition and reviewed bulk import (BR-025–BR-031). These augment the same three-pillar value loop; they are not claims of delivered software.
 
 The MVP may use explicit validity rules, lightweight ranking, and a curated staple catalog; it does not require advanced ML or retailer integration. Insufficient wardrobe data must be explained rather than disguised through invalid or repeated recommendations. Completion means a coherent, usable mobile product experience, with the validation targets in Section 19 assessed under agreed conditions. A working increment may deliver part of this experience; it is not the complete MVP until the connected value proposition is available.
 
@@ -662,7 +718,7 @@ These are product trust commitments, not assertions of legal certification or re
 
 ## 25. Future Opportunities
 
-The following are possibilities for later evaluation, not additions to MVP scope or commitments to deliver.
+The following are opportunities beyond the approved bounded MVP; they require separate evaluation and approval. Current Community, single-thread Chat, generic preview, catalog and reviewed bulk entry are specified in Section 16, not this future list.
 
 | Opportunity | Potential Business Value | Boundary |
 |---|---|---|
@@ -670,8 +726,6 @@ The following are possibilities for later evaluation, not additions to MVP scope
 | Advanced ML ranking and personalization models | Improve relevance as sufficient trustworthy feedback becomes available. | No sophisticated learned model required initially. |
 | Retailer integrations and affiliate partnerships | Improve candidate information, external destinations, and referral evidence. | No existing integration, contract, native commerce, or retailer dependency assumed. |
 | Subscriptions / premium insights | Explore payment for sustained wardrobe intelligence. | Packaging, willingness to pay, and commercial terms require later validation. |
-| Social / community experiences | Explore optional inspiration and sharing. | MVP includes outfit-inspiration feed only (Like / Follow creator / outfit sharing / Edit-as-duplicate / Save / Try-On; no comments, no messaging, no wardrobe sharing). Full social graph (comments, messaging, public wardrobes) remains excluded pending separate privacy/value assessment. |
-| Generic-model try-on preview | In MVP scope. | Personal avatar creation, AR, 3D avatars, and clothing simulation remain deferred. |
 | Additional markets and localization | Adapt the value loop to more climates, occasions, languages, and shopping contexts. | Expansion readiness does not require simultaneous multi-market launch. |
 
 ## 26. Traceability
@@ -684,6 +738,16 @@ The matrix connects business goals to the requirements that support them and the
 | BG-02 — Reduce Outfit Decision Effort | BR-002, BR-003, BR-005, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-021, BR-022, BR-023 | CAP-01 Account & Personalization; CAP-03 Wardrobe Management; CAP-04 Garment Intelligence; CAP-05 Context-Aware Styling; CAP-06 Behavioral Personalization |
 | BG-03 — Increase Wardrobe Utilization | BR-002, BR-003, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-014, BR-015, BR-021, BR-022, BR-023, BR-024 | CAP-03 Wardrobe Management; CAP-04 Garment Intelligence; CAP-05 Context-Aware Styling; CAP-06 Behavioral Personalization; CAP-07 Wardrobe Analytics; CAP-08 Gap Analysis |
 | BG-04 — Improve Purchase Quality | BR-002, BR-003, BR-009, BR-010, BR-012, BR-013, BR-014, BR-015, BR-016, BR-017, BR-018, BR-019, BR-020, BR-021, BR-022, BR-023, BR-024 | CAP-01 Account & Personalization; CAP-04 Garment Intelligence; CAP-05 Context-Aware Styling; CAP-07 Wardrobe Analytics; CAP-08 Gap Analysis; CAP-09 Wardrobe Multiplier; CAP-10 Strategic Shopping |
+
+### 26.1 Approved MVP Extension Traceability
+
+| Business outcome | Capability | Primary goals | Product handoff |
+|---|---|---|---|
+| BR-025 / BR-026 | CAP-11 | BG-02, BG-03 | FEAT-COM-001/002 |
+| BR-027 | CAP-12 | BG-01, BG-02 | FEAT-CHAT-001 |
+| BR-028 | CAP-13 | BG-02, BG-03 | FEAT-TRY-001 |
+| BR-029 / BR-030 | CAP-14 | BG-01, BG-04 | FEAT-CAT-001/002 |
+| BR-031 | CAP-15 | BG-01 | FEAT-BULK-001 |
 
 ## 27. Resolved Business Decisions
 
@@ -698,7 +762,7 @@ Product decisions OPQ-001–OPQ-010 are resolved in the [PRD's Resolved Product 
 
 ## 28. Approval / Exit Criteria
 
-BRD v0.5 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
+BRD v0.8 is ready for acceptance and the next workflow step when the Product Owner, with relevant stakeholder review, confirms that:
 
 - The user problems, product vision, three connected pillars, and expected value are clear.
 - Decision stakeholders, end users, and supporting roles are identified.
@@ -707,7 +771,7 @@ BRD v0.5 is ready for acceptance and the next workflow step when the Product Own
 - Initial scope, exclusions, and the complete MVP experience are explicit.
 - Garment confirmation authority, inclusive personalization, explainability, and commerce independence are preserved.
 - Validation targets, assumptions, dependencies, constraints, and material risks are documented without presenting hypotheses as results.
-- OBQ-001 and OBQ-002 are resolved, the approved business clarifications are synchronized with the PRD, and no unresolved business ambiguity blocks downstream refinement.
+- OBQ-001 and OBQ-002 are resolved, the approved business clarifications are synchronized with the PRD, and unresolved implementation-facing product policies are explicitly tracked in PRD Section 34.2 without reopening approved scope.
 
 Acceptance is recorded through repository review and an appropriate document-status update by the decision authority. This draft does not claim completed approval. Later evidence may refine the baseline through controlled, traceable changes rather than freeze requirements before iterative development.
 
@@ -720,10 +784,10 @@ Acceptance is recorded through repository review and an appropriate document-sta
 | Market and platform | Vietnam-first, expansion-ready; mobile-first on Android and iOS; Vietnamese initial UI with later localization possible. | SRC-02, SRC-10; Section 10 |
 | Personas | Indecisive Professional is primary; Fashion-Conscious Minimalist and Smart Shopper are secondary behavioral archetypes. | SRC-02; Section 11 |
 | Initial categories | Tops, Dresses/Jumpsuits, Pants, Skirts, Outerwear, Shoes, Bags, and Headwear; recommendation-policy expansion remains explicit. | SRC-11; Sections 13.2/16; PRD Section 13.2 |
-| Garment intelligence | Exactly the source-owned 13-property model, category applicability, one dominant Color, optional multiple Materials and confirmation authority. | SRC-12; Section 13.2 |
+| Garment intelligence | Exactly the source-owned 13-property model, category applicability, one dominant Color, optional multiple Materials and Styles, approved Brand/Price validation and confirmation authority. | SRC-12; Section 13.2 |
 | Wardrobe authority | User-confirmed/corrected information is canonical; AI uncertainty and manual entry remain meaningful. | SRC-02; BR-002–BR-004 |
 | Recommendation strategy | Hard validity constraints plus soft personalized ranking; no sophisticated ML requirement. | SRC-02; Section 13.3 |
-| Active feedback and context | Wear This Today records user-reported wear events, including multiple intentional events within a day; Like/Dislike and history actively inform lightweight personalization. | SRC-02, SRC-10; BR-010–BR-011 |
+| Feedback and reported use | Like on AI Today/Chat and Community; Dislike only on AI Today/Chat. Store revisable state and distinct Wear Events for history/future engine use, without fixed weights, ranking decay, penalties, boosts or outfit/day increment caps. | PR #4 / DD-007; BR-010–BR-011 |
 | Inclusive context | Body shape and gender are optional and non-restrictive; device location permission is optional with manual selection. | SRC-02; BR-012–BR-013 |
 | Wardrobe Coverage Score | Explainable coverage of relevant needs through one Personalized Everyday Capsule; no universal checklist or objective-completeness claim. | SRC-02, SRC-10; BR-014 |
 | Wardrobe Multiplier | Core differentiator: incremental count of unique valid outfits under a consistent context, with hypothetical previews. | SRC-02; BR-016–BR-017 |
@@ -734,6 +798,4 @@ Acceptance is recorded through repository review and an appropriate document-sta
 
 ## Next Artifact
 
-This BRD v0.3 is synchronized with the [normalized PRD v0.2](../02-product/PRD.md). The next workflow artifact is `docs/03-requirements/SRS.md`, derived from the product behavior after PRD review; it is not created by this revision.
-
-BRD and PRD remain Baseline Draft until document review/acceptance is recorded. Their resolved business and product decisions support SRS drafting without reopening the settled capsule-needs, language, and wear-activity meaning. Formal requirements, domain rules, and architecture remain separate downstream artifacts under `CapsuleAI_Scrum_Development_Workflow.md`.
+Maintain the existing PRD, SRS, Business Rules, Use Cases/Activities, backlog/Stories and affected architecture against this approved business baseline. Resolve relevant PRD Section 34.2 policy questions during refinement; Sprint Planning precedes selected-story JIT detailed design and automated test/implementation. Document status remains Baseline Draft; source approval is not a claim of complete product implementation or Sprint selection.

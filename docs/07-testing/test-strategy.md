@@ -7,9 +7,9 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Project-wide Test Strategy |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Baseline Draft |
-| Date | 2026-10-20 |
+| Date | 2026-11-09 |
 | Ownership | Developers / Tech Lead with QA; AI and Mobile contributors own their relevant verification evidence; Product/BA clarify source behavior |
 | Process Authority | [CapsuleAI Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md), Sections 26–33, 40 and 46 |
 | Completion Authority | [Definition of Done](../06-scrum/definition-of-done.md) |
@@ -18,6 +18,7 @@
 | Version | Date | Revision |
 | --- | --- | --- |
 | 0.1 | 2026-10-20 | Established the verification approach from current requirements, stories, quality obligations and selected architecture. No implementation, infrastructure configuration or executed verification is included. |
+| 0.2 | 2026-11-09 | Propagated approved PR #4 / DD-007 into planned target/privacy/entry/integration regressions; removed superseded ranking fixtures while preserving timing, ownership, history and retention criteria. No new feature implementation or executed tests claimed. |
 
 **2026-11-05 requirements synchronization:** The approved eight-category expansion retains the existing recognition floor of 50 qualified images per category, hence at least 400 images total. Accuracy thresholds, label adjudication, held-out evaluation and privacy rules are unchanged. Requalify/version the label manifest for the new taxonomy; earlier four-group evidence does not establish eight-group quality. No benchmark result, model implementation or Sprint 2 AI scope is claimed.
 
@@ -70,10 +71,10 @@ Run real domain policies without Spring, database, HTTP, external providers or D
 
 | Rule Area | Direct Verification Focus | Authority |
 | --- | --- | --- |
-| Garment truth, properties and unevaluated eligibility | Confirmed Category/one Color saves without image/AI; every applicable optional property is supported/preserved, all source lists/applicability apply, Material is a distinct collection, and no ready/ineligible assertion is fabricated. | BRULE-GAR-001–010; source catalogue |
+| Garment truth, properties and unevaluated eligibility | Confirmed Category/one Color saves without image/AI; every applicable optional property is supported/preserved, all source lists/applicability apply, Material and Style are distinct-value collections, and no ready/ineligible assertion is fabricated. | BRULE-GAR-001–010; source catalogue |
 | Future outfit validity and identity | Former fixed-role/removed-property predicates are superseded. Validate identity and owner boundaries; engine compatibility tests require a future approved policy and cannot reintroduce removed fields. | BRULE-OUT-001–009, superseded status respected |
 | Shuffle | Only the selected slot changes; other identities/context stay fixed; when no alternative exists, retain selection; no inferred Like/Dislike/Wear. | BRULE-OUT-010 |
-| Feedback and Wear | Effective outfit-targeted feedback, reported Wear strength, retry versus new intention, one outfit/original-day ranking increment, survivor-anchor recalculation and elapsed-time aging. History count remains distinct from ranking normalization. | BRULE-PERS-001–006, BRULE-WEAR-001–006, BRULE-HIST-001–003 |
+| Feedback and Wear | Typed AI Today/Chat versus Community targets; Like on both and AI-only Dislike, revisable/clearable effective state, faithful timestamps, retry versus distinct Wear intention and surviving history after correction/removal. No mandatory weights, decay, penalty/boost or outfit/day increment cap. | BRULE-PERS-001–006, BRULE-WEAR-001–006, BRULE-HIST-001–003 |
 | Coverage and gaps | Positive-priority weighting, sufficient evidence required by a future evaluation policy, zero versus insufficient information, mapped-occasion deduplication and capability gaps supported by evidence. | BRULE-COV-001–006, BRULE-GAP-001/002 |
 | Wardrobe Multiplier | Complete same-basis unique-set difference; candidate-bearing previews; Exact/Evaluated Zero/Incomplete/Unavailable/Outdated; no ownership or Wear from hypothetical evaluation. | BRULE-MULT-001–009, BRULE-SHOP-002 |
 
@@ -200,7 +201,7 @@ These are candidate coverage groups, not a requirement to combine everything int
 
 ## 14. Test Data, Time and Isolation
 
-Plan catalogue-driven coverage for all 13 applicable properties and every approved value: 84 category-valid Subtypes, 34 single dominant Colors, 28 Materials with zero/one/multiple/duplicate selections, 24 single optional Patterns, 17 named Styles with Etc rejected, and every Tops/Pants-specific detail. Verify supplied invalid/inapplicable input, optional omissions, exact accepted-value persistence/reread, Brand text, decimal Price/currency, missing rather than zero, no image/default inference, ownership and safe retries. Detail returns all applicable accepted properties; summaries remain identifiable without every detail field. Eligibility is not evaluated, with no readiness gate or ready/unsuitable/ineligible inference. These are planned verification obligations, not executed product tests.
+Plan catalogue-driven coverage for all 13 applicable properties and every approved value: 84 category-valid Subtypes, 34 single dominant Colors, 28 Materials with zero/one/multiple/duplicate selections, 24 single optional Patterns, 17 named Styles with zero/one/multiple/duplicate selections and Etc rejected, and every Tops/Pants-specific detail. Verify supplied invalid/inapplicable input, optional omissions, exact accepted-value persistence/reread, Brand text, decimal Price/currency, missing distinct from a valid known zero Price, no image/default inference, ownership and safe retries. Detail returns all applicable accepted properties; summaries remain identifiable without every detail field. Eligibility is not evaluated, with no readiness gate or ready/unsuitable/ineligible inference. These are planned verification obligations, not executed product tests.
 
 Use small explicit fixtures with stable identities and readable builders/factories where repetition warrants them. Each test creates its own state and obtains its expected result from requirements. Factories should expose relevant values rather than hide scenario-critical defaults. Use synthetic accounts, local delivery destinations, disposable secrets and approved nonpersonal media; no production database exports or real-user wardrobes in ordinary test runs.
 
@@ -209,7 +210,7 @@ Use small explicit fixtures with stable identities and readable builders/factori
 | Ownership/security | At least two synthetic accounts and separate sessions allow owner/other-user/unauthenticated and per-session/account-wide effects to be distinguished. Assertions include forbidden disclosure/mutation. |
 | Garment/evaluation states | Saveable with recommendation eligibility not evaluated, removed/historical, current owned and hypothetical candidates; valid/invalid layered outfits; no, one, two and sufficient distinct options; zero versus missing/incomplete/unavailable/outdated evidence. |
 | Clock and expiry | Supply a controllable clock at policy boundaries. Fix evaluation instants and test just before/at/after access, session, reset, weather, commercial and retention boundaries; never wait days in real time. |
-| Event time | Preserve original event-local date/timezone for history/grouping; calculate age/recency from absolute instants and completed 24-hour periods. Include travel, same-original-day correction, future/cross-day rejection, latest-survivor changes and 30/31, 60/61, 90/91-day decay boundaries. Do not invent an overlooked-garment age anchor. |
+| Event time | Preserve original event-local date/timezone and absolute timestamps for history/grouping/ordering. Include travel, same-original-day correction, future/cross-day rejection and surviving reports after removal. No ranking-decay bands or boost-age anchor are acceptance fixtures. Independently verify actual auth expiry, freshness, removed-data deletion and 90-day user-linked measurement-retention boundaries. |
 | Repetition and randomness | Distinguish repeated delivery of one logical intention from a new explicit report on the same outfit/day. Use fixed/random seeds with failure reporting when sampling is useful; permutation or duplicate inputs must not inflate unique outfits. |
 | Database and parallelism | Fresh data per test/worker, explicit cleanup, no dependence on execution order or shared mutable fixture state. Reset mutable doubles and static state. Use the transaction/disposable-resource approach from Section 8. |
 | Concurrency and asynchronous work | Use explicit barriers/signals and bounded completion checks rather than timing guesses. Exercise independent real transactions where races matter. Control provider timing/failure and inspect committed accepted outcomes. |
@@ -224,9 +225,25 @@ Select affected checks by risk and dependency impact: shared validity/identity c
 
 Postman and manual sessions remain useful for debugging, exploration and inspecting unfamiliar behavior. A manually successful request does not provide repeatable regression or establish Done. Record necessary human/device/model-quality evidence alongside automation, with tested version, conditions and limits (DoD Sections 4–6).
 
+### 15.1 Approved PR #4 Regression Extension
+
+These are **planned source-linked verification obligations**, not test implementation, passing results or Sprint selection. Preserve existing Sprint 1–2 access/recovery, confirmed create, opaque cursor pagination and detail tests/contracts. New feature fixtures evolve only with selected stories and relevant approved policy; whole-MVP detailed API/schema design is not a test prerequisite.
+
+| Capability / source | Required positive, boundary and negative evidence | Proportional test layers |
+|---|---|---|
+| Community — FR-COM-001–009; UC/AD-024–026; US-COM-001–003 | Attributed accessible posts; loading/empty/unavailable/denied; correct creator Follow; Like/clear; Community Dislike rejected without mutation. Confirm sharing only approved fields/audience; deny private inventory/source media/Price/profile/history. Independent duplicate leaves original/ownership unchanged; Save and preview entry have no implicit Wear. Policy fixtures require MVP-Q01/Q02/Q06 approval. | Domain/application policy, real authorization/persistence/API integration when delivered, supported client journeys. |
+| Chat — FR-CHAT-001–007; UC/AD-027; US-CHAT-001 | One thread, text/cards/chips with identifiable owned/unowned source meaning; chip does not mutate feedback/ownership/Wear. Photo routes into explicit garment review. AI Today/Chat Like/Dislike/revise/clear uses correct typed target; unavailable AI, absent context and cross-account/retention/minimal-provider-payload checks use approved MVP-Q03/Q09. | Application and adapter contract tests, real accepted-state/security integration and selected provider/client evidence. |
+| Generic preview — FR-TRY-001–005; UC/AD-028; US-TRY-001 | Selected-look/result identity, selection change, generic-model limitations, truthful failed/unavailable recovery. Save alone is neither Wear nor ownership; Wear Today requires current valid owned constituents. Unowned inspiration fails that gate, and one logical Wear retry creates one event. No selfie avatar/AR/3D fixture is required. | Application/result-basis tests, adapter contract and authorized media integration, client Save/Wear handoff. |
+| Catalog — FR-CAT-001–008; UC/AD-029/030; US-CAT-001/002 | Separate catalog versus owned search; qualified missing data; no-match versus unavailable; explicit selection/Add intent without automatic ownership. Confirm/cancel/correct all 13 applicable properties, Materials/Styles sets, source provenance, no asking-price-to-purchase-Price inference, one logical accepted addition and no later source overwrite. | Domain/application tests, actual owner persistence/security/API integration and approved source/client handoff. |
+| Bulk — FR-BULK-001–006; UC/AD-031; US-BULK-001 | Queue/item/photo correspondence; explicit per-item review/confirmation and complete source-vocabulary validation; uploaded/proposed-only inputs create no garment. Mixed failed/uncertain/accepted outcomes, safe per-item retry, separate intentional additions, no cross-item/user leakage and no loss of known accepted outcomes. Limits/atomicity/resumption/staging lifecycle fixtures require MVP-Q08. | Domain/application and real transaction/idempotency/media integration; client recovery under the approved processing policy. |
+| Feedback/Wear — FR-PERS-001–014; FR-WEAR-*; UC/AD-013/014/016/017 | Same displayed constituent set on AI and Community retains distinct source targets; reject Community Dislike in the service boundary, not only the UI. Store revised/cleared accepted state; preserve intentional repeated Wear reports and original time through correction/removal. Test validity dominance without inventing +1/-2/+2, ranking-decay bands, penalties, boosts or a daily preference cap. Any future engine fixture needs explicit approved policy (MVP-Q10). | Policy/application and real persistence/security/contract tests when delivered. |
+| Privacy and lifecycle — NFR-PRIV-001/002; DATA-RET-001–003 | Approved sharing projection versus private source access; purpose-minimal Chat/preview/catalog input; no MVP training. Preserve applicable 30-day removed garment/Wear deletion and distinct 90-day user-linked measurement expiry/de-identification. Do not invent Chat/post/preview/staged-media retention from those limits. | Authorized/denied API and lifecycle integration, payload/evidence inspection and client state checks. |
+
+Each new Story AC cites a functional requirement and observable verification; its UC/Activity defines the interaction and ADD Section 15 records architecture impact. Untested/not-yet-implemented paths remain planned. No new numeric quality target, vendor, infrastructure or whole-feature implementation is authorized by this table.
+
 ## 16. Selective TDD
 
-Use **RED → GREEN → REFACTOR** where it improves clarity: write a failing behavior test, implement enough to satisfy it, then improve the design while the relevant suite stays green. Good candidates include garment readiness, hard validity, unique-set calculations, Coverage, Wear normalization/aging, and security-sensitive lifecycle decisions. A failing test must fail for the intended missing behavior, not broken setup.
+Use **RED → GREEN → REFACTOR** where it improves clarity: write a failing behavior test, implement enough to satisfy it, then improve the design while the relevant suite stays green. Good candidates include garment readiness, hard validity, unique-set calculations, Coverage, Wear logical-action identity and history revisions, and security-sensitive lifecycle decisions. A failing test must fail for the intended missing behavior, not broken setup.
 
 Strict TDD is not required for every configuration class, DTO, mapping, framework integration or trivial accessor. Integration-first investigation can be appropriate for an unfamiliar adapter; then automate the learned contract. Testing still accompanies implementation whichever order is useful. Keep JIT design, tests, implementation and refactoring in one small feedback loop under Workflow Sections 26/28/33.
 

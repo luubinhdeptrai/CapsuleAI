@@ -4,17 +4,22 @@ import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.GarmentCreation;
+import com.capsuleai.wardrobe.application.GarmentPhotoContentService;
+import com.capsuleai.wardrobe.application.GarmentRevision;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
+import com.capsuleai.wardrobe.application.ReviseGarmentService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -33,13 +38,19 @@ public class WardrobeGarmentController {
     private final AddGarmentService addGarmentService;
     private final BrowseWardrobeService browseWardrobeService;
     private final InspectGarmentService inspectGarmentService;
+    private final ReviseGarmentService reviseGarmentService;
+    private final GarmentPhotoContentService garmentPhotoContentService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
                                      BrowseWardrobeService browseWardrobeService,
-                                     InspectGarmentService inspectGarmentService) {
+                                     InspectGarmentService inspectGarmentService,
+                                     ReviseGarmentService reviseGarmentService,
+                                     GarmentPhotoContentService garmentPhotoContentService) {
         this.addGarmentService = addGarmentService;
         this.browseWardrobeService = browseWardrobeService;
         this.inspectGarmentService = inspectGarmentService;
+        this.reviseGarmentService = reviseGarmentService;
+        this.garmentPhotoContentService = garmentPhotoContentService;
     }
 
     /**
@@ -80,5 +91,29 @@ public class WardrobeGarmentController {
     public GarmentResponse inspectGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
                                           @PathVariable String garmentId) {
         return GarmentResponse.from(inspectGarmentService.inspect(owner.accountId(), garmentId));
+    }
+
+    /**
+     * US-GAR-002 — applies one explicitly confirmed, presence-aware edit and returns the garment
+     * as it now is (200). A stale expected revision is 409 and changes nothing; the client
+     * rereads with GET /{garmentId} before asking the user to confirm again.
+     */
+    @PatchMapping("/{garmentId}")
+    public GarmentResponse reviseGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                         @PathVariable String garmentId,
+                                         @RequestBody GarmentRevisionRequest request) {
+        GarmentRevision revision = reviseGarmentService.revise(request.toCommand(owner.accountId(), garmentId));
+        return GarmentResponse.from(revision.garment());
+    }
+
+    /**
+     * US-GAR-003 — the garment's private photo, streamed after the current owner check (S3-IMG-05).
+     * 404 GARMENT_PHOTO_UNAVAILABLE when there is none or its object is missing; the garment's
+     * information stays available through GET /{garmentId} (AC-06).
+     */
+    @GetMapping("/{garmentId}/photo")
+    public ResponseEntity<Resource> garmentPhoto(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                                 @PathVariable String garmentId) {
+        return PhotoResponses.image(garmentPhotoContentService.open(owner.accountId(), garmentId));
     }
 }

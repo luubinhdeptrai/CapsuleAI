@@ -1,0 +1,50 @@
+@startuml
+' AD-027; source ../use-cases/UC-027-consult-ai-chat-stylist.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-CHAT-001; BR-027; CAP-12; PBI-044; US-CHAT-001 AC.
+' SRS: FR-CHAT-001, FR-CHAT-002, FR-CHAT-003, FR-CHAT-004, FR-CHAT-005, FR-CHAT-006, FR-CHAT-007; DATA-CHAT-001.
+' Business Rules: BRULE-CHAT-001/002; BRULE-PERS-001; BRULE-GAR-001/002; BRULE-AUTH-001/007.
+' Open policy: MVP-Q03, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-027 - Consult the single-thread AI Chat Stylist
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-027;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|User|
+if (Attach garment photo?) then (Yes)
+  |CapsuleAI|
+  :Route permitted photo to Add Garment (UC-007);
+  :Require review and explicit confirmation;
+  :No ownership from attachment alone;
+else (Text / chip)
+  |CapsuleAI|
+  :Use single thread and authorized relevant context;
+  :Show pending reply;
+  if (AI reply available?) then (Yes)
+    :Show reply, identified outfit / item cards and chips;
+    |User|
+    :Continue text / chips or choose suggestion feedback;
+    |CapsuleAI|
+    :Route AI suggestion feedback through UC-013;
+  else (Failed / unavailable)
+    :Explain actual unavailable state;
+    :Offer retry / independent wardrobe use;
+  endif
+endif
+note right
+  One thread; no multithread product history.
+  No invented missing context, provider or training consent.
+  Chat retention / context exchange require refinement.
+end note
+
+stop
+@enduml

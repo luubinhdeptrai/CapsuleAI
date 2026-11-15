@@ -50,7 +50,7 @@ The User explicitly initiates Wear This Today for the identified owned outfit.
 At Main Step 1:
 
 1. The User makes a new explicit Wear This Today initiation for the same valid outfit on the same event-local calendar day.
-2. CapsuleAI accepts a separate legitimate event through Main Steps 2–4; it does not collapse the reports into one history record. Same-outfit/day ranking evidence remains capped.
+2. CapsuleAI accepts a separate legitimate event through Main Steps 2–4; it does not collapse the reports into one history record. Same-outfit/day history grouping does not cap or merge distinct accepted reports.
 
 ### A2 — Different outfit on the same local day
 
@@ -99,7 +99,7 @@ At Main Step 1:
 ## 9. Success Postconditions
 
 - One accepted event exists for the logical action, with the outfit, accepted absolute time, original event-local context and user-reported nature.
-- History retains distinct intentional reports; applicable normalized evidence allows at most one Wear-based preference increment for the exact outfit/original local day.
+- History retains every distinct intentional report; outfit/day presentation groups neither merge records nor mandate a ranking contribution or cap.
 
 ## 10. Minimal / Failure Postconditions
 
@@ -117,11 +117,11 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-WEAR-001` | One explicit logical report defaults to its accepted current time on a valid owned outfit. |
 | `BRULE-WEAR-002` | Retry identity differs from a new intention, including repeated same-outfit/day reports. |
-| `BRULE-WEAR-003` | Preserve original event-local context after travel; absolute elapsed time governs aging. |
+| `BRULE-WEAR-003` | Preserve original event-local context after travel and retain absolute timestamps for faithful history. |
 | `BRULE-WEAR-006` | Accepted reports affect history/utilization and effective ranking evidence. |
-| `BRULE-PERS-002` | Wear contributes conceptual +2 before decay, stronger than Like. |
-| `BRULE-PERS-003` | Apply completed elapsed 24-hour aging periods; expiry of influence is not deletion. |
-| `BRULE-PERS-005` | Same exact outfit/original day contributes at most one increment, anchored to the latest surviving accepted timestamp. |
+| `BRULE-PERS-002` | Wear is a distinct user-reported stored event; no fixed increment or Like-strength comparison applies. |
+| `BRULE-PERS-003` | No business-rule ranking aging/decay applies; necessary functional history follows its own lifecycle. |
+| `BRULE-PERS-005` | Same exact outfit/original day may be grouped for history presentation/counting; each intentional event remains separate, with no ranking-increment cap. |
 | `BRULE-HIST-001` | Reports are evidence supplied by the User, not verified physical wear. |
 | `BRULE-OUT-002` | Current owned eligibility excludes historical removed and hypothetical candidate items. |
 
@@ -144,7 +144,7 @@ The following references constrain this interaction; detailed policy remains in 
 
 - Documentation is English; the Vietnamese MVP UI supports Android 10+ and iOS 15+. Translated labels preserve canonical meanings. Applicable actions/states have meaningful accessible names/roles/states and understandable labels beyond color, and remain operable with primary actions accessible at text scaling up to 200%. TalkBack/VoiceOver validation and platform primary touch-target criteria follow SRS Sections 6.7/12.4.
 - Logical-action retry protection must not deduplicate all User/outfit/date reports. History identity and daily evidence normalization have different purposes.
-- Time-decay/recency use the absolute elapsed-time policy; original event-local date determines daily grouping. No future scheduling or backdated creation policy is added.
+- Original event-local date/time and timezone remain preserved, with absolute timestamps for event order. No mandatory ranking weights/decay, outfit/day increment cap, future scheduling or backdated creation policy is added.
 
 - Reports support necessary private history/utilization/personalization without MVP personal-data AI training. Necessary active history may outlast ranking influence; user-linked engagement measurement has a separate 90-day retention limit.
 

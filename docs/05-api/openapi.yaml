@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.8.0
+  version: 0.11.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -16,6 +16,9 @@ info:
       - US-GAR-001: Add an owned garment manually
       - US-WAR-001: Browse my current wardrobe
       - US-WAR-002: Inspect an owned garment
+      - US-GAR-002: Correct and enrich garment information
+      - US-GAR-003: Add a photo-supported garment with manual confirmation
+      - US-PROF-001: Set and revise style preferences and common needs
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -49,13 +52,28 @@ info:
     own garments. Every garment has exactly the 13 approved
     properties; controlled values are codes whose approved labels
     are listed in the vocabulary schemas. Recommendation
-    eligibility is not evaluated in this release, and no garment
-    image is stored.
+    eligibility is not evaluated in this release. A new garment
+    may carry one private photo (US-GAR-003): the photo is staged
+    first and becomes part of a garment only through an explicitly
+    confirmed garment creation. Photos are served only to their
+    owner, through the application.
 
     This specification does not introduce endpoints for
-    session listing, all-device logout, garment editing or
-    removal, garment images, search, filtering or user
-    profiles.
+    session listing, all-device logout, garment removal,
+    attaching a photo to an existing garment, replacing a
+    confirmed photo, search, filtering, body or gender
+    profiles, location, or public profiles.
+
+    Personal preferences (US-PROF-001) are the account's own
+    declared profile styles and common-need priorities. Unset
+    needs are null; 0 means Not Relevant. They are never
+    derived from garments or from a request occasion.
+
+    Garment editing (US-GAR-002) is a presence-aware PATCH
+    protected by an optimistic revision: every garment
+    response carries an opaque revision, which an edit sends
+    back as expectedRevision; a stale value is 409
+    REVISION_CONFLICT and changes nothing.
 
 servers:
   - url: http://localhost:8080
@@ -66,6 +84,8 @@ tags:
     description: Account registration and authentication lifecycle
   - name: Wardrobe
     description: The authenticated user's own confirmed garments
+  - name: PersonalContext
+    description: The authenticated user's own declared preferences
 
 # Every endpoint requires bearer authentication unless it
 # explicitly overrides this requirement with security: [].
@@ -768,11 +788,14 @@ paths:
                 recordedUse:
                   availability: "UNAVAILABLE"
                 createdAt: "2026-11-05T09:30:00.123456Z"
+                revision: "1"
+                photo: null
 
         "200":
           description: |
             The same logical addition was already accepted; this is
-            that garment. Nothing new was created.
+            that garment as it is now (it may have been edited since).
+            Nothing new was created.
           content:
             application/json:
               schema:
@@ -783,6 +806,12 @@ paths:
 
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
 
         "422":
           $ref: "#/components/responses/IdempotencyKeyReused"
@@ -839,8 +868,382 @@ paths:
         "503":
           $ref: "#/components/responses/Unavailable"
 
+    patch:
+      tags:
+        - Wardrobe
+      operationId: reviseGarment
+      summary: Correct or enrich one owned garment
+      description: |
+        US-GAR-002 (FR-WAR-003, FR-GAR-001–013, BRULE-GAR-002/005/006/009/010;
+        approved S3-GAR-01–05 and OPEN-S3-04/05/06).
+
+        Applies an explicitly confirmed, presence-aware edit to a
+        current garment of the authenticated account:
+
+        - an omitted property keeps its accepted value;
+        - null clears an optional property or the whole price;
+        - null or [] clears materials or styles; an array replaces
+          the whole set;
+        - price is always replaced as a whole object;
+        - category and color can be changed but never cleared.
+
+        The complete resulting profile is validated. A previously
+        accepted value that no longer applies after a category change
+        is reported against its own field and must be corrected or
+        cleared in the same edit; nothing is cleared automatically.
+
+        expectedRevision must be the revision last read. A stale
+        value is 409 REVISION_CONFLICT and changes nothing: read the
+        garment again, review, and confirm again with the new
+        revision. An edit that would change nothing returns 200 with
+        the same revision. After a lost response or a 503, read the
+        garment before retrying; a retry with the original
+        expectedRevision can never apply the edit twice.
+
+        Recommendation eligibility stays NOT_EVALUATED. Edits never
+        change the garment's id, creation time or provenance.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview or detail.
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentRevisionRequest"
+            examples:
+              correctAndClear:
+                summary: Correct the color, replace the materials, clear the brand
+                value:
+                  confirmed: true
+                  expectedRevision: "1"
+                  color: "NAVY"
+                  materials: ["COTTON", "LINEN"]
+                  brand: null
+              changeCategory:
+                summary: Change Tops to Pants and clear the Tops-only fit in the same edit
+                value:
+                  confirmed: true
+                  expectedRevision: "2"
+                  category: "PANTS"
+                  subtype: "JEANS"
+                  fit: null
+                  silhouette: "WIDE_LEG"
+
+      responses:
+        "200":
+          description: The edit was accepted (or changed nothing); the garment as it now is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "400":
+          $ref: "#/components/responses/GarmentRevisionRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/GarmentNotFound"
+
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments/{garmentId}/photo:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getGarmentPhoto
+      summary: The private photo of one owned garment
+      description: |
+        US-GAR-003 (AC-06/AC-07, S3-IMG-05). Streams the garment's
+        photo after the current owner check. The photo is a
+        normalized JPEG without metadata. Responses are private and
+        not stored by caches. 404 GARMENT_PHOTO_UNAVAILABLE means
+        the garment has no photo or its photo is missing; the
+        garment's information is unaffected. Send
+        Accept: image/jpeg, application/problem+json.
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The photo.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: "no-store, private"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/GarmentPhotoUnavailable"
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads:
+    post:
+      tags:
+        - Wardrobe
+      operationId: stagePhoto
+      summary: Stage one private garment photo for review
+      description: |
+        US-GAR-003 (FR-AI-001/002/012, S3-IMG-02/03/04/06). Uploads
+        one photo. The bytes must genuinely be JPEG, PNG or
+        HEIC/HEIF (file names and declared types are ignored), at
+        most 15,000,000 bytes, with the shorter side of the
+        original at least 512 pixels. A non-plain background is
+        fine. The stored photo is a normalized JPEG: orientation
+        applied, metadata (including location) removed, longer
+        side at most 2048 pixels.
+
+        Staging creates no garment. Confirm the garment with
+        POST /api/v1/wardrobe/garments and photoUploadId before
+        expiresAt; unconfirmed photos are deleted after they
+        expire. Repeat a lost upload with the same Idempotency-Key
+        and the same photo to get the same staged photo (200).
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: A UUID the client generates once per intended upload and repeats on retry.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: The photo was staged and can be reviewed and confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "200":
+          description: A retry of the same staging; this is that staged photo, in its current status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "422":
+          $ref: "#/components/responses/PhotoRejected"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads/{photoUploadId}:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getPhotoUpload
+      summary: Review a staged photo's status
+      description: |
+        US-GAR-003 (AC-06). The status of one of the account's
+        staged photos, for example after an interrupted upload or
+        confirmation: RECEIVING, READY, ATTACHED (with garmentId)
+        or DISCARDED (cancelled, expired or failed).
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "200":
+          description: The staged photo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    delete:
+      tags:
+        - Wardrobe
+      operationId: cancelPhotoUpload
+      summary: Cancel an unconfirmed staged photo
+      description: |
+        US-GAR-003 (AC-03, FR-AI-004/009). The staged photo becomes
+        unusable at once and is deleted. Cancelling again succeeds.
+        A photo that already belongs to a garment cannot be
+        cancelled (409).
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "204":
+          description: Cancelled (or already cancelled or expired).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads/{photoUploadId}/content:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getPhotoUploadContent
+      summary: The staged photo itself, for review
+      description: |
+        US-GAR-003 (AC-03, S3-IMG-05). Available only while the
+        staged photo is READY. Private; not stored by caches. Send
+        Accept: image/jpeg, application/problem+json.
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "200":
+          description: The staged photo.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/personal-context/preferences:
+    get:
+      tags:
+        - PersonalContext
+      operationId: viewPreferences
+      summary: The account's declared styles and common needs
+      description: |
+        US-PROF-001 AC-01 (FR-PROF-002/003, DATA-AUTH-003). Always
+        200: an account that declared nothing has revision null,
+        styles [] and every need null. Absent context is not a
+        persona and never a default.
+      responses:
+        "200":
+          description: The current declaration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    patch:
+      tags:
+        - PersonalContext
+      operationId: revisePreferences
+      summary: Set or revise the account's styles and common needs
+      description: |
+        US-PROF-001 (FR-PROF-002/003, BRULE-PROF-002; approved
+        S3-PROF-02/03/04 and OPEN-S3-04/05/06/15).
+
+        - styles omitted keeps them; null or [] clears them; an
+          array replaces the whole selection (profile style codes
+          only, never garment Style codes).
+        - commonNeeds omitted keeps every need. In the object, an
+          omitted need is kept, null makes it unset, and 0–3 sets
+          it (0 = Not Relevant). commonNeeds: null is rejected.
+        - expectedRevision is required: null for the first
+          declaration (only one can be created), otherwise the
+          revision last read. A mismatch is 409 REVISION_CONFLICT
+          and changes nothing.
+
+        A change that would change nothing returns 200 with the
+        same revision. A request occasion never changes these
+        values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesRevisionRequest"
+            examples:
+              firstDeclaration:
+                summary: First declaration
+                value:
+                  expectedRevision: null
+                  styles: ["MINIMAL", "SMART_CASUAL"]
+                  commonNeeds:
+                    WORK_PROFESSIONAL: 3
+                    SPORT_ACTIVE: 0
+              revision:
+                summary: Raise Travel, unset School, keep everything else
+                value:
+                  expectedRevision: "1"
+                  commonNeeds:
+                    TRAVEL: 2
+                    SCHOOL_UNIVERSITY: null
+      responses:
+        "200":
+          description: The change was accepted (or changed nothing); the declaration as it now is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
 components:
   parameters:
+    PhotoUploadId:
+      name: photoUploadId
+      in: path
+      required: true
+      description: The id of one of the account's staged photos.
+      schema:
+        type: string
+        format: uuid
+
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -1221,6 +1624,14 @@ components:
           anyOf:
             - $ref: "#/components/schemas/Price"
             - type: "null"
+        photoUploadId:
+          type: [string, "null"]
+          format: uuid
+          description: |
+            US-GAR-003: the reviewed staged photo to attach. Omit or
+            null for a garment without a photo. A photo that cannot
+            be used fails the request (404 or 409); it never falls
+            back to a garment without a photo.
 
     Price:
       type: object
@@ -1247,6 +1658,73 @@ components:
           description: Upper-case ISO 4217 code of a real currency.
           examples:
             - "VND"
+
+    GarmentRevisionRequest:
+      type: object
+      description: |
+        An explicitly confirmed edit of one garment (US-GAR-002).
+        Omit a property to keep it; send null to clear an optional
+        property, the whole price or a set; send [] to clear a set.
+        A value of the wrong JSON type is rejected for that field.
+        There is no owner field and no media field.
+      required:
+        - confirmed
+        - expectedRevision
+      properties:
+        confirmed:
+          type: boolean
+          description: Must be true. false or missing changes nothing.
+        expectedRevision:
+          type: string
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: The revision of the garment as last read. Opaque; send it unchanged.
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        materials:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/GarmentMaterialCode"
+        pattern:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPatternCode"
+            - type: "null"
+        styles:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
+        fit:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentFitCode"
+            - type: "null"
+        neckline:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentNecklineCode"
+            - type: "null"
+        sleeveLength:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSleeveLengthCode"
+            - type: "null"
+        length:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentLengthCode"
+            - type: "null"
+        silhouette:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSilhouetteCode"
+            - type: "null"
+        brand:
+          type: [string, "null"]
+          description: Kept exactly; blank or null clears it; at most 100 Unicode code points.
+        price:
+          anyOf:
+            - $ref: "#/components/schemas/Price"
+            - type: "null"
 
     Garment:
       type: object
@@ -1275,6 +1753,8 @@ components:
         - recommendationEligibility
         - recordedUse
         - createdAt
+        - revision
+        - photo
       properties:
         id:
           type: string
@@ -1342,6 +1822,77 @@ components:
         createdAt:
           type: string
           format: date-time
+        revision:
+          type: string
+          pattern: "^[1-9][0-9]*$"
+          description: |
+            Opaque version of the accepted profile (US-GAR-002,
+            OPEN-S3-04). Send it unchanged as expectedRevision when
+            editing. It changes only when an edit changes the profile.
+        photo:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPhoto"
+            - type: "null"
+
+    GarmentPhoto:
+      type: object
+      description: |
+        The garment's private photo (US-GAR-003); its bytes are at
+        GET /api/v1/wardrobe/garments/{garmentId}/photo. Media
+        metadata, not a garment property.
+      required:
+        - contentType
+        - width
+        - height
+      properties:
+        contentType:
+          type: string
+          const: image/jpeg
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+
+    PhotoUpload:
+      type: object
+      description: |
+        A staged photo (US-GAR-003). Every field is always present.
+        A staged photo is never a garment.
+      required:
+        - id
+        - status
+        - contentType
+        - width
+        - height
+        - expiresAt
+        - garmentId
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [RECEIVING, READY, ATTACHED, DISCARDED]
+        contentType:
+          type: [string, "null"]
+          description: image/jpeg once READY; null before.
+        width:
+          type: [integer, "null"]
+        height:
+          type: [integer, "null"]
+        expiresAt:
+          type: string
+          format: date-time
+          description: |
+            When an unconfirmed photo stops being usable and is
+            deleted: 24 hours after staging (pending lifetime
+            approved by the Product Owner, OPEN-S3-07).
+        garmentId:
+          type: [string, "null"]
+          format: uuid
+          description: The garment this photo belongs to, once ATTACHED.
 
     RecordedUse:
       type: object
@@ -1960,6 +2511,88 @@ components:
         - const: WIDE_LEG
           title: "Wide-leg"
 
+    PreferencesRevisionRequest:
+      type: object
+      description: |
+        A presence-aware change of the account's declared
+        preferences (US-PROF-001). There is no owner field.
+      required:
+        - expectedRevision
+      properties:
+        expectedRevision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: null for the first declaration; otherwise the revision last read (opaque).
+        styles:
+          type: [array, "null"]
+          items:
+            $ref: "#/components/schemas/ProfileStyleCode"
+        commonNeeds:
+          type: object
+          description: Only the needs to change. null unsets one need; 0–3 sets it.
+          additionalProperties:
+            type: [integer, "null"]
+            minimum: 0
+            maximum: 3
+          propertyNames:
+            $ref: "#/components/schemas/CommonNeedCode"
+
+    Preferences:
+      type: object
+      description: |
+        The account's declaration. Every field is always present.
+        revision and updatedAt are null while nothing is declared.
+      required:
+        - revision
+        - styles
+        - commonNeeds
+        - updatedAt
+      properties:
+        revision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]*$"
+          description: Opaque; send it back as expectedRevision.
+        styles:
+          type: array
+          description: Declared profile styles in catalogue order; [] means none.
+          items:
+            $ref: "#/components/schemas/ProfileStyleCode"
+        commonNeeds:
+          type: object
+          description: All six needs, always present. null = unset; 0 Not Relevant, 1 Low, 2 Medium, 3 High.
+          required:
+            - EVERYDAY_CASUAL
+            - WORK_PROFESSIONAL
+            - SCHOOL_UNIVERSITY
+            - FORMAL_SPECIAL_EVENT
+            - TRAVEL
+            - SPORT_ACTIVE
+          properties:
+            EVERYDAY_CASUAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            WORK_PROFESSIONAL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            SCHOOL_UNIVERSITY: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            FORMAL_SPECIAL_EVENT: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            TRAVEL: { type: [integer, "null"], minimum: 0, maximum: 3 }
+            SPORT_ACTIVE: { type: [integer, "null"], minimum: 0, maximum: 3 }
+        updatedAt:
+          type: [string, "null"]
+          format: date-time
+
+    ProfileStyleCode:
+      type: string
+      description: Profile style preference (SRS 4.10); not a garment Style.
+      enum: [MINIMAL, CASUAL, SMART_CASUAL, CLASSIC, STREETWEAR, SPORTY, FORMAL]
+
+    CommonNeedCode:
+      type: string
+      description: |
+        Common-need dimension (SRS 3.14.1; codes per OPEN-S3-15):
+        EVERYDAY_CASUAL (EVERYDAY, DATE, SOCIAL_EVENT),
+        WORK_PROFESSIONAL (WORK), SCHOOL_UNIVERSITY
+        (SCHOOL_UNIVERSITY), FORMAL_SPECIAL_EVENT (FORMAL_EVENT),
+        TRAVEL (TRAVEL), SPORT_ACTIVE (SPORT_ACTIVITY).
+      enum: [EVERYDAY_CASUAL, WORK_PROFESSIONAL, SCHOOL_UNIVERSITY, FORMAL_SPECIAL_EVENT, TRAVEL, SPORT_ACTIVE]
+
     FieldError:
       type: object
       description: A validation failure associated with a request field.
@@ -2132,6 +2765,117 @@ components:
                 fieldErrors:
                   - field: "fit"
                     code: "NOT_APPLICABLE"
+
+    GarmentRevisionRejected:
+      description: |
+        The edit was not applied; the accepted garment is unchanged.
+        VALIDATION_FAILED lists every problem: a missing or false
+        confirmation, a missing or malformed expectedRevision, a
+        cleared category or color, unsupported, inapplicable or
+        wrong-type values, an incomplete price or an overlong brand.
+        A previously accepted value that no longer applies after a
+        category change is reported against its own field.
+        MALFORMED_REQUEST means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            staleDetailAfterCategoryChange:
+              summary: A Tops-only fit left in place when the category becomes Pants
+              value:
+                title: "Bad Request"
+                status: 400
+                detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+                instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
+                code: "VALIDATION_FAILED"
+                fieldErrors:
+                  - field: "fit"
+                    code: "NOT_APPLICABLE"
+
+    RevisionConflict:
+      description: |
+        The resource changed after it was read, so the edit was not
+        applied. Read it again, let the user review the current
+        values and confirm again with the new revision. Never resend
+        automatically with the new revision.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This garment changed after you opened it, so your edit was not applied. Reload it, review the current values and confirm your changes again."
+            instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
+            code: "REVISION_CONFLICT"
+
+    PhotoRejected:
+      description: |
+        The photo was not accepted and nothing was stored. Choose
+        another photo or continue without one. Codes:
+        PHOTO_UNSUPPORTED_FORMAT, PHOTO_TOO_LARGE (above
+        15,000,000 bytes), PHOTO_TOO_SMALL (shorter side below 512
+        pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES (a HEIF
+        file with several images whose primary image is not
+        selected; temporary until primary-image selection is
+        verified and enabled), and PHOTO_UPLOAD_KEY_REUSED (the
+        Idempotency-Key was used for a different photo).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Unprocessable Content"
+            status: 422
+            detail: "This photo is too small: its shorter side must be at least 512 pixels. Choose another photo or continue without one; nothing was saved."
+            instance: "/api/v1/wardrobe/photo-uploads"
+            code: "PHOTO_TOO_SMALL"
+
+    PhotoUploadNotFound:
+      description: |
+        No staged photo with this id belongs to the account (unknown,
+        another account's or malformed; indistinguishable).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This photo is not among your staged photos. Choose the photo again."
+            code: "PHOTO_UPLOAD_NOT_FOUND"
+
+    PhotoUploadNotUsable:
+      description: |
+        The staged photo cannot be used for this action: still being
+        received, cancelled, expired or already attached to a
+        garment. Nothing changed. Check its status with
+        GET /api/v1/wardrobe/photo-uploads/{photoUploadId}.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This photo can no longer be used here: it was cancelled, expired, is still being received or already belongs to a garment. Check the photo's status or choose it again."
+            code: "PHOTO_UPLOAD_NOT_USABLE"
+
+    GarmentPhotoUnavailable:
+      description: |
+        GARMENT_NOT_FOUND: no such garment in the account's wardrobe.
+        GARMENT_PHOTO_UNAVAILABLE: the garment has no photo, or its
+        photo is missing; the garment's information is unchanged.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "No photo can be shown for this garment. Its information is unchanged."
+            code: "GARMENT_PHOTO_UNAVAILABLE"
 
     GarmentNotFound:
       description: |

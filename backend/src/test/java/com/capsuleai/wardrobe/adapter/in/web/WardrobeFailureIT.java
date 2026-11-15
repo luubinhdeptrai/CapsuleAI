@@ -5,6 +5,7 @@ import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
 import com.capsuleai.wardrobe.application.ports.WardrobePosition;
 import com.capsuleai.wardrobe.domain.Garment;
+import com.capsuleai.wardrobe.domain.GarmentProfile;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
 import com.jayway.jsonpath.JsonPath;
 import java.time.Duration;
@@ -22,10 +23,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +62,7 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         private final GarmentRepository delegate;
         private final AtomicBoolean failAfterWrite = new AtomicBoolean();
         private final AtomicBoolean failReads = new AtomicBoolean();
+        private final AtomicBoolean failAfterRevision = new AtomicBoolean();
 
         FailingGarmentRepository(GarmentRepository delegate) {
             this.delegate = delegate;
@@ -72,9 +76,14 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
             failReads.set(true);
         }
 
+        void failNextRevisionAfterItRan() {
+            failAfterRevision.set(true);
+        }
+
         void reset() {
             failAfterWrite.set(false);
             failReads.set(false);
+            failAfterRevision.set(false);
         }
 
         @Override
@@ -102,6 +111,16 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
         public Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId) {
             failReadIfRequested();
             return delegate.findOwned(ownerAccountId, garmentId);
+        }
+
+        @Override
+        public boolean reviseIfCurrentAt(UUID ownerAccountId, UUID garmentId, long expectedRevision,
+                                         GarmentProfile revisedProfile) {
+            boolean revised = delegate.reviseIfCurrentAt(ownerAccountId, garmentId, expectedRevision, revisedProfile);
+            if (failAfterRevision.getAndSet(false)) {
+                throw new DataAccessResourceFailureException("connection lost after the revision (simulated)");
+            }
+            return revised;
         }
 
         private void failReadIfRequested() {
@@ -201,6 +220,32 @@ class WardrobeFailureIT extends WardrobeIntegrationTestSupport {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(garmentId.toString()));
+    }
+
+    /** US-GAR-002 AC-05/AC-07: a failed edit is rolled back, not reported as saved, and the reread shows the truth. */
+    @Test
+    void aFailedEditIsRolledBackAndNotReportedAsSaved() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("failed-edit@example.com");
+        UUID garmentId = addGarmentAndReturnId(tokens.accessToken(),
+                garment("TOPS", "WHITE", "materials", List.of("COTTON")));
+        failingGarmentRepository.failNextRevisionAfterItRan();
+
+        mockMvc.perform(patch(GARMENTS + "/" + garmentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"confirmed\":true,\"expectedRevision\":\"1\",\"color\":\"BLACK\","
+                                + "\"materials\":[\"WOOL\",\"SILK\"]}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.revision").doesNotExist());
+
+        mockMvc.perform(get(GARMENTS + "/" + garmentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.color").value("WHITE"))
+                .andExpect(jsonPath("$.materials.length()").value(1))
+                .andExpect(jsonPath("$.materials[0]").value("COTTON"))
+                .andExpect(jsonPath("$.revision").value("1"));
     }
 
     @Test

@@ -1,0 +1,43 @@
+@startuml
+' AD-026; source ../use-cases/UC-026-duplicate-shared-outfit.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-COM-002; BR-026; CAP-11; PBI-043; US-COM-003 AC.
+' SRS: FR-COM-005, FR-COM-008; DATA-COM-001.
+' Business Rules: BRULE-COM-001, BRULE-COM-002; BRULE-AUTH-001/007.
+' Open policy: MVP-Q01, MVP-Q02, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-026 - Duplicate shared inspiration as an independent outfit draft
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-026;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|CapsuleAI|
+:Identify accessible shared outfit
+and permitted reusable representation;
+:Attempt independent draft copy for requesting user;
+if (Draft acceptance established?) then (Yes)
+  :Show own editable outfit draft;
+  |User|
+  :Edit own draft;
+  |CapsuleAI|
+  :Keep creator original unchanged;
+else (Failed / uncertain)
+  :Explain actual outcome;
+  :Offer source / draft outcome review before safe retry;
+endif
+note right
+  A draft copy is not owned-garment ingestion.
+  It grants no access to the creator private inventory.
+  Source withdrawal / saved content policy remains open.
+end note
+
+stop
+@enduml

@@ -30,7 +30,7 @@ endif
 repeat
     if (This logical action already accepted?) then (Yes)
         :Return its single accepted event;
-        :Do not create another report or evidence increment;
+        :Do not create another event from this logical action;
         stop
     endif
     if (Outfit currently eligible and valid?) then (Yes)
@@ -49,13 +49,13 @@ repeat
         :Preserve absolute timestamp, original local date/time
 and event timezone/UTC offset;
         :Update effective history and utilization;
-        :Update recency and normalized age-weighted evidence;
+        :Retain stored event evidence for future engine use;
         note right
           Each new explicit intention remains a separate event,
           including another report for the same outfit/day.
-          One outfit/original-day group supplies at most one
-          Wear increment, anchored at its latest accepted event.
-          Absolute elapsed time governs aging and recency.
+          History grouping does not merge or cap events.
+          No fixed ranking contribution or decay applies.
+          Original local time and absolute timestamps persist.
         end note
         :Show accepted user-reported event;
         |User|

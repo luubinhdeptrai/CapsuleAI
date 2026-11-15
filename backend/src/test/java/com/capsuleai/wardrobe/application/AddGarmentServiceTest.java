@@ -19,7 +19,8 @@ class AddGarmentServiceTest {
     private final InMemoryGarmentRepository garments = new InMemoryGarmentRepository();
     private final ImmediateWardrobeTransactions transactions = new ImmediateWardrobeTransactions();
     private final MutableClock clock = new MutableClock(MutableClock.DEFAULT_START);
-    private final AddGarmentService service = new AddGarmentService(garments, transactions, clock);
+    private final AddGarmentService service =
+            new AddGarmentService(garments, new InMemoryPhotoUploadRepository(), transactions, clock);
 
     private final UUID owner = UUID.randomUUID();
 
@@ -90,7 +91,8 @@ class AddGarmentServiceTest {
 
     @Test
     void aFailedCommitIsNotReportedAsACreatedGarment() {
-        AddGarmentService failingCommit = new AddGarmentService(garments, new FailingCommit(), clock);
+        AddGarmentService failingCommit =
+                new AddGarmentService(garments, new InMemoryPhotoUploadRepository(), new FailingCommit(), clock);
 
         assertThatThrownBy(() -> failingCommit.add(command(owner, UUID.randomUUID().toString(), "SHOES", "BLACK")))
                 .isInstanceOf(IllegalStateException.class);

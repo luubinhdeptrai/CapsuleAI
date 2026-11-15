@@ -2,15 +2,20 @@ package com.capsuleai.wardrobe.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * One confirmed garment owned by one account (DATA-GAR-001, BRULE-GAR-001).
- * Only accepted creation produces a Garment; drafts never do.
+ * Only accepted creation produces a Garment; drafts and staged photos never do.
  *
  * <p>{@code removedAt} is null while the garment is in the owner's current
  * wardrobe. Ownership is independent of optional properties and of
  * recommendation eligibility, which is not evaluated (DATA-GAR-005).
+ *
+ * <p>{@code revision} identifies the accepted profile version (US-GAR-002, S3-GAR-02).
+ * {@code photo} is the private photo attached at confirmation, if any (US-GAR-003); it is
+ * metadata, not a garment property, and edits never change it (S3-IMG-07).
  */
 public record Garment(
         UUID id,
@@ -18,7 +23,12 @@ public record Garment(
         GarmentProfile profile,
         ValueProvenance provenance,
         Instant createdAt,
-        Instant removedAt) {
+        Instant removedAt,
+        long revision,
+        Optional<GarmentPhoto> photo) {
+
+    /** The revision of a newly accepted garment. */
+    public static final long FIRST_REVISION = 1;
 
     public Garment {
         Objects.requireNonNull(id, "id");
@@ -26,14 +36,50 @@ public record Garment(
         Objects.requireNonNull(profile, "profile");
         Objects.requireNonNull(provenance, "provenance");
         Objects.requireNonNull(createdAt, "createdAt");
+        Objects.requireNonNull(photo, "photo must be Optional.empty() when absent");
         if (removedAt != null && removedAt.isBefore(createdAt)) {
             throw new IllegalArgumentException("A garment cannot be removed before it was created");
         }
+        if (revision < FIRST_REVISION) {
+            throw new IllegalArgumentException("A garment revision starts at " + FIRST_REVISION);
+        }
     }
 
-    /** A newly confirmed manual entry: user-entered values, currently owned. */
+    /** A garment without a photo. */
+    public Garment(UUID id, UUID ownerAccountId, GarmentProfile profile, ValueProvenance provenance,
+                   Instant createdAt, Instant removedAt, long revision) {
+        this(id, ownerAccountId, profile, provenance, createdAt, removedAt, revision, Optional.empty());
+    }
+
+    /** A garment at its first revision, without a photo. */
+    public Garment(UUID id, UUID ownerAccountId, GarmentProfile profile, ValueProvenance provenance,
+                   Instant createdAt, Instant removedAt) {
+        this(id, ownerAccountId, profile, provenance, createdAt, removedAt, FIRST_REVISION, Optional.empty());
+    }
+
+    /** A newly confirmed manual entry: user-entered values, currently owned, no photo. */
     public static Garment confirmManualEntry(UUID id, UUID ownerAccountId, GarmentProfile profile, Instant createdAt) {
         return new Garment(id, ownerAccountId, profile, ValueProvenance.USER_ENTERED, createdAt, null);
+    }
+
+    /** A newly confirmed manual entry with the reviewed photo attached (US-GAR-003 AC-04). */
+    public static Garment confirmWithPhoto(UUID id, UUID ownerAccountId, GarmentProfile profile, Instant createdAt,
+                                           GarmentPhoto photo) {
+        return new Garment(id, ownerAccountId, profile, ValueProvenance.USER_ENTERED, createdAt, null,
+                FIRST_REVISION, Optional.of(photo));
+    }
+
+    /**
+     * The same garment with an accepted revised profile (US-GAR-002). Identity, owner,
+     * provenance, creation time, removal state and photo are kept; the revision advances by one.
+     */
+    public Garment withRevisedProfile(GarmentProfile revisedProfile) {
+        Objects.requireNonNull(revisedProfile, "revisedProfile");
+        if (!isCurrent()) {
+            throw new IllegalStateException("Only a garment in the current wardrobe can be revised");
+        }
+        return new Garment(id, ownerAccountId, revisedProfile, provenance, createdAt, removedAt,
+                Math.addExact(revision, 1), photo);
     }
 
     public boolean isCurrent() {

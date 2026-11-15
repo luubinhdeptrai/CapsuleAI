@@ -6,14 +6,14 @@
 | --- | --- |
 | Artifact | Quality Story |
 | Story ID | US-PRIV-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-041](../../product-backlog.md#pbi-041--verify-authorization-privacy-and-retention-across-the-mvp) |
 | Domain | Privacy |
 | Theme | Quality / Security / Operations |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Enabling / Protecting Product Value |
-| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. 2026-11-10: approved PR #4 scope/feedback synchronization; IDs and existing story scope retained. |
 
 ## 1. Story
 
@@ -43,7 +43,7 @@ Current-session logout, rotated-token reuse and completed-reset all-account revo
 
 ### AC-03 — Inspect purpose and disclosure
 
-Processing remains necessary/private with omission/removal/permission controls. Weather receives needed selected location, recovery delivery needed email/instructions and shopping only explicit chosen navigation; no unrelated private wardrobe/profile/history, personal-data sale/public sharing or MVP personal-data AI training/improvement is introduced.
+Processing stays purpose-limited with user controls. Permit only the approved shared outfit/creator/media projection to its authorized audience; this grants no private inventory/source-image/purchase-information/profile/history access. Inspect minimal authorized weather/recovery/shopping and any approved Chat/preview exchange; no unrelated private disclosure, sale, entire-wardrobe sharing or MVP model training is allowed. Relevant sharing/context/lifecycle policy in PRD Section 34.2 must be approved before affected stories are Ready.
 
 ### AC-04 — Verify garment lifecycle
 
@@ -51,11 +51,11 @@ Accepted garment removal immediately excludes current ownership/advice/Coverage/
 
 ### AC-05 — Verify event lifecycle
 
-Accepted individual event removal immediately excludes its effective history/utilization/recency/personalization, recomputes survivors and physically deletes applicable personal event data within 30 days, preserving unrelated reports and underlying outfits/garments.
+Accepted individual removal immediately excludes the report from stored history/utilization and current evidence available to future engine use, preserves separate surviving reports and physically deletes applicable personal event data within 30 days. Underlying Outfits/Garments and independent feedback remain; no ranking increment/decay calculation is required.
 
 ### AC-06 — Verify measurement lifecycle
 
-User-linked engagement/measurement is deleted or aggregated/de-identified within 90 days, with no older user-linked measurement retained. This is distinct from the 90-day ranking window and necessary unremoved functional history/feedback; it cannot extend a 30-day removal deadline.
+User-linked engagement/measurement is deleted or aggregated/de-identified within 90 days, with no older user-linked measurement retained. This is distinct from necessary unremoved functional history/feedback; there is no mandatory ranking-decay window; it cannot extend a 30-day removal deadline.
 
 ### AC-07 — Provide real privacy-safe evidence
 

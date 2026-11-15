@@ -39,7 +39,7 @@ The User explicitly chooses removal of the identified Wear Event.
 2. CapsuleAI identifies the targeted report and explains that removal concerns that report, with the outfit/garments and other reports retained.
 3. The User proceeds with the explicit individual removal intention.
 4. CapsuleAI accepts removal, shows immediate exclusion from effective history/utilization/recency/personalization and explains the 30-day deletion policy for applicable personal event data.
-5. The User reviews available history/utilization; relevant recency and normalized ranking evidence reflect surviving reports.
+5. The User reviews available history/utilization; stored history/utilization and future engine inputs reflect surviving reports without a prescribed ranking contribution.
 
 ## 7. Alternative Flows
 
@@ -55,7 +55,7 @@ At Main Step 3:
 At Main Step 5:
 
 1. CapsuleAI keeps the remaining legitimate reports separately in history.
-2. The same exact outfit/original-day evidence group remains subject to one increment, using the latest surviving accepted timestamp; removing the latest event updates that anchor.
+2. Every surviving same-outfit/original-day report remains distinct with its actual timestamp. History presentation/counting grouping imposes no ranking increment, cap or aging requirement.
 
 ### A3 — Last effective report for the evidence group
 
@@ -110,8 +110,8 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-WEAR-006` | Accepted removal updates effective report-derived effects. |
 | `BRULE-PERS-005` | Surviving group evidence uses the latest surviving accepted event anchor; no survivors means no group Wear increment. |
 | `BRULE-PERS-006` | Recompute relevant evidence after removal. |
-| `BRULE-HIST-001` | Historical report counts are not collapsed into normalized ranking increments. |
-| `BRULE-HIST-003` | Ranking aging does not define physical retention/deletion policy. |
+| `BRULE-HIST-001` | Distinct historical report counts are preserved; display groups do not merge or delete accepted events. |
+| `BRULE-HIST-003` | Functional history and measurement have distinct retention/deletion policies; no ranking-decay rule applies. |
 
 ## 12. Requirements Traceability
 
@@ -151,9 +151,9 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-017-remove-wear-event.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.
 
 ## 17. Activity Diagram
 

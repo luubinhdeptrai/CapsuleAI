@@ -4,6 +4,8 @@ import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
 import com.capsuleai.wardrobe.application.ports.WardrobePosition;
 import com.capsuleai.wardrobe.domain.Garment;
+import com.capsuleai.wardrobe.domain.GarmentProfile;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,6 +58,34 @@ final class InMemoryGarmentRepository implements GarmentRepository {
         return all().stream()
                 .filter(garment -> garment.isOwnedBy(ownerAccountId) && garment.id().equals(garmentId))
                 .findFirst();
+    }
+
+    @Override
+    public synchronized boolean reviseIfCurrentAt(UUID ownerAccountId, UUID garmentId, long expectedRevision,
+                                                  GarmentProfile revisedProfile) {
+        for (Map.Entry<CreationKey, RecordedGarmentCreation> entry : creations.entrySet()) {
+            Garment garment = entry.getValue().garment();
+            if (garment.id().equals(garmentId) && garment.isOwnedBy(ownerAccountId) && garment.isCurrent()
+                    && garment.revision() == expectedRevision) {
+                entry.setValue(new RecordedGarmentCreation(
+                        garment.withRevisedProfile(revisedProfile), entry.getValue().creationFingerprint()));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** TEST HELPER: the garment leaves the current wardrobe at {@code removedAt}. */
+    synchronized void remove(UUID garmentId, Instant removedAt) {
+        creations.replaceAll((key, recorded) -> {
+            Garment garment = recorded.garment();
+            if (!garment.id().equals(garmentId)) {
+                return recorded;
+            }
+            return new RecordedGarmentCreation(new Garment(garment.id(), garment.ownerAccountId(), garment.profile(),
+                    garment.provenance(), garment.createdAt(), removedAt, garment.revision()),
+                    recorded.creationFingerprint());
+        });
     }
 
     synchronized void add(Garment garment) {

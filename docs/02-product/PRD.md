@@ -8,13 +8,13 @@
 |---|---|
 | Document Name | CapsuleAI — Product Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.4 |
+| Version | 0.6 |
 | Status | Baseline Draft |
-| Last Updated | 2026-11-05 |
+| Last Updated | 2026-11-09 |
 | Primary Owner | Product Owner / Product |
 | Approval Authority | Product Owner / Product Decision Authority |
 | Reviewers | Business Analyst, UX/Product Design, Tech Lead, AI/ML Engineering, QA/Testing |
-| Business Source of Truth | [docs/01-business/BRD.md](../01-business/BRD.md), version 0.5 |
+| Business Source of Truth | [docs/01-business/BRD.md](../01-business/BRD.md), current revision |
 | Process Authority | [CapsuleAI_Scrum_Development_Workflow.md](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) |
 | Development Model | Scrum / Agile |
 | Authoritative Product Location | `docs/02-product/PRD.md`, after review and acceptance |
@@ -30,7 +30,7 @@ The BRD's approved business decisions govern this document even though its docum
 
 | Source | Use in This PRD |
 |---|---|
-| [BRD v0.5](../01-business/BRD.md) | Authoritative positioning, BG-01–BG-04, BR-001–BR-024, CAP-01–CAP-10, scope, personas, constraints, and trust commitments. |
+| [BRD](../01-business/BRD.md) | Authoritative positioning, BG-01–BG-04, BR-001–BR-031, CAP-01–CAP-10, scope, personas, constraints, and trust commitments. |
 | [Scrum Development Workflow](../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) | Process authority for artifact order, ownership, traceability, review, and change propagation. |
 | Existing root PRD (historical source; not present in this checkout) | Earlier capture/review, outfit choice, item shuffle, and shopping-preview experiences; normalized against the BRD. |
 | [Implementation Summary](../../Initial%20files/CapsuleAI_Implementation_Summary.md) | Consolidated context and explicit decisions in Section 15; technical descriptions remain outside this PRD. |
@@ -45,10 +45,10 @@ Conflict precedence is: explicit BRD decisions; explicit later CapsuleAI decisio
 
 | Earlier Description | Normalized Product Position |
 |---|---|
-| Three largely isolated features and narrow category/color tags | Connected MVP, active personalization, rich garment intelligence, contextual coverage, and all ten business capabilities. |
+| Three largely isolated features and narrow category/color tags | Connected MVP, active personalization, rich garment intelligence, contextual coverage, and all business capabilities. |
 | Exactly three outfits on every request | At least three distinct valid options when available; fewer or none explained honestly. |
 | Fixed weather cutoffs and universal pattern/color heuristics | Validity precedes ranking; detailed compatibility rules and thresholds are downstream work. |
-| Wear selection primarily stored as history | Like, Dislike, Wear This Today, and history actively influence lightweight personalization and utilization insight. |
+| Wear selection primarily stored as history | Store supported Like/Dislike state and distinct Wear Events for future Matching Engine use and utilization; no fixed contribution or aging policy applies (DD-007). |
 | Six-second processing and one combined recognition/background-removal success claim | Approved 3–5 second direction; category and dominant-color accuracy assessed separately, with preview usability assessed separately. |
 | Every shopping card requires a link, price, and durability rating | Utility advice works without a destination; price and longevity guidance appears only when credible and qualified. |
 | Specific frameworks, storage, service routing, and security mechanisms | Retain private access, email/password recovery, and current-versus-historical behavior. The newly approved JWT direction is recorded only as a downstream system constraint in Section 10.1; detailed design remains outside this PRD. |
@@ -63,6 +63,7 @@ Conflict precedence is: explicit BRD decisions; explicit later CapsuleAI decisio
 | 0.3 | 2026-11-05 | Adopted approved taxonomy, optional properties and explicit Price approval; OPQ-011 records approval and OPQ-012–014 track unresolved policy. | Baseline Draft |
 | 0.4 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. | Baseline Draft |
 | 0.5 | 2026-11-07 | Product Owner decisions: OPQ-013 resolved (Brand and Price validation); multiple Styles (OPQ-016); Tanks & Camis spelling (OPQ-017); paged wardrobe overview (OPQ-018); obsolete compatibility-readiness wording removed from FEAT-WAR-001. Existing IDs retained. | Baseline Draft |
+| 0.6 | 2026-11-09 | Propagated approved PR #4 / DD-007 into seven feature specifications, journeys, states, privacy boundaries and traceability; removed superseded ranking obligations and recorded unapproved policy questions separately. | Baseline Draft |
 
 ### 1.4 Artifact Boundary
 
@@ -88,7 +89,7 @@ The supported primary garment categories are **Tops, Dresses/Jumpsuits, Pants, S
 
 ## 3. Relationship to the BRD
 
-This PRD preserves the BRD's four business goals, ten capabilities, three personas, market direction, complete MVP, and commercial boundary. Features refine BRD needs into observable user behavior; they do not replace BR-* statements.
+This PRD preserves the BRD's four business goals and current capabilities, three personas, market direction, complete MVP, and commercial boundary. Features refine BRD needs into observable user behavior; they do not replace BR-* statements.
 
 Product terms retain their BRD meanings: a confirmed garment profile is authoritative; validity excludes unsuitable combinations before ranking; coverage is a contextual estimate of Personalized Everyday Capsule needs; a gap is an underserved wardrobe capability; the Wardrobe Multiplier counts newly enabled unique valid outfits under the same context. Sections 9 and 33 provide forward and reverse traceability.
 
@@ -137,7 +138,7 @@ These are overlapping behavioral archetypes, not account types or eligibility re
 
 The draft mobile navigation uses four primary areas: **Today**, **Wardrobe**, **Insights**, and **Profile**. Add Garment is a prominent action from Today and Wardrobe. Candidate evaluation is reached from a gap or related insight rather than making a storefront the primary experience.
 
-These are product navigation responsibilities, not mandated tab placement, gestures, or pixel layouts. UX may refine labels and presentation while preserving entry points and relationships.
+Community, Chat, Try-On, catalog and bulk-entry responsibilities must also be reachable through their approved entry paths. Final navigation placement is UX refinement, not an approved new tab structure. These are product navigation responsibilities, not mandated tab placement, gestures, or pixel layouts. UX may refine labels and presentation while preserving entry points and relationships.
 
 ### 7.2 Screen / Product Area Inventory
 
@@ -154,6 +155,11 @@ These are product navigation responsibilities, not mandated tab placement, gestu
 | Wardrobe Coverage / Gaps | Personalized Everyday Capsule context/priorities, score, covered/underserved needs, and limitations. | Review common needs/style/climate context; inspect a gap or improve wardrobe information. |
 | Candidate Recommendations / Detail | Visual/identity, category/subtype, gap, relevant attributes, +N New Outfits, why it helps, and hypothetical previews; commercial details remain optional. | Inspect candidate/previews, continue browsing, or open an available external destination. |
 | Profile / Preferences | Current preferences, optional personal context, manual location, and explanations of personalization. | Edit/remove optional information; update preferences; log out. |
+| Community / Shared Look | Outfit inspiration and attributed creator; approved projection, never private wardrobe inventory. | Like, Follow, Share, Edit-as-duplicate, Save look, Try-On; no Community Dislike. |
+| AI Chat Stylist | One text thread, outfit/item cards and suggestion chips. | Continue conversation, feedback on AI suggestions, route photo to Add Garment. |
+| Generic-Model Preview | Illustration tied to the selected outfit. | Save look, Wear Today subject to owned-valid Wear rules, retry/return. |
+| Internal Catalog | Catalog results distinct from owned wardrobe results. | Search, select, explicitly review/confirm Add-to-Closet. |
+| Bulk Import | Multi-photo queue with individual review/save outcomes. | Review/correct/confirm accepted entries; recover failed or uncertain items. |
 
 ### 7.3 Product Navigation Visualization
 
@@ -313,6 +319,37 @@ flowchart TD
 
 The count is incremental utility, not a purchase recommendation score or proof of savings. Evaluation remains useful without a destination. **Recovery:** No useful candidate, unavailable links, or an outdated assessment is explained before unsupported advice is shown. **Features:** FEAT-GAP-001, FEAT-MULT-001, FEAT-SHOP-001, FEAT-SHOP-002.
 
+### 8.8 JRN-08 — Outfit inspiration
+
+Browse attributed shared looks → Like/Follow/Save or preview → explicitly share a chosen representation or create an independent editable draft. No action exposes the creator's private wardrobe.
+
+**Recovery / completion:** Distinguish pending, genuinely empty, unavailable, denied, failed and accepted outcomes where applicable; preserve prior accepted information and safe retry. **Features:** FEAT-COM-001/002; unresolved policy is in Section 34.2.
+
+### 8.9 JRN-09 — Conversational styling
+
+Enter one thread → submit text or choose a chip → inspect identified cards/reply → optionally Like/Dislike an AI outfit suggestion or route a photo to Add Garment → review/confirm separately.
+
+**Recovery / completion:** Distinguish pending, genuinely empty, unavailable, denied, failed and accepted outcomes where applicable; preserve prior accepted information and safe retry. **Features:** FEAT-CHAT-001; unresolved policy is in Section 34.2.
+
+### 8.10 JRN-10 — Generic-model preview
+
+Choose an accessible outfit → request preview → inspect the identified generic-model result → Save look or initiate Wear Today. The Wear path revalidates current owned validity; an unowned look cannot become a wear report.
+
+**Recovery / completion:** Distinguish pending, genuinely empty, unavailable, denied, failed and accepted outcomes where applicable; preserve prior accepted information and safe retry. **Features:** FEAT-TRY-001; unresolved policy is in Section 34.2.
+
+### 8.11 JRN-11 — Catalog discovery and confirmed addition
+
+Search the internal catalog → select a result → choose Add-to-Closet → review/correct the applicable profile → explicitly confirm → inspect the accepted owned garment. Searching or selecting alone creates none.
+
+**Recovery / completion:** Distinguish pending, genuinely empty, unavailable, denied, failed and accepted outcomes where applicable; preserve prior accepted information and safe retry. **Features:** FEAT-CAT-001/002; unresolved policy is in Section 34.2.
+
+### 8.12 JRN-12 — Reviewed bulk entry
+
+Select multiple photos → inspect per-item queue outcomes → review/correct each applicable profile → explicitly confirm accepted entries → inspect saved items and resolve failed/uncertain items safely.
+
+**Recovery / completion:** Distinguish pending, genuinely empty, unavailable, denied, failed and accepted outcomes where applicable; preserve prior accepted information and safe retry. **Features:** FEAT-BULK-001; unresolved policy is in Section 34.2.
+
+
 ## 9. Product Feature Catalog
 
 Prefixes group stable product features by responsibility: AUTH access, PROF context, AI ingestion, GAR garment intelligence, WAR management, OUT outfit interaction, PERS personalization, ANL analytics, GAP gaps, MULT multiplier, SHOP shopping advice, and MET measurement. IDs remain stable through later refinement.
@@ -341,6 +378,13 @@ Prefixes group stable product features by responsibility: AUTH access, PROF cont
 | FEAT-SHOP-001 | Utility-led candidate advice | Section 20.1 | Yes |
 | FEAT-SHOP-002 | Optional external shopping navigation | Section 20.2 | Yes |
 | FEAT-MET-001 | Privacy-respecting product measurement | Section 24 | Yes |
+| FEAT-COM-001 | Browse and interact with outfit inspiration | Section 20.3 | Yes |
+| FEAT-COM-002 | Explicit outfit sharing and independent reuse | Section 20.3 | Yes |
+| FEAT-CHAT-001 | Single-thread AI Chat Stylist | Section 20.3 | Yes |
+| FEAT-TRY-001 | Generic-model outfit Try-On preview | Section 20.3 | Yes |
+| FEAT-CAT-001 | Search the internal garment catalog | Section 20.3 | Yes |
+| FEAT-CAT-002 | Confirm a catalog item into the owned closet | Section 20.3 | Yes |
+| FEAT-BULK-001 | Review and confirm bulk garment-photo import | Section 20.3 | Yes |
 
 All feature behavior is governed by the cross-cutting states, explainability, privacy, and quality expectations in Sections 21–25. Section 33 maps every feature to its BRD requirements and capabilities.
 
@@ -517,7 +561,7 @@ Users may mark some needs as more relevant than others. Common need priorities a
 **Product behavior:**
 
 1. Present proposals using High Confidence, Needs Review, and Uncertain; distinguish AI Suggested, User Confirmed, User Corrected, and User Entered provenance. Even high-confidence proposals remain reviewable.
-2. Offer all 13 applicable properties from Section 13, including optional multiple Materials, category-specific details, Brand and Price; validate only supplied optional information. Category and one dominant Color plus confirmation remain the minimum.
+2. Offer all 13 applicable properties from Section 13, including optional multiple Materials and Styles, category-specific details, Brand and Price; validate only supplied optional information. Category and one dominant Color plus confirmation remain the minimum.
 3. Allow manual entry without AI success or an image. Unknown optional information stays unknown rather than fabricated.
 4. Save after explicit confirmation of Category and Color, preserving every supplied valid applicable property. Recommendation eligibility is not evaluated and is not a save gate.
 5. Show accepted garment information and guidance that eligibility has not been evaluated in Wardrobe; confirmed/corrected values are authoritative regardless of prior AI confidence, and later analysis cannot silently overwrite them.
@@ -569,7 +613,7 @@ The [garment-property authority](../../Initial%20files/Image%20to%20Properties%2
 
 **Feature-level acceptance criteria:**
 
-- **AC-01:** Entry and inspection support all 13 applicable properties in the catalogue, with one dominant Color and optional multiple distinct Materials.
+- **AC-01:** Entry and inspection support all 13 applicable properties in the catalogue, with one dominant Color and optional multiple distinct Materials and Styles.
 - **AC-02:** Every supplied controlled value uses the authority's complete list and applicable category; invalid pairs/fields can be corrected or cleared without silent replacement.
 - **AC-03:** Optional Material may be empty, one or multiple values; duplicates add no semantic material and no percentages or physical-composition certainty are fabricated.
 - **AC-04:** Unknown information remains absent or qualified; it is not a confident prediction or user confirmation.
@@ -589,7 +633,7 @@ Subtype is optional, but a supplied value must belong to the selected category. 
 
 Exactly 13 fashion properties are approved: Category, Subtype, Color, Material, Pattern, Style, Fit, Neckline, Sleeve Length, Length, Silhouette, Brand, Price. Category and one dominant Color plus explicit user confirmation form the saving minimum. All other applicable properties are optional. Material and Style each support zero or multiple distinct selections; Pattern is single and optional. Fit, Neckline and Sleeve Length apply only to Tops; Length uses separate Tops/Pants vocabularies; Silhouette applies only to Pants. Every supplied controlled value must match the source vocabulary and category; correct or clear invalid/inapplicable input rather than silently substitute or discard it. Unknown optional information is absent, not an invented UNKNOWN/OTHER/Etc value. Preserve real listed fallbacks such as Other, Other Materials and Colorful only where defined.
 
-Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without mandating a NOT_EVALUATED enum or database field.
+Recommendation eligibility has not been evaluated. A saved garment is not invalid, unsuitable or ineligible because an engine policy is undefined or an optional property is absent. No ready/unready result, required compatibility field, fixed outfit composition or category-to-role mapping is approved for the current phase. Define composition, compatibility and sufficient-evidence policy during recommendation-engine development, using only approved properties unless the Product Owner approves a future model change. Sprint 2 exposes truthful accepted information and missing values; the smallest contract representation is selected during story-specific design, without prescribing a new database field. The implemented Sprint 2 API already reports `recommendationEligibility: NOT_EVALUATED`; preserve that contract until explicitly changed through its owning design.
 
 Removed fashion properties and the earlier readiness policy are explicitly superseded in the authority's Section 5. User-profile preferences, request occasion/weather and technical metadata remain separate. Their existence cannot recreate removed garment fields or a hidden compatibility gate.
 
@@ -823,14 +867,14 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 
 **Related BRD:** BR-011, BR-021, BR-022; CAP-06; BG-02, BG-03. **Primary users:** All personas.
 
-**Entry points / trigger:** Feedback controls on applicable outfit results/detail. **Preconditions:** An identified recommendation; the user understands feedback is about preference, not verified wear.
+**Entry points / trigger:** Like on AI Today/Chat outfit suggestions or Community posts; Dislike only on AI Today/Chat suggestions. **Preconditions:** An identified accessible typed target; feedback is preference, not verified wear. A Community post and an AI suggestion are different targets even if they display the same garment combination.
 
 **Product behavior:**
 
-1. Provide clearly distinguishable Like and Dislike actions and show the current recorded feedback state.
-2. Like indicates a positive preference; Dislike indicates a negative preference and reduces similar unsuitable advice conceptually.
+1. Offer Like on AI Today/Chat outfit suggestions and Community posts; offer/accept Dislike only on AI Today/Chat suggestions. Show the current recorded state for the identified target.
+2. Store Like as positive and supported Dislike as negative user-expressed state, with no fixed weight, ranking decay or prescribed similarity effect.
 3. Allow the user to change or clear accidental feedback; contradictory simultaneous Like/Dislike states must not persist for the same feedback target.
-4. Use current feedback in later lightweight personalization without overriding validity or permanently banning garment categories.
+4. Make current accepted state available to the future Matching Engine under its explicitly approved rules, preserving hard validity and without permanent garment/category bans.
 
 **User controls:** Like, Dislike, change/clear feedback. **Product states:** No feedback, liked, disliked, recording, failed.
 
@@ -838,12 +882,12 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 
 **Feature-level acceptance criteria:**
 
-- **AC-01:** Like/Dislike visibly records the corresponding preference and does not create wear history.
+- **AC-01:** Like records positive state on AI Today/Chat suggestions or Community posts; Dislike records negative state only on AI Today/Chat suggestions. Community Dislike is neither offered nor accepted, and feedback creates no Wear Event.
 - **AC-02:** Changing/clearing feedback updates the effective signal and displayed state.
-- **AC-03:** In controlled relevant fixtures, feedback can influence later valid-outfit ranking; it never makes an invalid outfit eligible.
+- **AC-03:** Stored feedback preserves target kind/origin and current accepted state for engine consumption. No fixed effect or aging is required, and feedback never makes an invalid outfit eligible.
 - **AC-04:** A failed action is distinguishable from recorded feedback and offers recovery.
 
-**Out of scope / deferred detail:** Feedback-target representation, similarity rules, strength, aggregation, and retention rules belong downstream. Detailed reason surveys are not an MVP requirement.
+**Out of scope / deferred detail:** Typed target identity is required; API/storage representation and any explicitly approved Matching Engine policy are downstream. Functional state persists until user revision/clearing, subject to its removal/retention obligations. Detailed reason surveys are not an MVP requirement.
 
 ### 16.3 FEAT-PERS-002 — Wear This Today / Wear Events
 
@@ -863,7 +907,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 4. Distinguish those intentional reports from accidental repeated taps, retries, or duplicate processing; those duplicates must not manufacture events or inflate metrics.
 5. Let users inspect, correct an accidental event, and remove an individual event. Removal does not delete the underlying Outfit/Garments or other events.
 6. Reflect accepted/corrected/removed events in relevant history, utilization, recency, variety, and lightweight personalization.
-7. Wear events provide strong positive evidence, but history and preference strength are distinct: accidental or artificial repetition must not distort personalization disproportionately. A report never proves automatically observed physical wear or bypasses outfit validity.
+7. Wear Events are reported-use evidence for history and future engine use; history and preference state are distinct, and logical-action retries must not manufacture extra events. A report never proves automatically observed physical wear or bypasses outfit validity.
 
 **User controls:** Record an intentional wear event, inspect event date/time/context, correct a specific accidental event, remove an individual event, or cancel a pending correction/removal. **Product states:** No events, recording, event recorded, multiple events in a day, correction pending/completed, removal pending/completed, failed.
 
@@ -872,7 +916,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 **Feature-level acceptance criteria:**
 
 - **AC-01:** Successful reporting creates an understandable user-reported Wear Event in history and relevant utilization views.
-- **AC-02:** Like alone creates no Wear Event; reported wear supplies stronger positive preference evidence than Like.
+- **AC-02:** Like alone creates no Wear Event. Reported wear remains a distinct intentional history event; no preference-strength comparison with Like is prescribed.
 - **AC-03:** Accidental repeated taps, retries, and duplicate processing of one action do not inflate Wear Events, history, or product metrics.
 - **AC-04:** Users can inspect/correct a specific accidental event; the correction affects that event rather than replacing other reports.
 - **AC-05:** A hypothetical or invalid combination cannot become an owned valid outfit through repeated wear reporting; no report claims verified physical wear.
@@ -882,7 +926,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 - **AC-09:** Each visible event has understandable local date/time and available occasion/context; absent context is not fabricated.
 - **AC-10:** Accepted corrections/removals affect relevant subsequent history/utilization/signals; repetition cannot be used as an unlimited artificial personalization boost.
 
-**Out of scope / deferred detail:** Precise local-time handling, correction validation, duplicate windows, technical idempotency, anti-spam measures, weighting/normalization, retention, and signal formulas belong in SRS/Business Rules/design. Automatic wear detection, planned wear, and calendar-planning features remain outside MVP.
+**Out of scope / deferred detail:** Precise local-time handling, correction validation, duplicate windows, technical idempotency, anti-spam measures, stored evidence and retention semantics remain in SRS/Business Rules; any future explicitly approved engine strategy belongs to its scoped refinement/design, without mandatory weights/decay/normalization. Automatic wear detection, planned wear, and calendar-planning features remain outside MVP.
 
 ### 16.4 FEAT-PERS-003 — Active Behavioral Personalization
 
@@ -897,10 +941,10 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 **Product behavior:**
 
 1. Use style and occasion actively from the initial release, even without prior behavior.
-2. Use Like/Dislike, distinct user-reported Wear Events, and relevant history as meaningful soft ranking signals. Multiple intentional events may coexist in a day; accidental/artificial repetition must not disproportionately distort preference strength.
-3. Consider recency, variety, and overlooked garments where compatible; positive preference does not require immediate repetition on every request.
+2. Retain current supported Like/Dislike state and distinct user-reported Wear Events for future Matching Engine consumption. Separate intentional same-day reports remain separate; one logical action's retry creates no extra event.
+3. Do not prescribe contribution weights, ranking decay, recency penalties, overlooked-item boosts or an outfit/day preference-increment cap. An explicitly approved future engine strategy may use stored evidence.
 4. Use optional body context only softly; gender/body never introduce restrictive category eligibility.
-5. Explain relevant influences without pretending every signal guarantees a changed result when valid choices are limited. History records activity; personalization applies relevant evidence without treating unlimited repetition as unlimited preference strength.
+5. Explain relevant influences without pretending every signal guarantees a changed result when valid choices are limited. History records activity; accepted revisions/removals update the evidence available to future engine use.
 
 **User controls:** Change preferences and revise the originating feedback/reported wear; inspect explanation. **Product states:** Explicit-context only, behavior-informed, limited valid choice, optional context missing.
 
@@ -908,14 +952,14 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 
 **Feature-level acceptance criteria:**
 
-- **AC-01:** With controlled valid alternatives, each supported signal type can produce an observable relevance, recency, variety, or ordering effect.
-- **AC-02:** Wear This Today supplies stronger positive preference evidence than Like in an otherwise controlled comparison, without a prescribed numeric weight.
+- **AC-01:** Declared style/current occasion remain usable without history; supported behavioral state/events are available for engine use with their original meaning and timestamps.
+- **AC-02:** Like, supported Dislike and Wear remain distinct evidence, with no mandatory numeric contribution, relative strength or ranking aging.
 - **AC-03:** An invalid outfit remains excluded regardless of personalization evidence.
 - **AC-04:** New users without behavioral history can receive advice; omitted body/gender does not exclude categories.
 - **AC-05:** Superseded/cleared feedback, corrected/removed wear events, and removed optional context are not treated as unchanged current signals.
-- **AC-06:** Multiple legitimate daily events remain inspectable in history, while accidental/artificial repetition cannot disproportionately boost personalized ranking or override validity.
+- **AC-06:** All legitimate daily reports remain inspectable; same-action retries do not add evidence. Same-outfit/day grouping is a history presentation/counting concern, not a ranking cap.
 
-**Out of scope / deferred detail:** Numerical weights, wear-signal normalization, anti-spam/duplicate rules, history horizons, conflict resolution, similarity modeling, and learned-model design belong downstream. Sophisticated ML is not required for MVP.
+**Out of scope / deferred detail:** Any Matching Engine strategy needs explicit downstream policy and verification. No superseded numeric/banded strategy is a default; retention and logical-action identity remain source-owned. Sophisticated ML is not required for MVP.
 
 ### 16.5 Interaction Meaning and History
 
@@ -923,7 +967,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 |---|---|---|
 | Like | Positive outfit preference, not evidence of wear. | Relevant soft ranking signal. |
 | Dislike | Negative outfit preference, not a permanent category ban. | Reduces relevant unwanted advice conceptually. |
-| Wear This Today | Creation of a distinct user-reported Wear Event; multiple intentional events, including separate uses of the same outfit, may occur within a local day. | Relevant strong positive preference, recorded use, recency, and utilization evidence without disproportionate repetition effects; no verified physical-wear claim. |
+| Wear This Today | A distinct user-reported Wear Event, including separate intentional repeats within one day. | Stored history/utilization and future engine input without a mandatory ranking weight or age rule; no verified physical-wear claim. |
 | Shuffle | Request for a compatible replacement. | Changes the selected item; measurable interaction, not automatically negative feedback. |
 | Recommendation view | Exposure to advice. | Engagement measurement, not acceptance or wear. |
 | Wear Event correction/removal | Revision/removal of a specific report, not deletion of the Outfit/Garments. | Relevant history/utilization/signals update; other events remain intact and metrics distinguish creation from correction/removal. |
@@ -1138,6 +1182,137 @@ History and utilization views are specified in FEAT-ANL-001. This table establis
 
 **Out of scope / deferred detail:** Browser/app handoff, link verification, referral attribution, commercial agreements, and future affiliate disclosure details are downstream. No native commerce or verified sales attribution is included in MVP.
 
+### 20.3 Approved MVP Inspiration, Conversation and Entry Features
+
+Scope authority is merged PR #4 and DD-007. These are required product outcomes with Draft downstream stories, not delivered features. Their open policies are tracked once in Section 34.2; recommendations there are not approved defaults.
+
+#### FEAT-COM-001 — Browse and interact with outfit inspiration
+
+**Purpose / user value:** Discover useful shared looks and creators without exposing private wardrobes.
+
+**Source:** BR-025; CAP-11; JRN-08; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Browse identifiable outfit posts attributed to their creators; Like, Follow creator, Save look and enter generic-model Try-On. Loading, empty, unavailable and denied access are distinct. Dislike, comments and messaging are absent.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-COM-002 — Explicit outfit sharing and independent reuse
+
+**Purpose / user value:** Share selected inspiration and adapt a copy while preserving the creator original and private inventory.
+
+**Source:** BR-026; CAP-11; JRN-08; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Review the selected outfit representation before explicit sharing; expose only approved sharing fields to authorized recipients. Edit-as-duplicate creates the requesting user's editable outfit draft. It neither edits the original nor creates owned garments. Audience/consent and post lifecycle remain MVP-Q01/Q02.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-CHAT-001 — Single-thread AI Chat Stylist
+
+**Purpose / user value:** Ask for relevant styling guidance and continue into explicit product actions.
+
+**Source:** BR-027; CAP-12; JRN-09; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Use one text conversation with outfit/item cards and suggestion chips. Cards identify their actual context; a chip does not imply feedback or ownership. Attach a photo by routing to Add Garment for review/confirmation. Like/Dislike on AI-generated outfit suggestions use the same supported-target policy as Today. Missing context and unavailable AI are explained; no invented response or saved action is shown.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-TRY-001 — Generic-model outfit Try-On preview
+
+**Purpose / user value:** Inspect an illustration of the selected look before a separate Save or Wear action.
+
+**Source:** BR-028; CAP-13; JRN-10; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Preview the selected outfit on a generic model, keeping the outfit basis identifiable. Save look and Wear Today are distinct explicit entry points. Wear still requires a current valid owned outfit; Community/unowned inspiration cannot silently create ownership or a Wear Event. A failed/unavailable preview retains selection and recovery. No selfie avatar, personal avatar creation, fit guarantee or AR/3D simulation is introduced.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-CAT-001 — Search the internal garment catalog
+
+**Purpose / user value:** Find relevant catalog garment information separately from owned wardrobe discovery.
+
+**Source:** BR-029; CAP-14; JRN-11; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Search the internal catalog, inspect identifiable results and select an item for an explicit Add-to-Closet intent. Show known descriptive information and qualify missing/unavailable information. No-match, loading, unavailable and denied states remain distinct. Catalog sourcing/rights and search semantics remain MVP-Q07; no live retailer inventory is assumed.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-CAT-002 — Confirm a catalog item into the owned closet
+
+**Purpose / user value:** Reuse supported catalog information while personally confirming the actual owned garment.
+
+**Source:** BR-030; CAP-14; JRN-11; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** From an explicit selection, review/correct all applicable properties under the same 13-property authority. Category and one Color plus confirmation are required; optional fields stay optional. A catalog asking price is not the personal purchase Price, and source values do not silently become user-confirmed truth. Only accepted confirmation creates an owned garment. Cancel/known failure creates none; uncertainty permits outcome review and safe retry. Later catalog changes do not overwrite confirmed values.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+#### FEAT-BULK-001 — Review and confirm bulk garment-photo import
+
+**Purpose / user value:** Reduce repeated entry work while keeping each wardrobe addition deliberate and trustworthy.
+
+**Source:** BR-031; CAP-15; JRN-12; DD-007. **Entry / preconditions:** Authenticated authorized access and an identifiable source look/item where applicable; an empty wardrobe does not prohibit independent discovery or conversation.
+
+**Product behavior:** Select multiple photos, see their batch queue, inspect each entry, correct/complete the applicable profile and explicitly confirm accepted garments before saving. Per-item pending, review, accepted, failed and uncertain states are distinguishable; one item failure does not falsely complete or erase another accepted result. Upload/analysis alone does not confirm ownership. Limits, processing, resumability and save atomicity remain MVP-Q08; AI is not a prerequisite to manual confirmation.
+
+**Controls / states / recovery:** Use the explicit actions above; distinguish loading/pending, available, empty/no-match, failed/unavailable and denied access as applicable. Preserve the identified selection and prior accepted state; uncertain mutation outcomes require review/safe retry, not a second accepted action.
+
+**Feature-level acceptance criteria:**
+
+- **AC-01:** The source-linked end-to-end outcome and each stated supported action can be demonstrated with identifiable accepted results.
+- **AC-02:** Missing information, denied access and dependency failure produce the stated recovery without fabricated success, ownership or wear.
+- **AC-03:** The relevant privacy, user-confirmation, typed feedback and independent-action boundaries above hold in positive and negative fixtures; open policy must be approved before the affected story is Ready.
+
+**Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
+
+
 ## 21. Product States and Experience States
 
 States communicate what the user can rely on and what to do next. They are product experiences, not formal software state machines. “Sufficient wardrobe” is context-dependent: garment count alone cannot establish compatibility or coverage.
@@ -1239,6 +1414,8 @@ BR-021 and BR-012–BR-013 govern these product expectations:
 - Measurement collects the information needed to understand product outcomes with appropriate privacy controls; raw wardrobe photos or detailed sensitive profiles are not necessary engagement-metric payloads.
 - External navigation is identified before handoff; it does not imply that the retailer receives unrestricted access to the user's private wardrobe.
 
+Explicit outfit sharing is a limited exception for an approved shared representation and audience; it is never permission to expose private inventory, source images, Brand/purchase Price, profile or history. Shared source media requires its own approved publishable projection. Audience, consent, creator identity, removal and saved-look effects must be resolved in Section 34.2 before sharing-related stories become Ready. Chat/preview integrations also require purpose-minimal authorized input and no MVP training use.
+
 Historical removed-state presentation is resolved. Detailed consent/retention/access/deletion requirements, snapshot implementation, and legal disclosures are downstream specification/review responsibilities. This section does not invent a legal policy, account-export workflow, account-deletion feature, or broader data-sharing scope.
 
 ## 24. Product Metrics / Instrumentation
@@ -1326,10 +1503,17 @@ The MVP delivers the connected experience: email/password access and progressive
 | Private mobile access and context | Vietnamese Android/iOS UI; email/password, email reset/logout, progressive setup, controlled preferences/common needs, optional body/gender/location, manual location. | FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 |
 | Trustworthy digital wardrobe | Capture/gallery/manual entry, confidence/provenance, confirmed category/color saveability, unevaluated recommendation eligibility, bounded subtypes, and management with preserved removed-garment history. | FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001, FEAT-WAR-001–FEAT-WAR-003 |
 | Daily styling | Owned, valid, explained distinct choices; relevant style/occasion/weather; compatible single-item shuffle. | FEAT-OUT-001–FEAT-OUT-003 |
-| Active learning and recorded use | Like/Dislike and multiple intentional Wear Events per local day, individual correction/removal, time-aware history/snapshots, meaningful normalized personalization, utilization/variety/recency. | FEAT-PERS-001–FEAT-PERS-003, FEAT-ANL-001 |
+| Active learning and recorded use | Like/Dislike and multiple intentional Wear Events per local day, individual correction/removal, time-aware history/snapshots, stored engine inputs without prescribed weights/decay, and reported utilization/variety/recency. | FEAT-PERS-001–FEAT-PERS-003, FEAT-ANL-001 |
 | Wardrobe intelligence | One Personalized Everyday Capsule using relevant common needs/style/climate/current wardrobe; contextual explainable coverage/gaps and insufficient/no-gap states. | FEAT-ANL-002, FEAT-GAP-001 |
 | Candidate evaluation | Same-context incremental valid-outfit count, visibly hypothetical previews, gap-based advice, credible optional guidance, optional external exit. | FEAT-MULT-001, FEAT-SHOP-001, FEAT-SHOP-002 |
 | Cross-cutting trust and validation | Privacy, explanations, useful recovery/empty states, product measurement, and quality directions. | FEAT-MET-001; Sections 21–25 |
+| Browse and interact with outfit inspiration | Discover useful shared looks and creators without exposing private wardrobes. | FEAT-COM-001 |
+| Explicit outfit sharing and independent reuse | Share selected inspiration and adapt a copy while preserving the creator original and private inventory. | FEAT-COM-002 |
+| Single-thread AI Chat Stylist | Ask for relevant styling guidance and continue into explicit product actions. | FEAT-CHAT-001 |
+| Generic-model outfit Try-On preview | Inspect an illustration of the selected look before a separate Save or Wear action. | FEAT-TRY-001 |
+| Search the internal garment catalog | Find relevant catalog garment information separately from owned wardrobe discovery. | FEAT-CAT-001 |
+| Confirm a catalog item into the owned closet | Reuse supported catalog information while personally confirming the actual owned garment. | FEAT-CAT-002 |
+| Review and confirm bulk garment-photo import | Reduce repeated entry work while keeping each wardrobe addition deliberate and trustworthy. | FEAT-BULK-001 |
 
 All catalog features are included. BR-020 remains a **Should** expectation conditional on credible information; it does not justify fabricated commercial details or defer core candidate utility. Completion requires the connected product outcome, not three isolated demonstrations.
 
@@ -1359,12 +1543,12 @@ Some exclusions are candidate future opportunities; others are scope guardrails.
 | Advanced learned personalization | Improve ranking when trustworthy data and evaluation support it. | Evidence of need and benefit beyond the initial lightweight approach. |
 | Retailer integrations / affiliate partnerships | Better candidate information and optional destinations/referral evidence. | Approved commercial/privacy model and feasible partner arrangements. |
 | Subscription / premium insights | Evaluate packaging for sustained wardrobe intelligence. | Validated willingness to pay and an approved business decision. |
-| Social/community experiences | Outfit-inspiration feed. | MVP includes Like, Follow creator, outfit sharing, Edit-as-duplicate, Save, Try-On (no comments, no messaging, no wardrobe sharing). Full social graph pending separate assessment. |
-| Generic-model try-on preview | In MVP scope. | Personal avatar, AR/3D remain deferred pending separate approval. |
-| Internal catalog search + bulk import | In MVP scope. | Catalog curation/source and batch limits require refinement. |
+| Broader social experiences | Beyond the approved bounded Community feature. | Comments, messaging and entire-wardrobe sharing remain excluded; separate approval is required. |
+| Personalized avatars / AR/3D | Beyond the approved generic-model preview. | Separate product approval and evidence required. |
+| Catalog and batch expansion beyond MVP | Broader sourcing or processing capabilities. | The approved search/confirmed-add and reviewed bulk-entry flows are current MVP; their open policies are in Section 34.2. |
 | More markets / localization | Adapt climate, occasion, language, and catalog context. | Market-specific validation and approved release scope. |
 
-These possibilities have no MVP feature acceptance criteria or committed delivery dates.
+Only expansion beyond the approved bounded features is future-only. The promoted MVP features have acceptance criteria in Section 20.3; none has a committed delivery date.
 
 ## 29. Product Dependencies
 
@@ -1406,7 +1590,7 @@ These remain hypotheses, not research findings. No numerical adoption, retention
 | RSK-007 — Unclear intelligence | Coverage is read as completeness; multiplier feels arbitrary. | Explain assessed needs, baseline/context, incremental uniqueness, and hypothetical previews. |
 | RSK-008 — Catalog/destinations | Stale links or weak information undermine advice. | Qualify unknown guidance, retain utility, and recover from navigation failure. |
 | RSK-009 — Privacy | Personal wardrobe/images/history become exposed. | Authorized access, clear controls, minimal measurement content, privacy validation. |
-| RSK-010 — Repetition | Advice is repetitive or artificially amplified by repeated wear reporting. | Meaningful signals, recency/variety where valid, duplicate protection, and bounded influence of accidental/artificial repetition; exact normalization remains downstream. |
+| RSK-010 — Repetition | Advice is repetitive or artificially amplified by repeated wear reporting. | Meaningful signals, recency/variety where valid, duplicate protection, and bounded influence of accidental/artificial repetition; any future engine strategy remains explicitly scoped and approved; no fixed cap or decay is prescribed. |
 
 Shopping advice may also feel sales-driven if gaps are manufactured. BR-024, no-gap/no-candidate states, and independent utility evaluation address that product risk.
 
@@ -1456,10 +1640,17 @@ Every feature derives from existing business intent. Cross-cutting expectations 
 | FEAT-SHOP-001 | Utility-led candidate advice | BR-015, BR-016, BR-017, BR-018, BR-020, BR-022, BR-024 | CAP-10, CAP-08, CAP-09 | JRN-07 | Yes; BR-020 conditional |
 | FEAT-SHOP-002 | External shopping navigation | BR-018, BR-019, BR-022, BR-024 | CAP-10 | JRN-07 | Yes |
 | FEAT-MET-001 | Product measurement | BR-019, BR-021 | CAP-10, CAP-02, CAP-05, CAP-06, CAP-07, CAP-08, CAP-09 | JRN-02, JRN-04–JRN-07 | Yes |
+| FEAT-COM-001 | Browse and interact with outfit inspiration | BR-025, BR-021, BR-022 | CAP-11 | JRN-08 | Yes; open policy refinement required |
+| FEAT-COM-002 | Explicit outfit sharing and independent reuse | BR-026, BR-021, BR-022 | CAP-11 | JRN-08 | Yes; open policy refinement required |
+| FEAT-CHAT-001 | Single-thread AI Chat Stylist | BR-027, BR-021, BR-022 | CAP-12 | JRN-09 | Yes; open policy refinement required |
+| FEAT-TRY-001 | Generic-model outfit Try-On preview | BR-028, BR-021, BR-022 | CAP-13 | JRN-10 | Yes; open policy refinement required |
+| FEAT-CAT-001 | Search the internal garment catalog | BR-029, BR-021, BR-022 | CAP-14 | JRN-11 | Yes; open policy refinement required |
+| FEAT-CAT-002 | Confirm a catalog item into the owned closet | BR-030, BR-021, BR-022 | CAP-14 | JRN-11 | Yes; open policy refinement required |
+| FEAT-BULK-001 | Review and confirm bulk garment-photo import | BR-031, BR-021, BR-022 | CAP-15 | JRN-12 | Yes; open policy refinement required |
 
 ### 33.2 Business Requirement Coverage Audit
 
-This audit accounts for all BR-001–BR-024. No Must business requirement is deferred. OPQ-001–OPQ-010 are resolved in Section 34; remaining taxonomy policy questions are explicit in Section 34.1 and do not remove a capability or block minimum manual saving.
+This audit accounts for all BR-001–BR-031. No Must business requirement is deferred. OPQ-001–OPQ-010 are resolved in Section 34; remaining taxonomy policy questions are explicit in Section 34.1 and do not remove a capability or block minimum manual saving.
 
 | BRD Requirement | Product Coverage / Primary References | Disposition |
 |---|---|---|
@@ -1487,6 +1678,13 @@ This audit accounts for all BR-001–BR-024. No Must business requirement is def
 | BR-022 | FEAT-OUT-002, FEAT-ANL-002, FEAT-MULT-001 and applicable feature explanations; Sections 21–22. | Covered — cross-cutting MVP explainability |
 | BR-023 | FEAT-AUTH-001; Sections 2, 7, 25–28: Vietnamese Android/iOS UI, Vietnam-first, localization/expansion readiness. | Covered — cross-cutting MVP platform/scope |
 | BR-024 | FEAT-OUT-001, FEAT-ANL-001, FEAT-ANL-002, FEAT-GAP-001, FEAT-MULT-001, FEAT-SHOP-001, FEAT-SHOP-002. | Covered — cross-cutting commerce independence |
+| BR-025 | FEAT-COM-001: Browse and interact with outfit inspiration. | Covered — approved MVP, downstream Draft refinement |
+| BR-026 | FEAT-COM-002: Explicit outfit sharing and independent reuse. | Covered — approved MVP, downstream Draft refinement |
+| BR-027 | FEAT-CHAT-001: Single-thread AI Chat Stylist. | Covered — approved MVP, downstream Draft refinement |
+| BR-028 | FEAT-TRY-001: Generic-model outfit Try-On preview. | Covered — approved MVP, downstream Draft refinement |
+| BR-029 | FEAT-CAT-001: Search the internal garment catalog. | Covered — approved MVP, downstream Draft refinement |
+| BR-030 | FEAT-CAT-002: Confirm a catalog item into the owned closet. | Covered — approved MVP, downstream Draft refinement |
+| BR-031 | FEAT-BULK-001: Review and confirm bulk garment-photo import. | Covered — approved MVP, downstream Draft refinement |
 
 ### 33.3 Business Capability Coverage Audit
 
@@ -1502,6 +1700,11 @@ This audit accounts for all BR-001–BR-024. No Must business requirement is def
 | CAP-08 — Gap Analysis | FEAT-GAP-001, FEAT-ANL-002 | Underserved capabilities connected to useful candidate evaluation. |
 | CAP-09 — Wardrobe Multiplier | FEAT-MULT-001 | Incremental unique valid outfits and hypothetical previews. |
 | CAP-10 — Strategic Shopping | FEAT-SHOP-001, FEAT-SHOP-002, FEAT-MET-001 | Independent utility advice, optional external exits, and privacy-respecting engagement evidence. |
+| CAP-11 | FEAT-COM-001, FEAT-COM-002 | Approved bounded MVP outcome; policy questions in Section 34.2. |
+| CAP-12 | FEAT-CHAT-001 | Approved bounded MVP outcome; policy questions in Section 34.2. |
+| CAP-13 | FEAT-TRY-001 | Approved bounded MVP outcome; policy questions in Section 34.2. |
+| CAP-14 | FEAT-CAT-001, FEAT-CAT-002 | Approved bounded MVP outcome; policy questions in Section 34.2. |
+| CAP-15 | FEAT-BULK-001 | Approved bounded MVP outcome; policy questions in Section 34.2. |
 
 ## 34. Resolved Product Decisions
 
@@ -1535,14 +1738,35 @@ Historical decisions remain traceable. OPQ-015 now governs the garment model and
 | OPQ-018 | The wardrobe overview is delivered page by page in a stable newest-first order with explicit continuation, without omitting or repeating garments that stay current. | Product Owner decision, 2026-11-07 | FEAT-WAR-001; SRS FR-WAR-001; US-WAR-001. |
 | OPQ-015 | Exactly 13 source-owned properties, all listed values approved, multiple Materials, one dominant Color, category applicability, removed obsolete attributes, deferred eligibility and all applicable properties in Sprint 2. | Final Product Owner approval, 2026-11-05 | Supersedes conflicting OPQ-003/004/011–014 property/readiness descriptions; unrelated profile/context decisions remain valid. |
 
+### 34.2 MVP Expansion Open Decisions
+
+**Already approved:** PR #4 / DD-007 establishes the five capabilities, every listed MVP action, AI Today/Chat-only Dislike, stored feedback/Wear without prescribed ranking weights/aging, and unchanged user-confirmed 13-property authority. None of those scope decisions is reopened below.
+
+**Recommended but unapproved:** The following bounded alternatives require the named owner's review before the affected story can be Ready. Recommendations are advice, not defaults or approval. An open question blocks only the affected unresolved behavior, not unrelated implemented work.
+
+| ID | Question / owner | Options | Trade-offs | Recommendation (unapproved) | Impact |
+|---|---|---|---|---|---|
+| MVP-Q01 | Which audience, explicit sharing consent and outfit/creator/media fields are authorized? Owner: PO with UX/privacy review. | Authenticated bounded audience; selected recipients; broader public/link audience. | Reach versus disclosure, source-media control and abuse exposure. No audience, moderation or consent default is selected. | Unapproved: start with a minimal explicit shared projection and bounded authenticated audience; review safety/reporting needs without adding a social network. | US-COM-001/002/003 before Ready; FR-COM-004/008; private Wardrobe/media access must never be reused as sharing permission. |
+| MVP-Q02 | What does Save look retain, and what happens after a post changes or is withdrawn? Owner: PO/BA. | Source reference; minimal snapshot; controlled reference plus snapshot. Define creator withdrawal, saved references and independent draft treatment. | Freshness/deletion control versus durable inspiration, copying and storage. | Unapproved: preserve source attribution with an explicit unavailable-source state; select reference/snapshot and deletion effects before implementation. | US-COM-001/002/003 and US-TRY-001; no inherited 30-day rule or invented retention period for shared posts/saved looks. |
+| MVP-Q03 | How long is the single Chat thread retained, and can it be cleared/reset? Which context may it use? Owner: PO with privacy/engineering. | Session-limited conversation; persistent single thread with explicit clearing; bounded retained thread. No multithread product. | Continuity versus privacy, model context size and lifecycle complexity. | Unapproved: purpose-minimal single-thread storage with understandable user control; approve retention/clear behavior and external disclosure before Ready. | US-CHAT-001; no invented retention period, reset feature or training consent. |
+| MVP-Q04 | What is an acceptable generic-model preview and its permitted rendering/data contract? Owner: PO/UX with Tech Lead. | Composited generic illustration; generative generic preview; another validated generic method. Compare providers/licenses only during necessary investigation. | Visual usefulness and identity fidelity versus cost, latency, licensing and disclosure. | Unapproved: select the smallest demonstrably useful generic preview with explicit limitations and minimal authorized inputs. | US-TRY-001 before Ready; no selected provider/model, new latency promise, selfie avatar or AR/3D. |
+| MVP-Q05 | How should Wear Today explain an unowned Community/catalog look at preview? Owner: PO/UX. | Explain ineligibility to report until current valid ownership is established; route to an existing explicit owned-look review where feasible. | Clear boundary versus navigation effort; neither option may auto-create owned items or report hypothetical wear. | Unapproved: explain the prerequisite and preserve the look; only offer a supported separate ownership/review route. | US-TRY-001 Wear branch; current-valid-owned Wear requirement is already approved, not reopened. |
+| MVP-Q06 | Which creator identifier/display fields and Follow revision behavior are supported? Owner: PO/BA. | Minimal attributed account identity; distinct creator profile projection. Define Follow state/revision without assuming a full social graph or feed algorithm. | Recognizable attribution and user control versus exposing private profile information or adding profile scope. | Unapproved: use only an approved minimal creator projection and explicit Follow state; confirm reversal and feed effects. | US-COM-001/002; US-PROF-001 remains private preferences, not a public creator-profile story. |
+| MVP-Q07 | Which catalog source/rights, usable fields and search behavior are supported? Owner: PO with Tech Lead. | Curated licensed internal data; approved imported source; approved partner source. Define search descriptors and missing-information handling. | Coverage/maintenance versus licensing, freshness and integration dependence. | Unapproved: a bounded curated source whose rights/provenance can be verified; personal purchase Price must still come from the user. | US-CAT-001/002 and candidate-source reuse; no retailer agreement, live inventory or new category is inferred. |
+| MVP-Q08 | What batch limits, processing, resumability, per-item retry and save atomicity are required? Owner: PO with Developers. | Bounded sequential queue; bounded parallel processing; resumable batch with item outcomes. Decide partial acceptance versus reviewed atomic save and staged-media lifecycle. | User effort/recovery versus resource use and transaction/lifecycle complexity. | Unapproved: evaluate independently recoverable item outcomes and bounded processing first; approve limits and accepted-save semantics before Ready. | US-BULK-001; upload never confirms ownership. No broker, asynchronous architecture, numeric limit or staged-media TTL selected. |
+| MVP-Q09 | Which existing owner or justified new owner coordinates Community, Catalog, Chat and Try-On, and which external inputs are permitted? Owner: Tech Lead with PO for privacy implications. | Extend cohesive existing owners where semantics fit; introduce an explicit owner within the same monolith where authority differs; narrow integration ports. | Low structural cost versus semantic isolation, coupling, shared-content lifecycle and future extraction. | Unapproved: keep confirmed garments with Wardrobe and existing feedback/Wear with Outfit Advice and Use; analyze shared-content/catalog/orchestration allocation before selecting a new owner. | ADD Section 15 and all four views; preserve ADA-001–018 and AR-01–08; allocation is not implemented or approved by a note. |
+| MVP-Q10 | What future Matching Engine policy consumes typed feedback and Wear, and how is it evaluated? Owner: PO/BA with engine Developers/QA. | Store/evidence integration first; explicitly approve a lightweight engine policy; later validate a learned strategy. | Observable relevance versus risk of unsupported fixed rules or premature algorithm design. | Unapproved: refine evidence/target handling first; approve a proportional engine policy and controlled verification before claiming ranking effects. | US-PERS-002 / PBI-024; no fixed weights, ranking decay, recency penalty, boost or outfit/day cap is restored. Measurement retention stays 90 days. |
+
+**Deferred JIT details:** Exact endpoints/DTOs, owner-local tables and forward migrations, transaction/concurrency mechanisms, concrete provider adapters, queue implementation, request correlation and necessary sequence/state models follow Sprint selection. Lightweight investigation may resolve material feasibility before selection; it does not predesign the MVP. No provider, architecture option, Sprint date, estimate or new numeric product policy is approved by this table.
+
 ## 35. Approval / Exit Criteria
 
 ### 35.1 Product Review and Acceptance Gate
 
-PRD v0.4 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
+PRD v0.6 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
 
-- All ten capabilities and all 24 business requirements are represented, with no unexplained omission or business-scope change.
-- The seven core journeys, navigation, and 22 stable feature specifications give a coherent connected MVP experience.
+- All 15 capabilities and all 31 business requirements are represented, with no unexplained omission or business-scope change.
+- The 12 core journeys, navigation, and 29 stable feature specifications give a coherent connected MVP experience.
 - Each feature has testable product-level acceptance criteria and useful entry, control, state, and recovery definitions.
 - Manual entry, confirmed authority, rich garment intelligence, active inclusive personalization, and validity-first recommendations are preserved.
 - Coverage, capability-based gaps, incremental unique-outfit utility, hypothetical previews, and commerce independence are understandable.
@@ -1556,15 +1780,13 @@ Acceptance is recorded by the decision authority through repository review and a
 
 ### 35.2 Current Handoff Status
 
-**The original v0.2 SRS-drafting handoff is historical. This v0.3 revision synchronizes the existing requirements and selected stories.** OPQ-001–OPQ-010 are resolved, their decisions are synchronized across affected experiences and with BRD v0.3, and the later taxonomy revision has open follow-up decisions in Section 34.1.
-
-Both documents remain Baseline Draft until review/acceptance is recorded. Product decision resolution removes the former OPQ gates; it does not imply document approval, completed system specification, or validated product results. The SRS must refine precise requirements and approved downstream constraints while retaining feature/business traceability.
+PR #4 approved the bounded MVP expansion and feedback policy; artifact status remains Baseline Draft. The SRS, rules, Use Cases/Activities and backlog/story coverage are synchronized. Section 34.2 identifies decisions that block affected Draft stories becoming Ready, without reopening the approved scope. Existing Sprint 1–2 backend behavior is preserved; new capabilities are not implemented by documentation.
 
 ## 36. PRD Baseline Decision Summary
 
 | Topic | Preserved Baseline / Product Refinement |
 |---|---|
-| Authority | BRD v0.4 remains the business authority; PRD v0.3 synchronizes the approved taxonomy/property changes without changing stable IDs. |
+| Authority | The current BRD and approved PR #4 / DD-007 govern this v0.6 synchronization; prior IDs and unrelated decisions remain. |
 | Positioning | Personalized wardrobe intelligence and decision support with three connected pillars. |
 | Users / market | Same personas; Vietnam-first Android/iOS MVP with Vietnamese UI, English documentation, and later localization readiness. |
 | Initial categories | Tops, Dresses/Jumpsuits, Pants, Skirts, Outerwear, Shoes, Bags, and Headwear; category codes and subtypes in Section 13.2. |
@@ -1583,6 +1805,4 @@ Both documents remain Baseline Draft until review/acceptance is recorded. Produc
 
 ## 37. Next Artifact
 
-The next workflow artifact is **`docs/03-requirements/SRS.md`**. Do not create it as part of this task.
-
-With OPQ-001–OPQ-010 resolved and no new blocking ambiguity, the SRS should derive precise software requirements from the FEAT-* behavior and scoped acceptance criteria while retaining BR-* and CAP-* traceability. Document review/acceptance remains distinct from readiness to draft. The SRS also records the approved downstream JWT access/refresh constraint from Section 10.1 without inventing its detailed security design. Detailed domain invariants then belong in Business Rules, and formal Use Cases/activity diagrams follow the workflow. ASR/ADD/ADR, implementation tasks, backlog items, and User Stories remain separate downstream work.
+Maintain the existing SRS, Business Rules, Use Cases/Activities, backlog, Draft Stories and affected architecture through normal change propagation. Resolve only relevant open policy and feasibility questions in refinement; Sprint Planning selects work before necessary story-specific JIT design and automated implementation/testing. No baseline artifact needs recreating, and new MVP scope is not an implementation assignment.

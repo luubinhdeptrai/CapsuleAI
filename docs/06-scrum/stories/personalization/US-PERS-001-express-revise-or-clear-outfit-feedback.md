@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-PERS-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-020](../../product-backlog.md#pbi-020--express-revise-or-clear-outfit-likedislike) |
@@ -14,6 +14,8 @@
 | Theme | Wear & Learning |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -25,7 +27,7 @@ Give users control over meaningful preference evidence separately from reported 
 
 ## 3. Scope
 
-Identified exact-target feedback, one effective state, accepted revision/clearing and safe failure/uncertainty without reported wear.
+Like on AI Today/Chat outfit suggestions and Community posts; Dislike only on AI Today/Chat suggestions, never Community. Preserve typed target/source identity, one effective state, revision/clearing and safe failure/uncertainty without Wear or prescribed ranking effects.
 
 ## 4. Preconditions
 
@@ -33,17 +35,17 @@ Identified exact-target feedback, one effective state, accepted revision/clearin
 
 ## 5. Acceptance Criteria
 
-### AC-01 — Set the correct target state
+### AC-01 — Set the supported target state
 
-Accepted Like or Dislike is shown for the identified exact garment-identity combination and user. Permuting the same constituents does not create a different outfit target; an unidentified/inaccessible target receives no unrelated feedback.
+Accepted Like applies to an identified AI Today/Chat outfit suggestion or Community post; Dislike applies only to AI Today/Chat suggestions. Preserve affected user, target kind/origin and identifiable source reference. The same garment set in an AI suggestion and a Community post does not alias their feedback. Unidentified/inaccessible targets receive no unrelated feedback; Community Dislike is neither offered nor accepted and changes no state. FR-PERS-001/002/014 govern the target policy.
 
-### AC-02 — Revise or clear
+### AC-02 — Revise or clear supported feedback
 
-Changing Like to Dislike or vice versa leaves only the accepted effective state; explicit clearing leaves no effective Like/Dislike and updates applicable evidence without deleting Wear history.
+On an AI target, changing Like to Dislike or vice versa leaves one accepted effective state. On Community, Like can be applied or cleared, never changed to Dislike. Clearing leaves no effective preference for that target and never deletes Wear history; retries/failures cannot leave contradictory effective states.
 
-### AC-03 — Preserve source signal meaning
+### AC-03 — Store user-expressed meaning
 
-Like is conceptual base +1 and Dislike -2 for that outfit target; state persists until changed/cleared/superseded by user action. Aging its ranking influence does not automatically clear the displayed state or permanently ban constituent garments/categories.
+Store accepted Like/Dislike state and applicable action-time information for history and future Matching Engine use until revised/cleared/superseded through user action, subject to functional retention/removal. No fixed numeric contribution, ranking decay, recency penalty, boost, relative strength or outfit/day increment cap is prescribed. Dislike does not automatically ban garments/categories.
 
 ### AC-04 — Handle failure and uncertainty
 
@@ -63,12 +65,12 @@ Apply the [shared quality and completion conditions](../README.md#2-shared-quali
 
 ## 7. Dependencies
 
-- Parent PBI capability inputs: PBI-017.
+- A supported authorized target from its owning capability: PBI-017 for AI Today, PBI-042 for Community, or PBI-044 for AI Chat. These target sources are alternatives by slice, not a gate requiring every feature first.
 - Source-linked related stories describe collaborating outcomes; they do not change the Product Backlog's hard-dependency semantics or imply a serial development schedule.
 
 ## 8. Out of Scope
 
-Age-aware ranking is [US-PERS-002](../personalization/US-PERS-002-adapt-valid-ranking-from-feedback-and-wear.md); Wear reporting is [US-WEAR-001](../wear/US-WEAR-001-report-an-intentional-wear-event.md). No reason survey, permanent garment ban, similarity algorithm or feedback endpoint design is added.
+Future engine evidence consumption is [US-PERS-002](../personalization/US-PERS-002-adapt-valid-ranking-from-feedback-and-wear.md); Wear reporting is [US-WEAR-001](../wear/US-WEAR-001-report-an-intentional-wear-event.md). No reason survey, permanent garment ban, similarity algorithm or feedback endpoint design is added.
 
 ## 9. Traceability
 
@@ -80,12 +82,12 @@ Age-aware ranking is [US-PERS-002](../personalization/US-PERS-002-adapt-valid-ra
 | SRS | [SRS](../../../03-requirements/SRS.md): FR-PERS-001–FR-PERS-005, FR-PERS-013; DATA-OUT-001; DATA-WEAR-001; COM-002; FR-MET-007 |
 | Business Rules | [Business Rules](../../../03-requirements/business-rules.md): BRULE-PERS-001, BRULE-PERS-003, BRULE-PERS-006, BRULE-OUT-008 |
 | Use Cases | [UC-013](../../../03-requirements/use-cases/UC-013-provide-outfit-feedback.md); applicable interaction slices / verification anchors only |
-| Activity Diagrams | No dedicated activity for this slice is required by the current baseline; the linked textual Use Cases govern relevant behavior. |
+| Activity Diagrams | [AD-013](../../../03-requirements/activity-diagrams/AD-013-provide-outfit-feedback.puml): typed target, supported actions and accepted/rejected state. |
 | Completion / Verification | [Definition of Done](../../definition-of-done.md), applicable common/triggered criteria; [Test Strategy](../../../07-testing/test-strategy.md), proportional source-linked evidence. |
 
 ## 10. Open Refinement Notes
 
-No new feedback policy decision is needed. Target/lifecycle integration mechanics are selected-story JIT details; planned tests must distinguish accepted state from aged ranking influence.
+No new feedback policy decision is needed. Target/lifecycle integration mechanics are selected-story JIT details; planned tests distinguish typed targets, supported actions and current accepted state without asserting a fixed ranking effect. MVP-Q10 tracks any future engine policy.
 
 ## 11. Status
 

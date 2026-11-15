@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Initial ordered Scrum Product Backlog |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Owner / Accountability | Product Owner |
@@ -27,16 +27,16 @@ The canonical artifacts below were read before deriving this backlog. Their requ
 | Business | [BRD](../01-business/BRD.md), v0.3: intent, BG/BR/CAP, personas, value and MVP boundaries. |
 | Product | [PRD](../02-product/PRD.md), v0.2: JRN/FEAT, user experience, product behavior and measurement directions. |
 | Software requirements | [SRS](../03-requirements/SRS.md), v0.3: functional, data, interface, quality, localization, AI and recovery constraints. |
-| Domain invariants | [Business Rules](../03-requirements/business-rules.md), v0.1.2: all 11 rule families and precedence. |
-| User goals | [Master Use Case Diagram](../03-requirements/use-cases/use-case-diagram.puml) and all 23 [Use Case Specifications](../03-requirements/use-cases/), UC-001 through UC-023. |
-| Complex flows | All 12 current [Activity Diagrams](../03-requirements/activity-diagrams/): AD-004, AD-006, AD-007, AD-011, AD-012, AD-014, AD-016, AD-017, AD-019, AD-020, AD-021 and AD-022. |
+| Domain invariants | [Business Rules](../03-requirements/business-rules.md), v0.1.2: all 16 rule families and precedence. |
+| User goals | [Master Use Case Diagram](../03-requirements/use-cases/use-case-diagram.puml) and all 31 [Use Case Specifications](../03-requirements/use-cases/), UC-001 through UC-031. |
+| Complex flows | All 21 current [Activity Diagrams](../03-requirements/activity-diagrams/): AD-004, AD-006, AD-007, AD-011, AD-012, AD-014, AD-016, AD-017, AD-019, AD-020, AD-021 and AD-022. |
 | Scrum ordering anchor | [Product Goal](product-goal.md), v0.1.1: outcomes, value loop, boundaries and existing evidence directions. |
 
 The other repository sources were inspected: the Implementation Summary, proposal, official outline and Business Analysis notes are historical context. Their older quotas, rules, targets, technology descriptions, speculative features and Sprint roadmap do not override the current canonical baseline. That v0.1 inventory predates the current architecture and engineering baseline. For this refinement, the [Selected Architecture Decisions](../04-architecture/selected-architecture-decisions.md), [ADD and views](../04-architecture/ADD.md), [Test Strategy](../07-testing/test-strategy.md), [Definition of Done](definition-of-done.md), [Delivery Decisions](delivery-decisions.md) and merged [backend foundation](../../backend/README.md) provide current constraints and implementation evidence. Infrastructure evidence does not establish product completion or approval.
 
 ## 2. Backlog Management Principles
 
-- **One global order:** Order 1 is currently highest. Section 5 is authoritative across all themes; no separate theme priority or invented prioritization score applies.
+- **One global order:** Section 5 preserves Orders 1–41. New PBI-042–048 are an explicitly unranked refinement pool pending PO placement. Their stable ID numbers do not establish priority; there is no second theme order.
 - **Stable identity:** PBI IDs identify work permanently. Initial IDs happen to follow initial allocation order; future reordering changes the Order field, never the IDs. Preserve references when splitting, merging or retiring work through refinement.
 - **Goal-led value:** Each PBI identifies a Product Goal contribution. Enablers and quality work state which product value or delivery capability they support.
 - **Progressive refinement:** Top items have clearer outcomes and boundaries. Refinement states are Candidate, Needs Refinement, Refinable Soon and Ready for Story Refinement. Story readiness does not establish Sprint readiness, approval or commitment.
@@ -75,7 +75,7 @@ Product increments can expose useful parts of the loop before the complete MVP e
 | Strategic Shopping | Credible candidates, exact incremental utility, hypothetical previews and optional external guidance. |
 | Quality / Security / Operations | Privacy, measurement, AI validation, performance, accessibility, usability, regression and operability. |
 
-Themes aid reading only. The list below contains one global order: 41 PBIs comprising 28 Product Increments, 5 Enablers and 8 Quality items.
+Themes aid reading only. Section 5 preserves the original 41-item global order (28 Product Increments, 5 Enablers and 8 Quality items). Section 6.1 adds seven approved-scope Product Increment candidates without assigning relative order; the 48-PBI inventory is not a new approved priority list.
 
 ## 5. Initial Ordered Product Backlog
 
@@ -102,7 +102,7 @@ Dependencies in this table are hard capability dependencies; None means no speci
 | 17 | PBI-017 | Receive valid daily outfits relevant to declared context | Product Increment | Outfit Decision Support | Easier Outfit Decisions; Greater Owned-Garment Value | PBI-008, PBI-010 | Needs Refinement |
 | 18 | PBI-018 | Inspect outfit constituents and explanation | Product Increment | Outfit Decision Support | Easier Outfit Decisions | PBI-017, PBI-007 | Needs Refinement |
 | 19 | PBI-019 | Shuffle one garment slot while retaining other choices | Product Increment | Outfit Decision Support | Easier Outfit Decisions; Greater Owned-Garment Value | PBI-017 | Needs Refinement |
-| 20 | PBI-020 | Express, revise or clear outfit Like/Dislike | Product Increment | Wear & Learning | Easier Outfit Decisions; Greater Owned-Garment Value | PBI-017 | Needs Refinement |
+| 20 | PBI-020 | Express, revise or clear outfit Like/Dislike | Product Increment | Wear & Learning | Easier Outfit Decisions; Greater Owned-Garment Value | Authorized target from its owning capability; PBI-017 for AI Today | Needs Refinement |
 | 21 | PBI-021 | Report intentional wear and review distinct Wear Events | Product Increment | Wear & Learning | Greater Owned-Garment Value | PBI-017 | Needs Refinement |
 | 22 | PBI-022 | Correct one reported Wear Event within its original local day | Product Increment | Wear & Learning | Greater Owned-Garment Value | PBI-021 | Needs Refinement |
 | 23 | PBI-023 | Withdraw one Wear Event and remove its effective influence | Product Increment | Wear & Learning | Greater Owned-Garment Value | PBI-021 | Needs Refinement |
@@ -157,7 +157,7 @@ BR-023; NFR-MNT-001, NFR-TEST-001, NFR-TEST-002, NFR-TEST-003, NFR-SUP-001; Work
 
 **Refinement Notes**
 
-The [backend README](../../backend/README.md), Sections 11–15, records foundation verification and its limits; current production source contains bootstrap and module documentation, not business features. Mobile and Python/provider integration evidence is not established by those checks. PO and Developers must review a bounded completion/evidence boundary for this PBI (review Q-01/Q-02), distinguishing remaining foundation capability from ongoing feature tests under the DoD, PBI-039's complete-loop regression and PBI-040's operational readiness. No automatic Done transition, duplicate infrastructure work or topology change follows.
+The [backend README](../../backend/README.md), Sections 11–15, records foundation verification and its limits; that foundation-only statement described the earlier snapshot. Current Sprint 1–2 source contains implemented Identity access/recovery and Wardrobe create/page/detail behavior, OpenAPI and regression suites; preserve them. This does not prove full mobile-story Done. Mobile and Python/provider integration evidence is not established by those checks. PO and Developers must review a bounded completion/evidence boundary for this PBI (review Q-01/Q-02), distinguishing remaining foundation capability from ongoing feature tests under the DoD, PBI-039's complete-loop regression and PBI-040's operational readiness. No automatic Done transition, duplicate infrastructure work or topology change follows.
 
 ### PBI-002 — Protect private user data from the first usable increment
 
@@ -173,7 +173,7 @@ Make trustworthy wardrobe participation possible through authorized isolation an
 
 **Scope Summary**
 
-Establish private access to each user's images, profile, wardrobe, feedback and history; protect credentials, sessions, transport and secrets. Apply minimum necessary external disclosures and the approved retention distinctions from first collection. MVP personal data is excluded from AI training/improvement, sale, public access and unrestricted sharing.
+Establish private access to each user's images, profile, wardrobe, feedback and history; protect credentials, sessions, transport and secrets. Apply minimum necessary external disclosures and the approved retention distinctions from first collection. Private data remains excluded from MVP model training/improvement, sale and unrestricted sharing. Only the approved shared-outfit projection may be exposed under the refined audience/consent policy; private inventory/source media remain protected.
 
 **Key Dependencies**
 
@@ -381,7 +381,7 @@ BR-003, BR-002; CAP-04; JRN-02, JRN-03, FEAT-GAR-001, FEAT-WAR-002; FR-GAR-005, 
 
 **Refinement Notes**
 
-Keep initial review and later edit aligned to the same vocabularies. Readiness alone does not guarantee outfit validity; not all descriptors become mandatory saving fields. Refine normal edits, unknowns, cancellation and accepted-versus-uncertain outcomes.
+Keep initial review and later edit aligned to the same vocabularies. Saving does not evaluate recommendation eligibility; every optional applicable property stays optional. Materials and Styles are distinct-value sets; Brand/Price use the approved November 7 validation. Refine normal edits, unknowns, cancellation and accepted-versus-uncertain outcomes.
 
 ### PBI-009 — Minimum necessary measurement from first wardrobe use
 
@@ -541,7 +541,7 @@ BG-01; BR-001, BR-002, BR-004; CAP-02, CAP-04; JRN-02, FEAT-AI-001, FEAT-AI-002;
 
 **Refinement Notes**
 
-Review/correction and fallback belong inside this usable assisted-entry slice, not separate AI layer tasks. Preview usability and attribute certainty are separate. PBI-014 supplies validation evidence before assisted quality claims are accepted; PBI-008 supplies rich descriptor enrichment.
+Review/correction and fallback belong inside this usable assisted-entry slice, not separate AI layer tasks. Preview usability and attribute certainty are separate. PBI-014 supplies validation evidence before assisted quality claims are accepted; PBI-008 supplies later edits; all applicable rich fields are already supported by confirmed manual creation.
 
 ### PBI-014 — Validate garment-assistance quality on a locked benchmark
 
@@ -607,7 +607,7 @@ BR-005; CAP-03; JRN-03, FEAT-WAR-003; FR-WAR-007, FR-WAR-008; UC-008.
 
 **Refinement Notes**
 
-Keep search and filtering together as discovery inside View Wardrobe. Internal catalog search and add-to-closet are in MVP scope; full catalog sourcing/limits require refinement in new PBIs. Do not add new garment categories.
+Keep US-WAR-003 scoped to current owned-wardrobe discovery. Internal catalog discovery and confirmed Add-to-Closet are separate PBI-046/PBI-047; their source/rights/search questions are MVP-Q07. No new category or catalog implementation enters this item.
 
 ### PBI-016 — Remove a garment while preserving minimal historical meaning
 
@@ -751,11 +751,11 @@ Give users control over meaningful preference evidence separately from reported 
 
 **Scope Summary**
 
-Accept Like/Dislike for the identified exact outfit/recommendation target, showing one effective state and allowing revision or clearing. Preserve prior state on known failure and resolve uncertain updates safely. Make accepted changes available for future soft personalization without permanent garment bans or Wear creation.
+Accept Like on identified AI Today/Chat outfit targets and Community posts; accept Dislike only on AI Today/Chat targets, never Community. Preserve affected user and target kind/origin/source identity, show one effective state and allow supported revision or clearing. Preserve prior state on known failure and resolve uncertain updates safely. Make accepted changes available for future soft personalization without permanent garment bans or Wear creation.
 
 **Key Dependencies**
 
-Hard capability dependencies: PBI-017.
+Target capability for the selected slice: PBI-017 (AI Today), PBI-042 (Community post) or PBI-044 (AI Chat suggestion). These are alternatives by source, not a requirement to complete every family before delivering a supported feedback slice.
 
 **Goal Contribution**
 
@@ -767,7 +767,7 @@ BR-011, BR-021; CAP-06; JRN-05, FEAT-PERS-001; FR-PERS-001, FR-PERS-002, FR-PERS
 
 **Refinement Notes**
 
-This owns the feedback interaction and effective state; PBI-024 owns its age-aware effect on future ranking. Refine target identity and reversal/clearing, without promising visibly different advice when valid alternatives are limited.
+This owns the feedback interaction and stored effective state; PBI-024 owns future engine evidence consumption without prescribed weights or aging. PBI-017 supplies AI Today targets; PBI-042/PBI-044 supply Community/Chat targets as those capabilities arrive, not as new prerequisites for already valid feedback slices. Refine target identity and reversal/clearing, without promising visibly different advice when valid alternatives are limited.
 
 ### PBI-021 — Report intentional wear and review distinct Wear Events
 
@@ -799,7 +799,7 @@ BG-03; BR-006, BR-011; CAP-06, CAP-07; JRN-05, FEAT-PERS-002, FEAT-ANL-001; FR-W
 
 **Refinement Notes**
 
-Creation and inspectable history form one useful reporting increment, including resolution of uncertain acceptance. PBI-022/PBI-023 provide repair/withdrawal, PBI-024 ranking effects and PBI-025 utilization. History identity and daily preference normalization remain different concepts.
+Creation and inspectable history form one useful reporting increment, including resolution of uncertain acceptance. PBI-022/PBI-023 provide repair/withdrawal, PBI-024 ranking effects and PBI-025 utilization. History event identity and outfit/day presentation grouping remain different concepts; no ranking-increment cap applies.
 
 ### PBI-022 — Correct one reported Wear Event within its original local day
 
@@ -815,7 +815,7 @@ Repair inaccurate reported use without changing unrelated history.
 
 **Scope Summary**
 
-Select one effective event and correct supported outfit, occasion/context or local time. Accept only non-future time within the original event-local day; preserve that meaning after travel. Accepted corrections update effective history/utilization and affected normalized ranking groups/anchors; cancellation or known failure preserves prior state, while uncertainty requires outcome review.
+Select one effective event and correct supported outfit, occasion/context or local time. Accept only non-future time within the original event-local day; preserve that meaning after travel. Accepted corrections update stored history/utilization and affected history groups, preserving source timestamps and unrelated reports; cancellation or known failure preserves prior state, while uncertainty requires outcome review.
 
 **Key Dependencies**
 
@@ -847,7 +847,7 @@ Let users withdraw a report while preserving other events, outfits and garments.
 
 **Scope Summary**
 
-Explicitly remove the selected event from effective history, utilization, recency and personalization immediately on acceptance. Recompute effects from survivors, including the latest surviving same-outfit/original-day anchor, and physically delete applicable personal event data within 30 days. Retain underlying outfits/garments, independent feedback and unrelated reports; support cancel, failed and uncertain outcomes.
+Explicitly remove the selected event from stored history/utilization immediately on acceptance. Preserve surviving reports and update the stored evidence available to future engine use, and physically delete applicable personal event data within 30 days. Retain underlying outfits/garments, independent feedback and unrelated reports; support cancel, failed and uncertain outcomes.
 
 **Key Dependencies**
 
@@ -863,7 +863,7 @@ BR-006, BR-011, BR-021; CAP-06, CAP-07; JRN-05, FEAT-PERS-002, FEAT-ANL-001; FR-
 
 **Refinement Notes**
 
-Individual withdrawal is distinct from wardrobe removal and ranking expiry. Refine survivor and last-event consequences without removing every report for the same outfit/day; broader retention proof is PBI-041.
+Individual withdrawal is distinct from wardrobe removal and the separate measurement-retention policy. Refine survivor and last-event consequences without removing every report for the same outfit/day; broader retention proof is PBI-041.
 
 ### PBI-024 — Adapt future valid-outfit ranking to feedback and reported use
 
@@ -879,7 +879,7 @@ Make repeated use of CapsuleAI more personally relevant and help rediscover owne
 
 **Scope Summary**
 
-Use accepted Like/Dislike and Wear evidence for lightweight age-aware personalization, diversity and soft recency adjustments only after hard validity. Preserve distinct Wear history while capping same-exact-outfit/original-day preference influence and using the latest surviving accepted timestamp. Apply the established elapsed-time aging policy and reflect revisions, corrections and removals without clearing history merely at ranking expiry.
+Make accepted typed Like/Dislike state and distinct Wear Events available to future Matching Engine rules after hard validity. Reflect feedback revisions/clearing and event corrections/removals in stored evidence. No fixed contribution, ranking decay, recency penalty, overlooked boost or same-outfit/day increment cap is mandated; an explicitly approved future engine strategy and its verification remain MVP-Q10.
 
 **Key Dependencies**
 
@@ -895,7 +895,7 @@ BR-009, BR-011, BR-012; CAP-06; JRN-04, JRN-05, FEAT-PERS-003; FR-PERS-007, FR-P
 
 **Refinement Notes**
 
-Initial advice is already usable through PBI-017. Refine observable personalization effects and survivor/time boundaries from the rules, without designing a ranking algorithm or training on personal data. PBI-022/PBI-023 provide mutation examples to validate.
+Initial advice is already usable through PBI-017. Refine source-faithful evidence consumption and an explicitly approved engine policy before claiming ranking effects; no algorithm or personal-data model training is approved here. PBI-022/PBI-023 provide mutation examples to validate.
 
 ### PBI-025 — Understand reported wardrobe utilization and overlooked items
 
@@ -911,7 +911,7 @@ Show useful patterns in owned-clothing use while acknowledging incomplete report
 
 **Scope Summary**
 
-Present reported frequency, recency, variety and supported overlooked-item indicators from effective accepted Wear Events, with explainable evidence and paths back to wardrobe/history. Count legitimate intentional reports independently of normalized ranking increments. Reflect corrections/removals, retain necessary history beyond ranking influence and label no recorded use without claiming never worn.
+Present reported frequency, recency, variety and supported overlooked-item indicators from effective accepted Wear Events, with explainable evidence and paths back to wardrobe/history. Count every legitimate intentional report, distinguishing retries and any history display groups from raw event counts. Reflect corrections/removals and retain necessary history under its own lifecycle and label no recorded use without claiming never worn.
 
 **Key Dependencies**
 
@@ -959,7 +959,7 @@ BG-03, BG-04; BR-014, BR-010, BR-022; CAP-07; JRN-06, FEAT-ANL-002; FR-ANL-008, 
 
 **Refinement Notes**
 
-Numeric sufficiency requires positive priorities and applicable ready garment roles, not a universal wardrobe quota. Count complete valid distinct support, not the small daily displayed subset. Coverage needs no prior Wear history and makes no purchase claim; detailed need inspection is PBI-027.
+Numeric sufficiency requires positive priorities and completed evaluation under a future approved engine policy; there is no active ready-role gate or universal wardrobe quota. Count complete valid distinct support, not the small daily displayed subset. Coverage needs no prior Wear history and makes no purchase claim; detailed need inspection is PBI-027.
 
 ### PBI-027 — Explore per-need Coverage evidence and useful input revisions
 
@@ -1055,7 +1055,7 @@ BR-015, BR-018, BR-020, BR-024; CAP-08, CAP-10; JRN-06, JRN-07, FEAT-SHOP-001; F
 
 **Refinement Notes**
 
-Candidate descriptors need explicit user evidence or an identifiable configured credible source. Internal catalog search, bulk import, and generic-model try-on are in scope and require new PBIs; refine available candidate/source examples and honest absence without prescribing a supplier. PBI-030 provides evaluation; unavailable utility must be disclosed until it exists.
+Candidate descriptors need explicit user evidence or an identifiable configured credible source. Internal catalog search/confirmed addition (PBI-046/047), bulk import (PBI-048) and generic-model Try-On (PBI-045) have separate Draft work; refine available candidate/source examples and honest absence without prescribing a supplier. PBI-030 provides evaluation; unavailable utility must be disclosed until it exists.
 
 ### PBI-030 — Evaluate candidate Wardrobe Multiplier with honest result states
 
@@ -1359,7 +1359,7 @@ Demonstrate that connected capabilities preserve trustworthy meaning from entry 
 
 **Scope Summary**
 
-Extend incremental automated evidence to complete connected scenarios: confirmed authority/readiness, owned hard-valid outfits, explicit feedback, intentional Wear identity/time and correction/removal effects, explainable Coverage/Gaps, complete same-basis Multiplier states and hypothetical previews. Verify optional commercial/link failures leave core utility intact, with mutation and unavailable-state regressions.
+Extend incremental automated evidence to complete connected scenarios: confirmed authority and unevaluated eligibility, owned hard-valid outfits, explicit feedback, intentional Wear identity/time and correction/removal effects, explainable Coverage/Gaps, complete same-basis Multiplier states and hypothetical previews. Verify optional commercial/link failures leave core utility intact, with mutation and unavailable-state regressions.
 
 **Key Dependencies**
 
@@ -1375,7 +1375,7 @@ BR-002, BR-009, BR-011, BR-014, BR-015, BR-016, BR-017, BR-024; NFR-TEST-001, NF
 
 **Refinement Notes**
 
-Use the existing Use Cases and all 11 Business Rule families as evidence anchors. PBI-001 enables automated checks from the outset; this adds integrated coverage as the loop becomes available, without creating a test-plan document or duplicating behavioral requirements.
+Use the existing Use Cases and all 16 Business Rule families as evidence anchors. PBI-001 enables automated checks from the outset; this adds integrated coverage as the loop becomes available, without creating a test-plan document or duplicating behavioral requirements.
 
 ### PBI-040 — Deliver repeatable deployment and inspectable operation
 
@@ -1441,6 +1441,133 @@ BR-021; NFR-SEC-001, NFR-SEC-002, NFR-SEC-003, NFR-PRIV-001, NFR-PRIV-002; DATA-
 
 Foundational protection is PBI-002; action-specific lifecycle behavior remains in PBI-016/PBI-023 and measurement PBIs. This is evidence and remediation across the integrated product, not deferred privacy implementation or a new account deletion/export feature.
 
+### 6.1 Approved MVP Extension — Unranked Refinement Pool
+
+PR #4 / DD-007 approves these capabilities, not their backlog placement or Sprint scope. **Proposed priority for PO review: MVP candidate; relative order unassigned for every row.** Existing Orders 1–41 above are preserved. All new items are Not Estimated and **Needs Refinement (Draft)**; no new item is selected for Sprint 3. Dependencies below are capability/collaboration proposals to validate in refinement, not a silently approved serial schedule.
+
+| PBI ID | Title | Type | Relative order | Refinement status |
+|---|---|---|---|---|
+| PBI-042 | Browse and interact with outfit inspiration | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-043 | Explicit outfit sharing and independent reuse | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-044 | Single-thread AI Chat Stylist | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-045 | Generic-model outfit Try-On preview | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-046 | Search the internal garment catalog | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-047 | Confirm a catalog item into the owned closet | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+| PBI-048 | Review and confirm bulk garment-photo import | Product Increment | Unassigned — PO review | Needs Refinement (Draft) |
+
+#### PBI-042 — Browse and interact with outfit inspiration
+
+**ID:** PBI-042; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Outfit Inspiration. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Discover useful shared looks and creators without exposing private wardrobes.
+
+**Scope Summary:** Browse identifiable outfit posts attributed to their creators; Like, Follow creator, Save look and enter generic-model Try-On. Loading, empty, unavailable and denied access are distinct. Dislike, comments and messaging are absent.
+
+**Dependencies:** Authorized shared-post representation and creator identity; existing PBI-020 feedback policy. Collaborates with PBI-043 (sharing/duplication), PBI-045 (preview) and saved-look policy. Relative delivery order is proposed, not selected.
+
+**Product Goal Contribution:** Easier Outfit Decisions; Greater Owned-Garment Value. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-025, BR-021/022, CAP-11; [PRD](../02-product/PRD.md): FEAT-COM-001, JRN-08; [SRS](../03-requirements/SRS.md): FR-COM-001–FR-COM-009, DATA-COM-001; [Business Rules](../03-requirements/business-rules.md): BRULE-COM-002, BRULE-COM-003; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q01/Q02/Q06/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-043 — Explicit outfit sharing and independent reuse
+
+**ID:** PBI-043; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Outfit Inspiration. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Share selected inspiration and adapt a copy while preserving the creator original and private inventory.
+
+**Scope Summary:** Review the selected outfit representation before explicit sharing; expose only approved sharing fields to authorized recipients. Edit-as-duplicate creates the requesting user's editable outfit draft. It neither edits the original nor creates owned garments. Audience/consent and post lifecycle remain MVP-Q01/Q02.
+
+**Dependencies:** Authorized selected outfit and approved sharing/projection policy; private access PBI-004. Feed discovery PBI-042 consumes its content. Reuse need not create owned garments or await a Matching Engine.
+
+**Product Goal Contribution:** Easier Outfit Decisions; Greater Owned-Garment Value. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-026, BR-021/022, CAP-11; [PRD](../02-product/PRD.md): FEAT-COM-002, JRN-08; [SRS](../03-requirements/SRS.md): FR-COM-001–FR-COM-009, DATA-COM-001; [Business Rules](../03-requirements/business-rules.md): BRULE-COM-001, BRULE-COM-002; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q01/Q02/Q06/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-044 — Single-thread AI Chat Stylist
+
+**ID:** PBI-044; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Styling Assistance. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Ask for relevant styling guidance and continue into explicit product actions.
+
+**Scope Summary:** Use one text conversation with outfit/item cards and suggestion chips. Cards identify their actual context; a chip does not imply feedback or ownership. Attach a photo by routing to Add Garment for review/confirmation. Like/Dislike on AI-generated outfit suggestions use the same supported-target policy as Today. Missing context and unavailable AI are explained; no invented response or saved action is shown.
+
+**Dependencies:** Private access PBI-004; authorized context as available, explicit card/source semantics and AI feasibility. Photo route collaborates with PBI-012/PBI-006; feedback with PBI-020. No Community/Catalog completion gate for text interaction is inferred.
+
+**Product Goal Contribution:** Easier Outfit Decisions; Greater Owned-Garment Value. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-027, BR-021/022, CAP-12; [PRD](../02-product/PRD.md): FEAT-CHAT-001, JRN-09; [SRS](../03-requirements/SRS.md): FR-CHAT-001–FR-CHAT-007, DATA-CHAT-001; [Business Rules](../03-requirements/business-rules.md): BRULE-CHAT-001, BRULE-CHAT-002; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q03/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-045 — Generic-model outfit Try-On preview
+
+**ID:** PBI-045; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Styling Assistance. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Inspect an illustration of the selected look before a separate Save or Wear action.
+
+**Scope Summary:** Preview the selected outfit on a generic model, keeping the outfit basis identifiable. Save look and Wear Today are distinct explicit entry points. Wear still requires a current valid owned outfit; Community/unowned inspiration cannot silently create ownership or a Wear Event. A failed/unavailable preview retains selection and recovery. No selfie avatar, personal avatar creation, fit guarantee or AR/3D simulation is introduced.
+
+**Dependencies:** An accessible identified selected outfit and preview feasibility. Collaborates with PBI-042 for inspiration, saved-look policy and PBI-021 for the separately owned-valid Wear branch. Previewing unowned inspiration does not require false ownership.
+
+**Product Goal Contribution:** Easier Outfit Decisions; Greater Owned-Garment Value. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-028, BR-021/022, CAP-13; [PRD](../02-product/PRD.md): FEAT-TRY-001, JRN-10; [SRS](../03-requirements/SRS.md): FR-TRY-001–FR-TRY-005, DATA-TRY-001; [Business Rules](../03-requirements/business-rules.md): BRULE-TRY-001, BRULE-TRY-002; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q02/Q04/Q05/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-046 — Search the internal garment catalog
+
+**ID:** PBI-046; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Digital Wardrobe. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Find relevant catalog garment information separately from owned wardrobe discovery.
+
+**Scope Summary:** Search the internal catalog, inspect identifiable results and select an item for an explicit Add-to-Closet intent. Show known descriptive information and qualify missing/unavailable information. No-match, loading, unavailable and denied states remain distinct. Catalog sourcing/rights and search semantics remain MVP-Q07; no live retailer inventory is assumed.
+
+**Dependencies:** Verified catalog source/rights and search semantics; authorized access as required. Does not require populated owned Wardrobe or US-WAR-003.
+
+**Product Goal Contribution:** Trustworthy Wardrobe Understanding. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-029, BR-021/022, CAP-14; [PRD](../02-product/PRD.md): FEAT-CAT-001, JRN-11; [SRS](../03-requirements/SRS.md): FR-CAT-001–FR-CAT-008, DATA-CAT-001; [Business Rules](../03-requirements/business-rules.md): BRULE-CAT-001; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q07/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-047 — Confirm a catalog item into the owned closet
+
+**ID:** PBI-047; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Digital Wardrobe. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Reuse supported catalog information while personally confirming the actual owned garment.
+
+**Scope Summary:** From an explicit selection, review/correct all applicable properties under the same 13-property authority. Category and one Color plus confirmation are required; optional fields stay optional. A catalog asking price is not the personal purchase Price, and source values do not silently become user-confirmed truth. Only accepted confirmation creates an owned garment. Cancel/known failure creates none; uncertainty permits outcome review and safe retry. Later catalog changes do not overwrite confirmed values.
+
+**Dependencies:** PBI-046 catalog selection plus confirmed garment authority from PBI-006 and supported review. The owned addition remains independently owner-controlled; catalog price is not purchase Price.
+
+**Product Goal Contribution:** Trustworthy Wardrobe Understanding. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-030, BR-021/022, CAP-14; [PRD](../02-product/PRD.md): FEAT-CAT-002, JRN-11; [SRS](../03-requirements/SRS.md): FR-CAT-001–FR-CAT-008, DATA-CAT-001; [Business Rules](../03-requirements/business-rules.md): BRULE-CAT-001, BRULE-CAT-002; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q07/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+#### PBI-048 — Review and confirm bulk garment-photo import
+
+**ID:** PBI-048; **Order / proposed priority:** Unassigned; MVP candidate for PO ordering review. **Type:** Product Increment. **Theme:** Digital Wardrobe. **Refinement Status:** Needs Refinement (Draft). **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Reduce repeated entry work while keeping each wardrobe addition deliberate and trustworthy.
+
+**Scope Summary:** Select multiple photos, see their batch queue, inspect each entry, correct/complete the applicable profile and explicitly confirm accepted garments before saving. Per-item pending, review, accepted, failed and uncertain states are distinguishable; one item failure does not falsely complete or erase another accepted result. Upload/analysis alone does not confirm ownership. Limits, processing, resumability and save atomicity remain MVP-Q08; AI is not a prerequisite to manual confirmation.
+
+**Dependencies:** Photo-supported review PBI-012, confirmed addition PBI-006 and per-item outcome identity. AI assistance PBI-013 is conditional, not a prerequisite to manual confirmation; processing architecture is unresolved.
+
+**Product Goal Contribution:** Trustworthy Wardrobe Understanding. Existing BG-01–BG-04 and the connected value loop remain; no separate Product Goal is created.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-031, BR-021/022, CAP-15; [PRD](../02-product/PRD.md): FEAT-BULK-001, JRN-12; [SRS](../03-requirements/SRS.md): FR-BULK-001–FR-BULK-006, DATA-BULK-001; [Business Rules](../03-requirements/business-rules.md): BRULE-BULK-001, BRULE-BULK-002; DD-007. The [story catalogue](stories/README.md) maps the detailed Use Case/Activity and Draft Story slices.
+
+**Refinement Notes:** MVP-Q08/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
+
+
 ## 7. Dependency and Sequencing View
 
 The hard relationships below summarize the master table. They identify needed product capabilities, not implementation layers or a requirement to finish all work serially. The Product Owner may reorder independent work or refine related items together while keeping stable IDs.
@@ -1449,8 +1576,8 @@ The hard relationships below summarize the master table. They identify needed pr
 | --- | --- | --- |
 | Private wardrobe value | PBI-002 → PBI-004 → PBI-006 → PBI-008; PBI-004 → PBI-007 | Manual creation, populated inspection and readiness enrichment establish early useful wardrobe value. Empty browsing remains valid without existing garments. |
 | Assisted entry | PBI-006 → PBI-012 → PBI-013 → PBI-014 | Photo-supported manual entry precedes useful automated proposals and quality evidence. Neither photo input nor successful AI blocks PBI-006. Benchmark preparation can proceed earlier. |
-| Daily choices and learning | PBI-008 + PBI-010 → PBI-017; PBI-017 → PBI-019 / PBI-020 / PBI-021; PBI-020 + PBI-021 → PBI-024 | Initial declared-context advice is useful without behavioral history. PBI-011 is useful environmental sequencing, with denied permission/missing weather handled explicitly. |
-| Trustworthy reported-use insight | PBI-021 → PBI-022 / PBI-023; PBI-021 + PBI-007 → PBI-025 | Repair and withdrawal affect the selected report and all existing consumers. Same-day history identity is separate from daily ranking normalization. Utilization does not gate Coverage. |
+| Daily choices and learning | PBI-008 + PBI-010 → PBI-017; PBI-017 → PBI-019 / PBI-021 and AI Today feedback; other feedback targets come from PBI-042/PBI-044; PBI-020 + PBI-021 → PBI-024 | Initial declared-context advice is useful without behavioral history. PBI-011 is useful environmental sequencing, with denied permission/missing weather handled explicitly. |
+| Trustworthy reported-use insight | PBI-021 → PBI-022 / PBI-023; PBI-021 + PBI-007 → PBI-025 | Repair and withdrawal affect the selected report and all existing consumers. Separate intentional report identity is preserved; outfit/day grouping is for history presentation/counting only. Utilization does not gate Coverage. |
 | Needs and candidate utility | PBI-017 + PBI-010 → PBI-026; PBI-026 → PBI-027 / PBI-028; PBI-028 → PBI-029; PBI-029 + PBI-017 → PBI-030 → PBI-031 | Coverage/candidate work needs defensible validity behavior and confirmed inputs, not a three-choice UI subset or prior Wear history. Detailed need inspection and gap explanation are distinct outcomes. |
 | Optional commerce guidance | PBI-029 → PBI-032 / PBI-033 | Credible commercial fields and explicit navigation can advance independently of exact utility. Their absence/failure must preserve otherwise valid advice; no retail partnership or purchase gates the loop. |
 | Measurement and operation | PBI-002 → PBI-009 → PBI-034; PBI-001 → PBI-040 | Measurement begins with early wardrobe outcomes and expands with feature availability. Deployable validation and operating capability can advance with early increments rather than waiting for every feature. |
@@ -1488,8 +1615,15 @@ Coverage here means a defined implementing/enabling backlog path, not delivered 
 | Deployment / Operability | PBI-001, PBI-040; recovery evidence PBI-038 |
 | Product Measurement | PBI-009, PBI-034; existing validation evidence PBI-014/PBI-035/PBI-037/PBI-039 |
 | Vietnamese localization and supported mobile experience | PBI-003, PBI-036; applied to every user-facing increment |
+| Browse and interact with outfit inspiration | PBI-042 — unranked Draft refinement; FEAT-COM-001 |
+| Explicit outfit sharing and independent reuse | PBI-043 — unranked Draft refinement; FEAT-COM-002 |
+| Single-thread AI Chat Stylist | PBI-044 — unranked Draft refinement; FEAT-CHAT-001 |
+| Generic-model outfit Try-On preview | PBI-045 — unranked Draft refinement; FEAT-TRY-001 |
+| Search the internal garment catalog | PBI-046 — unranked Draft refinement; FEAT-CAT-001 |
+| Confirm a catalog item into the owned closet | PBI-047 — unranked Draft refinement; FEAT-CAT-002 |
+| Review and confirm bulk garment-photo import | PBI-048 — unranked Draft refinement; FEAT-BULK-001 |
 
-No backlog item adds native commerce, social/public wardrobe features, AR/3D, social/OTP/guest access, personal-data AI training or an administrator product. Candidate capture/import, account export/deletion and speculative reward/advertising features are also absent from the current scope.
+No backlog item adds native commerce, comments, messaging, entire-wardrobe sharing, personal avatars, AR/3D, social/OTP/guest access, personal-data AI training or an administrator product. Candidate capture/import, account export/deletion and speculative reward/advertising features are also absent from the current scope.
 
 ## 9. Traceability Summary
 
@@ -1506,7 +1640,7 @@ Primary Traceability in Section 6 uses selected stable identifiers from the link
 | Judge informed additions — BG-04; JRN-07 | CAP-09, CAP-10; FEAT-MULT-001, FEAT-SHOP-001, FEAT-SHOP-002 | PBI-029–PBI-033 |
 | Enable/protect every loop stage | BR-021–BR-024; FEAT-MET-001; applicable NFR/LOC/AI-REQ/DATA/ERR and interface constraints | PBI-001–PBI-003, PBI-009, PBI-014, PBI-034–PBI-041 plus owning product increments |
 
-The coverage audit accounts for BG-01–BG-04, BR-001–BR-024, CAP-01–CAP-10, all 22 FEAT identifiers, all 23 UC goals, all 14 FR families (AUTH, PROF, WEATHER, AI, GAR, WAR, OUT, PERS, WEAR, ANL, GAP, MULT, SHOP and MET) and all 11 Business Rule families (AUTH, PROF, GAR, OUT, PERS, WEAR, HIST, COV, GAP, MULT and SHOP). Relevant data integrity/retention, interfaces, localization, AI obligations, recovery and quality constraints follow the owning increments and the evidence PBIs.
+The coverage audit accounts for BG-01–BG-04, BR-001–BR-031, CAP-01–CAP-15, all 29 FEAT identifiers, all 31 UC goals, all 19 FR families (the prior 14 plus COM, CHAT, TRY, CAT and BULK) and all 16 Business Rule families (the prior 11 plus COM, CHAT, TRY, CAT and BULK). Relevant data integrity/retention, interfaces, localization, AI obligations, recovery and quality constraints follow the owning increments and the evidence PBIs.
 
 The following decomposition is intentional rather than a one-to-one UC mapping:
 
@@ -1514,7 +1648,7 @@ The following decomposition is intentional rather than a one-to-one UC mapping:
 | --- | --- | --- |
 | UC-007 — Add Garment | PBI-006, PBI-008, PBI-012, PBI-013; supporting PBI-014 | Minimum manual ownership; descriptor enrichment; photo-supported manual entry; assisted preview/proposals; separate quality evidence. Confirmation/fallback remains inside each entry slice. |
 | UC-011 — Get Outfit Recommendations | PBI-017, PBI-018, PBI-024 | Initial valid declared-context choices; inspectable detail; active behavioral ranking once explicit evidence exists. Shuffle remains its separate UC-012 outcome. |
-| UC-014 — Record Wear Event | PBI-021, PBI-024; related UC-016/UC-017 in PBI-022/PBI-023 | Intentional reporting with inspectable history differs from normalized future-ranking effects and individual repair/withdrawal. |
+| UC-014 — Record Wear Event | PBI-021, PBI-024; related UC-016/UC-017 in PBI-022/PBI-023 | Intentional reporting with inspectable history differs from future engine evidence consumption and individual repair/withdrawal. |
 | UC-019 — View Wardrobe Coverage | PBI-026, PBI-027 | Defensible score/summary versus detailed need evidence and useful input-revision routes. Sufficiency/currentness is preserved in both. |
 | UC-020 — View Wardrobe Gaps | PBI-028, PBI-029 | Supported capability bottleneck versus optional exploration of credible hypothetical candidates. No candidate does not erase a supported gap. |
 | UC-021 — View Shopping Recommendations | PBI-029, PBI-032; evaluated utility/previews from PBI-030/PBI-031 and optional UC-023 in PBI-033 | Required supported candidate information differs from conditional commercial guidance, defensible utility and optional external navigation. |
@@ -1524,17 +1658,16 @@ Simple behaviors remain grouped where they form one useful capability: UC-001/UC
 
 ## 10. Refinement Guidance
 
-Use a small first refinement horizon: **PBI-001–PBI-007**. Begin story-level refinement with PBI-004–PBI-007 (private account access, recovery, confirmed manual entry and wardrobe inspection). Clarify the enabling/quality outcomes of PBI-001–PBI-003 within that horizon so technical preparation and trust/usability constraints accompany early value. PBI-008–PBI-011 are the next candidates when review and learning justify extending the horizon.
+The original first refinement horizon was **PBI-001–PBI-007**, beginning with PBI-004–PBI-007 (private access, recovery, manual confirmation and inspection). That authoring-time horizon is historical, not an instruction to restart implemented Sprint 1–2 work. Clarify the enabling/quality outcomes of PBI-001–PBI-003 within that horizon so technical preparation and trust/usability constraints accompany early value. PBI-008–PBI-011 are the next candidates when review and learning justify extending the horizon.
 
-For each candidate PBI, clarify the user/delivery outcome, smallest coherent slice, source constraints, dependencies, failed/uncertain states and evidence needed. The [eight existing stories](stories/README.md) already provide the PBI-004–PBI-007 decomposition under DD-003; refine them rather than derive duplicate stories. Use the existing architecture and Test Strategy to establish enough feasibility/testability for selection. Full API, physical-data, transaction and interaction/state design remains Just-In-Time during execution of a selected story.
+For each candidate PBI, clarify the user/delivery outcome, smallest coherent slice, source constraints, dependencies, failed/uncertain states and evidence needed. The original eight-story decomposition under DD-003 is retained in the expanded [story catalogue](stories/README.md). The current user-supplied Sprint 3 candidates are US-GAR-002, US-GAR-003, US-PROF-001 and US-MEAS-001; their [impact review](backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) changes no Sprint commitment or existing order. Use the existing architecture and Test Strategy to establish enough feasibility/testability for selection. Full API, physical-data, transaction and interaction/state design remains Just-In-Time during execution of a selected story.
 
 The [first focused refinement review](backlog-refinement-review.md), dated 2026-10-21, records findings, advisory candidate assessments and Q-01–Q-05 for PO/Developers. Existing refinement states remain unchanged; none signifies completed stories, formal readiness or Sprint selection. Lower items retain their current states and require later refinement as needed. Only PO-authorized ordering changes may alter Section 5; no team capacity, estimates or Sprint allocation are inferred here.
 
 ## 11. Current Status
 
-**Baseline Draft.** The backlog contains an initial proposed order, not formal approval, implemented capability or a Sprint commitment. All items are Not Estimated. Review may change ordering and decomposition while preserving stable identities and upstream traceability.
+**Baseline Draft.** The existing ordered 41-PBI baseline is preserved; seven approved-scope PBIs form an explicitly unranked Draft refinement pool. No estimate, relative priority, Sprint Goal, scope selection or feature implementation is implied. Current Sprint 1–2 backend contracts are preserved as implemented evidence, with full-story completion governed by the DoD.
 
-The audit found no blocking contradiction in current MVP scope or behavior and no uncovered major MVP area. One non-blocking source editorial issue remains: FR-MET-004 contains an incomplete benchmark cross-reference. PBI-014/PBI-035 use the explicit SRS Sections 8.1 and 12.3 to anchor recognition and timing validation. The SRS and every other input artifact remain unchanged.
+PR #4 / DD-007 scope and feedback changes are propagated into requirements, rules, Use Cases/Activities, story coverage, architecture impact and verification guidance. Relevant [MVP open decisions](../02-product/PRD.md#342-mvp-expansion-open-decisions) and [Sprint 3 candidate impact](backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) remain for PO/team refinement. Existing Sprint plans/guides remain historical.
 
-The original v0.1 handoff to initial Stories/DoD is historical: those artifacts, the system-wide architecture, Test Strategy and merged backend engineering foundation now exist. Current work is **focused Backlog Refinement → PO/team review of remaining questions → future Sprint Planning when authorized → selected-story JIT Detailed Design with Automated Test + Implementation → PR / CI / Review → Done Increment**, followed by Review/Retrospective and adaptation. Separate baseline ADRs and whole-MVP detailed design are not prerequisites. This refinement changes no requirement, architecture decision, order, estimate, Sprint scope or implementation; PBI-001 completion remains for evidence-based review.
-
+Continue focused refinement and authorized Sprint Planning; necessary story-specific JIT design and automated test/implementation follow selection. New MVP capabilities are not automatically selected or implemented. No fixed feedback weights, ranking decay, recency penalties, overlooked boost or same-outfit/day preference-increment cap applies; functional history and 90-day user-linked measurement retention remain distinct.

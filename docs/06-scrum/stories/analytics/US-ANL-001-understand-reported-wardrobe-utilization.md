@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-ANL-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-025](../../product-backlog.md#pbi-025--understand-reported-wardrobe-utilization-and-overlooked-items) |
@@ -14,6 +14,8 @@
 | Theme | Wardrobe Intelligence |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Greater Owned-Garment Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -37,17 +39,17 @@ Derived recorded-use indicators and evidence/limitations, separate current/histo
 
 Derive available frequency/recency and supported variety/overlooked indicators from accepted effective Wear Events, and explain the relevant evidence and measure basis. Reporting periods/denominators not fixed upstream require CAT-Q02 clarification before exact statistical AC can be completed.
 
-### AC-02 — Count intentional reports honestly
+### AC-02 — Count intentional history faithfully
 
-Legitimate intentional same-outfit/day events count as separate reported events; logical-action retries do not inflate counts, and normalized/aged ranking increments are not substituted for historical frequency.
+Legitimate same-outfit/day intentions count as separate reported events; retries of one logical action do not inflate counts. Display groups must not replace raw event counts or imply a mandatory ranking increment.
 
 ### AC-03 — Explain missing reporting
 
 A garment with no recorded use is labeled that way rather than never physically worn. Empty history shows no Wear Events without invented frequency/diversity/recency measures or purchase pressure.
 
-### AC-04 — Reflect corrected and removed evidence
+### AC-04 — Reflect corrections and retention
 
-Accepted event corrections/removals affect effective indicators and retain unrelated reports. Necessary unremoved history beyond 90-day ranking influence is not automatically truncated.
+Accepted event corrections/removals update effective indicators and preserve unrelated reports. Necessary unremoved functional history follows its own lifecycle; the separate 90-day measurement limit is not ranking decay.
 
 ### AC-05 — Distinguish current and historical garments
 
@@ -68,7 +70,7 @@ Apply the [shared quality and completion conditions](../README.md#2-shared-quali
 
 ## 8. Out of Scope
 
-Chronological event inspection is [US-WEAR-002](../wear/US-WEAR-002-review-distinct-wear-history.md); ranking boost is [US-PERS-002](../personalization/US-PERS-002-adapt-valid-ranking-from-feedback-and-wear.md). No verified physical-wear score, new measurement period, forecasting, automatic wear detection or purchase obligation is added.
+Chronological event inspection is [US-WEAR-002](../wear/US-WEAR-002-review-distinct-wear-history.md); future engine evidence use is [US-PERS-002](../personalization/US-PERS-002-adapt-valid-ranking-from-feedback-and-wear.md). No verified physical-wear score, new measurement period, forecasting, automatic wear detection or purchase obligation is added.
 
 ## 9. Traceability
 
@@ -85,7 +87,7 @@ Chronological event inspection is [US-WEAR-002](../wear/US-WEAR-002-review-disti
 
 ## 10. Open Refinement Notes
 
-CAT-Q02 covers reporting periods, denominators and variety/overlooked indicator definitions; CAT-Q03 covers the optional boost's evidence anchor where reused. Do not infer an unrecorded-wear duration or creation-date origin from absent history.
+CAT-Q02 covers reporting periods, denominators and honest variety/overlooked indicators. CAT-Q03's optional ranking-boost anchor is superseded by DD-007. Do not infer an unrecorded-wear duration or creation-date origin from absent history.
 
 Question ownership and impact: [catalogue questions CAT-Q02, CAT-Q03](../README.md#4-open-questions-and-readiness). These are unresolved refinements, not new requirement identifiers.
 

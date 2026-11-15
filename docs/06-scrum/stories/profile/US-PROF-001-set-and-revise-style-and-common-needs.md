@@ -6,14 +6,14 @@
 | --- | --- |
 | Artifact | User Story |
 | Story ID | US-PROF-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-010](../../product-backlog.md#pbi-010--set-and-revise-preferences-through-progressive-onboarding) |
 | Domain | Personalization Profile |
 | Theme | Personalization & Context |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Easier Outfit Decisions; Actionable Wardrobe Needs |
-| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+| Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. 2026-11-10: approved PR #4 scope/feedback synchronization; IDs and existing story scope retained. |
 
 ## 1. Story
 
@@ -26,6 +26,8 @@ Give first advice a relevant personal basis while keeping optional information a
 ## 3. Scope
 
 Initial progressive preference setup and later revision; controlled styles, six common needs, priority weights, separate current occasion and source-supported accepted/canceled/error outcomes.
+
+**PR #4 scope boundary — 2026-11-09:** This story remains private declared style/common-needs setup and revision. It neither defines a public creator profile nor publishes preferences through Community. MVP-Q06 governs the separate creator projection; no Community, Chat or Try-On implementation enters this candidate.
 
 ## 4. Preconditions
 

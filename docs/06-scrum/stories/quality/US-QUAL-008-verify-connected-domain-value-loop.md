@@ -6,7 +6,7 @@
 | --- | --- |
 | Artifact | Quality Story |
 | Story ID | US-QUAL-008 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft |
 | Product | CapsuleAI |
 | Parent PBI | [PBI-039](../../product-backlog.md#pbi-039--verify-domain-invariants-and-the-complete-mvp-value-loop) |
@@ -14,6 +14,8 @@
 | Theme | Quality / Security / Operations |
 | Product Goal Contribution | [Product Goal](../../product-goal.md#4-desired-product-outcomes): Enabling / Protecting Product Value |
 | Revision note | 2026-10-22: initial source-linked draft; no approval, estimate, Sprint selection or implementation claim. |
+
+**2026-11-09 synchronization:** Approved PR #4 / DD-007 is propagated; existing Story/AC IDs and scope boundaries are retained. This revision makes no Sprint selection or implementation claim.
 
 ## 1. Story
 
@@ -37,9 +39,9 @@ Integrated source-linked domain regressions across all three value-loop stages, 
 
 Connected scenarios retain explicit garment authority, saveable-versus-ready meaning, current ownership and hard validity before preference; removed/hypothetical items never silently enter current daily advice.
 
-### AC-02 — Verify behavior and event integrity
+### AC-02 — Verify feedback and Wear boundaries
 
-Exercise feedback revision/clearing, separate explicit Wear intentions versus retries, original-local history/travel, bounded correction and individual removal with survivor normalization/aging. History counts, ranking influence and measurement meaning remain distinct.
+Exercise AI Today/Chat and Community Like, AI-only Dislike with Community rejection, revision/clearing and typed target separation. Verify distinct Wear intentions versus retries, original local history through travel, bounded correction, removal and surviving history without prescribed ranking weights/decay/penalties/caps. Measurement and functional-history retention remain distinct.
 
 ### AC-03 — Verify defensible intelligence
 

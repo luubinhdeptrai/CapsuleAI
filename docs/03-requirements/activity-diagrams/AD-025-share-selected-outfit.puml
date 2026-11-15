@@ -1,0 +1,49 @@
+@startuml
+' AD-025; source ../use-cases/UC-025-share-selected-outfit.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-COM-002; BR-026; CAP-11; PBI-043; US-COM-002 AC.
+' SRS: FR-COM-004, FR-COM-008, FR-COM-009; DATA-COM-001.
+' Business Rules: BRULE-COM-001, BRULE-COM-003; BRULE-AUTH-001/007.
+' Open policy: MVP-Q01, MVP-Q02, MVP-Q06, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-025 - Explicitly share a selected outfit
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-025;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|CapsuleAI|
+:Present approved outfit / creator / media projection
+and approved sharing audience;
+|User|
+:Review disclosure;
+if (Explicitly confirm sharing?) then (Yes)
+  |CapsuleAI|
+  :Check creator authority and approved sharing policy;
+  :Attempt publication of selected representation;
+  if (Acceptance established?) then (Yes)
+    :Show attributed shared post;
+  else (Failed / uncertain)
+    :Preserve known accepted state;
+    :Explain failed or unconfirmed publication;
+    :Offer outcome review / safe retry;
+  endif
+else (Cancel)
+  |CapsuleAI|
+  :Publish nothing from canceled intention;
+endif
+note right
+  Audience, consent, fields and lifecycle remain open.
+  Approve relevant policy before this Draft is Ready.
+  No entire wardrobe or private source media is exposed.
+end note
+
+stop
+@enduml

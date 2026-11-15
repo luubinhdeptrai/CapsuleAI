@@ -12,6 +12,7 @@ import com.capsuleai.wardrobe.domain.GarmentFit;
 import com.capsuleai.wardrobe.domain.GarmentLength;
 import com.capsuleai.wardrobe.domain.GarmentMaterial;
 import com.capsuleai.wardrobe.domain.GarmentNeckline;
+import com.capsuleai.wardrobe.domain.GarmentPhoto;
 import com.capsuleai.wardrobe.domain.GarmentPattern;
 import com.capsuleai.wardrobe.domain.GarmentProfile;
 import com.capsuleai.wardrobe.domain.GarmentSilhouette;
@@ -45,9 +46,13 @@ public final class JdbcGarmentRepository implements GarmentRepository {
             SELECT g.id, g.owner_account_id, g.creation_fingerprint, g.category, g.subtype, g.color,
                    g.pattern, g.fit, g.neckline, g.sleeve_length, g.length, g.silhouette,
                    g.brand, g.price_amount, g.price_currency, g.value_provenance, g.created_at, g.removed_at,
+                   g.revision,
                    ARRAY(SELECT m.material FROM wardrobe.wardrobe_garment_material m WHERE m.garment_id = g.id) AS materials,
-                   ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles
+                   ARRAY(SELECT s.style FROM wardrobe.wardrobe_garment_style s WHERE s.garment_id = g.id) AS styles,
+                   p.id AS photo_id, p.content_type AS photo_content_type, p.width AS photo_width,
+                   p.height AS photo_height
             FROM wardrobe.wardrobe_garment g
+            LEFT JOIN wardrobe.wardrobe_photo_upload p ON p.garment_id = g.id AND p.status = 'ATTACHED'
             """;
 
     /**
@@ -69,6 +74,22 @@ public final class JdbcGarmentRepository implements GarmentRepository {
             LIMIT :maximumCount
             """;
 
+    /**
+     * US-GAR-002: replaces the profile only while the garment is the owner's, current and at the
+     * expected revision. Under READ COMMITTED a concurrent revision of the same row makes this
+     * statement wait and then re-evaluate the predicate against the committed row, so at most
+     * one of several edits expecting the same revision updates it (S3-GAR-02).
+     */
+    static final String REVISE_IF_CURRENT_AT = """
+            UPDATE wardrobe.wardrobe_garment
+            SET category = :category, subtype = :subtype, color = :color, pattern = :pattern,
+                fit = :fit, neckline = :neckline, sleeve_length = :sleeveLength, length = :length,
+                silhouette = :silhouette, brand = :brand, price_amount = :priceAmount,
+                price_currency = :priceCurrency, revision = revision + 1
+            WHERE id = :garmentId AND owner_account_id = :ownerAccountId
+              AND removed_at IS NULL AND revision = :expectedRevision
+            """;
+
     private final JdbcClient jdbc;
 
     public JdbcGarmentRepository(JdbcClient jdbc) {
@@ -77,52 +98,29 @@ public final class JdbcGarmentRepository implements GarmentRepository {
 
     @Override
     public boolean addIfCreationKeyUnused(Garment garment, UUID creationKey, String creationFingerprint) {
-        GarmentProfile profile = garment.profile();
-        int inserted = jdbc.sql("""
+        int inserted = bindProfile(jdbc.sql("""
                         INSERT INTO wardrobe.wardrobe_garment (
                             id, owner_account_id, creation_key, creation_fingerprint, category, subtype, color,
                             pattern, fit, neckline, sleeve_length, length, silhouette, brand,
-                            price_amount, price_currency, value_provenance, created_at)
+                            price_amount, price_currency, value_provenance, created_at, revision)
                         VALUES (
                             :id, :ownerAccountId, :creationKey, :creationFingerprint, :category, :subtype, :color,
                             :pattern, :fit, :neckline, :sleeveLength, :length, :silhouette, :brand,
-                            :priceAmount, :priceCurrency, :valueProvenance, :createdAt)
+                            :priceAmount, :priceCurrency, :valueProvenance, :createdAt, :revision)
                         ON CONFLICT (owner_account_id, creation_key) DO NOTHING
-                        """)
+                        """), garment.profile())
                 .param("id", garment.id())
                 .param("ownerAccountId", garment.ownerAccountId())
                 .param("creationKey", creationKey)
                 .param("creationFingerprint", creationFingerprint)
-                .param("category", profile.category().name())
-                .param("subtype", code(profile.subtype()), Types.VARCHAR)
-                .param("color", profile.color().name())
-                .param("pattern", code(profile.pattern()), Types.VARCHAR)
-                .param("fit", code(profile.fit()), Types.VARCHAR)
-                .param("neckline", code(profile.neckline()), Types.VARCHAR)
-                .param("sleeveLength", code(profile.sleeveLength()), Types.VARCHAR)
-                .param("length", code(profile.length()), Types.VARCHAR)
-                .param("silhouette", code(profile.silhouette()), Types.VARCHAR)
-                .param("brand", profile.brand().map(Brand::value).orElse(null), Types.VARCHAR)
-                .param("priceAmount", profile.price().map(PurchasePrice::amount).orElse(null), Types.NUMERIC)
-                .param("priceCurrency", profile.price().map(PurchasePrice::currencyCode).orElse(null), Types.VARCHAR)
                 .param("valueProvenance", garment.provenance().name())
                 .param("createdAt", toDatabase(garment.createdAt()))
+                .param("revision", garment.revision())
                 .update();
         if (inserted == 0) {
             return false;
         }
-        for (GarmentMaterial material : profile.materials()) {
-            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
-                    .param("garmentId", garment.id())
-                    .param("material", material.name())
-                    .update();
-        }
-        for (GarmentStyle style : profile.styles()) {
-            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_style (garment_id, style) VALUES (:garmentId, :style)")
-                    .param("garmentId", garment.id())
-                    .param("style", style.name())
-                    .update();
-        }
+        insertSets(garment.id(), garment.profile());
         return true;
     }
 
@@ -163,6 +161,61 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 .optional();
     }
 
+    @Override
+    public boolean reviseIfCurrentAt(UUID ownerAccountId, UUID garmentId, long expectedRevision,
+                                     GarmentProfile revisedProfile) {
+        int updated = bindProfile(jdbc.sql(REVISE_IF_CURRENT_AT), revisedProfile)
+                .param("garmentId", garmentId)
+                .param("ownerAccountId", ownerAccountId)
+                .param("expectedRevision", expectedRevision)
+                .update();
+        if (updated == 0) {
+            return false;
+        }
+        // The UPDATE holds the garment's row lock until commit, so no other revision can
+        // interleave with this replacement of the two sets.
+        jdbc.sql("DELETE FROM wardrobe.wardrobe_garment_material WHERE garment_id = :garmentId")
+                .param("garmentId", garmentId)
+                .update();
+        jdbc.sql("DELETE FROM wardrobe.wardrobe_garment_style WHERE garment_id = :garmentId")
+                .param("garmentId", garmentId)
+                .update();
+        insertSets(garmentId, revisedProfile);
+        return true;
+    }
+
+    private void insertSets(UUID garmentId, GarmentProfile profile) {
+        for (GarmentMaterial material : profile.materials()) {
+            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_material (garment_id, material) VALUES (:garmentId, :material)")
+                    .param("garmentId", garmentId)
+                    .param("material", material.name())
+                    .update();
+        }
+        for (GarmentStyle style : profile.styles()) {
+            jdbc.sql("INSERT INTO wardrobe.wardrobe_garment_style (garment_id, style) VALUES (:garmentId, :style)")
+                    .param("garmentId", garmentId)
+                    .param("style", style.name())
+                    .update();
+        }
+    }
+
+    /** Binds the 12 scalar profile columns shared by INSERT and the revision UPDATE. */
+    private static JdbcClient.StatementSpec bindProfile(JdbcClient.StatementSpec statement, GarmentProfile profile) {
+        return statement
+                .param("category", profile.category().name())
+                .param("subtype", code(profile.subtype()), Types.VARCHAR)
+                .param("color", profile.color().name())
+                .param("pattern", code(profile.pattern()), Types.VARCHAR)
+                .param("fit", code(profile.fit()), Types.VARCHAR)
+                .param("neckline", code(profile.neckline()), Types.VARCHAR)
+                .param("sleeveLength", code(profile.sleeveLength()), Types.VARCHAR)
+                .param("length", code(profile.length()), Types.VARCHAR)
+                .param("silhouette", code(profile.silhouette()), Types.VARCHAR)
+                .param("brand", profile.brand().map(Brand::value).orElse(null), Types.VARCHAR)
+                .param("priceAmount", profile.price().map(PurchasePrice::amount).orElse(null), Types.NUMERIC)
+                .param("priceCurrency", profile.price().map(PurchasePrice::currencyCode).orElse(null), Types.VARCHAR);
+    }
+
     static Garment mapGarment(ResultSet row) throws SQLException {
         BigDecimal priceAmount = row.getBigDecimal("price_amount");
         Optional<PurchasePrice> price = priceAmount == null
@@ -188,7 +241,19 @@ public final class JdbcGarmentRepository implements GarmentRepository {
                 profile,
                 ValueProvenance.valueOf(row.getString("value_provenance")),
                 fromDatabase(row, "created_at"),
-                fromDatabase(row, "removed_at"));
+                fromDatabase(row, "removed_at"),
+                row.getLong("revision"),
+                photo(row));
+    }
+
+    /** US-GAR-003: the attached photo's metadata, if any. */
+    private static Optional<GarmentPhoto> photo(ResultSet row) throws SQLException {
+        UUID photoId = row.getObject("photo_id", UUID.class);
+        if (photoId == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new GarmentPhoto(photoId, row.getString("photo_content_type"),
+                row.getInt("photo_width"), row.getInt("photo_height")));
     }
 
     /** The distinct stored codes of a multi-valued property (Materials, Styles) as a catalogue-ordered set. */

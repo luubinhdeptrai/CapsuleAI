@@ -10,7 +10,7 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
@@ -27,7 +27,7 @@ Express, revise or clear Like (AI-generated and community targets) or Dislike (A
 
 ## 4. Preconditions
 
-- The User has authenticated access authorized for the identified recommendation/exact outfit feedback target.
+- The User has authenticated access authorized for the identified supported feedback target: an AI Today/Chat outfit suggestion or Community post. Target kind/origin and source reference remain distinct even for matching constituent sets (FR-PERS-014).
 
 ## 5. Trigger
 
@@ -35,11 +35,11 @@ The User chooses Like, Dislike, a revision or clearing of feedback on the identi
 
 ## 6. Main Success Scenario
 
-1. The User identifies the outfit/recommendation and chooses Like.
+1. The User identifies an accessible AI Today/Chat outfit suggestion or Community post and chooses Like.
 2. CapsuleAI shows the targeted combination and the current effective feedback state.
 3. The User submits the selected preference action.
 4. CapsuleAI accepts the change and shows Like as the effective state for that target, superseding any contradictory prior state.
-5. The User may continue viewing recommendations; applicable future ranking uses the accepted evidence under the Business Rules.
+5. The User may continue the originating experience; accepted state is available to future Matching Engine use without a prescribed ranking effect.
 
 ## 7. Alternative Flows
 
@@ -54,7 +54,7 @@ At Main Step 1:
 
 At Main Step 3:
 
-1. The User replaces Like with Dislike or Dislike with Like.
+1. On an AI Today/Chat suggestion, the User can replace Like with Dislike or Dislike with Like. On Community, the User can apply or clear Like; Dislike is never supported or accepted.
 2. CapsuleAI accepts and shows only the revised effective state; continue at Main Step 5.
 
 ### A3 — Clear feedback
@@ -114,7 +114,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-AUTH-007` | Personal information is purpose-limited/private; MVP personal data is not used for AI training/improvement or unrestricted external sharing. |
 | `BRULE-AUTH-001` | Personal information/actions require authorized access for the affected User. |
 | `BRULE-PERS-001` | Like on AI/community targets, Dislike on AI-generated targets only; store-only, no weights/decay. |
-| `BRULE-PERS-003` | No business-rule aging/decay (superseded 2026-11-09). |
+| `BRULE-PERS-003` | Stored timestamps and state do not prescribe ranking aging or decay. |
 | `BRULE-PERS-006` | Accepted revision/clearing updates stored state (no decay). |
 | `BRULE-OUT-008` | Feedback influences soft ranking only after validity. |
 
@@ -124,7 +124,7 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-04`, `JRN-05` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-PERS-001`, `FEAT-PERS-003`, `FEAT-MET-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-PERS-001`, `FR-PERS-002`, `FR-PERS-003`, `FR-PERS-004`, `FR-PERS-005`, `FR-PERS-007`, `FR-PERS-011`, `FR-PERS-013`, `FR-MET-001`, `FR-MET-007`, `FR-AUTH-008`, `FR-MET-006` |
+| [Software Requirements — Functional](../SRS.md) | `FR-PERS-001`, `FR-PERS-002`, `FR-PERS-003`, `FR-PERS-004`, `FR-PERS-005`, `FR-PERS-007`, `FR-PERS-011`, `FR-PERS-013`, `FR-PERS-014`, `FR-MET-001`, `FR-MET-007`, `FR-AUTH-008`, `FR-MET-006` |
 | [Software Requirements — Data](../SRS.md) | `DATA-OUT-001`, `DATA-WEAR-001`, `DATA-RET-003` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-001`, `UI-003`, `COM-001`, `COM-002` |
@@ -151,10 +151,10 @@ Related goals do not imply UML include relationships. The master diagram defines
 
 ## 15. Open Issues
 
-No unresolved Use Case-specific issue currently blocks this interaction.
+Supported actions and typed target separation are approved. Source identity/version and integration mechanics are refined proportionally; related sharing and Chat policies remain [PRD Section 34.2](../../02-product/PRD.md#342-mvp-expansion-open-decisions). An unavailable/unrecognized target or Community Dislike is rejected without changing accepted state.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-013-provide-outfit-feedback.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.

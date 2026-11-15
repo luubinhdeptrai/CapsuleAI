@@ -1,6 +1,7 @@
 package com.capsuleai.wardrobe.application.ports;
 
 import com.capsuleai.wardrobe.domain.Garment;
+import com.capsuleai.wardrobe.domain.GarmentProfile;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,4 +39,20 @@ public interface GarmentRepository {
      * garment is never returned, so a guessed id reveals nothing. Read-only.
      */
     Optional<Garment> findOwned(UUID ownerAccountId, UUID garmentId);
+
+    /**
+     * Replaces the accepted profile of the owner's current garment, only if its revision is
+     * still {@code expectedRevision} (US-GAR-002, S3-GAR-02/05). Scalar values, Materials and
+     * Styles change together and the revision increases by exactly one; identity, owner,
+     * provenance, creation key, creation fingerprint and creation time do not change.
+     *
+     * <p>Must be atomic under concurrency: of several revisions of the same garment expecting
+     * the same revision, at most one returns {@code true}. Call inside
+     * {@link WardrobeTransactions} so the profile and both sets commit or roll back together.
+     *
+     * @return {@code true} if revised; {@code false} if the garment is not this owner's, is not
+     *         in the current wardrobe or is no longer at {@code expectedRevision} (nothing changed)
+     */
+    boolean reviseIfCurrentAt(UUID ownerAccountId, UUID garmentId, long expectedRevision,
+                              GarmentProfile revisedProfile);
 }

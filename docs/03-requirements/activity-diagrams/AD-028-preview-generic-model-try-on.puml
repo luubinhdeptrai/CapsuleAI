@@ -1,0 +1,54 @@
+@startuml
+' AD-028; source ../use-cases/UC-028-preview-generic-model-try-on.md
+' Draft v0.1, 2026-11-09; approved PR #4 / DD-007 scope, not implementation.
+' Trace: FEAT-TRY-001; BR-028; CAP-13; PBI-045; US-TRY-001 AC.
+' SRS: FR-TRY-001, FR-TRY-002, FR-TRY-003, FR-TRY-004, FR-TRY-005; DATA-TRY-001.
+' Business Rules: BRULE-TRY-001/002; BRULE-COM-002; BRULE-WEAR-001/002; BRULE-AUTH-001/007.
+' Open policy: MVP-Q02, MVP-Q04, MVP-Q05, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+title AD-028 - Preview a selected look on a generic model
+skinparam monochrome true
+skinparam shadowing false
+|User|
+start
+:Deliberately start UC-028;
+|CapsuleAI|
+if (Source / affected-user access authorized?) then (Yes)
+  :Identify intended source and user context;
+else (Denied / unusable)
+  :Explain access state; disclose no private data;
+  :Offer renewed access or accessible source;
+  stop
+endif
+|CapsuleAI|
+:Retain selected outfit basis and owned / unowned meaning;
+:Request preview with approved minimal input;
+if (Preview available for this basis?) then (Yes)
+  :Show selected outfit on generic model with limitations;
+else (Failed / unavailable)
+  :Retain selection; explain actual state;
+  :Offer retry / return; no fabricated preview;
+  stop
+endif
+|User|
+switch (Choose next action?)
+case (Save look)
+  |CapsuleAI|
+  :Apply approved saved-look policy;
+case (Wear Today)
+  |CapsuleAI|
+  if (Current valid owned outfit established?) then (Yes)
+    :Use UC-014 logical Wear action and retry identity;
+  else (No)
+    :Explain prerequisite; retain selected look;
+    :Create no ownership or Wear Event;
+  endif
+case (Return)
+  :Retain independent product use;
+endswitch
+note right
+  No selfie / personal avatar or AR / 3D.
+  Preview is no guarantee of fit, suitability or wear.
+end note
+
+stop
+@enduml

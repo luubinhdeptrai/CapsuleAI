@@ -168,9 +168,9 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ## 16. Focused Use Case Diagram
 
-[Focused Use Case Diagram](diagrams/UC-006-set-location-context.puml)
+[Master Use Case Diagram](use-case-diagram.puml)
 
-This focused diagram is a local projection of the master Use Case Diagram. Detailed workflow behavior is defined by this specification and by later Activity Diagrams.
+The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.
 
 ## 17. Activity Diagram
 

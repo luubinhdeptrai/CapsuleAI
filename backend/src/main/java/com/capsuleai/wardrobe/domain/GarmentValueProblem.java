@@ -8,7 +8,10 @@ package com.capsuleai.wardrobe.domain;
  */
 public enum GarmentValueProblem {
 
-    /** A required value (Category, Color, confirmation, Idempotency-Key) is missing. */
+    /**
+     * A required value (Category, Color, confirmation, Idempotency-Key, expectedRevision)
+     * is missing, or an edit tried to clear Category or Color.
+     */
     REQUIRED,
 
     /** The user did not explicitly confirm the garment (confirmed was false). */
@@ -41,6 +44,6 @@ public enum GarmentValueProblem {
     /** The Brand contains malformed Unicode. */
     INVALID_CHARACTERS,
 
-    /** The Idempotency-Key is not a UUID. */
+    /** The Idempotency-Key is not a UUID, or expectedRevision is not a revision token. */
     INVALID_FORMAT
 }
