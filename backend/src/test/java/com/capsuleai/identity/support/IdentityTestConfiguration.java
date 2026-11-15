@@ -1,6 +1,7 @@
 package com.capsuleai.identity.support;
 
 import com.capsuleai.identity.api.AuthenticatedAccount;
+import com.capsuleai.wardrobe.support.FaultInjectingPhotoStorage;
 import java.util.Map;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -33,6 +34,16 @@ public class IdentityTestConfiguration {
     @Primary
     RecordingPasswordResetInstructionSender recordingPasswordResetInstructionSender() {
         return new RecordingPasswordResetInstructionSender();
+    }
+
+    /**
+     * US-GAR-003: every integration context stores photos in memory, with fault injection, instead of
+     * contacting S3. The real S3 adapter is verified separately by S3PhotoStorageIT.
+     */
+    @Bean
+    @Primary
+    FaultInjectingPhotoStorage faultInjectingPhotoStorage() {
+        return new FaultInjectingPhotoStorage();
     }
 
     /**

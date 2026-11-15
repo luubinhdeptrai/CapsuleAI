@@ -161,7 +161,7 @@ public class WardrobeApiExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-        public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
+    public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
         return respond(problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST",
                 "The request body is missing or is not valid JSON."));
     }

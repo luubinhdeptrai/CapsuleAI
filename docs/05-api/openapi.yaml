@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.9.0
+  version: 0.10.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -17,6 +17,7 @@ info:
       - US-WAR-001: Browse my current wardrobe
       - US-WAR-002: Inspect an owned garment
       - US-GAR-002: Correct and enrich garment information
+      - US-GAR-003: Add a photo-supported garment with manual confirmation
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -50,12 +51,16 @@ info:
     own garments. Every garment has exactly the 13 approved
     properties; controlled values are codes whose approved labels
     are listed in the vocabulary schemas. Recommendation
-    eligibility is not evaluated in this release, and no garment
-    image is stored.
+    eligibility is not evaluated in this release. A new garment
+    may carry one private photo (US-GAR-003): the photo is staged
+    first and becomes part of a garment only through an explicitly
+    confirmed garment creation. Photos are served only to their
+    owner, through the application.
 
     This specification does not introduce endpoints for
     session listing, all-device logout, garment removal,
-    garment images, search, filtering or user profiles.
+    attaching a photo to an existing garment, replacing a
+    confirmed photo, search, filtering or user profiles.
 
     Garment editing (US-GAR-002) is a presence-aware PATCH
     protected by an optimistic revision: every garment
@@ -774,11 +779,14 @@ paths:
                 recordedUse:
                   availability: "UNAVAILABLE"
                 createdAt: "2026-11-05T09:30:00.123456Z"
+                revision: "1"
+                photo: null
 
         "200":
           description: |
             The same logical addition was already accepted; this is
-            that garment. Nothing new was created.
+            that garment as it is now (it may have been edited since).
+            Nothing new was created.
           content:
             application/json:
               schema:
@@ -789,6 +797,12 @@ paths:
 
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
 
         "422":
           $ref: "#/components/responses/IdempotencyKeyReused"
@@ -940,8 +954,204 @@ paths:
         "503":
           $ref: "#/components/responses/Unavailable"
 
+  /api/v1/wardrobe/garments/{garmentId}/photo:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getGarmentPhoto
+      summary: The private photo of one owned garment
+      description: |
+        US-GAR-003 (AC-06/AC-07, S3-IMG-05). Streams the garment's
+        photo after the current owner check. The photo is a
+        normalized JPEG without metadata. Responses are private and
+        not stored by caches. 404 GARMENT_PHOTO_UNAVAILABLE means
+        the garment has no photo or its photo is missing; the
+        garment's information is unaffected. Send
+        Accept: image/jpeg, application/problem+json.
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The photo.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: "no-store, private"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/GarmentPhotoUnavailable"
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads:
+    post:
+      tags:
+        - Wardrobe
+      operationId: stagePhoto
+      summary: Stage one private garment photo for review
+      description: |
+        US-GAR-003 (FR-AI-001/002/012, S3-IMG-02/03/04/06). Uploads
+        one photo. The bytes must genuinely be JPEG, PNG or
+        HEIC/HEIF (file names and declared types are ignored), at
+        most 15,000,000 bytes, with the shorter side of the
+        original at least 512 pixels. A non-plain background is
+        fine. The stored photo is a normalized JPEG: orientation
+        applied, metadata (including location) removed, longer
+        side at most 2048 pixels.
+
+        Staging creates no garment. Confirm the garment with
+        POST /api/v1/wardrobe/garments and photoUploadId before
+        expiresAt; unconfirmed photos are deleted after they
+        expire. Repeat a lost upload with the same Idempotency-Key
+        and the same photo to get the same staged photo (200).
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: A UUID the client generates once per intended upload and repeats on retry.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: The photo was staged and can be reviewed and confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "200":
+          description: A retry of the same staging; this is that staged photo, in its current status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "422":
+          $ref: "#/components/responses/PhotoRejected"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads/{photoUploadId}:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getPhotoUpload
+      summary: Review a staged photo's status
+      description: |
+        US-GAR-003 (AC-06). The status of one of the account's
+        staged photos, for example after an interrupted upload or
+        confirmation: RECEIVING, READY, ATTACHED (with garmentId)
+        or DISCARDED (cancelled, expired or failed).
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "200":
+          description: The staged photo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUpload"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    delete:
+      tags:
+        - Wardrobe
+      operationId: cancelPhotoUpload
+      summary: Cancel an unconfirmed staged photo
+      description: |
+        US-GAR-003 (AC-03, FR-AI-004/009). The staged photo becomes
+        unusable at once and is deleted. Cancelling again succeeds.
+        A photo that already belongs to a garment cannot be
+        cancelled (409).
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "204":
+          description: Cancelled (or already cancelled or expired).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/photo-uploads/{photoUploadId}/content:
+    get:
+      tags:
+        - Wardrobe
+      operationId: getPhotoUploadContent
+      summary: The staged photo itself, for review
+      description: |
+        US-GAR-003 (AC-03, S3-IMG-05). Available only while the
+        staged photo is READY. Private; not stored by caches. Send
+        Accept: image/jpeg, application/problem+json.
+      parameters:
+        - $ref: "#/components/parameters/PhotoUploadId"
+      responses:
+        "200":
+          description: The staged photo.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PhotoUploadNotFound"
+        "409":
+          $ref: "#/components/responses/PhotoUploadNotUsable"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
 components:
   parameters:
+    PhotoUploadId:
+      name: photoUploadId
+      in: path
+      required: true
+      description: The id of one of the account's staged photos.
+      schema:
+        type: string
+        format: uuid
+
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -1322,6 +1532,14 @@ components:
           anyOf:
             - $ref: "#/components/schemas/Price"
             - type: "null"
+        photoUploadId:
+          type: [string, "null"]
+          format: uuid
+          description: |
+            US-GAR-003: the reviewed staged photo to attach. Omit or
+            null for a garment without a photo. A photo that cannot
+            be used fails the request (404 or 409); it never falls
+            back to a garment without a photo.
 
     Price:
       type: object
@@ -1444,6 +1662,7 @@ components:
         - recordedUse
         - createdAt
         - revision
+        - photo
       properties:
         id:
           type: string
@@ -1518,6 +1737,70 @@ components:
             Opaque version of the accepted profile (US-GAR-002,
             OPEN-S3-04). Send it unchanged as expectedRevision when
             editing. It changes only when an edit changes the profile.
+        photo:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPhoto"
+            - type: "null"
+
+    GarmentPhoto:
+      type: object
+      description: |
+        The garment's private photo (US-GAR-003); its bytes are at
+        GET /api/v1/wardrobe/garments/{garmentId}/photo. Media
+        metadata, not a garment property.
+      required:
+        - contentType
+        - width
+        - height
+      properties:
+        contentType:
+          type: string
+          const: image/jpeg
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+
+    PhotoUpload:
+      type: object
+      description: |
+        A staged photo (US-GAR-003). Every field is always present.
+        A staged photo is never a garment.
+      required:
+        - id
+        - status
+        - contentType
+        - width
+        - height
+        - expiresAt
+        - garmentId
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [RECEIVING, READY, ATTACHED, DISCARDED]
+        contentType:
+          type: [string, "null"]
+          description: image/jpeg once READY; null before.
+        width:
+          type: [integer, "null"]
+        height:
+          type: [integer, "null"]
+        expiresAt:
+          type: string
+          format: date-time
+          description: |
+            When an unconfirmed photo stops being usable and is
+            deleted: 24 hours after staging (pending lifetime
+            approved by the Product Owner, OPEN-S3-07).
+        garmentId:
+          type: [string, "null"]
+          format: uuid
+          description: The garment this photo belongs to, once ATTACHED.
 
     RecordedUse:
       type: object
@@ -2352,6 +2635,73 @@ components:
             detail: "This garment changed after you opened it, so your edit was not applied. Reload it, review the current values and confirm your changes again."
             instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
             code: "REVISION_CONFLICT"
+
+    PhotoRejected:
+      description: |
+        The photo was not accepted and nothing was stored. Choose
+        another photo or continue without one. Codes:
+        PHOTO_UNSUPPORTED_FORMAT, PHOTO_TOO_LARGE (above
+        15,000,000 bytes), PHOTO_TOO_SMALL (shorter side below 512
+        pixels), PHOTO_UNREADABLE, PHOTO_MULTIPLE_IMAGES (a HEIF
+        file with several images whose primary image is not
+        selected; temporary until primary-image selection is
+        verified and enabled), and PHOTO_UPLOAD_KEY_REUSED (the
+        Idempotency-Key was used for a different photo).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Unprocessable Content"
+            status: 422
+            detail: "This photo is too small: its shorter side must be at least 512 pixels. Choose another photo or continue without one; nothing was saved."
+            instance: "/api/v1/wardrobe/photo-uploads"
+            code: "PHOTO_TOO_SMALL"
+
+    PhotoUploadNotFound:
+      description: |
+        No staged photo with this id belongs to the account (unknown,
+        another account's or malformed; indistinguishable).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This photo is not among your staged photos. Choose the photo again."
+            code: "PHOTO_UPLOAD_NOT_FOUND"
+
+    PhotoUploadNotUsable:
+      description: |
+        The staged photo cannot be used for this action: still being
+        received, cancelled, expired or already attached to a
+        garment. Nothing changed. Check its status with
+        GET /api/v1/wardrobe/photo-uploads/{photoUploadId}.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This photo can no longer be used here: it was cancelled, expired, is still being received or already belongs to a garment. Check the photo's status or choose it again."
+            code: "PHOTO_UPLOAD_NOT_USABLE"
+
+    GarmentPhotoUnavailable:
+      description: |
+        GARMENT_NOT_FOUND: no such garment in the account's wardrobe.
+        GARMENT_PHOTO_UNAVAILABLE: the garment has no photo, or its
+        photo is missing; the garment's information is unchanged.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "No photo can be shown for this garment. Its information is unchanged."
+            code: "GARMENT_PHOTO_UNAVAILABLE"
 
     GarmentNotFound:
       description: |

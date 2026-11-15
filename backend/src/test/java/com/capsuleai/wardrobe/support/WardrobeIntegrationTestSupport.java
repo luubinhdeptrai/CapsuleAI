@@ -7,12 +7,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import tools.jackson.databind.json.JsonMapper;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,13 +32,46 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 
     protected static final String GARMENTS = "/api/v1/wardrobe/garments";
     protected static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+    protected static final String PHOTO_UPLOADS = "/api/v1/wardrobe/photo-uploads";
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
+    @Autowired
+    protected FaultInjectingPhotoStorage photoStorage;
+
     @BeforeEach
     protected void resetWardrobeState() {
-        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment_style, "
-                + "wardrobe.wardrobe_garment").update();
+        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_photo_upload, wardrobe.wardrobe_garment_material, "
+                + "wardrobe.wardrobe_garment_style, wardrobe.wardrobe_garment").update();
+        photoStorage.reset();
+    }
+
+    /** US-GAR-003: stages one photo as a multipart upload. */
+    protected ResultActions uploadPhoto(String accessToken, String uploadKey, byte[] bytes, String fileName,
+                                        String declaredType) throws Exception {
+        // Spring Framework 7: the multipart builder is not a MockHttpServletRequestBuilder subtype.
+        MockMultipartHttpServletRequestBuilder request = multipart(PHOTO_UPLOADS)
+                .file(new MockMultipartFile("photo", fileName, declaredType, bytes))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        if (uploadKey != null) {
+            request.header(IDEMPOTENCY_KEY, uploadKey);
+        }
+        return mockMvc.perform(request);
+    }
+
+    /** Stages a photo as a new upload, expects 201 and returns its id. */
+    protected UUID stagePhotoAndReturnId(String accessToken, byte[] bytes) throws Exception {
+        String response = uploadPhoto(accessToken, UUID.randomUUID().toString(), bytes, "garment.jpg", "image/jpeg")
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+        return UUID.fromString(JsonPath.read(response, "$.id"));
+    }
+
+    protected String photoUploadStatus(UUID photoUploadId) {
+        return jdbc.sql("SELECT status FROM wardrobe.wardrobe_photo_upload WHERE id = :id")
+                .param("id", photoUploadId).query(String.class).single();
     }
 
     /** POSTs one addition with the given logical-action key. */

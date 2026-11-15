@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,12 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -155,7 +158,14 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
                 assertThat(responseType).as("%s documents no response body", operation.key()).isEqualTo(Void.class);
                 continue;
             }
-            Map<String, Object> schema = resolve(map(map(map(success, "content"), "application/json"), "schema"));
+            Map<String, Object> content = map(success, "content");
+            if (!content.containsKey("application/json")) {
+                // US-GAR-003: a private photo streamed by the application.
+                assertThat(content).as("%s documents a JPEG photo response", operation.key()).containsKey("image/jpeg");
+                assertThat(responseType).as("%s streams the photo", operation.key()).isEqualTo(Resource.class);
+                continue;
+            }
+            Map<String, Object> schema = resolve(map(map(content, "application/json"), "schema"));
             Set<String> returnedFields = recordComponentNames((Class<?>) responseType);
 
             assertThat(map(schema, "properties").keySet())
@@ -164,6 +174,29 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
             assertThat(requiredFields(schema))
                     .as("%s: every returned field is always present (null when empty)", operation.key())
                     .containsExactlyInAnyOrderElementsOf(returnedFields);
+        }
+    }
+
+    /** US-GAR-003: a multipart operation documents exactly the parts its handler reads. */
+    @Test
+    void multipartRequestsListExactlyThePartsTheEndpointsRead() {
+        List<DocumentedOperation> multipart = documentedOperations.values().stream()
+                .filter(operation -> requestContentTypes(operation).contains("multipart/form-data"))
+                .toList();
+        assertThat(multipart).as("documented multipart operations").isNotEmpty();
+
+        for (DocumentedOperation operation : multipart) {
+            Map<String, Object> schema = resolve(map(map(map(map(operation.definition(), "requestBody"), "content"),
+                    "multipart/form-data"), "schema"));
+            Set<String> parts = Arrays.stream(handlerFor(operation).getMethodParameters())
+                    .map(parameter -> parameter.getParameterAnnotation(RequestPart.class))
+                    .filter(Objects::nonNull)
+                    .map(RequestPart::name)
+                    .collect(Collectors.toSet());
+
+            assertThat(map(schema, "properties").keySet())
+                    .as("%s multipart parts", operation.key())
+                    .containsExactlyInAnyOrderElementsOf(parts);
         }
     }
 
@@ -234,10 +267,17 @@ class IdentityOpenApiContractIT extends IdentityIntegrationTestSupport {
 
     private List<DocumentedOperation> operationsWithRequestBodies() {
         List<DocumentedOperation> withBodies = documentedOperations.values().stream()
-                .filter(operation -> operation.definition().containsKey("requestBody"))
+                .filter(operation -> requestContentTypes(operation).contains("application/json"))
                 .toList();
-        assertThat(withBodies).as("documented operations with a request body").isNotEmpty();
+        assertThat(withBodies).as("documented operations with a JSON request body").isNotEmpty();
         return withBodies;
+    }
+
+    private static Set<String> requestContentTypes(DocumentedOperation operation) {
+        if (!operation.definition().containsKey("requestBody")) {
+            return Set.of();
+        }
+        return map(map(operation.definition(), "requestBody"), "content").keySet();
     }
 
     private Map<String, Object> requestSchemaOf(DocumentedOperation operation) {

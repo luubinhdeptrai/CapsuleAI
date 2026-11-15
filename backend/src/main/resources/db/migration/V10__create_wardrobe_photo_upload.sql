@@ -44,8 +44,12 @@ CREATE TABLE wardrobe.wardrobe_photo_upload (
         CHECK (status IN ('RECEIVING', 'READY', 'ATTACHED', 'DISCARDED')),
     CONSTRAINT ck_wardrobe_photo_upload_sha256 CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
     CONSTRAINT ck_wardrobe_photo_upload_object_key CHECK (object_key ~ '^photos/[0-9a-f-]{36}\.jpg$'),
+    -- Explicit IS NOT NULL tests: a CHECK passes when its result is NULL, so "width > 0" alone would
+    -- accept a stored photo with no dimensions.
     CONSTRAINT ck_wardrobe_photo_upload_stored_metadata CHECK (status NOT IN ('READY', 'ATTACHED')
-        OR (content_type = 'image/jpeg' AND width > 0 AND height > 0 AND ready_at IS NOT NULL)),
+        OR (content_type IS NOT NULL AND content_type = 'image/jpeg'
+            AND width IS NOT NULL AND width > 0 AND height IS NOT NULL AND height > 0
+            AND ready_at IS NOT NULL)),
     CONSTRAINT ck_wardrobe_photo_upload_attached
         CHECK ((status = 'ATTACHED') = (garment_id IS NOT NULL AND attached_at IS NOT NULL)),
     CONSTRAINT ck_wardrobe_photo_upload_discarded

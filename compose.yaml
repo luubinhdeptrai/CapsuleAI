@@ -30,5 +30,18 @@ services:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
 
+  # US-GAR-003 (S3-IMG-01, OPEN-S3-13): local S3-compatible private photo storage for development
+  # only. Objects live inside the container; this is not the production provider. Both variable
+  # spellings create the bucket; which one 5.1.0 honours is part of verification V-S3.
+  s3mock:
+    image: adobe/s3mock:5.1.0
+
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: capsuleai-photos-local
+      initialBuckets: capsuleai-photos-local
+
+    ports:
+      - "127.0.0.1:9090:9090"
+
 volumes:
   pgdata:

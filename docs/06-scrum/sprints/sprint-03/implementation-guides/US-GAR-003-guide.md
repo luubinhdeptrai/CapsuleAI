@@ -702,8 +702,12 @@ CREATE TABLE wardrobe.wardrobe_photo_upload (
         CHECK (status IN ('RECEIVING', 'READY', 'ATTACHED', 'DISCARDED')),
     CONSTRAINT ck_wardrobe_photo_upload_sha256 CHECK (content_sha256 ~ '^[0-9a-f]{64}$'),
     CONSTRAINT ck_wardrobe_photo_upload_object_key CHECK (object_key ~ '^photos/[0-9a-f-]{36}\.jpg$'),
+    -- Explicit IS NOT NULL tests: a CHECK passes when its result is NULL, so "width > 0" alone would
+    -- accept a stored photo with no dimensions.
     CONSTRAINT ck_wardrobe_photo_upload_stored_metadata CHECK (status NOT IN ('READY', 'ATTACHED')
-        OR (content_type = 'image/jpeg' AND width > 0 AND height > 0 AND ready_at IS NOT NULL)),
+        OR (content_type IS NOT NULL AND content_type = 'image/jpeg'
+            AND width IS NOT NULL AND width > 0 AND height IS NOT NULL AND height > 0
+            AND ready_at IS NOT NULL)),
     CONSTRAINT ck_wardrobe_photo_upload_attached
         CHECK ((status = 'ATTACHED') = (garment_id IS NOT NULL AND attached_at IS NOT NULL)),
     CONSTRAINT ck_wardrobe_photo_upload_discarded
@@ -4944,7 +4948,11 @@ AFTER:
     sudo apt-get update
     sudo apt-get install --yes --no-install-recommends \
       libheif-examples libheif-plugin-libde265 libheif-plugin-x265
-    (heif-dec --version || heif-convert --version) | head -n 1
+    # Ubuntu 24.04 ships libheif 1.17, whose decoder is still named heif-convert (heif-dec from 1.18).
+    # Export the installed name for the application and HeifDecodingIT (CAPSULE_HEIF_DECODER).
+    if command -v heif-dec >/dev/null; then decoder=heif-dec; else decoder=heif-convert; fi
+    echo "CAPSULE_HEIF_DECODER=$decoder" >> "$GITHUB_ENV"
+    "$decoder" --version | head -n 1
     heif-info --version | head -n 1
 
 - name: Build and run required verification
@@ -4999,6 +5007,7 @@ AFTER:
 - **Primary-image evidence.** `HeifDecodingIT` runs the primary-image tests with selection enabled on the CI runner. A green run is the automated part of verification V4/V8 for that runner (OPEN-S3-11). It does not switch the application property on.
 - **Encoder.** `libheif-plugin-x265` provides the encoder `heif-enc` uses to create the synthetic HEIC fixtures. `libheif-examples` is expected to provide `heif-dec` (or `heif-convert`), `heif-info` and `heif-enc`; V1 confirms it.
 - **Package names.** They are the Ubuntu 24.04 names. Confirm them in the first CI run (verification V1/V2).
+- **Decoder name (V1 finding, 2026-11-15).** In an Ubuntu 24.04 container, `libheif-examples` 1.17.6 installs `heif-convert`, `heif-info` and `heif-enc` but no `heif-dec`. Without the detection above, `HeifDecodingIT` fails under `CAPSULEAI_REQUIRE_HEIF=true`, and the application's default `heif-dec` would make every HEIC upload answer `503`. Deployments on libheif 1.17 must set `CAPSULE_HEIF_DECODER=heif-convert`.
 
 ### Step P60 — [MODIFY] `backend/README.md`
 
@@ -5469,7 +5478,8 @@ AFTER:
     /** US-GAR-003: stages one photo as a multipart upload. */
     protected ResultActions uploadPhoto(String accessToken, String uploadKey, byte[] bytes, String fileName,
                                         String declaredType) throws Exception {
-        MockHttpServletRequestBuilder request = multipart(PHOTO_UPLOADS)
+        // Spring Framework 7: the multipart builder is not a MockHttpServletRequestBuilder subtype.
+        MockMultipartHttpServletRequestBuilder request = multipart(PHOTO_UPLOADS)
                 .file(new MockMultipartFile("photo", fileName, declaredType, bytes))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         if (uploadKey != null) {
@@ -5498,6 +5508,7 @@ AFTER:
 
 - **Truncate.** The photo table references garments, so it is truncated in the same statement.
 - **Fake storage.** It is reset before every test, so no object leaks between tests.
+- **Spring Framework 7.** `multipart(...)` returns a `MockMultipartHttpServletRequestBuilder`, which is no longer a `MockHttpServletRequestBuilder` subtype. Also add `import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;` (found when the tests were first compiled, 2026-11-15).
 
 ### Step T6 — [ADD] `InMemoryPhotoUploadRepository.java`
 
@@ -8061,6 +8072,7 @@ The response lists `photos/<id>.jpg` keys only; no user value appears in any key
 | Image routes answer `406` on errors                          | Client `Accept: image/jpeg` only                                                     | Send `Accept: image/jpeg, application/problem+json`                                                                                                                                     |
 | A CMYK or 12-bit JPEG → `PHOTO_UNREADABLE`                   | The JDK JPEG decoder lacks those variants                                            | A known limitation (phones produce 8-bit YCbCr). Raise it with the PO if real users hit it                                                                                              |
 | PNG with `eXIf` orientation shows rotated                    | PNG orientation is not applied (P37 note)                                            | A known limitation; phones store JPEG/HEIC                                                                                                                                              |
+| `GarmentSchemaIT.wardrobeTablesLiveOnlyInTheWardrobeSchema` lists an unexpected `wardrobe_photo_upload` | The US-GAR-001 test asserts the exact wardrobe tables; V10 adds one | Add `wardrobe_photo_upload` to its exact list (the check stays exact) |
 | `IdentityOpenApiContractIT` fails on the photo routes        | Missing `image/jpeg` content or the wrong handler return type                        | Return `ResponseEntity<Resource>`; document `image/jpeg`                                                                                                                                |
 | `PersistenceOwnershipSqlTest` flags SQL                      | Unqualified `wardrobe_photo_upload`                                                  | Qualify every table with `wardrobe.`                                                                                                                                                    |
 

@@ -66,7 +66,7 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
         mockMvc.perform(preflight(path, SWAGGER_EDITOR, "POST", "content-type"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, SWAGGER_EDITOR))
-                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PATCH"))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, "GET,POST,PATCH,DELETE"))
                 .andExpect(header().string(ACCESS_CONTROL_ALLOW_HEADERS, "content-type"))
                 .andExpect(header().string(ACCESS_CONTROL_MAX_AGE, "1800"))
                 .andExpect(header().doesNotExist(ACCESS_CONTROL_ALLOW_CREDENTIALS))
@@ -99,6 +99,21 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
 
         expectReadableAuthenticationFailure(mockMvc.perform(patch(garment).header(ORIGIN, WEB_CLIENT)
                 .contentType(MediaType.APPLICATION_JSON).content("{}")), WEB_CLIENT);
+    }
+
+    /** US-GAR-003: a browser client may cancel a staged photo; the actual cancel still needs a usable session. */
+    @Test
+    void photoCancellationPreflightIsGrantedButTheCancelStillNeedsAToken() throws Exception {
+        String photoUpload = "/api/v1/wardrobe/photo-uploads/" + UUID.randomUUID();
+
+        mockMvc.perform(preflight(photoUpload, WEB_CLIENT, "DELETE", "authorization"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, containsString("DELETE")))
+                .andExpect(header().doesNotExist(WWW_AUTHENTICATE));
+
+        expectReadableAuthenticationFailure(
+                mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete(photoUpload).header(ORIGIN, WEB_CLIENT)), WEB_CLIENT);
     }
 
     @Test
@@ -149,7 +164,6 @@ class CorsSecurityIT extends IdentityIntegrationTestSupport {
 
     @ParameterizedTest
     @CsvSource({
-            "DELETE, authorization",
             "PUT, content-type",
             "POST, x-requested-with"})
     void preflightForAMethodOrHeaderTheApiDoesNotAcceptIsRefused(String method, String requestHeaders)

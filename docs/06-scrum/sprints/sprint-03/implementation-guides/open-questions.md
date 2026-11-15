@@ -484,7 +484,15 @@ Both are implementation details of an approved choice, not new decisions.
 **G. Status:**
 
 - **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A. The approval selects the toolchain direction.
-- **Implementation / verification status:** PENDING. None of V1–V8 has been executed against this repository, the deployment image or the CI runner. Until they pass, the toolchain is approved but **unverified**.
+- **Implementation / verification status:** PENDING for the target environments. Until V1–V8 pass on the deployment image and the hosted CI runner, the toolchain is approved but **unverified** there.
+- **Local evidence (2026-11-15, implementation of US-GAR-003):** in an Ubuntu 24.04 container (the CI runner's distribution) with libheif 1.17.6 from `libheif-examples`, `libheif-plugin-libde265` and `libheif-plugin-x265`:
+  - **V1 passed, with a finding:** that libheif names the decoder `heif-convert`; `heif-dec` exists only from 1.18. CI now detects the name and exports `CAPSULE_HEIF_DECODER`, and libheif 1.17 deployments must set it to `heif-convert`.
+  - **V2 passed:** the libde265 HEVC decoder is listed.
+  - **V4 passed:** `heif-info` lists the two images in input order, the first marked `, primary`; `heif-convert` writes `out-1.png` (640×800) and `out-2.png` (800×640).
+  - **V5 passed:** a truncated file and a JPEG renamed `.heic` exit non-zero with no output.
+  - **V6 passed:** `HeifDecodingIT` 5 of 5 with `CAPSULEAI_REQUIRE_HEIF=true`, plus `HeifDecoderTest` and `ImageIoPhotoInspectorTest`, and a full `clean verify` with the CI report guard.
+  - **V8 (automated part) passed:** the primary-not-first test.
+  - **Outstanding:** V3 (real device photos), V7 (licence and update review), and every step on the deployment image and the hosted CI runner.
 - **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.
 
 **H. Approved direction, as implemented by the guides:**
@@ -628,6 +636,7 @@ Both are implementation details of an approved choice, not new decisions.
 - **Implementation / verification status:** PENDING.
   - Primary-image selection is designed, specified in code and covered by tests (US-GAR-003 §10.9, P38, T13, T22).
   - It stays **disabled** (`capsuleai.wardrobe.photo.heif-primary-image-selection=false`) until V4 and V8 pass on the deployment image and the CI runner.
+  - Local evidence (2026-11-15): V4 and the automated part of V8 passed in an Ubuntu 24.04 container with libheif 1.17.6 (see OPEN-S3-08). That is not the deployment image or the hosted CI runner, so selection stays disabled.
   - Until then the shipped behaviour is the temporary fallback, and the target capability is **not Done**.
 - **Status before approval:** BLOCKED — REQUIRES PO DECISION.
 
@@ -744,7 +753,7 @@ The verification procedure "V-S3" is a set of steps, recorded in the PR:
 
 - **Decision status:** APPROVED BY PRODUCT OWNER (2026-11-11), Option A, with the documented versions and real-provider verification.
 - **Implementation / verification status:** PENDING.
-  - V-S3 steps 1–4 have not been executed.
+  - V-S3 steps 1–2 passed locally on 2026-11-15: `S3PhotoStorageIT` put/get/delete, missing object and idempotent delete against `adobe/s3mock:5.1.0`, and a conditional put on an existing key refused with `412` (so `conditional-writes=true` is kept for the fixture). Steps 3–4 (a private AWS S3 bucket, least-privilege IAM, public-access block) have not been executed.
   - S3Mock's `If-None-Match` support is unverified, and an S3Mock pass is not evidence about Amazon S3.
   - AWS account, region, budget and production configuration remain outside this package (S3-IMG-01).
 - **Status before approval:** TECHNICAL DEFAULT — JIT VERIFICATION REQUIRED.

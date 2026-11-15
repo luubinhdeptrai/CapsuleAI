@@ -149,7 +149,7 @@ final class GarmentEntryValidator {
         }
         return Optional.of(UUID.fromString(photoUploadId));
     }
-    
+
     private <E extends Enum<E> & ControlledValue> Optional<E> required(Class<E> vocabulary, String field, String code) {
         if (isBlank(code)) {
             reject(field, GarmentValueProblem.REQUIRED);

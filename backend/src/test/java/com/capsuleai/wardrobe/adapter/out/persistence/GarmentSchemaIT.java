@@ -129,7 +129,8 @@ class GarmentSchemaIT extends WardrobeIntegrationTestSupport {
     void wardrobeTablesLiveOnlyInTheWardrobeSchema() {
         assertThat(jdbc.sql("SELECT tablename FROM pg_tables WHERE schemaname = 'wardrobe' ORDER BY tablename")
                 .query(String.class).list())
-                .containsExactly("wardrobe_garment", "wardrobe_garment_material", "wardrobe_garment_style");
+                .containsExactly("wardrobe_garment", "wardrobe_garment_material", "wardrobe_garment_style",
+                        "wardrobe_photo_upload"); // V10, US-GAR-003
         assertThat(jdbc.sql("SELECT count(*) FROM pg_tables WHERE tablename LIKE 'wardrobe\\_%' AND schemaname <> 'wardrobe'")
                 .query(Long.class).single()).isZero();
     }
