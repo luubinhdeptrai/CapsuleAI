@@ -8,14 +8,14 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.2 — approved PR #4 synchronization |
-| Updated | 2026-11-09 |
+| Version | 0.3 — Sprint 4 documentation synchronization |
+| Updated | 2026-11-17 |
 | Status | Draft catalogue; no approval, formal readiness or Sprint selection |
 | Ownership | PO / BA, with Developers and QA review |
-| Scope | 41 preserved ordered PBIs plus 7 unranked approved-scope candidates |
-| Stories | 56 total: 48 prior story identities preserved plus 8 new Draft stories |
-| Kinds | 42 User Stories, 4 Enabler Stories, 10 Quality Stories |
-| Coverage | 47 PBIs have mapped stories; PBI-001 retains its explained disposition. All 48 are accounted for; new PBI placement remains unassigned. |
+| Scope | 41 preserved ordered PBIs plus 7 unranked approved-scope candidates and PBI-049 (unranked, added 2026-11-17 for the Sprint 4 selection of US-GAR-006) |
+| Stories | 57 total: 48 prior story identities preserved, 8 Draft stories added on 2026-11-09 and US-GAR-006 added on 2026-11-17 |
+| Kinds | 43 User Stories, 4 Enabler Stories, 10 Quality Stories |
+| Coverage | 48 PBIs have mapped stories; PBI-001 retains its explained disposition. All 49 are accounted for; new PBI placement remains unassigned. |
 
 This catalogue is an initial requirements handoff, not an implementation or a fully refined Sprint backlog. The existing eight stories retain their IDs, paths, outcomes, Acceptance Criteria and Baseline Draft status. New stories use Draft. The [Product Backlog](../product-backlog.md) remains authoritative for order, type, responsibilities, refinement states and hard dependencies; none was changed.
 
@@ -64,6 +64,7 @@ Quality PBIs extend verification; their later order never postpones protection, 
 | US-QUAL-001 | [Validate garment assistance on the locked benchmark](quality/US-QUAL-001-validate-locked-garment-assistance-benchmark.md) | [PBI-014](../product-backlog.md#pbi-014--validate-garment-assistance-quality-on-a-locked-benchmark) | Quality Verification | Draft | Quality Story |
 | US-WAR-003 | [Find owned garments through search and filters](wardrobe/US-WAR-003-find-garments-with-search-and-filters.md) | [PBI-015](../product-backlog.md#pbi-015--find-garments-through-wardrobe-search-and-filters) | Wardrobe | Draft | User Story |
 | US-GAR-005 | [Remove a garment while preserving minimal history](garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md) | [PBI-016](../product-backlog.md#pbi-016--remove-a-garment-while-preserving-minimal-historical-meaning) | Garment | Draft | User Story |
+| US-GAR-006 | [Attach a photo to an existing imageless garment](garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) | [PBI-049](../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) | Garment | Draft | User Story |
 | US-OUT-001 | [Receive valid outfits for my declared context](outfit/US-OUT-001-receive-valid-declared-context-outfits.md) | [PBI-017](../product-backlog.md#pbi-017--receive-valid-daily-outfits-relevant-to-declared-context) | Outfit Advice | Draft | User Story |
 | US-OUT-002 | [Inspect outfit constituents and explanation](outfit/US-OUT-002-inspect-outfit-constituents-and-reasons.md) | [PBI-018](../product-backlog.md#pbi-018--inspect-outfit-constituents-and-explanation) | Outfit Advice | Draft | User Story |
 | US-OUT-003 | [Shuffle one garment slot while keeping other choices](outfit/US-OUT-003-shuffle-one-garment-slot.md) | [PBI-019](../product-backlog.md#pbi-019--shuffle-one-garment-slot-while-retaining-other-choices) | Outfit Advice | Draft | User Story |
@@ -112,7 +113,7 @@ The following catalogue questions are local discussion identifiers, not new soft
 
 | Question | Affected work | Exact unresolved point / source | Owner and planning effect |
 | --- | --- | --- | --- |
-| CAT-Q01 | PBI-015 / US-WAR-003 | Which supported descriptor fields and text-matching/combined-condition semantics are intended, including relevant Vietnamese input treatment? FR-WAR-007 and PRD Section 14.3 leave these details open. Preserve text/diacritics; do not assume accent-insensitive, wildcard or visual matching. | PO/BA with Developers. Clarify the smallest supported behavior before selecting the affected unresolved search acceptance; category/color filtering meaning is already established. |
+| CAT-Q01 | PBI-015 / US-WAR-003 | Which supported descriptor fields and text-matching/combined-condition semantics are intended, including relevant Vietnamese input treatment? FR-WAR-007 and PRD Section 14.3 leave these details open. Preserve text/diacritics; do not assume accent-insensitive, wildcard or visual matching. | PO/BA with Developers. Clarify the smallest supported behavior before selecting the affected unresolved search acceptance; category/color filtering meaning is already established. **Sprint 4 status (2026-11-17):** settled for US-WAR-003 by the approved S4-WAR-01–04 and the delegated OPEN-S4-11–15, including Vietnamese descriptor aliases authorized by the PO ([SRS Section 3.6.2](../../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules)). |
 | CAT-Q02 | PBI-025 / US-ANL-001 | Which reporting periods, denominators and variety/overlooked indicator definitions support the intended utilization views? FR-ANL-003/004 and PRD Section 17.1 establish reported-evidence meaning without exact statistical windows. | PO/BA with Developers/QA. Needed to finish the unspecified statistical criteria; no invented default period or physical-wear score. |
 | CAT-Q03 | Former optional overlooked-ranking boost | **Superseded by approved PR #4 / DD-007.** No required/default boost or age anchor applies. | No readiness blocker from this former rule; any future engine strategy is MVP-Q10. |
 | CAT-Q04 | PBI-029–PBI-033 / candidate, Multiplier and shopping stories | Which actual explicit-user/configured credible candidate source and evidence examples will be used, and which optional commercial/destination facts can be supported? FR-SHOP-001/003, DATA-ANL-003 and BRULE-SHOP-001 require evidence without selecting a supplier. | PO/BA with Developers. Material candidate-source feasibility needs review before affected selection; absent optional commercial fields never block otherwise supported utility. Full provider contracts stay JIT. |
@@ -174,6 +175,7 @@ PR #4 synchronization repairs FR-MET-004's benchmark cross-reference and replace
 | [PBI-046](../product-backlog.md) | Search the internal garment catalog | Product Increment | [US-CAT-001](catalog/US-CAT-001-search-internal-garment-catalog.md) | Approved scope, Draft refinement, relative order unassigned; relevant PRD MVP questions apply. |
 | [PBI-047](../product-backlog.md) | Confirm a catalog item into the owned closet | Product Increment | [US-CAT-002](catalog/US-CAT-002-confirm-catalog-item-into-owned-closet.md) | Approved scope, Draft refinement, relative order unassigned; relevant PRD MVP questions apply. |
 | [PBI-048](../product-backlog.md) | Review and confirm bulk garment import | Product Increment | [US-BULK-001](bulk-import/US-BULK-001-review-and-confirm-bulk-garment-import.md) | Approved scope, Draft refinement, relative order unassigned; relevant PRD MVP questions apply. |
+| [PBI-049](../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) | Attach a photo to an existing imageless garment | Product Increment | [US-GAR-006](garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) | Added 2026-11-17 for the Sprint 4 selection; unranked; AC formalized under delegation and awaiting PO acceptance. |
 
 
 ### PBI-001 disposition — reuse the established foundation
@@ -184,7 +186,7 @@ No additional PBI-001 story is justified solely to repeat that infrastructure. I
 
 [US-MOB-001](mobile/US-MOB-001-use-vietnamese-mobile-journey-foundation.md) covers PBI-003's distinct shared mobile experience. Ordinary test/quality obligations stay with each story's DoD; [US-QUAL-008](quality/US-QUAL-008-verify-connected-domain-value-loop.md) extends complete-loop assurance and [US-OPS-001](operations/US-OPS-001-deploy-and-inspect-current-increment.md) covers PBI-040 operation. These references do not remap their parents or absorb them into PBI-001.
 
-All 48 PBIs therefore have explicit story/work-item coverage or a justified disposition. Known gaps are visible above; no PBI is omitted because its refinement state is Needs Refinement or Refinable Soon.
+All 49 PBIs therefore have explicit story/work-item coverage or a justified disposition. Known gaps are visible above; no PBI is omitted because its refinement state is Needs Refinement or Refinable Soon.
 
 Current implemented backend includes Sprint 1–2 access/recovery and manual create/cursor browsing/detail. The original foundation-only evidence statement above is historical; present backend scope is in source/OpenAPI/tests. It does not establish whole mobile-story Done or implementation of the new approved capabilities.
 

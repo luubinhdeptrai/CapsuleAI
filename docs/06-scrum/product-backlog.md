@@ -7,13 +7,13 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Initial ordered Scrum Product Backlog |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Owner / Accountability | Product Owner |
 | Product Goal reference | [Product Goal](product-goal.md), Version 0.1.1, Baseline Draft |
 | Estimates | Not Estimated — applies to every PBI |
-| Revision note | 2026-10-21: focused refinement of PBI-001–PBI-007 against the merged backend foundation and existing stories; clarified evidence, boundaries and traceability without changing order, scope, estimates or refinement states. |
+| Revision note | 2026-10-21: focused refinement of PBI-001–PBI-007 against the merged backend foundation and existing stories; clarified evidence, boundaries and traceability without changing order, scope, estimates or refinement states. 2026-11-17 (0.4): Sprint 4 documentation synchronization. Added PBI-049 (attach a photo to an existing imageless garment, parent of US-GAR-006; Section 6.2) and Sprint 4 decision notes on PBI-010, PBI-011, PBI-015, PBI-016 and PBI-048. Orders 1–41, estimates and the refinement states of existing items are unchanged. |
 
 ## 1. Purpose
 
@@ -36,7 +36,7 @@ The other repository sources were inspected: the Implementation Summary, proposa
 
 ## 2. Backlog Management Principles
 
-- **One global order:** Section 5 preserves Orders 1–41. New PBI-042–048 are an explicitly unranked refinement pool pending PO placement. Their stable ID numbers do not establish priority; there is no second theme order.
+- **One global order:** Section 5 preserves Orders 1–41. New PBI-042–048 are an explicitly unranked refinement pool pending PO placement. PBI-049 (Section 6.2) was added on 2026-11-17 for a Sprint 4 selection and is also unranked. Their stable ID numbers do not establish priority; there is no second theme order.
 - **Stable identity:** PBI IDs identify work permanently. Initial IDs happen to follow initial allocation order; future reordering changes the Order field, never the IDs. Preserve references when splitting, merging or retiring work through refinement.
 - **Goal-led value:** Each PBI identifies a Product Goal contribution. Enablers and quality work state which product value or delivery capability they support.
 - **Progressive refinement:** Top items have clearer outcomes and boundaries. Refinement states are Candidate, Needs Refinement, Refinable Soon and Ready for Story Refinement. Story readiness does not establish Sprint readiness, approval or commitment.
@@ -75,7 +75,7 @@ Product increments can expose useful parts of the loop before the complete MVP e
 | Strategic Shopping | Credible candidates, exact incremental utility, hypothetical previews and optional external guidance. |
 | Quality / Security / Operations | Privacy, measurement, AI validation, performance, accessibility, usability, regression and operability. |
 
-Themes aid reading only. Section 5 preserves the original 41-item global order (28 Product Increments, 5 Enablers and 8 Quality items). Section 6.1 adds seven approved-scope Product Increment candidates without assigning relative order; the 48-PBI inventory is not a new approved priority list.
+Themes aid reading only. Section 5 preserves the original 41-item global order (28 Product Increments, 5 Enablers and 8 Quality items). Section 6.1 adds seven approved-scope Product Increment candidates without assigning relative order, and Section 6.2 adds PBI-049 for the Sprint 4 selection of US-GAR-006. The 49-PBI inventory is not a new approved priority list.
 
 ## 5. Initial Ordered Product Backlog
 
@@ -447,6 +447,8 @@ BR-010, BR-012; CAP-01, CAP-06; JRN-01, FEAT-PROF-001; FR-PROF-001, FR-PROF-003,
 
 Keep initial setup and subsequent profile maintenance in one capability. Refine the six canonical need priorities and optional-field lifecycle from the SRS; missing body/gender never prohibits a garment category. Useful entry routes are PBI-003/PBI-006, rather than hard completion gates.
 
+**Sprint 4 refinement (2026-11-17):** US-PROF-002 was selected for Sprint 4. Its optional Gender Context (4 values) and Body Shape (5 values) vocabularies are defined in [SRS §4.10.1](../03-requirements/SRS.md#4101-optional-personal-context-vocabularies). They are delegated defaults ([OPEN-S4-16](sprints/sprint-04/implementation-guides/open-questions.md#open-s4-16--optional-genderbody-vocabulary)), not Product Owner-approved values; an inclusive-representation review is advised. The approved decisions S4-PROF-01–04 (2026-11-16) govern the separate revisioned record, presence-aware clearing and the absence of a new consumer. Nothing is implemented yet.
+
 ### PBI-011 — Choose environmental context with manual and limited-context recovery
 
 **ID:** PBI-011; **Order:** 11; **Type:** Product Increment
@@ -478,6 +480,8 @@ BR-007, BR-013; CAP-01, CAP-05; JRN-01, JRN-04, FEAT-PROF-002; FR-WEATHER-001, F
 **Refinement Notes**
 
 Refine manual/permission-denied/skip routes and the weather-unavailable boundary. Provider selection and background tracking are not established here; location disclosure is limited to the context request's purpose.
+
+**Sprint 4 refinement (2026-11-17):** US-CTX-001 was selected for Sprint 4. The approved decisions S4-CTX-01–06 (2026-11-16) and the delegated details OPEN-S4-18–24 set the direction: one current manual or device location, rounded to two decimal places; no continuous tracking; Open-Meteo as the intended weather provider, whose terms and eligibility are **not yet verified**; weather current at age ≤30 minutes from the provider's observation time; one 2-second acquisition deadline; an explicit unavailable state otherwise. See [SRS §3.3.1](../03-requirements/SRS.md#331-location-and-weather-rules). Nothing is implemented yet.
 
 ### PBI-012 — Add a photo-supported garment with manual confirmation
 
@@ -609,6 +613,8 @@ BR-005; CAP-03; JRN-03, FEAT-WAR-003; FR-WAR-007, FR-WAR-008; UC-008.
 
 Keep US-WAR-003 scoped to current owned-wardrobe discovery. Internal catalog discovery and confirmed Add-to-Closet are separate PBI-046/PBI-047; their source/rights/search questions are MVP-Q07. No new category or catalog implementation enters this item.
 
+**Sprint 4 refinement (2026-11-17):** US-WAR-003 was selected for Sprint 4. CAT-Q01 is settled by the approved S4-WAR-01–04 and the delegated OPEN-S4-11–15. One literal, case-insensitive, accent-sensitive phrase matches the code, English label or **Vietnamese search alias** of Category, Subtype, Color, Material, Pattern and Style, or the Brand text; the Category and Color filters take exact codes. The Product Owner explicitly authorized Vietnamese descriptor search on 2026-11-17; the alias wording is a delegated default kept in the [canonical alias table](../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). See [SRS §3.6.2](../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules). Nothing is implemented yet.
+
 ### PBI-016 — Remove a garment while preserving minimal historical meaning
 
 **ID:** PBI-016; **Order:** 16; **Type:** Product Increment
@@ -640,6 +646,8 @@ BR-005, BR-006, BR-021; CAP-03; JRN-03, FEAT-WAR-002; FR-WAR-004, FR-WAR-005, FR
 **Refinement Notes**
 
 Later history/assessment consumers must honor removal as they arrive. Removal does not delete Wear Events, restore old ownership or add an archive/restore feature. Retention enforcement is part of this increment, with broader assurance in PBI-041.
+
+**Sprint 4 refinement (2026-11-17):** US-GAR-005 was selected for Sprint 4. The approved decisions S4-GAR-01–03 (2026-11-16) and the delegated OPEN-S4-01–06 define an explicit confirmed removal with the reviewed revision, a monotonic repeat, a minimized retained record (Category, Color and times), no resurrection by a replayed creation, and durable cleanup that deletes the photo within 30 days. Physical deletion still needs storage-versioning evidence. See [SRS §3.6.1](../03-requirements/SRS.md#361-garment-removal-rules). Nothing is implemented yet.
 
 ### PBI-017 — Receive valid daily outfits relevant to declared context
 
@@ -1567,6 +1575,33 @@ PR #4 / DD-007 approves these capabilities, not their backlog placement or Sprin
 
 **Refinement Notes:** MVP-Q08/Q09 in [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) must be resolved where relevant before Ready. Retain truthful states, authorized purpose-minimal data, explicit independent action meanings and safe retries. Refine only enough feasibility/testability for selection; full contracts, schemas and necessary interaction/state design remain selected-story JIT. No new implementation is established.
 
+**Sprint 4 refinement (2026-11-17):** US-BULK-001 was selected for Sprint 4; this does not rank the PBI. The approved decisions S4-BULK-01–07 (2026-11-16) select independently recoverable item outcomes and sequential processing. The delegated defaults of OPEN-S4-25 set at most 20 items per batch, 3 active batches per owner, a 7-day batch lifetime and an aggregate ceiling of 300,000,000 original bytes. The existing 24-hour staged-photo expiry and 15,000,000-byte photo limit are unchanged. These numbers are configuration awaiting Product Owner review ([PRD §34.3](../02-product/PRD.md#343-sprint-4-resolutions-2026-11-17), [SRS §3.23.1](../03-requirements/SRS.md#3231-bulk-import-rules)). Nothing is implemented yet.
+
+
+### 6.2 Sprint 4 Refinement Addition — Unranked
+
+Added on 2026-11-17. The Product Owner selected US-GAR-006 for Sprint 4, but no PBI existed for it. PBI-049 gives the story a parent so that its requirements, decisions and evidence stay traceable. **It receives no Section 5 order**; the Sprint selection is not a backlog ranking. Like the Section 6.1 items, it is Not Estimated.
+
+| PBI ID | Title | Type | Relative order | Refinement status |
+|---|---|---|---|---|
+| PBI-049 | Attach a photo to an existing imageless garment | Product Increment | Unassigned — PO review; selected for Sprint 4 | Refinable Soon (story formalized 2026-11-17) |
+
+#### PBI-049 — Attach a photo to an existing imageless garment
+
+**ID:** PBI-049; **Order / proposed priority:** Unassigned; selected for Sprint 4 by the Product Owner (US-GAR-006). **Type:** Product Increment. **Theme:** Digital Wardrobe. **Refinement Status:** Refinable Soon; its story and acceptance criteria were formalized on 2026-11-17 under delegated refinement and await Product Owner acceptance. **Estimate:** Not Estimated.
+
+**Outcome / User Value:** Make an already confirmed garment that has no photo visually recognizable, without deleting and re-entering it.
+
+**Scope Summary:** The owner selects a current garment of their own that has no photo, stages one photo through the existing private photo intake (same formats and limits as photo-supported creation), reviews it with the target garment and explicitly confirms. The attachment is one indivisible change that keeps every confirmed property, the creation time and the creation identity, and advances the garment revision once. A garment that already has a photo is refused; replacing or removing a photo, several photos, AI analysis and automatic property changes are out of scope. Retries of the same confirmation are safe; competing accepted changes are reported, not overwritten. Attached photos are protected from pending-photo cleanup and deleted with the garment's removal under the 30-day rule.
+
+**Dependencies:** Hard capability inputs PBI-007 (current owned garment and detail) and PBI-012 (private photo staging, delivered in Sprint 3). Useful sequencing: PBI-016, whose removal lock order and cleanup it reuses.
+
+**Product Goal Contribution:** Trustworthy Wardrobe Understanding.
+
+**Primary Traceability:** [BRD](../01-business/BRD.md): BR-005, BR-001, BR-021, CAP-03; [PRD](../02-product/PRD.md#142-feat-war-002--edit-and-remove-garments): JRN-03, FEAT-WAR-002 behavior 7 and AC-08–AC-09; [SRS](../03-requirements/SRS.md#36-wardrobe-management): FR-WAR-009, DATA-GAR-004, FR-AI-012, NFR-PRIV-001/002; [Business Rules](../03-requirements/business-rules.md#brule-gar-011--existing-garment-photo-attachment): BRULE-GAR-011; [UC-009](../03-requirements/use-cases/UC-009-edit-garment.md) A4/E5; Sprint 4 decisions S4-GAR-04–06 and S4-INT-01–03; delegated details OPEN-S4-07–10. Story: [US-GAR-006](stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md).
+
+**Refinement Notes:** The Product Owner selected the outcome and approved its solution decisions on 2026-11-16. The detailed acceptance criteria are a delegated formalization of the Sprint 4 plan's six provisional expectations; they are not separately approved and need PO acceptance before Done. Client evidence and the storage-deletion evidence shared with PBI-016 remain outstanding. No implementation is established.
+
 
 ## 7. Dependency and Sequencing View
 
@@ -1576,6 +1611,7 @@ The hard relationships below summarize the master table. They identify needed pr
 | --- | --- | --- |
 | Private wardrobe value | PBI-002 → PBI-004 → PBI-006 → PBI-008; PBI-004 → PBI-007 | Manual creation, populated inspection and readiness enrichment establish early useful wardrobe value. Empty browsing remains valid without existing garments. |
 | Assisted entry | PBI-006 → PBI-012 → PBI-013 → PBI-014 | Photo-supported manual entry precedes useful automated proposals and quality evidence. Neither photo input nor successful AI blocks PBI-006. Benchmark preparation can proceed earlier. |
+| Existing-garment photo | PBI-007 + PBI-012 → PBI-049 | Attaching a photo to an imageless garment reuses the private photo intake and the owned-garment detail. It benefits from PBI-016's lock order but does not depend on it. |
 | Daily choices and learning | PBI-008 + PBI-010 → PBI-017; PBI-017 → PBI-019 / PBI-021 and AI Today feedback; other feedback targets come from PBI-042/PBI-044; PBI-020 + PBI-021 → PBI-024 | Initial declared-context advice is useful without behavioral history. PBI-011 is useful environmental sequencing, with denied permission/missing weather handled explicitly. |
 | Trustworthy reported-use insight | PBI-021 → PBI-022 / PBI-023; PBI-021 + PBI-007 → PBI-025 | Repair and withdrawal affect the selected report and all existing consumers. Separate intentional report identity is preserved; outfit/day grouping is for history presentation/counting only. Utilization does not gate Coverage. |
 | Needs and candidate utility | PBI-017 + PBI-010 → PBI-026; PBI-026 → PBI-027 / PBI-028; PBI-028 → PBI-029; PBI-029 + PBI-017 → PBI-030 → PBI-031 | Coverage/candidate work needs defensible validity behavior and confirmed inputs, not a three-choice UI subset or prior Wear history. Detailed need inspection and gap explanation are distinct outcomes. |
@@ -1595,7 +1631,7 @@ Coverage here means a defined implementing/enabling backlog path, not delivered 
 | Garment Digitization | PBI-006, PBI-008, PBI-012, PBI-013 |
 | Manual Garment Entry | PBI-006; manual continuity in PBI-012/PBI-013, validated through PBI-014/PBI-038 |
 | AI-Assisted Garment Analysis | PBI-013, PBI-014; performance PBI-035 |
-| Wardrobe Management | PBI-007, PBI-008, PBI-015, PBI-016 |
+| Wardrobe Management | PBI-007, PBI-008, PBI-015, PBI-016, PBI-049 |
 | Outfit Recommendation | PBI-017, PBI-018, PBI-024 |
 | Shuffle | PBI-019 |
 | Like / Dislike | PBI-020, PBI-024 |
@@ -1633,7 +1669,7 @@ Primary Traceability in Section 6 uses selected stable identifiers from the link
 | --- | --- | --- |
 | Enable private participation — JRN-01 | CAP-01; FEAT-AUTH-001, FEAT-PROF-001, FEAT-PROF-002 | PBI-002–PBI-005, PBI-010, PBI-011 |
 | Understand My Wardrobe — BG-01; JRN-02 | CAP-02, CAP-04; FEAT-AI-001, FEAT-AI-002, FEAT-GAR-001 | PBI-006, PBI-008, PBI-012–PBI-014 |
-| Maintain current understanding — BG-01/BG-03; JRN-03 | CAP-03; FEAT-WAR-001–FEAT-WAR-003 | PBI-007, PBI-008, PBI-015, PBI-016 |
+| Maintain current understanding — BG-01/BG-03; JRN-03 | CAP-03; FEAT-WAR-001–FEAT-WAR-003 | PBI-007, PBI-008, PBI-015, PBI-016, PBI-049 |
 | Use My Wardrobe Better — BG-02; JRN-04 | CAP-05; FEAT-OUT-001–FEAT-OUT-003 | PBI-010, PBI-011, PBI-017–PBI-019, PBI-024 |
 | Learn from explicit use — BG-03; JRN-05 | CAP-06, CAP-07; FEAT-PERS-001–FEAT-PERS-003, FEAT-ANL-001 | PBI-020–PBI-025 |
 | Improve My Wardrobe through needs — BG-03/BG-04; JRN-06 | CAP-07, CAP-08; FEAT-ANL-002, FEAT-GAP-001 | PBI-026–PBI-029 |
@@ -1654,7 +1690,7 @@ The following decomposition is intentional rather than a one-to-one UC mapping:
 | UC-021 — View Shopping Recommendations | PBI-029, PBI-032; evaluated utility/previews from PBI-030/PBI-031 and optional UC-023 in PBI-033 | Required supported candidate information differs from conditional commercial guidance, defensible utility and optional external navigation. |
 | UC-022 — Evaluate Candidate Garment | PBI-030, PBI-031 | Complete same-basis incremental utility and honest states versus inspection of newly enabled hypothetical outfits. |
 
-Simple behaviors remain grouped where they form one useful capability: UC-001/UC-002/UC-003 in PBI-004; initial/later profile maintenance from UC-005 in PBI-010; UC-009's confirmed edits with garment enrichment in PBI-008; UC-015's history inspection with intentional reporting in PBI-021. UC-008's browsing/detail is PBI-007 and its discovery outcome PBI-015. Like/Dislike/revise/clear stay together in PBI-020; all single-slot Shuffle outcomes stay in PBI-019; external handoff/failure/return stay in PBI-033. Individual Wear correction/removal remain distinct outcomes in PBI-022/PBI-023, without splitting their validation steps into task PBIs.
+Simple behaviors remain grouped where they form one useful capability: UC-001/UC-002/UC-003 in PBI-004; initial/later profile maintenance from UC-005 in PBI-010; UC-009's confirmed edits with garment enrichment in PBI-008, and its photo attachment flow A4 in PBI-049; UC-015's history inspection with intentional reporting in PBI-021. UC-008's browsing/detail is PBI-007 and its discovery outcome PBI-015. Like/Dislike/revise/clear stay together in PBI-020; all single-slot Shuffle outcomes stay in PBI-019; external handoff/failure/return stay in PBI-033. Individual Wear correction/removal remain distinct outcomes in PBI-022/PBI-023, without splitting their validation steps into task PBIs.
 
 ## 10. Refinement Guidance
 
@@ -1666,7 +1702,7 @@ The [first focused refinement review](backlog-refinement-review.md), dated 2026-
 
 ## 11. Current Status
 
-**Baseline Draft.** The existing ordered 41-PBI baseline is preserved; seven approved-scope PBIs form an explicitly unranked Draft refinement pool. No estimate, relative priority, Sprint Goal, scope selection or feature implementation is implied. Current Sprint 1–2 backend contracts are preserved as implemented evidence, with full-story completion governed by the DoD.
+**Baseline Draft.** The existing ordered 41-PBI baseline is preserved; seven approved-scope PBIs form an explicitly unranked Draft refinement pool, and PBI-049 (2026-11-17) gives the Sprint 4 story US-GAR-006 an unranked parent. No estimate, relative priority, Sprint Goal, scope selection or feature implementation is implied. Current Sprint 1–2 backend contracts are preserved as implemented evidence, with full-story completion governed by the DoD.
 
 PR #4 / DD-007 scope and feedback changes are propagated into requirements, rules, Use Cases/Activities, story coverage, architecture impact and verification guidance. Relevant [MVP open decisions](../02-product/PRD.md#342-mvp-expansion-open-decisions) and [Sprint 3 candidate impact](backlog-refinement-review.md#10-pr-4-synchronization-and-sprint-3-candidate-impact) remain for PO/team refinement. Existing Sprint plans/guides remain historical.
 

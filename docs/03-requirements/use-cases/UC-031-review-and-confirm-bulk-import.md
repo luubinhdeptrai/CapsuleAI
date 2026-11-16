@@ -109,3 +109,12 @@ MVP-Q08, MVP-Q09 in [PRD Section 34.2](../../02-product/PRD.md#342-mvp-expansion
 ## 16. Use Case and Activity Diagrams
 
 [Master Use Case Diagram](use-case-diagram.puml) defines actor participation; [AD-031](../activity-diagrams/AD-031-review-and-confirm-bulk-import.puml) models this complex flow. Source diagrams and this textual specification stay synchronized; a duplicate focused diagram is unnecessary.
+
+## 17. Sprint 4 Refinement (2026-11-17)
+
+The flows above are unchanged. On 2026-11-16 the Product Owner approved the Sprint 4 decisions named below; the delegated OPEN-S4 details complete them. They are summarized here so that this Use Case stays consistent with the [SRS](../SRS.md). Delegated values are not Product Owner approvals of the specific values. Nothing below is implemented yet.
+
+- **Story:** [US-BULK-001](../../06-scrum/stories/bulk-import/US-BULK-001-review-and-confirm-bulk-garment-import.md). **Decisions:** S4-BULK-01–07 (approved); [OPEN-S4-25–30](../../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-25--bulk-admission-limits-and-retention) (delegated). MVP-Q08 is resolved provisionally for this story; MVP-Q09 is unaffected.
+- **Limits (delegated defaults, awaiting Product Owner review):** at most 20 items per batch, 3 active batches per User, a 7-day batch lifetime and an aggregate ceiling of 300,000,000 original bytes. The 24-hour staged-photo expiry and the 15,000,000-byte photo limit are unchanged.
+- **Flow:** photos are staged one at a time; each item is waiting for a photo, reviewable, accepted or cancelled; each reviewable item is confirmed on its own. An expired photo must be selected again.
+- **Recovery:** item outcomes are independent; a repeated confirmation returns the same garment. The User can cancel an item, stop the batch (accepted garments stay) or resume an active batch later ([SRS Section 3.23.1](../SRS.md#3231-bulk-import-rules)).

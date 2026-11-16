@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-BULK-01 to S4-BULK-07, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-25 to 33 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)). **The four admission values (20 items, 3 active batches, `P7D`, 300,000,000 bytes) are delegated defaults; Product Owner review is advised.** |
 | Out of scope by instruction | AI extraction or proposal of garment values, outfit recommendation, parallel or background processing, server-side drafts |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. Client multiphoto and resume evidence and the M11 resource measurement are outstanding. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. Client multiphoto and resume evidence and the M11 resource measurement are outstanding. |
 
 ## 1. Story Overview
 
@@ -53,11 +53,11 @@
 | `GarmentSchemaIT` | Exact `wardrobe` table list (US-GAR-005 T7) | T5 adds the two V15 tables |
 | Migrations | V1–V14 | This guide adds **V15** |
 | OpenAPI | 0.16.0 | → 0.17.0 |
-| CI | 130 entries | +7 entries (137) |
+| CI | 131 entries | +7 entries (138) |
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16. Paragraphs and lines dated 2026-11-17 were added to the sources by the Sprint 4 documentation synchronization.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -103,6 +103,8 @@ Select multiple photos → inspect per-item queue outcomes → review/correct ea
 
 **Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
 
+**Sprint 4 resolution (2026-11-17):** US-BULK-001 provisionally settles the MVP-Q08 points it needs ([SRS Section 3.23.1](../../../../03-requirements/SRS.md#3231-bulk-import-rules)): up to 20 photos per batch, up to 3 unfinished batches per user, 7 days to finish a batch, photos staged one at a time, each item reviewed and confirmed on its own, and the user can cancel an item, stop the batch or resume it later. These limits are delegated defaults awaiting Product Owner review. See Section 34.3.
+
 ## 5. Original Software Requirements — Verbatim
 
 From [SRS](../../../../03-requirements/SRS.md):
@@ -120,6 +122,25 @@ From [SRS](../../../../03-requirements/SRS.md):
 | NFR-PRIV-001 | The system shall limit personal data to necessary functionality, authorized bounded outfit sharing, personalization, history/utilization, measurement, security and operational integrity, respecting omission/correction/removal/permission controls. Only an explicitly approved shared-outfit/creator/media projection may be available to its authorized audience; this grants no access to private wardrobe inventories, source images, purchase information, profile, feedback or history. No entire-wardrobe sharing, unrestricted third-party sharing or personal-data sale is permitted. Sharing audience, consent and publishable fields remain MVP-Q01, not inferred permission. | MVP | FEAT-AUTH-001, FEAT-COM-001/002, FEAT-CHAT-001, FEAT-TRY-001; BR-021, BR-025–BR-028 | I/T: permitted shared projection versus denied private operations; explicit sharing and account isolation; policy approval required before sharing stories are Ready. |
 | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
+Added to the [SRS](../../../../03-requirements/SRS.md) on 2026-11-17 by the Sprint 4 documentation synchronization (verbatim):
+
+#### 3.23.1 Bulk Import Rules
+
+Added 2026-11-17 for [US-BULK-001](../../../stories/bulk-import/US-BULK-001-review-and-confirm-bulk-garment-import.md). The approved decisions S4-BULK-01–07 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-25–30](open-questions.md#open-s4-25--bulk-admission-limits-and-retention)). The numeric limits are configuration awaiting Product Owner review; they resolve the corresponding parts of MVP-Q08 provisionally ([PRD Section 34.3](../../../../02-product/PRD.md#343-sprint-4-resolutions-2026-11-17)). FR-BULK-001–FR-BULK-006 and DATA-BULK-001 are unchanged.
+
+| Rule | Requirement |
+|---|---|
+| Batch | The owner starts a batch by stating how many photos it will contain. Starting the same batch again with the same request key returns the same batch. |
+| Limits (delegated defaults) | At most 20 items per batch, at most 3 active batches per owner, a batch lifetime of 7 days, and an aggregate ceiling of 300,000,000 original bytes per batch (20 × the existing 15,000,000-byte photo limit). The existing 24-hour expiry of a staged photo is unchanged. |
+| Items | Each item is waiting for a photo, reviewable, accepted or cancelled. A reviewable item's photo is shown as ready or expired; an expired photo must be selected again. |
+| Sequential processing | Photos are staged one at a time through the existing intake. There is no background worker, parallel decoding or AI analysis. |
+| Review and confirmation | Each reviewable item is reviewed and confirmed individually, with Category and one Color plus any valid optional properties under the 13-property rules. Upload alone never creates a garment. |
+| Partial success | Item outcomes are independent: accepting one item never depends on another, a failed or cancelled item does not undo accepted ones, and the batch never reports items as accepted that were not. |
+| Retry | Repeating an item confirmation after a lost response returns the same accepted garment and never creates a second one. Confirming an accepted item again with different values is refused. |
+| Cancellation and stopping | The owner can cancel one item or stop the whole batch. Stopping cancels the remaining items and releases their unclaimed photos; accepted garments stay. |
+| Resumption | The owner can list active batches and reopen one to continue after leaving the app, within the batch lifetime. An expired batch accepts no further work but keeps its accepted garments. Purging old batches together with the account lifecycle is deferred. |
+| Ownership | Another account's batch, item or photo is indistinguishable from an unknown one. A staged photo belongs to at most one item. |
+
 ## 6. Original Business Rules — Verbatim
 
 From [Business Rules](../../../../03-requirements/business-rules.md):
@@ -135,6 +156,8 @@ From [Business Rules](../../../../03-requirements/business-rules.md):
 **Rule:** Track each item's actual outcome without cross-item/account mixing. Distinguish pending, reviewable, accepted, failed and uncertain; preserve accepted results and recover the same logical confirmed item action without duplicates. Multiple separate intentional additions remain possible. Limits, queue processing/resumption, save atomicity and staged-media lifecycle require MVP-Q08; no numeric limit, broker or asynchronous topology is implied.
 
 **Source:** FR-BULK-002/005/006; DATA-BULK-001; DATA-INT-004.
+
+**Sprint 4 refinement (2026-11-17):** For US-BULK-001, the delegated defaults of OPEN-S4-25–30 provisionally settle the MVP-Q08 parts it needs: at most 20 items per batch, 3 active batches per owner, a 7-day batch lifetime and a 300,000,000-byte aggregate ceiling, with sequential staging, independent item acceptance, item cancellation, batch stop and resumption. The existing 24-hour staged-photo expiry is unchanged. These numbers are configuration awaiting Product Owner review and do not introduce a broker or asynchronous topology (approved S4-BULK-01–07; SRS Section 3.23.1).
 
 ### BRULE-GAR-001 — Canonical Garment Authority
 
@@ -381,6 +404,8 @@ MVP-Q08, MVP-Q09 in [PRD Section 34.2](../../../../02-product/PRD.md#342-mvp-exp
 ' SRS: FR-BULK-001, FR-BULK-002, FR-BULK-003, FR-BULK-004, FR-BULK-005, FR-BULK-006; DATA-BULK-001.
 ' Business Rules: BRULE-BULK-001/002; BRULE-GAR-001/002/005/006/010; BRULE-AUTH-001/007.
 ' Open policy: MVP-Q08, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+' Sprint 4 refinement 2026-11-17: S4-BULK-01-07 approved 2026-11-16; MVP-Q08 resolved provisionally
+' for US-BULK-001 by delegated defaults OPEN-S4-25-30 (PRD Section 34.3, SRS Section 3.23.1). Not implemented.
 title AD-031 - Review and confirm bulk garment import
 skinparam monochrome true
 skinparam shadowing false
@@ -427,8 +452,11 @@ endif
 :Retain actual queue / accepted outcomes for further review;
 note right
   One item path is shown; repeat for chosen queue items.
-  Limits, resumption, processing and save atomicity are open.
-  No assumed partial-commit or whole-batch transaction model.
+  Sprint 4 (approved S4-BULK): photos are staged one at a time;
+  each item is accepted on its own, never as a whole-batch save;
+  the user can cancel an item, stop the batch or resume it later.
+  Delegated limits (PO review pending): 20 items, 3 active batches,
+  7-day batch lifetime, 300,000,000 bytes per batch.
   Upload / AI completion alone is never confirmation.
 end note
 
@@ -456,20 +484,20 @@ stop
 
 ### 8.5 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-BULK-01](../sprint-plan.md#s4-bulk-01) | US-BULK-001 | Wardrobe coordination and single-item acceptance reuse | Option A — Wardrobe-owned coordination with a focused shared acceptance operation and explicit item transaction. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-BULK-02](../sprint-plan.md#s4-bulk-02) | US-BULK-001 | Batch identity, durable review state and progress truth | Option B — a minimal durable Wardrobe batch/item model, contingent on approved lifecycle and resumption policy. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-03](../sprint-plan.md#s4-bulk-03) | US-BULK-001 | Bounded item processing without an AI dependency | Option A — sequential staging initially, with independent item progress and manual review. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-04](../sprint-plan.md#s4-bulk-04) | US-BULK-001 | Per-item acceptance versus reviewed atomic group save | Option A — independently confirmed per-item acceptance, with atomic item/garment/media/action effects. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-05](../sprint-plan.md#s4-bulk-05) | US-BULK-001 | Batch and item action identity across retries | Option A — stable item identities and persistent per-item acceptance keys independent of queue order. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-06](../sprint-plan.md#s4-bulk-06) | US-BULK-001 | Batch admission, resumability and draft retention policy | Option B — approve a finite composite admission and lifecycle policy before implementing its limits; leave numeric values unresolved here. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead, QA and operations owner |
-| [S4-BULK-07](../sprint-plan.md#s4-bulk-07) | US-BULK-001 | Cancellation, in-flight acceptance and interrupted-batch recovery | Option B — an authoritative stop for remaining unaccepted work, preserving accepted items and exposing race outcomes. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-01](../sprint-plan.md#s4-bulk-01) | US-BULK-001 | Wardrobe coordination and single-item acceptance reuse | Option A — Wardrobe-owned coordination with a focused shared acceptance operation and explicit item transaction. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-BULK-02](../sprint-plan.md#s4-bulk-02) | US-BULK-001 | Batch identity, durable review state and progress truth | Option B — a minimal durable Wardrobe batch/item model, contingent on approved lifecycle and resumption policy. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-03](../sprint-plan.md#s4-bulk-03) | US-BULK-001 | Bounded item processing without an AI dependency | Option A — sequential staging initially, with independent item progress and manual review. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-04](../sprint-plan.md#s4-bulk-04) | US-BULK-001 | Per-item acceptance versus reviewed atomic group save | Option A — independently confirmed per-item acceptance, with atomic item/garment/media/action effects. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-05](../sprint-plan.md#s4-bulk-05) | US-BULK-001 | Batch and item action identity across retries | Option A — stable item identities and persistent per-item acceptance keys independent of queue order. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-06](../sprint-plan.md#s4-bulk-06) | US-BULK-001 | Batch admission, resumability and draft retention policy | Option B — approve a finite composite admission and lifecycle policy before implementing its limits; leave numeric values unresolved here. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead, QA and operations owner |
+| [S4-BULK-07](../sprint-plan.md#s4-bulk-07) | US-BULK-001 | Cancellation, in-flight acceptance and interrupted-batch recovery | Option B — an authoritative stop for remaining unaccepted work, preserving accepted items and exposing race outcomes. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 9. Engineering Interpretation
 
@@ -3627,7 +3655,7 @@ AFTER:
           }
 ```
 
-This brings the total to 137 required entries, the final count for Sprint 4.
+This brings the total to 138 required entries, the final count for Sprint 4.
 
 ## 13. Complete Automated Test Implementation
 
@@ -4880,7 +4908,7 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 ## 16. Definition of Done
 
 - [ ] P1–P35 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including the unchanged creation suites, `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 137 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 138 required reports with no failure or skip.
 - [ ] **Product Owner review of the OPEN-S4-25 values** (20 items, 3 active batches, `P7D`, derived 300,000,000 bytes) and M11 resource evidence. Changes are configuration only.
 - [ ] Client evidence (M12).
 - [ ] Batch purge with account lifecycle is recorded as deferred, not done.
@@ -4908,5 +4936,5 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 - [ ] Lock order: batch → item → photo → garment. A stop holds the batch `FOR UPDATE`.
 - [ ] A retried confirmation, link or cancellation is safe; stop is idempotent.
 - [ ] No AI, outfit recommendation, worker or parallel decoding was added.
-- [ ] OpenAPI 0.17.0; 7 CI entries (total 137).
+- [ ] OpenAPI 0.17.0; 7 CI entries (total 138).
 - [ ] The OPEN-S4-25 values are labeled as delegated defaults awaiting Product Owner review.

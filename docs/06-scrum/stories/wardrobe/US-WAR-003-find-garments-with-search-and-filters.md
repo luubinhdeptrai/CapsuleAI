@@ -94,3 +94,16 @@ Question ownership and impact: [catalogue questions CAT-Q01](../README.md#4-open
 ## 11. Status
 
 **Draft.** PO/BA and Developers/QA review is pending. No approval, formal readiness, estimate, Sprint assignment or implemented outcome is claimed. Necessary implementation-level design follows selection and remains Just-In-Time during Sprint execution.
+
+## 12. Sprint 4 Decision Record (2026-11-17)
+
+This record is appended on 2026-11-17 and does not change the story, scope or acceptance criteria above. The Product Owner selected this story for Sprint 4 and, on 2026-11-16, approved the [Sprint 4 decisions](../../sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register) listed below. Delegated details are `SELECTED BY CLAUDE — DELEGATED DEFAULT` and are not Product Owner approvals of the specific values. The implementation is proposed in the guide below and has not been applied to the repository; the status in Section 11 is unchanged.
+
+| Item | Record |
+| --- | --- |
+| Approved decisions | S4-WAR-01–04, S4-INT-02, S4-INT-03 |
+| Delegated details | OPEN-S4-11–15, OPEN-S4-31, OPEN-S4-32 |
+| CAT-Q01 (Section 10) | Settled for Sprint 4: one literal phrase, case-insensitive and accent-sensitive, matched against the code, English label or **Vietnamese search alias** of Category, Subtype, Color, Material, Pattern and Style, and the Brand text; Price and the other details are not searched; Category and Color filters take exact codes, OR within a filter, AND across conditions ([SRS Section 3.6.2](../../../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules)). |
+| Vietnamese search | Explicitly authorized by the Product Owner on 2026-11-17. The alias wording is a delegated default in the [canonical alias table](../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md); an ambiguous word (for example `váy`) matches every value it names; unaccented input (`ao thun`) does not match. |
+| Remaining evidence | Review of the alias wording; query-plan measurement (OPEN-S4-15); client conditions, reset and result states. |
+| Implementation guide | [US-WAR-003 guide](../../sprints/sprint-04/implementation-guides/US-WAR-003-guide.md) |

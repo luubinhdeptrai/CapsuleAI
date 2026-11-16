@@ -180,3 +180,12 @@ The earlier review recorded no Use Case-specific blocker. The current revision m
 Focused diagram is not present in this checkout; see the [master Use Case Diagram](use-case-diagram.puml) and this textual specification
 
 The master diagram retains the actor/goal boundary; the textual specification and linked existing Activity Diagram, where present, define workflow behavior. This revision creates no replacement focused diagram.
+
+## 17. Sprint 4 Refinement (2026-11-17)
+
+The flows above are unchanged. On 2026-11-16 the Product Owner approved the Sprint 4 decisions named below; the delegated OPEN-S4 details complete them. They are summarized here so that this Use Case stays consistent with the [SRS](../SRS.md). Delegated values are not Product Owner approvals of the specific values. Nothing below is implemented yet.
+
+- **Story:** [US-WAR-003](../../06-scrum/stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md). **Decisions:** S4-WAR-01–04 (approved); [OPEN-S4-11–15](../../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) (delegated). Vietnamese descriptor search was explicitly authorized by the Product Owner on 2026-11-17.
+- **Search and filter alternative flow:** the User enters one phrase in Vietnamese or English. It matches Category, Subtype, Color, Material, Pattern and Style through their Vietnamese search aliases, English labels or codes, and the Brand text, ignoring letter case but not accents. A word that names several values (for example `váy`) matches all of them. Category and color filters take exact codes and narrow the result ([SRS Section 3.6.2](../SRS.md#362-wardrobe-search-and-filter-rules); [canonical alias table](../vocabularies/vietnamese-descriptor-search-aliases.md)).
+- **States:** results, no match (the wardrobe has garments), empty wardrobe and end of results are distinct; a failure is never shown as no match. Clearing every condition restores the whole current wardrobe.
+- **Continuation:** a page continuation belongs to its conditions; after a change of conditions or matching rules the User starts again from the first page.

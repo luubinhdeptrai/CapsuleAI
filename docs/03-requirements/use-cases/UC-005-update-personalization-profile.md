@@ -170,3 +170,12 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 [Master Use Case Diagram](use-case-diagram.puml)
 
 The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.
+
+## 17. Sprint 4 Refinement (2026-11-17)
+
+The flows above are unchanged. On 2026-11-16 the Product Owner approved the Sprint 4 decisions named below; the delegated OPEN-S4 details complete them. They are summarized here so that this Use Case stays consistent with the [SRS](../SRS.md). Delegated values are not Product Owner approvals of the specific values. Nothing below is implemented yet.
+
+- **Story:** [US-PROF-002](../../06-scrum/stories/profile/US-PROF-002-control-optional-personal-context.md). **Decisions:** S4-PROF-01–04 (approved); [OPEN-S4-16](../../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-16--optional-genderbody-vocabulary) and OPEN-S4-17 (delegated).
+- **Optional personal context** (the alternative flows that skip, add, edit or remove body/gender information): Gender Context and Body Shape are each optional and chosen from the codes in [SRS Section 4.10.1](../SRS.md#4101-optional-personal-context-vocabularies). Absence means "not provided"; there is no "prefer not to say" value.
+- **Revision and clearing:** optional context has its own revision, separate from preferences. Each value can be set, changed or cleared independently; a cleared value is absent for every later read. A change based on a stale view is refused, and the User reviews the current values ([SRS Section 3.2.1](../SRS.md#321-optional-personal-context-rules)).
+- **Boundaries:** values are never inferred, never restrict a garment category, are not sent to any provider and are not used by any consumer in Sprint 4.

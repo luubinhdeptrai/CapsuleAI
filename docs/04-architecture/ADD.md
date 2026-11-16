@@ -7,9 +7,9 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Architecture Design Document (ADD) |
-| Version | 0.1.7 |
+| Version | 0.1.8 |
 | Status | Baseline Draft |
-| Last Updated | 2026-11-10 |
+| Last Updated | 2026-11-17 |
 | Owner | Architect / Tech Lead, with Backend, AI, Mobile and QA input; Product/BA for requirement implications |
 | Architecture Decision Baseline | ADA-001–018 Selected; no override or deferral |
 | Selection Authority | [Selected Architecture Decisions](selected-architecture-decisions.md), v0.1; Project Owner / Backend Developer, 2026-10-10 |
@@ -29,6 +29,7 @@
 | 0.1.5 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
 | 0.1.6 | 2026-11-06 | Added refinement notes to Sections 3.3, 8.4 and 9.4 for the Product Owner-approved AR-01–AR-08 (one PostgreSQL schema per persistence owner; no cross-context joins, persistence access or foreign keys; published contracts; automated enforcement). Selected directions and existing text are unchanged. |
 | 0.1.7 | 2026-11-09 | Synchronized PR #4 source pressures, typed feedback, private/shared boundaries and capability-impact register; ADA-001–018 and AR-01–08 remain unchanged, with new allocation/integration questions explicitly unselected. |
+| 0.1.8 | 2026-11-17 | Sprint 4 documentation synchronization: new Section 16 records the planned (not implemented) impact of the 30 approved Sprint 4 decisions and the delegated OPEN-S4 details, plus dated notes in Sections 9.6 and 14. ADA-001–018 and AR-01–08 are unchanged. |
 
 Input versions identify the baselines re-read for authoring. Subsequent navigation-only revisions do not change those obligations or selections. Baseline Draft records pending artifact review, not software conformance or benchmark success.
 
@@ -490,6 +491,8 @@ Recovery email receives only necessary email/delivery information and does not c
 
 Exact providers/SDKs, contract shapes, retry/failure translation and acquired-evidence storage remain downstream. No general offline mode, retailer guarantee or additional commerce workflow is introduced.
 
+**2026-11-17 Sprint 4 note:** For the weather dependency, the approved S4-CTX-03 selects Open-Meteo as the provider to evaluate first, conditional on confirmed deployment eligibility, terms and real integration evidence. The planned adapter, deadline and evidence storage are described in [Section 16](#16-planned-sprint-4-architecture-impact-2026-11-17); they are not implemented, and the provider terms are not verified.
+
 ### 9.7 Wardrobe Intelligence, Validity, Exactness and Currentness
 
 **Basis:** ASR-CON-001; FR-OUT-003/007/009/013–017, FR-ANL-010–015, FR-GAP-001–005, FR-MULT-002–008, DATA-OUT-001–003, DATA-ANL-004; BRULE-OUT/COV/MULT. **Selections:** ADA-009/010/011/015–018.
@@ -598,7 +601,7 @@ Workflow realization follows ADD + four architecture views → Test Strategy →
 
 ## 14. Status and Next Step
 
-**Version 0.1.7 — Baseline Draft.** This revision propagates PR #4 requirements and records open allocation/integration impacts in Section 15; all four views already exist. Previously recorded human acceptance of Logical, Implementation and Deployment Views remains unchanged. ADD review still involves Architect/Tech Lead with Backend, AI, Mobile, QA and relevant Product/BA input. All 18 selected options and AR-01–08 remain. Driver/scenario identities and unrelated numeric measures remain; affected requirements and feedback/private-sharing interpretation follow the approved PR #4 baseline.
+**Version 0.1.8 — Baseline Draft.** Version 0.1.7 propagated PR #4 requirements and recorded open allocation/integration impacts in Section 15. Version 0.1.8 (2026-11-17) adds the planned Sprint 4 impact in Section 16; the implemented backend is Sprint 1–3, and Sprint 4 is planned, not implemented. All four views already exist. Previously recorded human acceptance of Logical, Implementation and Deployment Views remains unchanged. ADD review still involves Architect/Tech Lead with Backend, AI, Mobile, QA and relevant Product/BA input. All 18 selected options and AR-01–08 remain. Driver/scenario identities and unrelated numeric measures remain; affected requirements and feedback/private-sharing interpretation follow the approved PR #4 baseline.
 
 **Current handoff: relevant candidate refinement / policy and feasibility review → authorized Sprint Planning → selected-story JIT design and automated test/implementation.** Test Strategy, engineering foundation and Sprint 1–2 backend already exist. [Logical View v0.1](views/logical-view.puml), [Implementation View v0.1](views/implementation-view.puml), [Deployment View v0.1](views/deployment-view.puml) and [Data View v0.1 — Baseline Draft](views/data-view.puml) already exist. During Sprint execution, selected Stories receive only necessary JIT Detailed Design, with automated tests/implementation and PR/CI/review through Done. ADA and Selected Architecture Decisions already preserve the baseline; standalone ADRs are optional for significant future evolution. Follow Workflow Sections 25–33 and 46; no whole-MVP detailed-design gate is required.
 
@@ -621,3 +624,67 @@ Merged PR #4 (`9e10cbb`) and DD-007 approve product scope and supersede fixed fe
 **Approved versus proposed:** The product behaviors and existing owner/decision invariants above are approved. New responsibility allocation, publishable fields/audiences, source contracts and provider choices are open questions, not an accepted amended module map. The four views visibly identify those unallocated concerns without adding speculative services, databases, packages or cross-schema access. Any actual architectural change follows ADA/human selection and affected realization updates; a standalone ADR remains optional for consequential future evolution.
 
 **JIT boundary:** Lightweight source/feasibility investigation may make Draft stories selectable. Full API/data/sequence/state/transaction/integration design follows actual Sprint selection. Existing registration/login/session/recovery/garment-create/cursor-page/detail contracts and applied V1–V8 migrations remain unchanged by this synchronization; no new feature is marked implemented.
+
+## 16. Planned Sprint 4 Architecture Impact (2026-11-17)
+
+**Status: PLANNED — not implemented.** On 2026-11-16 the Product Owner approved the 30 Sprint 4 decisions (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) in the [Sprint 4 plan](../06-scrum/sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register). The detailed realization is proposed in the [Sprint 4 implementation guides](../06-scrum/sprints/sprint-04/implementation-guides/README.md), with delegated details OPEN-S4-01–33. **None of it is in the repository yet**: the implemented baseline is still Sprint 1–3 (Flyway V1–V11, OpenAPI 0.11.0). The migrations V12–V15, endpoints and components below are proposals and must not be read as deployed.
+
+The Sprint 4 decisions **realize existing selections; they change no ADA-001–018 option and no AR-01–AR-08 rule**:
+
+- every new table belongs to an existing owner schema (`wardrobe` or `personal_context`), with no cross-schema join or foreign key;
+- no new module, broker, cache, service or database is introduced;
+- the one new external dependency, the weather provider, sits behind a Personal Context port and adapter (ADA-006);
+- background work stays in-process (ADA-012).
+
+### 16.1 Planned components and persistence
+
+| Story | Owner module | Planned behavior and components | Planned persistence (owner schema) | External interaction |
+| --- | --- | --- | --- | --- |
+| US-GAR-005 removal | Wardrobe | Confirmed, revision-checked removal command; a scheduled in-process cleanup job (every 5 minutes, leased and retried) that minimizes the removed record and deletes the photo object outside the transaction | V12: `wardrobe_garment_removal_cleanup` (`wardrobe`) | Private object storage: idempotent delete |
+| US-GAR-006 photo attachment | Wardrobe | Attachment command reusing photo staging and the existing private delivery route; no new port to storage | None (V10 constraints reused) | None at confirmation |
+| US-WAR-003 search | Wardrobe | Search use case on the existing overview route; Java matching of codes, English labels and Vietnamese aliases; 14 complete bound SQL statements; read-only snapshot for the first page | None (indexes only after measurement) | None |
+| US-PROF-002 optional context | Personal Context | Separate revisioned optional-context resource; no change to the published `CurrentPersonalContext` | V13: `personal_context_optional_context` (`personal_context`) | None |
+| US-CTX-001 location and weather | Personal Context | Location resource; weather acquisition after commit through a `WeatherProvider` port; Open-Meteo adapter with one 2-second deadline, bounded capacity and response size | V14: `personal_context_location`, `personal_context_weather_evidence` (`personal_context`) | Open-Meteo over HTTPS: only the rounded point is sent. **Terms and eligibility not yet verified.** |
+| US-BULK-001 bulk import | Wardrobe | Batch and item coordination in Wardrobe (approved S4-BULK-01); per-item acceptance through a shared acceptance operation extracted from manual creation; sequential staging; no worker and no AI | V15: `wardrobe_bulk_import_batch`, `wardrobe_bulk_import_item` (`wardrobe`) | None beyond the existing photo staging |
+
+### 16.2 Planned interactions
+
+```mermaid
+flowchart LR
+    Client["Mobile client"] --> WardrobeAPI["Wardrobe HTTP API<br/>removal, photo attachment,<br/>search, bulk import"]
+    Client --> ContextAPI["Personal Context HTTP API<br/>optional context, location"]
+    subgraph Wardrobe["Wardrobe module, schema wardrobe"]
+        WardrobeAPI --> WardrobeServices["Removal, attachment, search,<br/>bulk import services"]
+        WardrobeServices --> WardrobeTables[("garments, photos,<br/>V12 cleanup, V15 batch/item")]
+        CleanupJob["Removal cleanup job<br/>(in-process, scheduled)"] --> WardrobeTables
+    end
+    subgraph Context["Personal Context module, schema personal_context"]
+        ContextAPI --> ContextServices["Optional context and<br/>location services"]
+        ContextServices --> ContextTables[("V13 optional context,<br/>V14 location, weather evidence")]
+        ContextServices --> WeatherPort["WeatherProvider port"]
+    end
+    CleanupJob -.->|"delete object, outside the transaction"| Storage["Private object storage"]
+    WeatherPort -.->|"HTTPS, rounded point, 2 s deadline"| OpenMeteo["Open-Meteo (terms pending)"]
+```
+
+### 16.3 Shared rules
+
+| Concern | Planned rule | Decision |
+| --- | --- | --- |
+| Lock order | Batch, then item, then existing garment, then photo, then cleanup work; a bulk item command holds the batch shared, a batch stop holds it exclusively; batch start takes a per-owner advisory lock | S4-INT-01; OPEN-S4-06, 08, 28 |
+| Network calls | Never inside a database transaction: weather is acquired after commit, and object deletion runs after the cleanup claim | S4-CTX-05, S4-GAR-03 |
+| Outcomes and retries | Natural identities (monotonic removal, same-pair attachment, item acceptance keys); no receipt table | S4-INT-02 |
+| Contracts | Explicit confirmed commands with body revisions; OpenAPI 0.12.0–0.17.0, one minor version per story | S4-INT-03; OPEN-S4-31 |
+| Privacy | Optional context and location are never logged, published or sent elsewhere, apart from the rounded point sent to the weather provider; photos stay private | S4-PROF-04, S4-CTX-01; NFR-PRIV-001/002 |
+
+### 16.4 Open evidence
+
+These architecture obligations remain open before the planned behavior can be called Done:
+
+- Open-Meteo terms, eligibility and a real request (S4-CTX-03 is conditional on them);
+- measured weather deadline behavior;
+- storage-versioning, object-lock, replication and backup evidence for physical deletion;
+- bulk resource measurement for the delegated limits;
+- the search query-plan measurement.
+
+[Section 15](#15-approved-pr-4-capability-impact) stays valid for the PR #4 capabilities that Sprint 4 does not touch. For bulk import, Sprint 4 provisionally settles the MVP-Q08 points it needs and keeps the work in Wardrobe; MVP-Q09 stays open for Community, Catalog, Chat and Try-On.

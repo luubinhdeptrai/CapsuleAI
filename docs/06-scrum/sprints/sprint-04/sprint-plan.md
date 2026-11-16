@@ -4,19 +4,19 @@
 
 | Field | Value |
 | --- | --- |
-| Artifact / version | Sprint 4 Backend Sprint Plan / 0.1 |
-| Status | Planning draft. Six stories selected by the Product Owner; new solutions remain proposed. No implementation or approval is claimed. |
+| Artifact / version | Sprint 4 Backend Sprint Plan / 0.2 |
+| Status | Updated for explicit Product Owner approvals: all 30 Section 9 decisions were approved on 2026-11-16, and the remaining detailed choices were delegated (OPEN-S4-01–33). Implementation and verification have not started in the repository. |
 | Repository baseline | `sprint_04`, commit `33c579c` (`Merge pull request #5 from luubinhdeptrai/sprint_03`); working tree clean before this document was created |
 | Scope authority | Product Owner's explicit six-story Sprint 4 selection; this does not approve detailed policies, contracts or the provisional attachment story |
 | Structural reference | [Sprint 3 plan](../sprint-03/sprint-plan.md), especially Section 9; its current approvals and later detailed choices take precedence over historical pending wording |
-| Revision | Initial source-grounded plan following repository-wide inspection; no changes to upstream artifacts |
+| Revision | 0.1: initial source-grounded plan following repository-wide inspection; no changes to upstream artifacts. 0.2 (2026-11-17): recorded the Product Owner's approval of all 30 decisions (2026-11-16) in Sections 9 and 13; referenced the delegated detailed choices in the [implementation-guide decision record](implementation-guides/open-questions.md); recorded the formal US-GAR-006 story and its parent PBI-049; recorded the Vietnamese descriptor-search refinement of OPEN-S4-11 authorized by the Product Owner on 2026-11-17. Analyses, options and historical planning text are otherwise unchanged. |
 | Accountability | Product Owner: product policy and provisional-story approval. Backend Tech Lead: technical direction and boundary compliance. Developers: JIT design, implementation and evidence. QA: independent coverage and recovery evidence. Mobile contributor: integrated client acceptance. |
 | Planning convention | Functional cohesion, dependency reuse and learning progression determine the recommended sequence. No delivery estimates or calendar commitment are introduced. |
-| Change boundary | This document only. Implementation, tests, migrations, OpenAPI, configuration, stories, guides, backlog ordering and architecture records are unchanged. |
+| Change boundary | 0.1: this document only. 0.2: this document, synchronized with the canonical documentation updated on 2026-11-17 (requirements, backlog PBI-049, story US-GAR-006, architecture Section 16, implementation guides). Implementation, tests, migrations, the live OpenAPI, configuration and backlog ordering are unchanged. |
 
-**Status vocabulary.** *Implemented* means current source contains behavior; it does not imply a successful current build, deployed integration or complete story acceptance. *Source test coverage* means inspectable tests exist, not that they were executed for this plan. *Approved* applies only to an explicit existing authority. All 30 new Section 9 recommendations are **PROPOSED — PENDING PO APPROVAL**. Planned evidence is not a result.
+**Status vocabulary.** *Implemented* means current source contains behavior; it does not imply a successful current build, deployed integration or complete story acceptance. *Source test coverage* means inspectable tests exist, not that they were executed for this plan. *Approved* applies only to an explicit existing authority. All 30 new Section 9 recommendations were proposed in version 0.1 and were **approved by the Product Owner on 2026-11-16** (Section 13). The detailed choices they left open are recorded as delegated defaults, not approvals, in the [decision record](implementation-guides/open-questions.md). Planned evidence is not a result.
 
-The five existing selected story files remain Draft in the repository. Their selection is now explicit, while policy/refinement and completion gaps remain visible. US-GAR-006 has no formal source story or parent PBI and is **PROPOSED — PENDING FORMAL STORY REFINEMENT AND APPROVAL**. This plan does not silently promote any source artifact to Ready or Done.
+The five existing selected story files remain Draft in the repository. Their selection is now explicit, while policy/refinement and completion gaps remain visible. US-GAR-006 had no formal source story or parent PBI and was **PROPOSED — PENDING FORMAL STORY REFINEMENT AND APPROVAL**. **Update 2026-11-17:** it now has a formal Draft story, [US-GAR-006](../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md), and a parent, [PBI-049](../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment). Its acceptance criteria formalize the six provisional expectations of Section 6.5 under the Product Owner's delegation and still need PO acceptance. This plan does not silently promote any source artifact to Ready or Done.
 
 ## 2. Sprint Goal
 
@@ -136,7 +136,7 @@ Exactly these six stories are selected. Source PBI links remain unchanged, inclu
 | [US-WAR-003 — Find owned garments through search and filters](../../stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md) | PBI-015 | Locate owned items through approved descriptor semantics and category/color conditions | Existing Draft selected; CAT-Q01 blocks complete matching specification |
 | [US-PROF-002 — Control optional body and gender context](../../stories/profile/US-PROF-002-control-optional-personal-context.md) | PBI-010 | Declare, revise, skip or clear private soft context independently of wardrobe access | Existing Draft selected; supported representation requires confirmation |
 | [US-CTX-001 — Choose environmental context with safe fallback](../../stories/context/US-CTX-001-choose-location-and-recover-limited-context.md) | PBI-011 | User-controlled selection plus actual fresh weather acquisition and truthful bounded fallback | Existing Draft selected; provider/precision decisions and future-consumer evidence pending |
-| **US-GAR-006 — Attach a photo to an existing garment** (provisional) | **Not assigned** | Attach one permitted staged photo to a current imageless owned garment without recreating it | **PROPOSED — PENDING FORMAL STORY REFINEMENT AND APPROVAL** |
+| [US-GAR-006 — Attach a photo to an existing imageless garment](../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) (provisional until 2026-11-17) | PBI-049 (added 2026-11-17, unranked) | Attach one permitted staged photo to a current imageless owned garment without recreating it | Formal Draft story since 2026-11-17; solution decisions approved 2026-11-16; formalized AC await PO acceptance |
 | [US-BULK-001 — Review and confirm bulk garment import](../../stories/bulk-import/US-BULK-001-review-and-confirm-bulk-garment-import.md) | PBI-048, unranked pool | Recoverable manually reviewed multiphoto additions with truthful per-item results | Existing Draft selected; MVP-Q08 and relevant ownership refinement pending |
 
 ## 6. User Story Scope and Acceptance Overview
@@ -222,6 +222,8 @@ The following five source-AC tables preserve the existing criterion wording, inc
 **Acceptance gap.** Saving a city is not AC-02/03/04. Actual acquisition/fallback and its live external compatibility are required for the selected work. Recommendation, Coverage and Multiplier are absent: the real consumer's selective environmental filtering in AC-04 and affected-result refresh/outdated behavior in AC-05 remain unavailable for integrated verification. Provide a truthful published current/unavailable basis and contract tests now; neither stubs nor fixtures complete those future consumers. Do not declare the whole story Done while applicable evidence is missing. No continuous tracking, provider-specific profile sharing or outfit implementation is added.
 
 ### 6.5 US-GAR-006 — Attach a photo to an existing garment (provisional)
+
+> **Update 2026-11-17:** the formal Draft story is [US-GAR-006](../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md), parent [PBI-049](../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment), with FR-WAR-009, BRULE-GAR-011, FEAT-WAR-002 behavior 7 and UC-009 A4/E5 added to the canonical documents. Its AC-01–AC-06 restate the six expectations below. The text of this section is kept as the original planning record.
 
 **Status: PROPOSED — PENDING FORMAL STORY REFINEMENT AND APPROVAL.** No formal story, PBI mapping or exact approved attachment requirement was found anywhere in the tracked repository. Selection authorizes planning this outcome; it does not approve its detailed AC or fabricate a source link.
 
@@ -379,7 +381,7 @@ Affected contracts, schemas, diagrams, configuration and evidence must follow im
 
 Each decision below addresses a genuinely open implementation/policy choice within the approved boundaries. All alternatives in the tables preserve confirmed-user authority, privacy and module ownership. Indefinite rich-data soft deletion, public photo buckets, automatic AI ownership, cross-owner SQL and mandatory new services are excluded constraints, not equally viable options.
 
-All **30** recommendations are **PROPOSED — PENDING PO APPROVAL**. Selection of the stories is already approved; it does not approve these options, new limits, providers or the provisional attachment expectations. The stated approval owner coordinates PO approval with the relevant contributors. Previously approved Sprint 1–3 choices are context, not reopened decisions.
+All **30** recommendations were proposed as **PROPOSED — PENDING PO APPROVAL** and were **approved unchanged by the Product Owner on 2026-11-16**; each Decision Status below records the approval and the earlier status. Approval authorizes the direction, not the evidence. The new limits, provider details and attachment expectations that the options left open were then selected as delegated defaults (OPEN-S4-01–33); they are not Product Owner approvals of the specific values. The stated approval owner coordinates PO approval with the relevant contributors. Previously approved Sprint 1–3 choices are context, not reopened decisions.
 
 Trace entries link to the source story/AC and cite stable source IDs; [Section 14](#14-requirements-traceability) links the corresponding BRD/PRD/SRS/Rules, interactions, architecture and verification baseline. Implementation implications describe behavior and responsibility, not final DTOs, table definitions or a replacement detailed-design phase. Related decisions share a mechanism rather than select it twice.
 
@@ -418,7 +420,7 @@ Add a domain transition and owner-transaction operation, with conditional curren
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -461,7 +463,7 @@ Review each retained fact and its purpose; distinguish a minimum historical proj
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -504,7 +506,7 @@ JIT design must reconcile association constraints, worker races, leases and rich
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -549,7 +551,7 @@ Approve examples including Vietnamese accented terms, partial Brand, unknown opt
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -592,7 +594,7 @@ JIT design chooses request representation and complete statements, retaining one
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -635,7 +637,7 @@ Keep the established immutable sort and bounded page contract rather than introd
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -678,7 +680,7 @@ Use safe representative fixtures for empty, small and substantially populated wa
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -723,7 +725,7 @@ Formalize only the agreed supported representation during selected-story refinem
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -766,7 +768,7 @@ Use a necessary owner-specific forward migration, guarded first declaration and 
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -809,7 +811,7 @@ Centralize mapping and complete-result validation; do not use empty strings as a
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -852,7 +854,7 @@ Keep published types framework-free and explicit about declaration/absence and r
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -897,7 +899,7 @@ Validate finite coordinates and geographic ranges, permitted source/label meanin
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -940,7 +942,7 @@ Reuse guarded first-write/no-op/revision conventions and uncertainty review. Kee
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -983,7 +985,7 @@ Keep trusted HTTPS destination/configuration and credentials in the outer adapte
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1026,7 +1028,7 @@ Use a testable clock and bind evidence to location revision. Distinguish no sele
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1069,7 +1071,7 @@ Test elapsed completion, slow headers/body, unavailable capacity, DNS/connect/TL
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1112,7 +1114,7 @@ Extend published types only as needed by real delivered boundaries, keeping prov
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1157,7 +1159,7 @@ Keep attachment separate from the generic 13-property patch and from new-garment
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1200,7 +1202,7 @@ Coordinate the canonical lock order with S4-INT-01; retain database uniqueness/c
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1243,7 +1245,7 @@ Retain the approved pending TTL/cancel/expiry behavior for unclaimed stages with
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1288,7 +1290,7 @@ JIT review confirms the narrow internal composition seam and owner-local transac
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1331,7 +1333,7 @@ Persist only required item draft/current outcome and opaque stage/action referen
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1374,7 +1376,7 @@ Do not hold a batch transaction across uploads or decoding. Reuse per-image inpu
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1417,7 +1419,7 @@ Use the shared acceptance seam in S4-BULK-01 and commit accepted item linkage wi
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1460,7 +1462,7 @@ Keep creation fingerprints based on original accepted input even after later gar
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1503,7 +1505,7 @@ PO/Developers/QA must resolve the relevant MVP-Q08 policies, review values and t
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1546,7 +1548,7 @@ Choose and test a batch/item/garment/photo lock order under S4-INT-01, with no u
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1591,7 +1593,7 @@ JIT design documents the actual operation/worker lock graph, including batch sto
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1634,7 +1636,7 @@ Define known accepted, known rejected and still-uncertain paths in each actual c
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1677,7 +1679,7 @@ During each selected story's JIT work, synchronize affected OpenAPI, request/res
 
 **Decision Status**
 
-PROPOSED — PENDING PO APPROVAL
+APPROVED — 2026-11-16, unchanged, by the Product Owner (status before approval: PROPOSED — PENDING PO APPROVAL)
 
 **Approval Owner**
 
@@ -1855,40 +1857,40 @@ Risk labels identify planning issues, not new requirements. The decision links c
 
 ## 13. Consolidated Decision Register
 
-There are **30 detailed decisions**: GAR 6, WAR 4, PROF 4, CTX 6, BULK 7 and INT 3. Each row corresponds to exactly one Section 9 analysis. All recommendations are new and **PROPOSED — PENDING PO APPROVAL**; existing approved constraints remain in Section 4 and are not relabeled as new approvals. A recommendation's option letter is meaningful within that decision only.
+There are **30 detailed decisions**: GAR 6, WAR 4, PROF 4, CTX 6, BULK 7 and INT 3. Each row corresponds to exactly one Section 9 analysis. All recommendations are new; the Product Owner **approved all 30 on 2026-11-16** (status before approval: PROPOSED — PENDING PO APPROVAL); existing approved constraints remain in Section 4 and are not relabeled as new approvals. A recommendation's option letter is meaningful within that decision only.
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-GAR-01](#s4-gar-01) | US-GAR-005 | Confirmed removal and monotonic current ownership | Option A — guarded current-to-removed transition with atomic cleanup intent and prompt minimization. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-GAR-02](#s4-gar-02) | US-GAR-005 | Minimal historical meaning and rich-data minimization | Option A — a deliberately minimized Wardrobe-owned removed representation, with a separate mapping from live profiles. | PROPOSED — PENDING PO APPROVAL | Product Owner with BA and privacy reviewer |
-| [S4-GAR-03](#s4-gar-03) | US-GAR-005 | Attached-media purge and retention enforcement | Option A — separate durable removal cleanup, sharing infrastructure patterns but not pending-media semantics. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and operations owner |
-| [S4-WAR-01](#s4-war-01) | US-WAR-003 | Searchable descriptors and Vietnamese matching semantics | Option B — the stated bounded descriptor set and literal substring semantics, subject to CAT-Q01 approval. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with Backend Tech Lead |
-| [S4-WAR-02](#s4-war-02) | US-WAR-003 | Combined filters and complete bound SQL | Option B — a small catalogue of complete bound statements for the approved condition shapes. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-WAR-03](#s4-war-03) | US-WAR-003 | Filtered cursor continuity and concurrent current state | Option A — current keyset pages with criteria-bound cursors and explicit live-view semantics. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-WAR-04](#s4-war-04) | US-WAR-003 | Proportional search indexing and performance evidence | Option A — measured relational indexing first; retain trigram indexing as an evidence-driven option. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-PROF-01](#s4-prof-01) | US-PROF-002 | Supported optional information without an invented taxonomy | Option B — obtain explicit confirmation of supported optional meanings/choices before coding them; no new taxonomy is approved here. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with privacy reviewer and Backend Tech Lead |
-| [S4-PROF-02](#s4-prof-02) | US-PROF-002 | Optional-context persistence and revision ownership | Option B — a separately revisioned optional-context resource within the existing Personal Context owner. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-PROF-03](#s4-prof-03) | US-PROF-002 | Presence-aware changes, explicit clearing and conflicts | Option A — reuse presence-aware absolute PATCH semantics and guarded first write for this resource. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-PROF-04](#s4-prof-04) | US-PROF-002 | Published optional context and purpose-limited future use | Option B — preserve the current published contract and keep optional-context access purpose-specific. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and privacy reviewer |
-| [S4-CTX-01](#s4-ctx-01) | US-CTX-001 | Manual and device-selected location representation | Option B — one minimal current selection with PO-reviewed precision and manual resolution. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead, Mobile and privacy reviewer |
-| [S4-CTX-02](#s4-ctx-02) | US-CTX-001 | Location persistence, revision and weather failure separation | Option B — independently revisioned current location, with provider evidence bound to that revision. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-03](#s4-ctx-03) | US-CTX-001 | Actual weather provider and semantic translation | Option A — evaluate Open-Meteo first, conditional on confirmed deployment eligibility, terms and actual integration evidence. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and operations owner |
-| [S4-CTX-04](#s4-ctx-04) | US-CTX-001 | Freshness, latest evidence and truthful stale handling | Option B — minimal latest evidence inside Personal Context, with on-demand refresh and no separate cache/history service. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-05](#s4-ctx-05) | US-CTX-001 | One acquisition deadline and explicit unavailable fallback | Option A — one bounded adapter attempt under a single elapsed deadline, with explicit unavailable outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-06](#s4-ctx-06) | US-CTX-001 | Current environmental basis and unavailable consumer evidence | Option A — authoritative current/unavailable facts and basis comparison, without speculative result invalidation infrastructure. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-GAR-04](#s4-gar-04) | US-GAR-006 | Provisional attachment eligibility and confirmation boundary | Option A — a narrow explicit confirmation of an existing imageless target and owned READY photo, after formal story approval. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with Backend Tech Lead |
-| [S4-GAR-05](#s4-gar-05) | US-GAR-006 | Atomic association, revision scope and short locks | Option A — one meaningful garment revision plus short transactional locking and conditional stage consumption. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-GAR-06](#s4-gar-06) | US-GAR-006 | Photo availability evidence and shared lifecycle reuse | Option A — reuse validated READY evidence, with explicit private-read limitation and cleanup safety. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-01](#s4-bulk-01) | US-BULK-001 | Wardrobe coordination and single-item acceptance reuse | Option A — Wardrobe-owned coordination with a focused shared acceptance operation and explicit item transaction. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-BULK-02](#s4-bulk-02) | US-BULK-001 | Batch identity, durable review state and progress truth | Option B — a minimal durable Wardrobe batch/item model, contingent on approved lifecycle and resumption policy. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-03](#s4-bulk-03) | US-BULK-001 | Bounded item processing without an AI dependency | Option A — sequential staging initially, with independent item progress and manual review. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-04](#s4-bulk-04) | US-BULK-001 | Per-item acceptance versus reviewed atomic group save | Option A — independently confirmed per-item acceptance, with atomic item/garment/media/action effects. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-05](#s4-bulk-05) | US-BULK-001 | Batch and item action identity across retries | Option A — stable item identities and persistent per-item acceptance keys independent of queue order. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-BULK-06](#s4-bulk-06) | US-BULK-001 | Batch admission, resumability and draft retention policy | Option B — approve a finite composite admission and lifecycle policy before implementing its limits; leave numeric values unresolved here. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead, QA and operations owner |
-| [S4-BULK-07](#s4-bulk-07) | US-BULK-001 | Cancellation, in-flight acceptance and interrupted-batch recovery | Option B — an authoritative stop for remaining unaccepted work, preserving accepted items and exposing race outcomes. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-01](#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-01](#s4-gar-01) | US-GAR-005 | Confirmed removal and monotonic current ownership | Option A — guarded current-to-removed transition with atomic cleanup intent and prompt minimization. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-GAR-02](#s4-gar-02) | US-GAR-005 | Minimal historical meaning and rich-data minimization | Option A — a deliberately minimized Wardrobe-owned removed representation, with a separate mapping from live profiles. | APPROVED — 2026-11-16 | Product Owner with BA and privacy reviewer |
+| [S4-GAR-03](#s4-gar-03) | US-GAR-005 | Attached-media purge and retention enforcement | Option A — separate durable removal cleanup, sharing infrastructure patterns but not pending-media semantics. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and operations owner |
+| [S4-WAR-01](#s4-war-01) | US-WAR-003 | Searchable descriptors and Vietnamese matching semantics | Option B — the stated bounded descriptor set and literal substring semantics, subject to CAT-Q01 approval. | APPROVED — 2026-11-16 | Product Owner and BA with Backend Tech Lead |
+| [S4-WAR-02](#s4-war-02) | US-WAR-003 | Combined filters and complete bound SQL | Option B — a small catalogue of complete bound statements for the approved condition shapes. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-WAR-03](#s4-war-03) | US-WAR-003 | Filtered cursor continuity and concurrent current state | Option A — current keyset pages with criteria-bound cursors and explicit live-view semantics. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-WAR-04](#s4-war-04) | US-WAR-003 | Proportional search indexing and performance evidence | Option A — measured relational indexing first; retain trigram indexing as an evidence-driven option. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-PROF-01](#s4-prof-01) | US-PROF-002 | Supported optional information without an invented taxonomy | Option B — obtain explicit confirmation of supported optional meanings/choices before coding them; no new taxonomy is approved here. | APPROVED — 2026-11-16 | Product Owner and BA with privacy reviewer and Backend Tech Lead |
+| [S4-PROF-02](#s4-prof-02) | US-PROF-002 | Optional-context persistence and revision ownership | Option B — a separately revisioned optional-context resource within the existing Personal Context owner. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-PROF-03](#s4-prof-03) | US-PROF-002 | Presence-aware changes, explicit clearing and conflicts | Option A — reuse presence-aware absolute PATCH semantics and guarded first write for this resource. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-PROF-04](#s4-prof-04) | US-PROF-002 | Published optional context and purpose-limited future use | Option B — preserve the current published contract and keep optional-context access purpose-specific. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and privacy reviewer |
+| [S4-CTX-01](#s4-ctx-01) | US-CTX-001 | Manual and device-selected location representation | Option B — one minimal current selection with PO-reviewed precision and manual resolution. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead, Mobile and privacy reviewer |
+| [S4-CTX-02](#s4-ctx-02) | US-CTX-001 | Location persistence, revision and weather failure separation | Option B — independently revisioned current location, with provider evidence bound to that revision. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-03](#s4-ctx-03) | US-CTX-001 | Actual weather provider and semantic translation | Option A — evaluate Open-Meteo first, conditional on confirmed deployment eligibility, terms and actual integration evidence. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and operations owner |
+| [S4-CTX-04](#s4-ctx-04) | US-CTX-001 | Freshness, latest evidence and truthful stale handling | Option B — minimal latest evidence inside Personal Context, with on-demand refresh and no separate cache/history service. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-05](#s4-ctx-05) | US-CTX-001 | One acquisition deadline and explicit unavailable fallback | Option A — one bounded adapter attempt under a single elapsed deadline, with explicit unavailable outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-06](#s4-ctx-06) | US-CTX-001 | Current environmental basis and unavailable consumer evidence | Option A — authoritative current/unavailable facts and basis comparison, without speculative result invalidation infrastructure. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-04](#s4-gar-04) | US-GAR-006 | Provisional attachment eligibility and confirmation boundary | Option A — a narrow explicit confirmation of an existing imageless target and owned READY photo, after formal story approval. | APPROVED — 2026-11-16 | Product Owner and BA with Backend Tech Lead |
+| [S4-GAR-05](#s4-gar-05) | US-GAR-006 | Atomic association, revision scope and short locks | Option A — one meaningful garment revision plus short transactional locking and conditional stage consumption. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-06](#s4-gar-06) | US-GAR-006 | Photo availability evidence and shared lifecycle reuse | Option A — reuse validated READY evidence, with explicit private-read limitation and cleanup safety. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-01](#s4-bulk-01) | US-BULK-001 | Wardrobe coordination and single-item acceptance reuse | Option A — Wardrobe-owned coordination with a focused shared acceptance operation and explicit item transaction. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-BULK-02](#s4-bulk-02) | US-BULK-001 | Batch identity, durable review state and progress truth | Option B — a minimal durable Wardrobe batch/item model, contingent on approved lifecycle and resumption policy. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-03](#s4-bulk-03) | US-BULK-001 | Bounded item processing without an AI dependency | Option A — sequential staging initially, with independent item progress and manual review. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-04](#s4-bulk-04) | US-BULK-001 | Per-item acceptance versus reviewed atomic group save | Option A — independently confirmed per-item acceptance, with atomic item/garment/media/action effects. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-05](#s4-bulk-05) | US-BULK-001 | Batch and item action identity across retries | Option A — stable item identities and persistent per-item acceptance keys independent of queue order. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-BULK-06](#s4-bulk-06) | US-BULK-001 | Batch admission, resumability and draft retention policy | Option B — approve a finite composite admission and lifecycle policy before implementing its limits; leave numeric values unresolved here. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead, QA and operations owner |
+| [S4-BULK-07](#s4-bulk-07) | US-BULK-001 | Cancellation, in-flight acceptance and interrupted-batch recovery | Option B — an authoritative stop for remaining unaccepted work, preserving accepted items and exposing race outcomes. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-01](#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 14. Requirements Traceability
 
@@ -1902,7 +1904,7 @@ The following matrix preserves the five existing stories' source references; sta
 | US-WAR-003; [PBI-015](../../product-backlog.md#pbi-015--find-garments-through-wardrobe-search-and-filters); scoped outcome and dependencies | [BRD](../../../01-business/BRD.md): BR-005, CAP-03 | [PRD](../../../02-product/PRD.md): JRN-03, FEAT-WAR-003 | [SRS](../../../03-requirements/SRS.md): FR-WAR-001, FR-WAR-007, FR-WAR-008; DATA-GAR-005; UI-003, UI-004; ERR-NET-001; LOC-004 | [Business Rules](../../../03-requirements/business-rules.md): BRULE-AUTH-001, BRULE-GAR-004, BRULE-GAR-009 |
 | US-PROF-002; [PBI-010](../../product-backlog.md#pbi-010--set-and-revise-preferences-through-progressive-onboarding); scoped outcome and dependencies | [BRD](../../../01-business/BRD.md): BR-010, BR-012, CAP-01, CAP-06 | [PRD](../../../02-product/PRD.md): JRN-01, FEAT-PROF-001 | [SRS](../../../03-requirements/SRS.md): FR-PROF-005–FR-PROF-007; FR-AUTH-011; FR-PERS-010; DATA-AUTH-004; NFR-PRIV-001, NFR-PRIV-002 | [Business Rules](../../../03-requirements/business-rules.md): BRULE-PROF-001, BRULE-AUTH-007, BRULE-OUT-008 |
 | US-CTX-001; [PBI-011](../../product-backlog.md#pbi-011--choose-environmental-context-with-manual-and-limited-context-recovery); scoped outcome and dependencies | [BRD](../../../01-business/BRD.md): BR-007, BR-013, CAP-01, CAP-05 | [PRD](../../../02-product/PRD.md): JRN-01, JRN-04, FEAT-PROF-002 | [SRS](../../../03-requirements/SRS.md): FR-WEATHER-001–FR-WEATHER-005; SI-002, HW-003; ERR-WEATHER-001; COM-003 | [Business Rules](../../../03-requirements/business-rules.md): BRULE-PROF-003, BRULE-OUT-006, BRULE-COV-006, BRULE-MULT-008 |
-| US-GAR-006; **no assigned PBI** | [BRD](../../../01-business/BRD.md) BR-005/CAP-03 provide supporting Wardrobe context only; no exact approved attachment requirement found | No exact attachment feature/journey mapping approved; formal refinement required | [SRS](../../../03-requirements/SRS.md) DATA-GAR-004 and existing privacy/image requirements constrain the proposal; no exact attachment FR is claimed | [Business Rules](../../../03-requirements/business-rules.md): existing user-authority and private ownership constraints; no attachment-specific rule ID is invented |
+| US-GAR-006; **no assigned PBI** in 0.1. **Update 2026-11-17:** [PBI-049](../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment), [story](../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) | [BRD](../../../01-business/BRD.md) BR-005/CAP-03 provide supporting Wardrobe context only; no exact approved attachment requirement found | No exact attachment feature/journey mapping approved; formal refinement required. **Update 2026-11-17:** [PRD](../../../02-product/PRD.md#142-feat-war-002--edit-and-remove-garments) FEAT-WAR-002 behavior 7, AC-08–AC-09; JRN-03 step 4a | [SRS](../../../03-requirements/SRS.md) DATA-GAR-004 and existing privacy/image requirements constrain the proposal; no exact attachment FR is claimed | [Business Rules](../../../03-requirements/business-rules.md): existing user-authority and private ownership constraints; no attachment-specific rule ID is invented |
 | US-BULK-001; [PBI-048](../../product-backlog.md) — Section 6.1; no relative order selected | [BRD](../../../01-business/BRD.md): BR-031, BR-021, BR-022; CAP-15; BG-01 | [PRD](../../../02-product/PRD.md): FEAT-BULK-001; JRN-12 | [SRS](../../../03-requirements/SRS.md): FR-BULK-001, FR-BULK-002, FR-BULK-003, FR-BULK-004, FR-BULK-005, FR-BULK-006; DATA-BULK-001; FR-PERS-014 where feedback applies; NFR-PRIV-001/002; DATA-INT-004; relevant ERR/LOC/UI requirements | [Business Rules](../../../03-requirements/business-rules.md): BRULE-BULK-001/002; BRULE-GAR-001/002/005/006/010; BRULE-AUTH-001/007 |
 
 The `FR-PERS-014 where feedback applies` reference in the bulk source is conditional: this plan does not select a feedback producer or ranking behavior. Similarly, source collaborations describe relevant future outcomes, not invented hard dependencies.
@@ -1948,10 +1950,10 @@ The recommended implementation order is **GAR-005 → GAR-006 → WAR-003 → PR
 
 The major technical challenges are atomic current-membership and photo transitions, bounded physical deletion, preserved minimal history/action identity, criteria-correct live paging, sensitive-context absence/concurrency, actual weather freshness/deadline behavior and independent bulk recovery. The architecture remains the existing monolith, owner-specific PostgreSQL persistence, published local contracts and narrow private-storage/weather adapters. No cache, broker, new service, AI or outfit engine is introduced.
 
-**Thirty proposed decisions** compare viable alternatives. Key recommendations are guarded monotonic removal with separate durable cleanup; measured, safely bound descriptor/filter queries; separately revisioned optional/location state; actual translated weather under one deadline with explicit unavailable context; narrow atomic attachment from owned READY media; and Wardrobe-owned durable bulk items with independent acceptance, stable identities and bounded policy. All new recommendations await Product Owner approval with the named technical/privacy contributors.
+**Thirty proposed decisions** compare viable alternatives. Key recommendations are guarded monotonic removal with separate durable cleanup; measured, safely bound descriptor/filter queries; separately revisioned optional/location state; actual translated weather under one deadline with explicit unavailable context; narrow atomic attachment from owned READY media; and Wardrobe-owned durable bulk items with independent acceptance, stable identities and bounded policy. All 30 recommendations were approved by the Product Owner on 2026-11-16; at the time of version 0.1 all new recommendations awaited Product Owner approval with the named technical/privacy contributors.
 
-The main blockers are formal GAR-006 refinement/source mapping, CAT-Q01, supported optional-context representation, location/provider/privacy decisions, actual storage-deletion evidence and MVP-Q08 batch policy. Future advice/history/ranking consumers and integrated mobile evidence remain absent or outstanding; a backend subset cannot stand in for applicable whole-story AC. The source acceptance criteria are preserved, not reduced to make the Sprint appear complete.
+The main blockers were formal GAR-006 refinement/source mapping, CAT-Q01, supported optional-context representation, location/provider/privacy decisions, actual storage-deletion evidence and MVP-Q08 batch policy. **Update 2026-11-17:** GAR-006 now has a formal story and PBI-049; CAT-Q01, the optional-context values, location precision and the batch limits are settled by delegated defaults (OPEN-S4-11, 16, 18, 25), with Vietnamese descriptor search authorized by the Product Owner. Still open: PO acceptance of the GAR-006 AC and review of the delegated values, the Open-Meteo terms and a real request, storage-deletion evidence, measurements and client evidence. Future advice/history/ranking consumers and integrated mobile evidence remain absent or outstanding; a backend subset cannot stand in for applicable whole-story AC. The source acceptance criteria are preserved, not reduced to make the Sprint appear complete.
 
 Next, review the affected proposed decisions, resolve the necessary policy/access questions and perform focused JIT design for the next selected story alongside automated tests and implementation. Keep affected contracts/migrations/docs synchronized as delivered truth evolves, gather required real/client/CI evidence and report only Done work as part of the usable Increment. Do not require all six stories to finish detailed design before any selected story can progress.
 
-**Task boundary:** only this Sprint 4 plan is created. Product requirements, architecture selections, backlog order, story files, Sprint 1–3, source code, tests, migrations, OpenAPI, configuration and infrastructure remain unchanged. No implementation, commit, push, merge or pull request is performed.
+**Task boundary (version 0.1):** only this Sprint 4 plan is created. Product requirements, architecture selections, backlog order, story files, Sprint 1–3, source code, tests, migrations, OpenAPI, configuration and infrastructure remain unchanged. No implementation, commit, push, merge or pull request is performed.

@@ -9,7 +9,7 @@
 | Field | Value |
 | --- | --- |
 | Artifact | Delivery Decision Log |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Baseline Draft |
 | Product | CapsuleAI |
 | Primary Audience | Backend Developer / Development Team |
@@ -30,6 +30,7 @@
 | 0.1.8 | 2026-10-11 | Linked Data View v0.1 and recorded explicit human acceptance of all three preceding views; Data View review precedes ADRs. Navigation/status only; substantive baseline and historical revisions remain unchanged. |
 | 0.1.9 | 2026-10-20 | Synchronized process navigation with the 2026-10-20 workflow: Test Strategy and Engineering Baseline precede Sprint delivery; detailed design is JIT for selected Sprint work; standalone ADRs are optional for significant future evolution. Substantive product, architecture and quality baselines remain unchanged. |
 | 0.2 | 2026-11-09 | Propagated merged PR #4 / DD-007 into source-linked scope/story/interaction/architecture coverage; preserved original backlog order and architecture selections, distinguished historical preparation from implemented Sprint 1–2 and current refinement. |
+| 0.3 | 2026-11-17 | Added DD-008 for the Sprint 4 documentation synchronization (unranked PBI-049 for US-GAR-006; PO-authorized Vietnamese descriptor search). Existing entries unchanged. |
 
 ## 2. Purpose
 
@@ -142,6 +143,18 @@ QA, ASR and ADA drafts exist; [Selected Architecture Decisions](../04-architectu
 
 **Backend Developer Impact:** Persist Like/Dislike/Wear events with timestamps for engine use with no fixed weights, decay bands, or recency penalties. The PR #4 synchronization supplies BR-025–031, CAP-11–15, seven FEATs, FR-COM/CHAT/TRY/CAT/BULK, PBI-042–048, eight Draft Stories and UC/AD-024–031. AD-013 clarifies typed feedback. Their relevant open policy/feasibility questions remain in PRD Section 34.2; no Ready, API, schema, provider, relative order, Sprint commitment or implementation is selected.
 
+### DD-008 — Sprint 4 traceability: PBI-049 for US-GAR-006 and Vietnamese descriptor search
+
+**Status:** Active (2026-11-17)
+
+**Decision:** (a) The Sprint 4 story US-GAR-006, selected by the Product Owner without a parent PBI, gets the unranked [PBI-049](product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) and a formal Draft story file. Its acceptance criteria formalize the plan's six provisional expectations under the Product Owner's delegation and await PO acceptance. (b) Wardrobe search (US-WAR-003) matches Vietnamese search labels and aliases of the six searchable garment vocabularies, as explicitly authorized by the Product Owner on 2026-11-17. The alias wording is a delegated default kept in one canonical table.
+
+**Reason:** A selected story must trace to a backlog item, requirements and rules, not only to an implementation guide. Vietnamese users must be able to find garments by the words they use, without changing the canonical codes.
+
+**Authoritative Basis:** [Sprint 4 plan](sprints/sprint-04/sprint-plan.md) version 0.2 (30 decisions approved 2026-11-16); [OPEN-S4-09 and OPEN-S4-11](sprints/sprint-04/implementation-guides/open-questions.md); SRS FR-WAR-009, LOC-006 and Sections 3.6.2–3.6.3 and 4.10.2; BRULE-GAR-011; [canonical alias table](../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md).
+
+**Backend Developer Impact:** PBI-049 has no Section 5 order; Sprint selection is not a ranking. Implement attachment and search from the Sprint 4 guides. Keep `VietnameseDescriptorAliases` identical to the canonical table (test T10). Change the matching-policy tag whenever the matching rules or aliases change. Do not treat delegated values (aliases, optional-context vocabularies, bulk limits) as Product Owner-approved.
+
 ## 5. Superseded Decisions
 
 None currently.
@@ -154,4 +167,4 @@ The current synchronization adds unranked PBI-042–048 and eight Draft Stories 
 
 ## 7. Status
 
-**Version 0.2 — Baseline Draft.** Seven Active entries, no Superseded entries.
+**Version 0.3 — Baseline Draft.** Eight Active entries, no Superseded entries.

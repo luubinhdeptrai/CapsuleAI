@@ -1,18 +1,18 @@
-# US-GAR-006 — Attach a Photo to an Existing Garment (Provisional): Implementation Guide
+# US-GAR-006 — Attach a Photo to an Existing Imageless Garment: Implementation Guide
 
 | Field | Value |
 | --- | --- |
-| Story | **Provisional.** There is no story file and no parent PBI. The only source is [Sprint 4 plan §6.5](../sprint-plan.md#65-us-gar-006--attach-a-photo-to-an-existing-garment-provisional). |
+| Story | [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) (Draft, formalized 2026-11-17), parent [PBI-049](../../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment). Until 2026-11-17 the only source was [Sprint 4 plan §6.5](../sprint-plan.md#65-us-gar-006--attach-a-photo-to-an-existing-garment-provisional), whose provisional expectations the story's AC restate. |
 | Sprint | Sprint 4, story 2 of 6 in the [recommended order](README.md#6-implementation-sequence) |
 | Starting point | After [US-GAR-005](US-GAR-005-guide.md) P1–P23 and T1–T11 are applied |
 | Approved decisions applied | S4-GAR-04, S4-GAR-05, S4-GAR-06, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-07, 08, 09, 10, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
-| Acceptance criteria | **P-AC-01–P-AC-06 are provisional** names chosen under OPEN-S4-09. They are not approved story AC. Formal refinement and PBI mapping by the PO and BA remain outstanding. |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. |
+| Acceptance criteria | P-AC-01–P-AC-06 (named under OPEN-S4-09) correspond one to one to the story's AC-01–AC-06. **The AC are a delegated formalization of 2026-11-17 and have not been separately approved by the Product Owner;** PO acceptance is required before Done. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. |
 
 ## 1. Story Overview
 
-**Provisional story (plan §6.5, verbatim).** As an authenticated owner, I want to attach a permitted photo to an existing garment that currently has no photo, so that I can make my wardrobe visually recognizable without recreating that garment.
+**Story (plan §6.5 and the formal story, verbatim).** As an authenticated owner, I want to attach a permitted photo to an existing garment that currently has no photo, so that I can make my wardrobe visually recognizable without recreating that garment.
 
 **Backend outcome.**
 
@@ -56,7 +56,7 @@
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim, as updated by the documentation synchronization of 2026-11-17. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -68,23 +68,48 @@ From [BRD](../../../../01-business/BRD.md):
 |---|---|---|
 | CAP-03 | Wardrobe Management | Keep the wardrobe current and discoverable through maintenance, browsing, search, and filtering. |
 
-These provide **supporting Wardrobe context only**. No exact approved attachment business requirement exists ([plan §14.1](../sprint-plan.md#141-outcome-and-source-matrix)).
+These provide **supporting Wardrobe context**: BR-005's "changing" garments covers the outcome, and no attachment-specific business requirement was added ([plan §14.1](../sprint-plan.md#141-outcome-and-source-matrix)). The product, software, rule, story and Use Case sources below were added on 2026-11-17.
 
 ## 4. Original Product Requirements — Verbatim
 
-**None.** No PRD feature or journey maps to attaching a photo to an existing garment; the plan records that formal refinement is required. Nothing is quoted because nothing exists.
+From [PRD](../../../../02-product/PRD.md), added on 2026-11-17 during the Sprint 4 documentation synchronization. Before that date no PRD feature or journey mapped to this outcome.
+
+### 8.3 JRN-03 — Wardrobe Management (excerpt)
+
+   - 4a. *(Added 2026-11-17, US-GAR-006.)* The user can add a photo to a garment that has none, after previewing and confirming it.
+
+### 14.2 FEAT-WAR-002 — Edit and Remove Garments (excerpt)
+
+7. *(Added 2026-11-17, US-GAR-006.)* For a current garment that has no photo, allow the user to add one photo, captured or selected under the normal photo rules, preview it with the garment and explicitly confirm. The garment keeps its confirmed information; an existing photo is never replaced.
+
+- **AC-08** *(added 2026-11-17)*: After explicit confirmation, a garment without a photo shows the attached photo, with every confirmed property unchanged; cancelling leaves it unchanged.
+- **AC-09** *(added 2026-11-17)*: Attaching is refused, without any partial change, for a garment that already has a photo, a removed garment or a photo that is no longer usable; repeating the same confirmation does not attach twice.
+
+**Sprint 4 resolution (2026-11-17):** US-GAR-005 settles removal for the current increment ([SRS Section 3.6.1](../../../../03-requirements/SRS.md#361-garment-removal-rules)): removal confirms the garment version the user reviewed; repeating it reports "already removed"; only Category, Color and times remain for history; a repeated creation request never brings the garment back; the photo is deleted within 30 days. Behavior 7 and AC-08–AC-09 come from US-GAR-006 ([SRS Section 3.6.3](../../../../03-requirements/SRS.md#363-existing-garment-photo-attachment-rules)); its detailed acceptance criteria are a delegated formalization awaiting Product Owner acceptance. See Section 34.3.
 
 ## 5. Original Software Requirements — Verbatim
 
-From [SRS](../../../../03-requirements/SRS.md):
+From [SRS](../../../../03-requirements/SRS.md). FR-WAR-009 and Section 3.6.3 were added on 2026-11-17; the remaining rows are unchanged requirements that constrain the attachment.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
+| FR-WAR-009 | The system shall allow the owner to attach one validated, privately staged photo to a current owned garment that has no photo, through explicit confirmation of the target garment and its reviewed revision, as one indivisible change that preserves all confirmed properties, the creation time and the creation identity. It shall refuse a garment that already has a photo, a removed garment, another account's garment or photo and an unusable photo without any partial change, and repeating the same confirmation shall not create a second association or revision. | MVP | FEAT-WAR-002; BR-005, BR-001, BR-021; US-GAR-006 (Sprint 4 selection; added 2026-11-17) | T: eligible attachment, confirm/cancel, refusals, same-pair retry and races; I: unchanged properties. |
 | DATA-GAR-004 | The system shall associate available image/preview information with the appropriate draft or garment without requiring an image for manually saved entries. | MVP | FEAT-AI-001, FEAT-AI-002; BR-001, BR-002 | T: imageless and image entry. |
 | NFR-PRIV-001 | The system shall limit personal data to necessary functionality, authorized bounded outfit sharing, personalization, history/utilization, measurement, security and operational integrity, respecting omission/correction/removal/permission controls. Only an explicitly approved shared-outfit/creator/media projection may be available to its authorized audience; this grants no access to private wardrobe inventories, source images, purchase information, profile, feedback or history. No entire-wardrobe sharing, unrestricted third-party sharing or personal-data sale is permitted. Sharing audience, consent and publishable fields remain MVP-Q01, not inferred permission. | MVP | FEAT-AUTH-001, FEAT-COM-001/002, FEAT-CHAT-001, FEAT-TRY-001; BR-021, BR-025–BR-028 | I/T: permitted shared projection versus denied private operations; explicit sharing and account isolation; policy approval required before sharing stories are Ready. |
 | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
-DATA-GAR-004 and the privacy requirements **constrain** the proposal; no exact attachment FR is claimed.
+#### 3.6.3 Existing-Garment Photo Attachment Rules
+
+Added 2026-11-17 for [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and FR-WAR-009. The approved decisions S4-GAR-04–06 and S4-INT-01–03 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-07–10](open-questions.md#open-s4-07--attachment-command-transport-and-outcomes)). The story's acceptance criteria are a delegated formalization awaiting Product Owner acceptance.
+
+| Rule | Requirement |
+|---|---|
+| Eligibility | Only the owner's current garment without a photo can receive one; one photo per garment. Replacing or removing a photo and several photos per garment are not supported. |
+| Photo | A photo staged through the existing intake (Section 3.4.1 limits, normalization and private storage) that is ready, unexpired and not used by another garment. It is not analyzed again and no property is derived from it. |
+| Confirmation | Explicit confirmation with the reviewed garment revision. Cancelling changes nothing; the staged photo expires after 24 hours as usual. |
+| Atomicity | The photo is claimed and linked, and the garment revision advances once, in one indivisible change. Confirmed properties, creation time and creation identity are unchanged. |
+| Retry and conflicts | The same garment-and-photo confirmation repeated after a lost response returns the same result without a new revision. A competing accepted change (an edit, a removal, another attachment) is reported, never overwritten. |
+| Privacy and lifecycle | The photo is delivered only through the application to its owner. A missing stored photo is reported as a photo limitation while the garment stays readable. Pending-photo cleanup never removes an attached photo; removal deletes it under Section 3.6.1. |
 
 ## 6. Original Business Rules — Verbatim
 
@@ -108,34 +133,75 @@ Only an approved shared outfit/creator/media projection may be exposed to its au
 
 **Source:** FR-AUTH-008, NFR-PRIV-001, NFR-PRIV-002, SI-002, SI-003, COM-003, FR-MET-006, DATA-RET-001, DATA-RET-002, DATA-RET-003.
 
-The general user-authority and private-ownership rules above apply. **No attachment-specific rule ID exists or is invented.**
+### BRULE-GAR-011 — Existing-Garment Photo Attachment
+
+**Rule:** A current owned garment without a photo may receive exactly one photo, and only through the owner's explicit confirmation of that garment and a validated, privately staged photo that is ready, unexpired and unused. The attachment changes no confirmed property, creation time or creation identity, and it advances the garment's revision once, together with claiming the photo, as one indivisible change. A garment that already has a photo is never given another one or a replacement; a staged photo is consumed by at most one garment. A repeated identical confirmation has the same outcome and no further effect. A competing accepted change is reported rather than overwritten. Pending-photo cleanup never removes an attached photo; the garment's removal deletes it under BRULE-GAR-009. No property is derived from the photo.
+
+**Applies To:** maintenance of existing garments and private photo lifecycle (added 2026-11-17 for US-GAR-006; approved S4-GAR-04–06 and S4-INT-01–03; delegated OPEN-S4-07–10).
+
+**Source:** FR-WAR-009, DATA-GAR-004, DATA-INT-004, FR-AI-012, NFR-PRIV-001, NFR-PRIV-002.
+
+BRULE-GAR-011 was added on 2026-11-17. Before that date no attachment-specific rule existed, and the general user-authority and private-ownership rules above applied alone.
 
 ## 7. Original User Story and Acceptance Criteria — Verbatim
 
-From [Sprint 4 plan §6.5](../sprint-plan.md#65-us-gar-006--attach-a-photo-to-an-existing-garment-provisional) (the only source; there is no story file):
+From the formal story [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md), created on 2026-11-17. Its AC-01–AC-06 restate the six provisional expectations of [Sprint 4 plan §6.5](../sprint-plan.md#65-us-gar-006--attach-a-photo-to-an-existing-garment-provisional), which remain the original planning record. **They are a delegated formalization (OPEN-S4-09) and await Product Owner acceptance.** This guide's names P-AC-01–P-AC-06 correspond one to one to AC-01–AC-06.
 
-### 6.5 US-GAR-006 — Attach a photo to an existing garment (provisional)
+### 1. Story
 
-**Status: PROPOSED — PENDING FORMAL STORY REFINEMENT AND APPROVAL.** No formal story, PBI mapping or exact approved attachment requirement was found anywhere in the tracked repository. Selection authorizes planning this outcome; it does not approve its detailed AC or fabricate a source link.
+As an authenticated owner, I want to attach a permitted photo to an existing garment that currently has no photo, so that I can make my wardrobe visually recognizable without recreating that garment.
 
-> As an authenticated owner, I want to attach a permitted photo to an existing garment that currently has no photo, so that I can make my wardrobe visually recognizable without recreating that garment.
+### 3. Scope
 
-The following are **newly proposed expectations**, named for discussion rather than assigned approved AC IDs:
+- One photo for one existing garment of the owner that is **current** (not removed) and **has no photo**.
+- The photo is staged through the existing private photo intake ([US-GAR-003](../../../stories/garment/US-GAR-003-add-photo-supported-garment.md)): the same supported formats, size and dimension limits, normalization and private storage.
+- The owner reviews the staged photo and the target garment and explicitly confirms the attachment.
+- The attachment changes only the garment's photo. All 13 confirmed properties, the creation time and the creation identity stay unchanged.
 
-| Provisional expectation | Proposed bounded behavior requiring confirmation |
+### 4. Preconditions
+
+- The owner is authenticated with a usable session.
+- The selected garment is the owner's current garment without a photo.
+- The owner has a staged photo in the **ready** state that has not expired and has not been used for another garment. Staged photos expire after 24 hours, as for photo-supported creation.
+
+### 5. Acceptance Criteria
+
+Each criterion below corresponds to one provisional expectation of the Sprint 4 plan. The original provisional name is shown in brackets.
+
+#### AC-01 — Attach only to an eligible garment [Eligibility]
+
+Only the authenticated owner's current garment without a photo can receive a photo. A garment of another account cannot be found or changed. A removed garment answers that it is no longer current. A garment that already has a photo is refused, and its photo is never replaced. Attaching is never offered as a way to create a garment.
+
+#### AC-02 — Confirm or cancel deliberately [Confirm / cancel]
+
+The owner sees the staged photo and the target garment before confirming. Only an explicit confirmation attaches the photo; the request also carries the garment revision the owner reviewed. Cancelling before confirmation leaves the garment unchanged. The staged photo then follows the normal pending lifecycle and expires after 24 hours; reviewing it does not extend that time.
+
+#### AC-03 — Attach atomically without changing confirmed information [Atomicity / authority]
+
+An accepted attachment happens as one indivisible change: the staged photo is claimed, linked to exactly this garment and the garment's revision advances by one. Category, Color and all other confirmed properties, the creation time and the creation identity do not change. If any check fails, nothing is attached and the staged photo is not consumed.
+
+#### AC-04 — Recover from retries and uncertainty [Retry / uncertainty]
+
+When the owner repeats the same confirmation (the same garment and the same photo) after a lost response, the outcome is the same attached garment, without a second revision or a duplicate association. A different photo is never attached over an existing one. If another accepted change happened first (an edit, a removal or another attachment), the owner is told about the conflict and can review the current garment; the other change is not overwritten or undone.
+
+#### AC-05 — Keep photos private and report unavailability truthfully [Privacy / availability]
+
+The attached photo is delivered only through the application to its authenticated owner; there is no public link. If the stored photo becomes unavailable after an accepted attachment, the owner sees a truthful photo limitation, and the garment's other information stays readable.
+
+#### AC-06 — Stay consistent under cleanup and competing changes [Cleanup / races]
+
+Unclaimed, cancelled or expired staged photos are removed by the existing pending-photo cleanup. An attached photo is never removed by that cleanup. Competing attachments, an attachment against a removal, and an attachment against an edit each have one coherent outcome. A rejected attachment leaves no partial association. When the garment is later removed, its attached photo is deleted within the 30-day removal deadline of [US-GAR-005](../../../stories/garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md).
+
+### 6. Validation, Concurrency, Retry, Security and Recovery
+
+| Concern | Expected behavior |
 | --- | --- |
-| Eligibility | Only the authorized owner's current imageless garment is eligible. Wrong owner, removed garment and an already photographed garment cannot be silently changed. |
-| Confirm / cancel | Review a genuinely validated owned READY photo and identify the existing target. Only explicit confirmation attaches; pre-submit cancellation leaves the garment unchanged. |
-| Atomicity / authority | In one Wardrobe transaction, claim the still-usable photo and associate it with that exact garment under a current revision check. Preserve all 13 properties, original creation identity and time; increment the garment revision on an accepted association change. |
-| Retry / uncertainty | Same target/photo intent cannot duplicate or replace an association; lost responses permit outcome review/same-action retry. A competing accepted change is reported, not overwritten or undone. |
-| Privacy / availability | Application-authorized photo delivery only; no public URL. A missing object after acceptance produces a truthful photo limitation while available garment information remains readable. |
-| Cleanup / races | Unclaimed canceled/expired media uses existing pending cleanup; ATTACHED media is protected from it. Removal/attachment and competing attachments have coherent, testable outcomes; rejected attachment leaves no half-association. |
-
-**Backend responsibility.** Reuse staging, original image validation, normalized private storage, existing revision discipline and owner transaction ports. Acceptance changes database authority, not object contents; no additional upload or AI call is needed. The READY stage was already validated against original-input rules; it must not be reinterpreted as a new unvalidated image.
-
-**Client responsibility.** Offer attachment only where applicable, reuse permitted photo capture/library/manual continuity, preview and confirm the intended target, preserve cancellation and show uncertain/rejected/current state. Account switching cannot reuse another owner's pending upload.
-
-**Evidence/refinement.** Existing BR-005, DATA-GAR-004, privacy and photo rules constrain the proposal but do not constitute a specific approved attachment FR/UC/AD. Formal refinement must settle the target/confirmation/retry policy and PBI/source mapping before implementation of the provisional behavior. Prior Sprint 3 exclusion of existing-garment attachment remains historically correct; this is a newly selected extension, not retroactive approval. No replacement, multiple photos, AI analysis, attribute auto-update or new garment creation is included. No separate story file is created by this task.
+| Validation | Confirmation, the reviewed garment revision and the staged-photo identifier are required. A missing or malformed value is reported field by field before any garment or photo is looked up. |
+| Photo validity | The photo was validated when it was staged (format, 15 MB limit, 512-pixel shortest side, normalization). Attachment reuses that validated, normalized photo; it does not upload, decode or analyze it again. |
+| Concurrency | The garment is protected before the photo, the same order used by removal and bulk import (S4-INT-01). Two photos for one garment: one wins, the other is told the garment already has a photo. One photo for two garments: one wins, the other is told the photo is no longer usable. |
+| Retry | The natural outcome identifies the action: the same garment-and-photo pair already attached answers with the current garment and no new revision. No separate receipt is stored (S4-INT-02). |
+| Security | The owner comes from the authenticated session. Another account's garment or staged photo is indistinguishable from an unknown one. No photo bytes or identifiers are written to logs. |
+| Recovery | After a lost response, repeat the same confirmation or review the garment. After a conflict, reread the garment and the staged photo. A temporary failure changes nothing and can be retried. |
 
 ## 8. Original Use Cases, Flows and Architecture Decisions — Verbatim
 
@@ -150,22 +216,45 @@ The following are **newly proposed expectations**, named for discussion rather t
 
 ### 8.2 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-GAR-04](../sprint-plan.md#s4-gar-04) | US-GAR-006 | Provisional attachment eligibility and confirmation boundary | Option A — a narrow explicit confirmation of an existing imageless target and owned READY photo, after formal story approval. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with Backend Tech Lead |
-| [S4-GAR-05](../sprint-plan.md#s4-gar-05) | US-GAR-006 | Atomic association, revision scope and short locks | Option A — one meaningful garment revision plus short transactional locking and conditional stage consumption. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-GAR-06](../sprint-plan.md#s4-gar-06) | US-GAR-006 | Photo availability evidence and shared lifecycle reuse | Option A — reuse validated READY evidence, with explicit private-read limitation and cleanup safety. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-04](../sprint-plan.md#s4-gar-04) | US-GAR-006 | Provisional attachment eligibility and confirmation boundary | Option A — a narrow explicit confirmation of an existing imageless target and owned READY photo, after formal story approval. | APPROVED — 2026-11-16 | Product Owner and BA with Backend Tech Lead |
+| [S4-GAR-05](../sprint-plan.md#s4-gar-05) | US-GAR-006 | Atomic association, revision scope and short locks | Option A — one meaningful garment revision plus short transactional locking and conditional stage consumption. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-06](../sprint-plan.md#s4-gar-06) | US-GAR-006 | Photo availability evidence and shared lifecycle reuse | Option A — reuse validated READY evidence, with explicit private-read limitation and cleanup safety. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+
+### 8.3 [UC-009](../../../../03-requirements/use-cases/UC-009-edit-garment.md) — alternative flow A4 and exception flow E5 (added 2026-11-17)
+
+#### A4 — Attach a photo to an imageless garment (added 2026-11-17)
+
+At Main Step 1, for a current owned garment that has no photo:
+
+1. The User chooses to add a photo to the garment.
+2. The User captures or selects one photo. CapsuleAI validates and privately stages it under the same input rules as photo-supported creation (Section 3.4.1 of the SRS) and shows the staged photo.
+3. CapsuleAI shows the staged photo together with the target garment.
+4. The User explicitly confirms the attachment, or cancels (resume at A3: the garment stays unchanged and the staged photo expires under the normal 24-hour pending lifecycle).
+5. CapsuleAI links the photo to exactly this garment in one indivisible change. The garment's confirmed properties, creation time and creation identity are unchanged; its revision advances once.
+6. CapsuleAI shows the garment with its photo. Repeating the same confirmation after a lost response shows the same result without a second change.
+
+The photo is not analyzed and no property is derived from it. A garment that already has a photo is not offered this flow; replacing or removing a photo is not supported.
+
+#### E5 — Photo attachment refused or conflicting (added 2026-11-17)
+
+During A4:
+
+1. The garment already has a photo, was removed, or changed since the User reviewed it; or the staged photo is no longer usable (expired, cancelled or attached elsewhere).
+2. CapsuleAI attaches nothing, keeps the garment and its existing photo unchanged, and explains the current state.
+3. The User can review the garment, stage another photo or stop. Another User's garment or photo is never disclosed.
 
 ## 9. Engineering Interpretation
 
-The provisional expectations are named **P-AC-01–P-AC-06** under OPEN-S4-09. These are not approved AC identifiers.
+The provisional expectations are named **P-AC-01–P-AC-06** under OPEN-S4-09. Since 2026-11-17 each corresponds to the formal story's AC with the same number (P-AC-01 = AC-01, and so on). The AC are a delegated formalization awaiting PO acceptance.
 
-| Provisional criterion (plan §6.5 expectation) | Engineering meaning | Where |
+| Criterion (plan §6.5 expectation = story AC) | Engineering meaning | Where |
 | --- | --- | --- |
 | **P-AC-01** Eligibility | Only the authenticated owner's **current** garment **without a photo** is eligible. Another owner's garment gives `404`; a removed garment `410`; a photographed garment `409 GARMENT_ALREADY_HAS_PHOTO`. | P6, T3, T4 |
 | **P-AC-02** Confirm / cancel | `confirmed: true` and the reviewed `expectedRevision` are required, and the photo must be the owner's READY stage. Cancelling means not sending the request; the stage then keeps its unchanged `PT24H` TTL. | P6, T3, T4 |
@@ -1877,21 +1966,27 @@ Check 'M4 private photo delivery -> 200' ($photoStatus -eq '200')
 
 ## 15. Acceptance Criteria and Requirements-to-Test Matrices
 
-### 15.1 Provisional criteria to evidence
+### 15.1 Acceptance criteria to evidence
 
-| Provisional criterion | Evidence (planned) | Remaining |
+P-AC-0n is the story's AC-0n.
+
+| Criterion | Evidence (planned) | Remaining |
 | --- | --- | --- |
-| P-AC-01 Eligibility | T1; T3 `aRemovedGarmentIsNoLongerCurrent`, `anotherOwnersPhotoOrGarmentIsNotFound`, `aGarmentThatAlreadyHasAnotherPhoto…`; T4 equivalents | **Formal story approval** |
-| P-AC-02 Confirm / cancel | T3 `missingFieldsAreRejectedBeforeAnyLookup`; T4 `missingFields…`, `aCancelledPhotoCannotBeAttached` | Client preview, confirm and cancel |
-| P-AC-03 Atomicity / authority | T1; T3 `aConfirmedAttachment…`; T4 `attachingAReviewedPhoto…` (properties kept); T5 (no half-association) | — |
-| P-AC-04 Retry / uncertainty | T3 `repeatingTheSamePair…`; T4 `repeatingTheSameAttachment…`; T5 | Client outcome review |
-| P-AC-05 Privacy / availability | T4 `attachingAReviewedPhoto…` (private route), `aMissingObjectAfterAttachmentLimitsOnlyThePhoto` | — |
-| P-AC-06 Cleanup / races | T4 `pendingCleanupNeverTouchesAnAttachedPhoto`; T3 `anExpiredOrCancelledPhotoIsNotUsable`; T5 (all three races) | — |
+| P-AC-01 / AC-01 Eligibility | T1; T3 `aRemovedGarmentIsNoLongerCurrent`, `anotherOwnersPhotoOrGarmentIsNotFound`, `aGarmentThatAlreadyHasAnotherPhoto…`; T4 equivalents | **PO acceptance of the formalized AC** |
+| P-AC-02 / AC-02 Confirm / cancel | T3 `missingFieldsAreRejectedBeforeAnyLookup`; T4 `missingFields…`, `aCancelledPhotoCannotBeAttached` | Client preview, confirm and cancel |
+| P-AC-03 / AC-03 Atomicity / authority | T1; T3 `aConfirmedAttachment…`; T4 `attachingAReviewedPhoto…` (properties kept); T5 (no half-association) | — |
+| P-AC-04 / AC-04 Retry / uncertainty | T3 `repeatingTheSamePair…`; T4 `repeatingTheSameAttachment…`; T5 | Client outcome review |
+| P-AC-05 / AC-05 Privacy / availability | T4 `attachingAReviewedPhoto…` (private route), `aMissingObjectAfterAttachmentLimitsOnlyThePhoto` | — |
+| P-AC-06 / AC-06 Cleanup / races | T4 `pendingCleanupNeverTouchesAnAttachedPhoto`; T3 `anExpiredOrCancelledPhotoIsNotUsable`; T5 (all three races) | — |
 
 ### 15.2 Requirements to tests
 
-| Source (supporting only) | Tests |
+| Source | Tests |
 | --- | --- |
+| FR-WAR-009 and SRS §3.6.3 (added 2026-11-17) | T1, T3, T4, T5 |
+| BRULE-GAR-011 (added 2026-11-17) | T1, T3, T4, T5 |
+| PRD FEAT-WAR-002 AC-08/AC-09 (added 2026-11-17) | T4 |
+| UC-009 A4/E5 (added 2026-11-17) | T3, T4 |
 | BR-005 (maintain an accurate wardrobe) | T4 |
 | DATA-GAR-004 (garment media association) | T3, T4, T5 |
 | NFR-PRIV-001/002 | T4 (`anotherAccounts…`, private delivery) |
@@ -1900,7 +1995,7 @@ Check 'M4 private photo delivery -> 200' ($photoStatus -eq '200')
 
 ## 16. Definition of Done
 
-- [ ] **The PO and BA formally refine and approve US-GAR-006, with a PBI mapping.** Until then, this story cannot be Done. The provisional names P-AC-01–06 are replaced by the approved AC.
+- [ ] **The Product Owner accepts (or amends) the formalized AC-01–AC-06 of [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md).** The story file and its parent PBI-049 were created on 2026-11-17 under delegation; until the PO accepts the AC, this story cannot be Done.
 - [ ] P1–P13 and T1–T5 applied. `.\mvnw.cmd clean verify` passes, including `IdentityOpenApiContractIT`, `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest`.
 - [ ] CI on a PR to `sprint_04` finds 106 required reports with no failure or skip.
 - [ ] US-GAR-005 regression stays green: removal of an attached photo is purged by the cleanup worker (GAR-005 T11 covers photo-backed removal).
@@ -1926,4 +2021,4 @@ Check 'M4 private photo delivery -> 200' ($photoStatus -eq '200')
 - [ ] Exactly one revision increment per real attachment; none on replay.
 - [ ] No `PhotoStorage` call in the attachment path.
 - [ ] No migration; OpenAPI 0.13.0; 4 CI entries.
-- [ ] Every mention of acceptance criteria is labelled **provisional**.
+- [ ] Acceptance criteria are cited as the story's AC-01–AC-06 (P-AC-0n = AC-0n) and labelled as a delegated formalization awaiting PO acceptance.

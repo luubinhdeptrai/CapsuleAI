@@ -105,3 +105,15 @@ MVP-Q08, MVP-Q09 are maintained in [PRD Section 34.2](../../../02-product/PRD.md
 ## 11. Status
 
 **Draft.** PO/BA, Developers and QA review remains pending. Approved MVP scope does not mean this story is Ready, selected, implemented or Done.
+
+## 12. Sprint 4 Decision Record (2026-11-17)
+
+This record is appended on 2026-11-17 and does not change the story, scope or acceptance criteria above. The Product Owner selected this story for Sprint 4 and, on 2026-11-16, approved the [Sprint 4 decisions](../../sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register) listed below. Delegated details are `SELECTED BY CLAUDE — DELEGATED DEFAULT` and are not Product Owner approvals of the specific values. The implementation is proposed in the guide below and has not been applied to the repository; the status in Section 11 is unchanged.
+
+| Item | Record |
+| --- | --- |
+| Approved decisions | S4-BULK-01–07, S4-INT-01–03 |
+| Delegated details | OPEN-S4-25–33 |
+| MVP-Q08 (Section 10) | Provisionally settled for this story: at most 20 items per batch, 3 active batches per owner, a 7-day batch lifetime and a 300,000,000-byte aggregate ceiling; sequential staging; independent per-item acceptance; item cancellation, batch stop and resumption ([SRS Section 3.23.1](../../../03-requirements/SRS.md#3231-bulk-import-rules)). The 24-hour staged-photo expiry and 15,000,000-byte photo limit are unchanged. Approved S4-BULK-06 expects the numeric policy to be approved, so these limits need Product Owner review before release. MVP-Q09 is unaffected. |
+| Remaining evidence | Product Owner review of the limits; resource measurement with representative photos; client multiphoto selection, progress, resume and outcome review. |
+| Implementation guide | [US-BULK-001 guide](../../sprints/sprint-04/implementation-guides/US-BULK-001-guide.md) |

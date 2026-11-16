@@ -12,9 +12,10 @@
 | Level | User Goal |
 | Primary Actor | User |
 | Supporting Actors | None |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Baseline Draft |
 | Product revision | 2026-11-05: Approved taxonomy and optional Brand/purchase Price synchronized; goals, alternate/failure paths and ownership/retry semantics preserved. |
+| Sprint 4 revision | 2026-11-17: added alternative flow A4 and exception flow E5 for attaching a photo to an existing imageless garment ([US-GAR-006](../../06-scrum/stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md), FR-WAR-009, BRULE-GAR-011). The existing edit flows are unchanged. |
 
 Source authority: [BRD](../../01-business/BRD.md) defines business intent; [PRD](../../02-product/PRD.md) defines product behavior; [SRS](../SRS.md) and [Business Rules](../business-rules.md) constrain interaction; the [master Use Case Diagram](use-case-diagram.puml) defines this goal and its actors. The [workflow](../../../Initial%20files/CapsuleAI_Scrum_Development_Workflow.md) governs artifact ownership and sequencing.
 
@@ -68,6 +69,19 @@ At Main Step 5:
 1. The User cancels the proposed edit.
 2. CapsuleAI retains the previously accepted profile and dependent state.
 
+### A4 — Attach a photo to an imageless garment (added 2026-11-17)
+
+At Main Step 1, for a current owned garment that has no photo:
+
+1. The User chooses to add a photo to the garment.
+2. The User captures or selects one photo. CapsuleAI validates and privately stages it under the same input rules as photo-supported creation (Section 3.4.1 of the SRS) and shows the staged photo.
+3. CapsuleAI shows the staged photo together with the target garment.
+4. The User explicitly confirms the attachment, or cancels (resume at A3: the garment stays unchanged and the staged photo expires under the normal 24-hour pending lifecycle).
+5. CapsuleAI links the photo to exactly this garment in one indivisible change. The garment's confirmed properties, creation time and creation identity are unchanged; its revision advances once.
+6. CapsuleAI shows the garment with its photo. Repeating the same confirmation after a lost response shows the same result without a second change.
+
+The photo is not analyzed and no property is derived from it. A garment that already has a photo is not offered this flow; replacing or removing a photo is not supported.
+
 ## 8. Exception / Failure Flows
 
 ### E1 — Invalid or unconfirmed required information
@@ -98,6 +112,14 @@ At Main Step 1:
 1. CapsuleAI pauses protected interaction if access expires, is revoked or is not authorized for the affected information, and explains the need to authenticate again.
 2. The User can resume the appropriate goal after UC-002 establishes usable access. Protected information is not exposed or misrepresented as empty, and the interrupted request is not falsely reported as accepted.
 
+### E5 — Photo attachment refused or conflicting (added 2026-11-17)
+
+During A4:
+
+1. The garment already has a photo, was removed, or changed since the User reviewed it; or the staged photo is no longer usable (expired, cancelled or attached elsewhere).
+2. CapsuleAI attaches nothing, keeps the garment and its existing photo unchanged, and explains the current state.
+3. The User can review the garment, stage another photo or stop. Another User's garment or photo is never disclosed.
+
 ## 9. Success Postconditions
 
 - Accepted revised values are canonical and cannot be silently replaced by later automated output.
@@ -127,6 +149,7 @@ The following references constrain this interaction; detailed policy remains in 
 | `BRULE-GAR-006` | Consistency and unknown handling prevent invented compatibility. |
 | `BRULE-GAR-008` | Material uncertainty/provenance is not verification. |
 | `BRULE-GAR-009` | Only accepted edits change state and invalidate affected advice. |
+| `BRULE-GAR-011` | A current imageless garment may receive one photo through explicit confirmation, without any property change (A4, E5). |
 
 ## 12. Requirements Traceability
 
@@ -134,12 +157,12 @@ The following references constrain this interaction; detailed policy remains in 
 | --- | --- |
 | [Journeys](../../02-product/PRD.md) | `JRN-03` |
 | [Product Features](../../02-product/PRD.md) | `FEAT-WAR-002`, `FEAT-GAR-001` |
-| [Software Requirements — Functional](../SRS.md) | `FR-WAR-003`, `FR-WAR-006`, `FR-GAR-002`, `FR-GAR-003`, `FR-GAR-004`, `FR-GAR-005`, `FR-GAR-006`, `FR-GAR-007`, `FR-GAR-008`, `FR-GAR-009`, `FR-GAR-010`, `FR-GAR-011`, `FR-AUTH-008`; `FR-GAR-001`, `FR-GAR-012`, `FR-GAR-013` |
+| [Software Requirements — Functional](../SRS.md) | `FR-WAR-003`, `FR-WAR-009` (A4, E5), `FR-WAR-006`, `FR-GAR-002`, `FR-GAR-003`, `FR-GAR-004`, `FR-GAR-005`, `FR-GAR-006`, `FR-GAR-007`, `FR-GAR-008`, `FR-GAR-009`, `FR-GAR-010`, `FR-GAR-011`, `FR-AUTH-008`; `FR-GAR-001`, `FR-GAR-012`, `FR-GAR-013` |
 | [Software Requirements — Data](../SRS.md) | `DATA-GAR-002`, `DATA-GAR-003`, `DATA-GAR-005`, `DATA-INT-001`, `DATA-INT-004` |
 | [Software Requirements — Failure / Recovery](../SRS.md) | `ERR-GAR-001`, `ERR-GAR-002`, `ERR-ANL-002`, `ERR-AUTH-001`, `ERR-AUTH-003`, `ERR-NET-001` |
 | [Software Requirements — Interfaces](../SRS.md) | `UI-004`, `COM-001`, `COM-002` |
 | [Software Requirements — Quality / Localization](../SRS.md) | `LOC-001`, `LOC-002`, `NFR-USE-001`, `NFR-ACC-002`, `NFR-PRIV-001`, `NFR-PRIV-002` |
-| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-001`, `BRULE-GAR-002`, `BRULE-GAR-003`, `BRULE-GAR-004`, `BRULE-GAR-005`, `BRULE-GAR-006`, `BRULE-GAR-008`, `BRULE-GAR-009`, `BRULE-AUTH-007` |
+| [Business Rules](../business-rules.md) | `BRULE-AUTH-001`, `BRULE-GAR-001`, `BRULE-GAR-002`, `BRULE-GAR-003`, `BRULE-GAR-004`, `BRULE-GAR-005`, `BRULE-GAR-006`, `BRULE-GAR-008`, `BRULE-GAR-009`, `BRULE-GAR-011`, `BRULE-AUTH-007` |
 | [Business Requirements](../../01-business/BRD.md) | `BR-002`, `BR-003`, `BR-004`, `BR-005`, `BR-021`, `BR-022` |
 | [Capabilities](../../01-business/BRD.md) | `CAP-03`, `CAP-04` |
 

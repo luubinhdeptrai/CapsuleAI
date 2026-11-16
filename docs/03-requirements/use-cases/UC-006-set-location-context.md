@@ -177,3 +177,13 @@ The master diagram defines actor participation. This textual specification and t
 [Activity Diagram](../activity-diagrams/AD-006-set-location-context.puml)
 
 This diagram visualizes the established main, alternative, and failure flows of this Use Case; the textual specification remains the normative behavioral source.
+
+## 18. Sprint 4 Refinement (2026-11-17)
+
+The flows above are unchanged. On 2026-11-16 the Product Owner approved the Sprint 4 decisions named below; the delegated OPEN-S4 details complete them. They are summarized here so that this Use Case stays consistent with the [SRS](../SRS.md). Delegated values are not Product Owner approvals of the specific values. Nothing below is implemented yet.
+
+- **Story:** [US-CTX-001](../../06-scrum/stories/context/US-CTX-001-choose-location-and-recover-limited-context.md). **Decisions:** S4-CTX-01–06 (approved); [OPEN-S4-18–24](../../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-18--location-representation-precision-and-manual-resolution) (delegated).
+- **Selection:** one current location, from the device or a manual city list, stored only as a point rounded to two decimal places with its source and an optional label. Skipping sends nothing; clearing removes the selection. There is no continuous tracking or location history.
+- **Weather:** acquired from the intended provider, Open-Meteo, whose terms are **not yet verified**; only the rounded point is sent. Weather is current at age ≤30 minutes from the provider's observation time, inclusive. One acquisition may delay the User by at most 2 seconds in total.
+- **Fallback:** without usable current weather the User sees the selected location and "weather unavailable" with a reason (deadline exceeded, provider unavailable, invalid or stale provider data, selection changed, not configured). A late result for a changed selection is never shown as current ([SRS Section 3.3.1](../SRS.md#331-location-and-weather-rules)).
+- **Absent consumers:** recommendation reevaluation after a location change applies when a recommendation consumer exists; none exists in Sprint 4.

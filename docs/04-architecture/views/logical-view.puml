@@ -154,12 +154,20 @@ legend bottom
   Its lifecycle differs from functional history. A local event implies neither async nor durability.
   No universal Shared Kernel, dedicated cache or broker. Contexts are not service/deployment choices.
   Derived-result ownership does not select a permanent store; Clean realization is in Implementation View.
-  Current: Sprint 1-2 backend exists; refine candidates and open policies.
+  Current: Sprint 1-3 backend exists; Sprint 4 is planned, not implemented (ADD Section 16).
   Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.
   Future composition/compatibility/eligibility policy is deferred.
   No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
+
+note as Sprint4Planned
+  2026-11-17 - Sprint 4: PLANNED, NOT IMPLEMENTED (ADD Section 16).
+  Wardrobe: confirmed removal with minimal history, photo attachment to an imageless garment,
+  search with Vietnamese aliases, bulk import batches. Personal Context: optional Gender Context /
+  Body Shape, one current location, weather evidence from Open-Meteo (terms pending).
+  ADA-001-018 and AR-01-AR-08 unchanged; implemented baseline is Sprint 1-3 (V1-V11).
+end note
 
 @enduml

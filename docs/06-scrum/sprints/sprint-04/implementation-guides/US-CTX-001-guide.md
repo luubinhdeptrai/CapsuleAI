@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-CTX-01 to S4-CTX-06, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-18 to 24, 31, 32, 33 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
 | External status | **The Open-Meteo terms of use, attribution and eligibility for the actual deployment are not verified, and no real provider request has been made.** The request and response shapes follow the provider's public documentation (checked through Context7 on 2026-11-16) and must be confirmed by a real authorized request (§14 M7). |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. No real Open-Meteo request was made, and the 2-second deadline must be measured in the agreed environment. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. No real Open-Meteo request was made, and the 2-second deadline must be measured in the agreed environment. |
 
 ## 1. Story Overview
 
@@ -59,11 +59,11 @@
 | `PreferencesSchemaIT` | Exact `personal_context` table list (US-PROF-002 T9) | T14 adds the two new tables |
 | Migrations | V1–V13 | This guide adds **V14** |
 | OpenAPI | 0.15.0 | → 0.16.0 |
-| CI | 121 entries | +9 entries |
+| CI | 122 entries | +9 entries (131) |
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16. Paragraphs and lines dated 2026-11-17 were added to the sources by the Sprint 4 documentation synchronization.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -142,6 +142,8 @@ From [PRD](../../../../02-product/PRD.md):
 
 **Out of scope / deferred detail:** Provider choice, retrieval frequency, location precision, and weather validity thresholds are downstream. Continuous background tracking is not an MVP requirement.
 
+**Sprint 4 resolution (2026-11-17):** US-CTX-001 settles the details deferred above for the current increment ([SRS Section 3.3.1](../../../../03-requirements/SRS.md#331-location-and-weather-rules)): one current location from the device or a manual city list, stored only as a point rounded to two decimal places; no continuous tracking or history; Open-Meteo as the intended provider, whose terms are not yet verified; weather current at age ≤30 minutes from the provider's observation time; at most 2 seconds of waiting for weather; and an explicit unavailable state with a reason otherwise. See Section 34.3.
+
 ## 5. Original Software Requirements — Verbatim
 
 From [SRS](../../../../03-requirements/SRS.md):
@@ -164,6 +166,25 @@ From [SRS](../../../../03-requirements/SRS.md):
 |---|---|---|---|---|
 | COM-003 | The system shall limit external shopping interaction to explicitly chosen navigation without granting destinations unrestricted private wardrobe/profile/history access; external dependencies receive only the minimum information needed for their purpose. | MVP | FEAT-SHOP-002, FEAT-AUTH-001; BR-018, BR-021 | I/T: explicit handoff, provider-specific minimal exchanges and no unrelated personal-data disclosure. |
 
+Added to the [SRS](../../../../03-requirements/SRS.md) on 2026-11-17 by the Sprint 4 documentation synchronization (verbatim):
+
+#### 3.3.1 Location and Weather Rules
+
+Added 2026-11-17 for [US-CTX-001](../../../stories/context/US-CTX-001-choose-location-and-recover-limited-context.md). The approved decisions S4-CTX-01–06 (approved 2026-11-16) govern; the concrete values are delegated defaults ([OPEN-S4-18–24](open-questions.md#open-s4-18--location-representation-precision-and-manual-resolution)). These rules refine FR-WEATHER-001–FR-WEATHER-005 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| One current location | Each user has at most one current location selection, from the device or chosen manually, with its own revision. Skipping sends nothing; clearing removes the selection. |
+| Precision | Only a point rounded to two decimal places of latitude and longitude (about 1.1 km), its source (device or manual) and, for a manual choice, a label of at most 80 characters are stored and used. Exact device coordinates are not retained. |
+| Manual choice | A manual city is chosen in the client from a bundled reference list and sent as a rounded point with its label. The backend performs no geocoding. |
+| No tracking | No continuous or background location tracking and no location history: a new selection replaces the previous one. |
+| Provider | The intended weather provider is Open-Meteo (current conditions). Only the rounded point is sent to it. **The provider's terms and eligibility for the actual deployment are not yet verified.** Until they are, a deployment runs with weather disabled, which reports weather as not configured. |
+| Freshness | Weather is current when the provider's observation time is at most 30 minutes old, inclusive. An observation more than 5 minutes in the future is invalid. Older weather is refreshed before it is used as current; a newly fetched reading that is already older than 30 minutes is not current. Retrieval time and observation time are both kept. |
+| Deadline | One acquisition takes at most 2 seconds in total, including any wait for capacity, the connection, the response and its interpretation. |
+| Truthful state | The user sees the selected location and, separately, either current weather with its observation time, no selection, or weather unavailable with a reason: deadline exceeded, provider unavailable, invalid provider data, stale provider data, selection changed or not configured. No weather value is invented. |
+| Revision binding | Weather is bound to the location revision it was acquired for. A late result for a changed or cleared selection is never shown as current. |
+| Consumers | No advice, Coverage or Multiplier consumer exists in Sprint 4. FR-WEATHER-005's reevaluation obligation applies when such a consumer arrives. |
+
 ## 6. Original Business Rules — Verbatim
 
 From [Business Rules](../../../../03-requirements/business-rules.md):
@@ -177,6 +198,8 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 **Applies To:** context selection, recommendation, Coverage and Multiplier.
 
 **Source:** FR-WEATHER-001, FR-WEATHER-002, FR-WEATHER-003, FR-WEATHER-004, FR-WEATHER-005, SI-002, ERR-WEATHER-001.
+
+**Sprint 4 refinement (2026-11-17):** The "applicable retrieval/observation timestamp" is the provider's observation time, and the 30-minute boundary is inclusive. An observation more than 5 minutes in the future is invalid. The 2-second limit covers the whole acquisition, including any wait for capacity. A location is a point rounded to two decimal places with its source and an optional label; there is no continuous tracking or location history, and only the rounded point is sent to the weather provider. Weather is bound to the location revision it was acquired for. Open-Meteo is the intended provider, pending verification of its terms (approved S4-CTX-01–06; delegated OPEN-S4-18–24; SRS Section 3.3.1).
 
 ### BRULE-OUT-006 — Unavailable Environmental Context
 
@@ -527,18 +550,18 @@ stop
 
 ### 8.4 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-CTX-01](../sprint-plan.md#s4-ctx-01) | US-CTX-001 | Manual and device-selected location representation | Option B — one minimal current selection with PO-reviewed precision and manual resolution. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead, Mobile and privacy reviewer |
-| [S4-CTX-02](../sprint-plan.md#s4-ctx-02) | US-CTX-001 | Location persistence, revision and weather failure separation | Option B — independently revisioned current location, with provider evidence bound to that revision. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-03](../sprint-plan.md#s4-ctx-03) | US-CTX-001 | Actual weather provider and semantic translation | Option A — evaluate Open-Meteo first, conditional on confirmed deployment eligibility, terms and actual integration evidence. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and operations owner |
-| [S4-CTX-04](../sprint-plan.md#s4-ctx-04) | US-CTX-001 | Freshness, latest evidence and truthful stale handling | Option B — minimal latest evidence inside Personal Context, with on-demand refresh and no separate cache/history service. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-05](../sprint-plan.md#s4-ctx-05) | US-CTX-001 | One acquisition deadline and explicit unavailable fallback | Option A — one bounded adapter attempt under a single elapsed deadline, with explicit unavailable outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-CTX-06](../sprint-plan.md#s4-ctx-06) | US-CTX-001 | Current environmental basis and unavailable consumer evidence | Option A — authoritative current/unavailable facts and basis comparison, without speculative result invalidation infrastructure. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-01](../sprint-plan.md#s4-ctx-01) | US-CTX-001 | Manual and device-selected location representation | Option B — one minimal current selection with PO-reviewed precision and manual resolution. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead, Mobile and privacy reviewer |
+| [S4-CTX-02](../sprint-plan.md#s4-ctx-02) | US-CTX-001 | Location persistence, revision and weather failure separation | Option B — independently revisioned current location, with provider evidence bound to that revision. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-03](../sprint-plan.md#s4-ctx-03) | US-CTX-001 | Actual weather provider and semantic translation | Option A — evaluate Open-Meteo first, conditional on confirmed deployment eligibility, terms and actual integration evidence. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and operations owner |
+| [S4-CTX-04](../sprint-plan.md#s4-ctx-04) | US-CTX-001 | Freshness, latest evidence and truthful stale handling | Option B — minimal latest evidence inside Personal Context, with on-demand refresh and no separate cache/history service. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-05](../sprint-plan.md#s4-ctx-05) | US-CTX-001 | One acquisition deadline and explicit unavailable fallback | Option A — one bounded adapter attempt under a single elapsed deadline, with explicit unavailable outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-CTX-06](../sprint-plan.md#s4-ctx-06) | US-CTX-001 | Current environmental basis and unavailable consumer evidence | Option A — authoritative current/unavailable facts and basis comparison, without speculative result invalidation infrastructure. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 9. Engineering Interpretation
 
@@ -3061,7 +3084,7 @@ AFTER:
           }
 ```
 
-This brings the total to 130 required entries. `OpenMeteoWeatherProviderTest` runs as a unit test (Surefire) against an in-process HTTP server and needs no Docker.
+This brings the total to 131 required entries. `OpenMeteoWeatherProviderTest` runs as a unit test (Surefire) against an in-process HTTP server and needs no Docker.
 
 ## 13. Complete Automated Test Implementation
 
@@ -4511,7 +4534,7 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 ## 16. Definition of Done
 
 - [ ] P1–P33 and T1–T15 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `OptionalContextApiIT`, `PreferencesSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 130 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 131 required reports with no failure or skip.
 - [ ] **The Open-Meteo terms, attribution and eligibility for the deployment are reviewed.** Either M7 is recorded, or production runs with `enabled=false` and reports `NOT_CONFIGURED`.
 - [ ] **M8 deadline measurement recorded.** OPEN-S4-22 moves from `VERIFICATION PENDING` only with that evidence.
 - [ ] The AC-04 and AC-05 consumer gaps are recorded as outstanding and never reported as passing.
@@ -4542,5 +4565,5 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 - [ ] One elapsed deadline covers capacity wait, connection, headers, body and translation; there is no retry.
 - [ ] Every failure is an explicit `UNAVAILABLE` reason. No invented weather.
 - [ ] No coordinates, labels or URLs in logs. Integration tests never call the internet.
-- [ ] OpenAPI 0.16.0; 9 CI entries (total 130).
+- [ ] OpenAPI 0.16.0; 9 CI entries (total 131).
 - [ ] Open-Meteo terms, M7 and M8 are listed as outstanding until done.

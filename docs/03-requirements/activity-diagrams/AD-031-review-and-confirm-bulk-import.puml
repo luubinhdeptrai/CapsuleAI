@@ -5,6 +5,8 @@
 ' SRS: FR-BULK-001, FR-BULK-002, FR-BULK-003, FR-BULK-004, FR-BULK-005, FR-BULK-006; DATA-BULK-001.
 ' Business Rules: BRULE-BULK-001/002; BRULE-GAR-001/002/005/006/010; BRULE-AUTH-001/007.
 ' Open policy: MVP-Q08, MVP-Q09; PRD Section 34.2. No provider / owner allocation selected.
+' Sprint 4 refinement 2026-11-17: S4-BULK-01-07 approved 2026-11-16; MVP-Q08 resolved provisionally
+' for US-BULK-001 by delegated defaults OPEN-S4-25-30 (PRD Section 34.3, SRS Section 3.23.1). Not implemented.
 title AD-031 - Review and confirm bulk garment import
 skinparam monochrome true
 skinparam shadowing false
@@ -51,8 +53,11 @@ endif
 :Retain actual queue / accepted outcomes for further review;
 note right
   One item path is shown; repeat for chosen queue items.
-  Limits, resumption, processing and save atomicity are open.
-  No assumed partial-commit or whole-batch transaction model.
+  Sprint 4 (approved S4-BULK): photos are staged one at a time;
+  each item is accepted on its own, never as a whole-batch save;
+  the user can cancel an item, stop the batch or resume it later.
+  Delegated limits (PO review pending): 20 items, 3 active batches,
+  7-day batch lifetime, 300,000,000 bytes per batch.
   Upload / AI completion alone is never confirmation.
 end note
 

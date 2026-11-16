@@ -94,3 +94,16 @@ The removal/deletion policies are established. Detailed minimal-snapshot fields,
 ## 11. Status
 
 **Draft.** PO/BA and Developers/QA review is pending. No approval, formal readiness, estimate, Sprint assignment or implemented outcome is claimed. Necessary implementation-level design follows selection and remains Just-In-Time during Sprint execution.
+
+## 12. Sprint 4 Decision Record (2026-11-17)
+
+This record is appended on 2026-11-17 and does not change the story, scope or acceptance criteria above. The Product Owner selected this story for Sprint 4 and, on 2026-11-16, approved the [Sprint 4 decisions](../../sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register) listed below. Delegated details are `SELECTED BY CLAUDE — DELEGATED DEFAULT` and are not Product Owner approvals of the specific values. The implementation is proposed in the guide below and has not been applied to the repository; the status in Section 11 is unchanged.
+
+| Item | Record |
+| --- | --- |
+| Approved decisions | S4-GAR-01–03, S4-INT-01–03 |
+| Delegated details | OPEN-S4-01–06, OPEN-S4-31–33 |
+| Open refinement note (Section 10) | Settled for Sprint 4: only identity, owner, creation identity, Category, Color, provenance, times and revision remain; every other field and the photo record are purged at the first cleanup; the photo object is deleted within 30 days through a durable, retried cleanup obligation ([SRS Section 3.6.1](../../../03-requirements/SRS.md#361-garment-removal-rules)). |
+| Retry and resurrection | A repeated removal reports "already removed" with the original time; a replayed creation never recreates the garment (AC-06). |
+| Remaining evidence | Storage-versioning, object-lock, replication and backup evidence (OPEN-S4-05); client confirmation screens; future advice/Coverage/Multiplier consumers (AC-02, AC-03) do not exist yet. |
+| Implementation guide | [US-GAR-005 guide](../../sprints/sprint-04/implementation-guides/US-GAR-005-guide.md) |

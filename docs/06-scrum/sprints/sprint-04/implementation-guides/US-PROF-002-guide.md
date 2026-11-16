@@ -7,7 +7,7 @@
 | Starting point | After US-GAR-005, US-GAR-006 and US-WAR-003 |
 | Approved decisions applied | S4-PROF-01, S4-PROF-02, S4-PROF-03, S4-PROF-04, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-16 (**newly selected values**), OPEN-S4-17, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. An inclusive-representation and privacy review of the selected values is strongly advised before release. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. An inclusive-representation and privacy review of the selected values is strongly advised before release. |
 
 ## 1. Story Overview
 
@@ -51,11 +51,11 @@
 | `PersonalContextIntegrationTestSupport` | Truncates the three V11 tables | T5 adds the new table and helpers |
 | Migrations | V1–V12 | This guide adds **V13** |
 | OpenAPI | 0.14.0; tag `PersonalContext` "own declared preferences" | → 0.15.0 |
-| CI | 115 entries | +6 entries |
+| CI | 116 entries | +6 entries (122) |
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16. Paragraphs and lines dated 2026-11-17 were added to the sources by the Sprint 4 documentation synchronization.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -124,6 +124,8 @@ From [PRD](../../../../02-product/PRD.md):
 
 **Out of scope / deferred detail:** Initial vocabularies and onboarding progression are resolved in Sections 11.3 and 8.1. Detailed compatibility semantics, need weighting, translated content design, and internal profile representation are downstream. Body measurement, inferred gender, and restrictive eligibility are outside scope.
 
+**Sprint 4 resolution (2026-11-17):** US-PROF-002 settles the optional personal context for the current increment. Gender Context and Body Shape are each optional and chosen from small controlled vocabularies with Vietnamese labels ([SRS Section 4.10.1](../../../../03-requirements/SRS.md#4101-optional-personal-context-vocabularies)); absence means "not provided". The user can set, change or clear each value at any time; clearing makes it absent, never replaced by an inferred value. Values are never inferred, never restrict a garment category and are not used by any consumer yet. The approved decisions S4-PROF-01–04 govern; the vocabulary values are delegated defaults (OPEN-S4-16) awaiting an inclusive-representation review. See Section 34.3.
+
 ## 5. Original Software Requirements — Verbatim
 
 From [SRS](../../../../03-requirements/SRS.md):
@@ -139,6 +141,56 @@ From [SRS](../../../../03-requirements/SRS.md):
 | NFR-PRIV-001 | The system shall limit personal data to necessary functionality, authorized bounded outfit sharing, personalization, history/utilization, measurement, security and operational integrity, respecting omission/correction/removal/permission controls. Only an explicitly approved shared-outfit/creator/media projection may be available to its authorized audience; this grants no access to private wardrobe inventories, source images, purchase information, profile, feedback or history. No entire-wardrobe sharing, unrestricted third-party sharing or personal-data sale is permitted. Sharing audience, consent and publishable fields remain MVP-Q01, not inferred permission. | MVP | FEAT-AUTH-001, FEAT-COM-001/002, FEAT-CHAT-001, FEAT-TRY-001; BR-021, BR-025–BR-028 | I/T: permitted shared projection versus denied private operations; explicit sharing and account isolation; policy approval required before sharing stories are Ready. |
 | NFR-PRIV-002 | The MVP shall not use personal wardrobe images, profiles, Wear Events, feedback or corrections for AI model training/improvement; any future use requires separate explicit opt-in and an approved future product/privacy change, and external navigation does not grant unrestricted sharing consent. | MVP | FEAT-AUTH-001, FEAT-AI-002, FEAT-MET-001, FEAT-SHOP-002; BR-002, BR-018, BR-021 | I: complete MVP data-use boundary and future opt-in/change control; private data absent from training/improvement inputs. |
 
+Added to the [SRS](../../../../03-requirements/SRS.md) on 2026-11-17 by the Sprint 4 documentation synchronization (verbatim):
+
+#### 3.2.1 Optional Personal Context Rules
+
+Added 2026-11-17 for [US-PROF-002](../../../stories/profile/US-PROF-002-control-optional-personal-context.md). The approved decisions S4-PROF-01–04 ([Sprint 4 plan](../sprint-plan.md#13-consolidated-decision-register), approved 2026-11-16) govern. The vocabulary values are delegated defaults ([OPEN-S4-16](open-questions.md#open-s4-16--optional-genderbody-vocabulary), [OPEN-S4-17](open-questions.md#open-s4-17--optional-context-resource-persistence-and-clearing)). These rules refine FR-PROF-005–FR-PROF-007 and DATA-AUTH-004 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Vocabularies | Gender Context and Body Shape are each optional and single-valued, chosen only from the exact codes in Section 4.10.1. No free text, measurement (height, weight, size) or other numeric body data is collected. |
+| Absence | Absence means "not provided". There is no separate "prefer not to say" code: leaving a value empty or clearing it expresses that choice. |
+| Declared only | Values are only ever declared by the user. They are never inferred from photos, garments, names, devices or behavior, and one is never derived from the other. |
+| Separate record | Optional context is kept apart from style preferences and common needs, with its own revision. A change based on a stale revision is refused; a request that changes nothing creates no new revision. |
+| Change and clearing | Each value can be set, changed or cleared independently. An omitted value is kept; a cleared value becomes absent for every later read, and no copy of it remains as current context. |
+| No restriction | No value restricts a garment category, a garment addition, account access or any validity rule. |
+| Permitted use | Values may be used only as personalization input for the owner's own future advice, once an approved consumer exists. In Sprint 4 no consumer exists: the values are stored and shown to their owner only. They are never sent to an external provider, written to logs, shared, published to other modules or used for AI training. |
+| Privacy | The values are sensitive personal context. They are shown only to their authenticated owner and follow the existing account retention rules. |
+
+#### 4.10.1 Optional Personal Context Vocabularies
+
+Added 2026-11-17 for [US-PROF-002](../../../stories/profile/US-PROF-002-control-optional-personal-context.md) (approved decision S4-PROF-01). **Decision authority:** the values below are `SELECTED BY CLAUDE — DELEGATED DEFAULT` under [OPEN-S4-16](open-questions.md#open-s4-16--optional-genderbody-vocabulary). They are new: no earlier source defined them, and the Product Owner has not approved the individual values. An inclusive-representation and privacy review of the values and their Vietnamese labels is advised before release. The Vietnamese labels are proposed display labels; the client owns the final wording (LOC-002).
+
+**Gender Context** — how the user describes their gender, if they choose to:
+
+| Code | English meaning | Proposed Vietnamese label |
+|---|---|---|
+| `WOMAN` | Woman | Nữ |
+| `MAN` | Man | Nam |
+| `NON_BINARY` | Non-binary | Phi nhị nguyên giới |
+| `ANOTHER_GENDER` | Another gender, not listed | Giới tính khác |
+
+**Body Shape** — a general geometric silhouette the user may choose to describe themselves with. It is not a measurement and implies no judgment:
+
+| Code | English meaning | Proposed Vietnamese label |
+|---|---|---|
+| `RECTANGLE` | Shoulders, waist and hips of similar width | Dáng chữ nhật |
+| `TRIANGLE` | Hips wider than shoulders | Dáng tam giác |
+| `INVERTED_TRIANGLE` | Shoulders wider than hips | Dáng tam giác ngược |
+| `HOURGLASS` | Shoulders and hips of similar width, with a narrower waist | Dáng đồng hồ cát |
+| `ROUND` | Fuller midsection relative to shoulders and hips | Dáng tròn |
+
+Both vocabularies follow Section 3.2.1:
+
+- **Optionality:** each is optional and single-valued; absence means "not provided".
+- **Validation:** only these exact upper-case codes are accepted; anything else is refused field by field.
+- **Clearing:** a cleared value becomes absent; it is not replaced by an inferred or default value.
+- **Privacy:** declared, sensitive context, shown only to its owner, never inferred from images and never shared or used for training.
+- **Permitted usage:** personalization input for the owner's own future advice once a consumer exists; no consumer exists in Sprint 4.
+- **No garment restriction:** no value makes any garment category, garment or outfit unavailable.
+- **Independence:** Gender Context and Body Shape are separate concepts; neither is derived from the other.
+
 ## 6. Original Business Rules — Verbatim
 
 From [Business Rules](../../../../03-requirements/business-rules.md):
@@ -150,6 +202,8 @@ From [Business Rules](../../../../03-requirements/business-rules.md):
 **Applies To:** onboarding, profile revision, recommendation and candidate ranking.
 
 **Source:** FR-AUTH-011, FR-PROF-005, FR-PROF-006, FR-PROF-007, FR-PERS-010, DATA-AUTH-004.
+
+**Sprint 4 refinement (2026-11-17):** Gender Context and Body Shape use the controlled optional vocabularies of [SRS Section 4.10.1](../../../../03-requirements/SRS.md#4101-optional-personal-context-vocabularies). Those values are delegated defaults (OPEN-S4-16), not Product Owner-approved values. Absence means "not provided"; there is no separate "prefer not to say" value. Values are only declared, never inferred, and neither is derived from the other. Optional context has its own revision, separate from style preferences and common needs. No consumer uses it in Sprint 4, so it has no ranking effect yet (approved S4-PROF-01–04; SRS Section 3.2.1).
 
 ### BRULE-AUTH-007 — Purpose-Limited Private Data Use
 
@@ -377,16 +431,16 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ### 8.3 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-PROF-01](../sprint-plan.md#s4-prof-01) | US-PROF-002 | Supported optional information without an invented taxonomy | Option B — obtain explicit confirmation of supported optional meanings/choices before coding them; no new taxonomy is approved here. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with privacy reviewer and Backend Tech Lead |
-| [S4-PROF-02](../sprint-plan.md#s4-prof-02) | US-PROF-002 | Optional-context persistence and revision ownership | Option B — a separately revisioned optional-context resource within the existing Personal Context owner. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-PROF-03](../sprint-plan.md#s4-prof-03) | US-PROF-002 | Presence-aware changes, explicit clearing and conflicts | Option A — reuse presence-aware absolute PATCH semantics and guarded first write for this resource. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-PROF-04](../sprint-plan.md#s4-prof-04) | US-PROF-002 | Published optional context and purpose-limited future use | Option B — preserve the current published contract and keep optional-context access purpose-specific. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and privacy reviewer |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-PROF-01](../sprint-plan.md#s4-prof-01) | US-PROF-002 | Supported optional information without an invented taxonomy | Option B — obtain explicit confirmation of supported optional meanings/choices before coding them; no new taxonomy is approved here. | APPROVED — 2026-11-16 | Product Owner and BA with privacy reviewer and Backend Tech Lead |
+| [S4-PROF-02](../sprint-plan.md#s4-prof-02) | US-PROF-002 | Optional-context persistence and revision ownership | Option B — a separately revisioned optional-context resource within the existing Personal Context owner. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-PROF-03](../sprint-plan.md#s4-prof-03) | US-PROF-002 | Presence-aware changes, explicit clearing and conflicts | Option A — reuse presence-aware absolute PATCH semantics and guarded first write for this resource. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-PROF-04](../sprint-plan.md#s4-prof-04) | US-PROF-002 | Published optional context and purpose-limited future use | Option B — preserve the current published contract and keep optional-context access purpose-specific. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and privacy reviewer |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 9. Engineering Interpretation
 
@@ -1653,7 +1707,7 @@ AFTER:
           }
 ```
 
-This brings the total to 121 required entries. That is six new classes; `PersonalContextIntegrationTestSupport` is support code, not a report.
+This brings the total to 122 required entries. That is six new classes; `PersonalContextIntegrationTestSupport` is support code, not a report.
 
 ## 13. Complete Automated Test Implementation
 
@@ -2491,7 +2545,7 @@ Check 'M6 preferences untouched (still undeclared)' ($null -eq $prefs.Json.revis
 ## 16. Definition of Done
 
 - [ ] P1–P22 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `CurrentPersonalContextIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 121 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 122 required reports with no failure or skip.
 - [ ] **Inclusive-representation and privacy review of `GenderContextCode` and `BodyShapeCode` and their client labels (OPEN-S4-16).** Any change goes through a new migration plus the enum and OpenAPI.
 - [ ] The AC-03/AC-04 consumer gap is recorded as untriggered or outstanding; it is never reported as passing.
 - [ ] Client evidence: skip, initial and later entry, clear, cancel, uncertain review, account switch, Vietnamese and accessibility.

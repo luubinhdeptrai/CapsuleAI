@@ -5,7 +5,7 @@
 | Applies to | [US-GAR-005](US-GAR-005-guide.md), [US-GAR-006](US-GAR-006-guide.md), [US-WAR-003](US-WAR-003-guide.md), [US-PROF-002](US-PROF-002-guide.md), [US-CTX-001](US-CTX-001-guide.md), [US-BULK-001](US-BULK-001-guide.md) |
 | Repository baseline | `sprint_04` at `33c579c` |
 | Decisions | S4-INT-01, S4-INT-02, S4-INT-03 (approved by the Product Owner on 2026-11-16) and OPEN-S4-31–33 (delegated defaults, [record](open-questions.md)) |
-| Verification status | **Proposed design, not implemented in the repository.** The six guides that realize it compiled and passed `clean verify` in an isolated scratch copy on 2026-11-16 ([README §11](README.md#11-status)). |
+| Verification status | **Proposed design, not implemented in the repository.** The six guides that realize it compiled and passed `clean verify` in an isolated scratch copy, most recently on 2026-11-17 after the Vietnamese search refinement ([README §11](README.md#11-status)). |
 
 ## 1. Purpose
 
@@ -82,7 +82,7 @@ New code stays inside the owning module and follows the existing `domain` / `app
 | Module | Package | New in Sprint 4 |
 | --- | --- | --- |
 | Wardrobe | `domain` | `RemovedGarment`; `BulkImportBatch`, `BulkImportItem` and their status enums |
-| Wardrobe | `application` | `RemoveGarmentService`, `GarmentRemovalCleanupService`, `AttachGarmentPhotoService`, `SearchWardrobeService`, `DescriptorMatcher`, `GarmentAcceptance`, `BulkImportService`, `AcceptBulkImportItemService`, plus commands, outcomes and exceptions |
+| Wardrobe | `application` | `RemoveGarmentService`, `GarmentRemovalCleanupService`, `AttachGarmentPhotoService`, `SearchWardrobeService`, `DescriptorMatcher`, `VietnameseDescriptorAliases`, `GarmentAcceptance`, `BulkImportService`, `AcceptBulkImportItemService`, plus commands, outcomes and exceptions |
 | Wardrobe | `application.ports` | `GarmentRemovalRepository`, `GarmentPhotoAttachmentRepository`, `WardrobeSearchRepository`, `BulkImportRepository` |
 | Wardrobe | `adapter.out.persistence` | `JdbcGarmentRemovalRepository`, `JdbcGarmentPhotoAttachmentRepository`, `SearchStatementCatalogue`, `JdbcWardrobeSearchRepository`, `JdbcBulkImportRepository` |
 | Wardrobe | `adapter.in.web` | removal, attachment, search and bulk request/response records; `WardrobeBulkImportController` |
@@ -149,7 +149,7 @@ flowchart LR
 | Garment creation (existing) | `(owner, creation_key)` + fingerprint | `200` with the current garment; **`410` if it was removed since** (OPEN-S4-03) | `422 IDEMPOTENCY_KEY_REUSED` |
 | Removal (GAR-005) | Monotonic `removed_at` on the owner's garment | `200 ALREADY_REMOVED` with the original `removedAt` | — (removal has no payload beyond the revision) |
 | Attachment (GAR-006) | The pair: photo row ATTACHED with `garment_id = target` | `200` with the current garment, no new revision | A different photo on a photographed garment gives `409 GARMENT_ALREADY_HAS_PHOTO` |
-| Search (WAR-003) | Read-only | Same page for the same cursor while membership is unchanged | A changed condition with an old cursor gives `400 CONDITIONS_CHANGED` |
+| Search (WAR-003) | Read-only | Same page for the same cursor while membership is unchanged | A changed condition with an old cursor gives `400 CONDITIONS_CHANGED`; so does a cursor issued under an earlier matching policy (`m1`), because the Vietnamese aliases (policy `m2`) change what a phrase matches |
 | Optional context and location (PROF-002, CTX-001) | Absolute values + revision | Reread. A stale revision gives `409`; the client reviews and resubmits. | — |
 | Bulk batch creation (BULK-001) | `(owner, creation_key)` + fingerprint of `itemCount` | `200` with the same batch | `422 IDEMPOTENCY_KEY_REUSED` |
 | Bulk item acceptance (BULK-001) | Item `ACCEPTED` + its acceptance key used as the garment creation key | `200` with the item already accepted, even after its garment was removed (`garmentCurrent: false`) | `409 BULK_IMPORT_CLOSED` (the item's outcome is final) |
@@ -267,6 +267,7 @@ Never log any of these:
 - garment values;
 - photo object keys combined with user identifiers;
 - optional gender/body values;
+- search phrases (`q`), including Vietnamese descriptor text;
 - coordinates, location labels or provider URLs with query strings;
 - tokens.
 
@@ -294,7 +295,9 @@ Existing classes keep their current field names when a guide only patches a meth
 | Removal cleanup job running in the deployment; overdue warnings monitored | GAR-005 | Operations | Unverified |
 | Open-Meteo terms of use, attribution and eligibility for the actual deployment | CTX-001 | PO + operations | **Unverified** |
 | One real authorized Open-Meteo request; measured 2-second behavior in the agreed environment | CTX-001 | Developers + QA | Unverified |
-| Inclusive-representation review of the optional gender/body values | PROF-002 | PO + privacy reviewer | Advised |
-| Formal US-GAR-006 story and PBI mapping | GAR-006 | PO + BA | Outstanding |
+| Inclusive-representation review of the optional gender/body values (approved S4-PROF-01 expects explicit confirmation of the choices) | PROF-002 | PO + privacy reviewer | Advised before release |
+| Review of the Vietnamese search-alias wording ([canonical table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md)) | WAR-003 | PO or native-speaker reviewer | Advised |
+| Product Owner review of the bulk limits (approved S4-BULK-06 expects the numeric policy to be approved) | BULK-001 | PO | Advised before release |
+| PO acceptance of the formalized US-GAR-006 AC; the [story](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and [PBI-049](../../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) were created on 2026-11-17 | GAR-006 | PO + BA | Outstanding |
 | Mobile evidence for all six stories, in Vietnamese, with accessibility | All | Mobile + QA | Outstanding |
 | Real consumers for removal, optional context and environment (advice, Coverage, Multiplier, history) | GAR-005, PROF-002, CTX-001 | Future stories | Absent |

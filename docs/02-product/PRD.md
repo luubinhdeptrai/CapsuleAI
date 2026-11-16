@@ -8,9 +8,9 @@
 |---|---|
 | Document Name | CapsuleAI — Product Requirements Document |
 | Product | CapsuleAI |
-| Version | 0.6 |
+| Version | 0.7 |
 | Status | Baseline Draft |
-| Last Updated | 2026-11-09 |
+| Last Updated | 2026-11-17 |
 | Primary Owner | Product Owner / Product |
 | Approval Authority | Product Owner / Product Decision Authority |
 | Reviewers | Business Analyst, UX/Product Design, Tech Lead, AI/ML Engineering, QA/Testing |
@@ -64,6 +64,7 @@ Conflict precedence is: explicit BRD decisions; explicit later CapsuleAI decisio
 | 0.4 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. | Baseline Draft |
 | 0.5 | 2026-11-07 | Product Owner decisions: OPQ-013 resolved (Brand and Price validation); multiple Styles (OPQ-016); Tanks & Camis spelling (OPQ-017); paged wardrobe overview (OPQ-018); obsolete compatibility-readiness wording removed from FEAT-WAR-001. Existing IDs retained. | Baseline Draft |
 | 0.6 | 2026-11-09 | Propagated approved PR #4 / DD-007 into seven feature specifications, journeys, states, privacy boundaries and traceability; removed superseded ranking obligations and recorded unapproved policy questions separately. | Baseline Draft |
+| 0.7 | 2026-11-17 | Sprint 4 documentation synchronization: dated resolution notes on FEAT-PROF-001, FEAT-PROF-002, FEAT-WAR-002, FEAT-WAR-003 and FEAT-BULK-001; FEAT-WAR-002 behavior 7 and AC-08–AC-09 for attaching a photo to an existing garment (US-GAR-006); JRN-03 step 4a; new Section 34.3. Delegated details are labeled as such. Existing feature text and IDs are unchanged. | Baseline Draft |
 
 ### 1.4 Artifact Boundary
 
@@ -247,6 +248,7 @@ A prediction can still require correction even when usable. Only the user's conf
 2. Garment detail presents confirmed information and recorded utilization without implying observed physical wear.
 3. The user edits inaccurate or changed information and confirms the revision.
 4. The user can remove a garment through an explicit, understandable removal action.
+   - 4a. *(Added 2026-11-17, US-GAR-006.)* The user can add a photo to a garment that has none, after previewing and confirming it.
 5. Subsequent recommendations and assessments reflect the current confirmed wardrobe; removed garments cannot remain selectable as owned items.
 
 **Recovery:** Empty wardrobes prompt Add Garment; no search results offer changes to the search/filter; failed edits/removals retain a clear unconfirmed state and retry. Historical Wear Events/outfit records preserve understandable snapshots, labeling a removed garment “Removed from wardrobe” rather than treating it as currently owned. **Features:** FEAT-WAR-001–FEAT-WAR-003, FEAT-ANL-001.
@@ -461,6 +463,8 @@ All feature behavior is governed by the cross-cutting states, explainability, pr
 
 **Out of scope / deferred detail:** Initial vocabularies and onboarding progression are resolved in Sections 11.3 and 8.1. Detailed compatibility semantics, need weighting, translated content design, and internal profile representation are downstream. Body measurement, inferred gender, and restrictive eligibility are outside scope.
 
+**Sprint 4 resolution (2026-11-17):** US-PROF-002 settles the optional personal context for the current increment. Gender Context and Body Shape are each optional and chosen from small controlled vocabularies with Vietnamese labels ([SRS Section 4.10.1](../03-requirements/SRS.md#4101-optional-personal-context-vocabularies)); absence means "not provided". The user can set, change or clear each value at any time; clearing makes it absent, never replaced by an inferred value. Values are never inferred, never restrict a garment category and are not used by any consumer yet. The approved decisions S4-PROF-01–04 govern; the vocabulary values are delegated defaults (OPEN-S4-16) awaiting an inclusive-representation review. See Section 34.3.
+
 ### 11.2 FEAT-PROF-002 — Location and Environmental Context
 
 **Purpose:** Supply useful environmental context without requiring device-location access.
@@ -492,6 +496,8 @@ All feature behavior is governed by the cross-cutting states, explainability, pr
 
 **Out of scope / deferred detail:** Provider choice, retrieval frequency, location precision, and weather validity thresholds are downstream. Continuous background tracking is not an MVP requirement.
 
+**Sprint 4 resolution (2026-11-17):** US-CTX-001 settles the details deferred above for the current increment ([SRS Section 3.3.1](../03-requirements/SRS.md#331-location-and-weather-rules)): one current location from the device or a manual city list, stored only as a point rounded to two decimal places; no continuous tracking or history; Open-Meteo as the intended provider, whose terms are not yet verified; weather current at age ≤30 minutes from the provider's observation time; at most 2 seconds of waiting for weather; and an explicit unavailable state with a reason otherwise. See Section 34.3.
+
 ### 11.3 Controlled Preference and Needs Vocabularies
 
 The following bounded initial vocabularies are approved product choices (OPQ-001/OPQ-003). Canonical terms remain English-friendly; users receive understandable Vietnamese labels in the initial UI. Versioned changes are maintained through product review and downstream traceability, rather than uncontrolled expansion.
@@ -513,6 +519,8 @@ The **Personalized Everyday Capsule** is one model, not separate Student, Profes
 | Sport / Active | Relevant sport/activity needs. |
 
 Users may mark some needs as more relevant than others. Common need priorities are persistent assessment context; the current occasion is the immediate context of a recommendation request. The six need dimensions and eight occasion terms are related concepts with distinct purposes, not interchangeable lists. Exact mappings, weights, and compatibility semantics belong in Business Rules/SRS/design; no universal wardrobe checklist is implied.
+
+The optional Gender Context and Body Shape vocabularies added for US-PROF-002 on 2026-11-17 are defined in [SRS Section 4.10.1](../03-requirements/SRS.md#4101-optional-personal-context-vocabularies). They are delegated defaults (OPEN-S4-16), not approved product choices like the vocabularies above.
 
 ## 12. AI Digital Closet Features
 
@@ -712,6 +720,7 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 4. Refresh or clearly require reevaluation of affected recommendations, coverage, and multiplier estimates.
 5. Removed garments leave the active owned wardrobe and are excluded from new current recommendations, current coverage, and the current multiplier baseline.
 6. Preserve sufficient historical snapshots for past Wear Events/outfit records to remain understandable, explicitly marking affected garments “Removed from wardrobe.” Do not erase meaningful history merely because ownership changed.
+7. *(Added 2026-11-17, US-GAR-006.)* For a current garment that has no photo, allow the user to add one photo, captured or selected under the normal photo rules, preview it with the garment and explicitly confirm. The garment keeps its confirmed information; an existing photo is never replaced.
 
 **User controls:** Edit, confirm/cancel edits, confirm/cancel removal. **Product states:** Viewing, editing, confirmation pending, updating/removing, complete, failed.
 
@@ -726,8 +735,12 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 - **AC-05:** Failed changes remain visibly unconfirmed and offer recovery.
 - **AC-06:** Removed garments do not count toward current coverage or the current Wardrobe Multiplier baseline.
 - **AC-07:** Past Wear Events/outfit records remain understandable through historical snapshots with “Removed from wardrobe” labeling, without implying current ownership.
+- **AC-08** *(added 2026-11-17)*: After explicit confirmation, a garment without a photo shows the attached photo, with every confirmed property unchanged; cancelling leaves it unchanged.
+- **AC-09** *(added 2026-11-17)*: Attaching is refused, without any partial change, for a garment that already has a photo, a removed garment or a photo that is no longer usable; repeating the same confirmation does not attach twice.
 
 **Out of scope / deferred detail:** Historical presentation is resolved: preserve understandable snapshots and mark removed garments. Physical storage/deletion/retention/privacy handling, snapshot implementation, and consistency mechanisms belong in SRS/Data View/Business Rules. No archive/restore feature is assumed.
+
+**Sprint 4 resolution (2026-11-17):** US-GAR-005 settles removal for the current increment ([SRS Section 3.6.1](../03-requirements/SRS.md#361-garment-removal-rules)): removal confirms the garment version the user reviewed; repeating it reports "already removed"; only Category, Color and times remain for history; a repeated creation request never brings the garment back; the photo is deleted within 30 days. Behavior 7 and AC-08–AC-09 come from US-GAR-006 ([SRS Section 3.6.3](../03-requirements/SRS.md#363-existing-garment-photo-attachment-rules)); its detailed acceptance criteria are a delegated formalization awaiting Product Owner acceptance. See Section 34.3.
 
 ### 14.3 FEAT-WAR-003 — Wardrobe Search and Filtering
 
@@ -758,6 +771,8 @@ This is personal purchase information, distinct from retailer/affiliate guidance
 - **AC-04:** No-match feedback provides a useful reset path distinct from Add Garment guidance for an empty wardrobe.
 
 **Out of scope / deferred detail:** Exact searchable vocabularies, matching semantics, optional extra filters/sort order, and search implementation are downstream. Visual similarity search is not an MVP requirement.
+
+**Sprint 4 resolution (2026-11-17):** US-WAR-003 settles the searchable vocabularies and matching semantics for the current increment ([SRS Section 3.6.2](../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules)). Users type one phrase in Vietnamese or English. It matches Category, Subtype, Color, Material, Pattern and Style through their Vietnamese search labels and aliases (for example "áo thun", "trắng", "chân váy"), their English labels or codes, and Brand text, ignoring letter case but not accents. A word that names several values, such as "váy", finds all of them. Category and color filters remain available; clearing restores the whole wardrobe. Vietnamese descriptor search was explicitly authorized by the Product Owner on 2026-11-17; the alias wording is a delegated default in the [canonical alias table](../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). See Section 34.3.
 
 ## 15. Outfit Recommendation Features
 
@@ -1312,6 +1327,8 @@ Scope authority is merged PR #4 and DD-007. These are required product outcomes 
 
 **Out of scope / deferred detail:** Exclusions in Section 27 apply. Exact API/schema/provider/model/transaction design is JIT for selected stories; no implementation or Sprint assignment follows from this feature specification.
 
+**Sprint 4 resolution (2026-11-17):** US-BULK-001 provisionally settles the MVP-Q08 points it needs ([SRS Section 3.23.1](../03-requirements/SRS.md#3231-bulk-import-rules)): up to 20 photos per batch, up to 3 unfinished batches per user, 7 days to finish a batch, photos staged one at a time, each item reviewed and confirmed on its own, and the user can cancel an item, stop the batch or resume it later. These limits are delegated defaults awaiting Product Owner review. See Section 34.3.
+
 
 ## 21. Product States and Experience States
 
@@ -1759,11 +1776,24 @@ Historical decisions remain traceable. OPQ-015 now governs the garment model and
 
 **Deferred JIT details:** Exact endpoints/DTOs, owner-local tables and forward migrations, transaction/concurrency mechanisms, concrete provider adapters, queue implementation, request correlation and necessary sequence/state models follow Sprint selection. Lightweight investigation may resolve material feasibility before selection; it does not predesign the MVP. No provider, architecture option, Sprint date, estimate or new numeric product policy is approved by this table.
 
+### 34.3 Sprint 4 Resolutions (2026-11-17)
+
+On 2026-11-16 the Product Owner selected six Sprint 4 stories and approved all 30 recommended solutions in the [Sprint 4 plan](../06-scrum/sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register). The remaining details were delegated and recorded as [OPEN-S4-01–33](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md). This table records what that resolves at product level. **Delegated defaults are not Product Owner approvals of the specific values**; each row names its authority. Nothing in this table is implemented yet.
+
+| Topic | Product-level resolution | Authority | Remaining |
+|---|---|---|---|
+| Wardrobe search (FEAT-WAR-003; former catalogue question CAT-Q01) | One phrase matched against Vietnamese search aliases, English labels and codes of six vocabularies and Brand; case-insensitive, accent-sensitive; ambiguous words match every named value; category and color code filters | S4-WAR-01–04 approved; Vietnamese search authorized by the PO on 2026-11-17; alias wording and details delegated (OPEN-S4-11–15) | Review of the alias wording; client screens |
+| Optional personal context (FEAT-PROF-001) | Gender Context (4 values) and Body Shape (5 values), optional, clearable, never inferred, no category restriction, no consumer yet | S4-PROF-01–04 approved; values delegated (OPEN-S4-16–17) | Inclusive-representation review of the values and labels |
+| Location and weather (FEAT-PROF-002) | Manual or device location rounded to two decimals; no tracking; Open-Meteo intended; ≤30-minute freshness; 2-second limit; explicit unavailable state | S4-CTX-01–06 approved; details delegated (OPEN-S4-18–24) | **Open-Meteo terms and eligibility for the deployment; a real provider request; deadline measurement** |
+| Garment removal (FEAT-WAR-002) | Confirmed, revision-checked, monotonic removal; minimal retained record; no resurrection; photo deleted within 30 days | S4-GAR-01–03 approved; details delegated (OPEN-S4-01–06) | Storage-versioning and backup evidence |
+| Existing-garment photo (FEAT-WAR-002 behavior 7, AC-08–AC-09) | One photo for a current imageless garment, explicitly confirmed, without property changes or replacement | Sprint 4 selection of US-GAR-006 and S4-GAR-04–06 approved; story AC formalized under delegation (OPEN-S4-09); parent PBI-049 added | PO acceptance of the formalized AC |
+| Bulk import (FEAT-BULK-001; MVP-Q08, provisionally) | 20 items, 3 active batches, 7-day lifetime, 300,000,000-byte aggregate; sequential staging; independent item outcomes; cancel, stop, resume | S4-BULK-01–07 approved; limits delegated (OPEN-S4-25–30) | **PO review of the limits**; resource measurement; MVP-Q09 unaffected |
+
 ## 35. Approval / Exit Criteria
 
 ### 35.1 Product Review and Acceptance Gate
 
-PRD v0.6 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
+PRD v0.7 is ready for acceptance and a complete SRS handoff when the Product Owner, with Product/UX, Engineering, and QA review, confirms that:
 
 - All 15 capabilities and all 31 business requirements are represented, with no unexplained omission or business-scope change.
 - The 12 core journeys, navigation, and 29 stable feature specifications give a coherent connected MVP experience.

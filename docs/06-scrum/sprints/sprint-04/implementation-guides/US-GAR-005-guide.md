@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-GAR-01, S4-GAR-02, S4-GAR-03, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-01, 02, 03, 04, 05, 06, 31, 32, 33. These are `SELECTED BY CLAUDE — DELEGATED DEFAULT`, **not** Product Owner approvals ([record](open-questions.md)). |
 | Shared conventions | [shared-architecture.md](shared-architecture.md), especially §5 (lock order) and §6 (logical-action identity) |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. The storage deletion boundary (OPEN-S4-05) needs operational evidence that no test can provide. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. The storage deletion boundary (OPEN-S4-05) needs operational evidence that no test can provide. |
 
 ## 1. Story Overview
 
@@ -54,7 +54,7 @@
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16. Paragraphs and lines dated 2026-11-17 were added to the sources by the Sprint 4 documentation synchronization.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -80,6 +80,7 @@ From [PRD](../../../../02-product/PRD.md):
 2. Garment detail presents confirmed information and recorded utilization without implying observed physical wear.
 3. The user edits inaccurate or changed information and confirms the revision.
 4. The user can remove a garment through an explicit, understandable removal action.
+   - 4a. *(Added 2026-11-17, US-GAR-006.)* The user can add a photo to a garment that has none, after previewing and confirming it.
 5. Subsequent recommendations and assessments reflect the current confirmed wardrobe; removed garments cannot remain selectable as owned items.
 
 **Recovery:** Empty wardrobes prompt Add Garment; no search results offer changes to the search/filter; failed edits/removals retain a clear unconfirmed state and retry. Historical Wear Events/outfit records preserve understandable snapshots, labeling a removed garment “Removed from wardrobe” rather than treating it as currently owned. **Features:** FEAT-WAR-001–FEAT-WAR-003, FEAT-ANL-001.
@@ -102,6 +103,7 @@ From [PRD](../../../../02-product/PRD.md):
 4. Refresh or clearly require reevaluation of affected recommendations, coverage, and multiplier estimates.
 5. Removed garments leave the active owned wardrobe and are excluded from new current recommendations, current coverage, and the current multiplier baseline.
 6. Preserve sufficient historical snapshots for past Wear Events/outfit records to remain understandable, explicitly marking affected garments “Removed from wardrobe.” Do not erase meaningful history merely because ownership changed.
+7. *(Added 2026-11-17, US-GAR-006.)* For a current garment that has no photo, allow the user to add one photo, captured or selected under the normal photo rules, preview it with the garment and explicitly confirm. The garment keeps its confirmed information; an existing photo is never replaced.
 
 **User controls:** Edit, confirm/cancel edits, confirm/cancel removal. **Product states:** Viewing, editing, confirmation pending, updating/removing, complete, failed.
 
@@ -116,8 +118,12 @@ From [PRD](../../../../02-product/PRD.md):
 - **AC-05:** Failed changes remain visibly unconfirmed and offer recovery.
 - **AC-06:** Removed garments do not count toward current coverage or the current Wardrobe Multiplier baseline.
 - **AC-07:** Past Wear Events/outfit records remain understandable through historical snapshots with “Removed from wardrobe” labeling, without implying current ownership.
+- **AC-08** *(added 2026-11-17)*: After explicit confirmation, a garment without a photo shows the attached photo, with every confirmed property unchanged; cancelling leaves it unchanged.
+- **AC-09** *(added 2026-11-17)*: Attaching is refused, without any partial change, for a garment that already has a photo, a removed garment or a photo that is no longer usable; repeating the same confirmation does not attach twice.
 
 **Out of scope / deferred detail:** Historical presentation is resolved: preserve understandable snapshots and mark removed garments. Physical storage/deletion/retention/privacy handling, snapshot implementation, and consistency mechanisms belong in SRS/Data View/Business Rules. No archive/restore feature is assumed.
+
+**Sprint 4 resolution (2026-11-17):** US-GAR-005 settles removal for the current increment ([SRS Section 3.6.1](../../../../03-requirements/SRS.md#361-garment-removal-rules)): removal confirms the garment version the user reviewed; repeating it reports "already removed"; only Category, Color and times remain for history; a repeated creation request never brings the garment back; the photo is deleted within 30 days. Behavior 7 and AC-08–AC-09 come from US-GAR-006 ([SRS Section 3.6.3](../../../../03-requirements/SRS.md#363-existing-garment-photo-attachment-rules)); its detailed acceptance criteria are a delegated formalization awaiting Product Owner acceptance. See Section 34.3.
 
 ## 5. Original Software Requirements — Verbatim
 
@@ -134,6 +140,22 @@ From [SRS](../../../../03-requirements/SRS.md):
 | DATA-RET-002 | The system shall retain required active-account profile/wardrobe/operational information and meaningful minimal history while the account is active and it remains necessary, while a removed garment's original image and nonessential personal data are physically deleted within 30 days. | MVP | FEAT-WAR-002, FEAT-ANL-001; BR-005, BR-006 | T/I: retained necessary active/minimal history versus removed images/nonessential data. |
 | COM-002 | The system shall distinguish interrupted communication from accepted save, access/recovery or Wear action outcomes, applying Section 9 recovery without false completion or duplicated logical actions. | MVP | FEAT-AI-002, FEAT-PERS-002, FEAT-AUTH-001; BR-005, BR-011, BR-021 | T: interrupted save/reset/refresh/Wear actions and outcome review. |
 
+Added to the [SRS](../../../../03-requirements/SRS.md) on 2026-11-17 by the Sprint 4 documentation synchronization (verbatim):
+
+#### 3.6.1 Garment Removal Rules
+
+Added 2026-11-17 for [US-GAR-005](../../../stories/garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md). The approved decisions S4-GAR-01–03 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-01–06](open-questions.md#open-s4-01--removal-command-transport-and-outcomes)). These rules refine FR-WAR-004–FR-WAR-006, DATA-HIST-001 and DATA-RET-002 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Explicit confirmation | Removal requires the owner's explicit confirmation and the garment revision the owner reviewed. A garment changed since that review is not removed; the owner is told and can review it. |
+| Immediate exclusion | An accepted removal immediately excludes the garment from the current wardrobe, search, detail, edits, photo delivery and photo attachment. |
+| Monotonic outcome | Repeating the removal of an already removed garment reports that it is already removed, with the original removal time. It creates no second removal and never restarts the 30-day deadline. |
+| Minimal retained record | Only the identity, owner, creation identity, Category, Color, value provenance, creation and removal times and the revision are retained, so that history can show "Removed from wardrobe". Every other property, the Material and Style sets and the photo record are purged at the first cleanup after removal. |
+| No resurrection | Replaying the original creation request of a removed garment never recreates it; it reports that the garment is no longer current. |
+| Physical deletion | The photo object is deleted from private storage outside the database transaction, with retries, within 30 days of removal. Incomplete deletions older than 21 days are reported as overdue. Proof that no recoverable copy remains (storage versioning, object lock, replication, backups) is an operational verification obligation. |
+| Ownership | Another account's garment is indistinguishable from an unknown one. |
+
 ## 6. Original Business Rules — Verbatim
 
 From [Business Rules](../../../../03-requirements/business-rules.md):
@@ -145,6 +167,8 @@ From [Business Rules](../../../../03-requirements/business-rules.md):
 **Applies To:** wardrobe maintenance and all dependent assessments.
 
 **Source:** FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001.
+
+**Sprint 4 refinement (2026-11-17):** Removal requires explicit confirmation of the reviewed garment revision. Repeating a removal reports "already removed" with the original time and never restarts the 30-day deadline. The retained record is limited to identity, owner, creation identity, Category, Color, provenance, times and revision; the rest is purged at the first cleanup. A replayed creation never recreates a removed garment (approved S4-GAR-01–03; delegated OPEN-S4-01–06; SRS Section 3.6.1).
 
 ### BRULE-OUT-002 — Current Daily Garment Eligibility
 
@@ -374,16 +398,16 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 
 ### 8.3 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-GAR-01](../sprint-plan.md#s4-gar-01) | US-GAR-005 | Confirmed removal and monotonic current ownership | Option A — guarded current-to-removed transition with atomic cleanup intent and prompt minimization. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-GAR-02](../sprint-plan.md#s4-gar-02) | US-GAR-005 | Minimal historical meaning and rich-data minimization | Option A — a deliberately minimized Wardrobe-owned removed representation, with a separate mapping from live profiles. | PROPOSED — PENDING PO APPROVAL | Product Owner with BA and privacy reviewer |
-| [S4-GAR-03](../sprint-plan.md#s4-gar-03) | US-GAR-005 | Attached-media purge and retention enforcement | Option A — separate durable removal cleanup, sharing infrastructure patterns but not pending-media semantics. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and operations owner |
-| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-GAR-01](../sprint-plan.md#s4-gar-01) | US-GAR-005 | Confirmed removal and monotonic current ownership | Option A — guarded current-to-removed transition with atomic cleanup intent and prompt minimization. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-GAR-02](../sprint-plan.md#s4-gar-02) | US-GAR-005 | Minimal historical meaning and rich-data minimization | Option A — a deliberately minimized Wardrobe-owned removed representation, with a separate mapping from live profiles. | APPROVED — 2026-11-16 | Product Owner with BA and privacy reviewer |
+| [S4-GAR-03](../sprint-plan.md#s4-gar-03) | US-GAR-005 | Attached-media purge and retention enforcement | Option A — separate durable removal cleanup, sharing infrastructure patterns but not pending-media semantics. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and operations owner |
+| [S4-INT-01](../sprint-plan.md#s4-int-01) | US-GAR-005; US-GAR-006; US-BULK-001 | Shared lock order and transaction authority | Option A — canonical existing garment then photo order, preceded by any batch/item coordination locks. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 9. Engineering Interpretation
 

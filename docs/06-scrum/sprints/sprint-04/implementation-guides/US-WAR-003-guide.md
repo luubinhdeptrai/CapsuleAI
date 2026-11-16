@@ -7,7 +7,8 @@
 | Starting point | After [US-GAR-005](US-GAR-005-guide.md) and [US-GAR-006](US-GAR-006-guide.md) |
 | Approved decisions applied | S4-WAR-01, S4-WAR-02, S4-WAR-03, S4-WAR-04, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-11, 12, 13, 14, 15, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)). Together they settle CAT-Q01 for this increment. |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-16: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, and `clean verify` passed there (677 unit and 433 integration tests; none failed, errored or was skipped), including every test in §13. A run in the repository and its CI is still required. The index decision (OPEN-S4-15) needs a measurement. |
+| Revision of 2026-11-17 | **Vietnamese descriptor search.** The Product Owner explicitly authorized Vietnamese search labels and aliases for all six searchable vocabularies. OPEN-S4-11 is refined accordingly: new step P3 (`VietnameseDescriptorAliases`, 195 values), changed P1 (matching policy `m2`), P4 (`DescriptorMatcher`), P20 (OpenAPI descriptions) and P21 (CI). New test T10; extended T2, T3, T4, T7 and T8. The former P3–P20 are now P4–P21. The canonical alias table is [vietnamese-descriptor-search-aliases.md](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). The specific Vietnamese words remain a delegated default; the capability is PO-authorized. |
+| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. The index decision (OPEN-S4-15) needs a measurement. |
 
 ## 1. Story Overview
 
@@ -16,10 +17,10 @@
 **Backend outcome.** The existing overview `GET /api/v1/wardrobe/garments` gains optional conditions:
 
 - **`q`:** one literal text phrase. It matches when it is contained, case-insensitively but accent-sensitively, in any of these:
-  - the label or code of Category, Subtype, Color, Material, Pattern or Style;
+  - the approved English label, the code or a **Vietnamese search alias** of Category, Subtype, Color, Material, Pattern or Style (for example `áo thun`, `áo phông`, `trắng`, `chân váy`);
   - the Brand text.
 
-  Price, the other optional details, personal context and images are never searched.
+  A phrase that names several values, such as `váy` (dresses and skirts) or `xanh` (blues and greens), matches all of them. Price, the other optional details, personal context and images are never searched.
 - **`category` and `color`:** repeatable exact codes. The rule is OR within a group, AND across groups and with `q`. A missing group means no restriction.
 - **Paging** stays keyset (`created_at DESC, id DESC`, bounded `limit`):
   - a filtered page issues a **criteria-bound cursor** (`v2`);
@@ -37,8 +38,8 @@
 
 **Out of scope:**
 
-- accent-insensitive or fuzzy matching;
-- Vietnamese descriptor labels on the server (OPEN-S4-11);
+- accent-insensitive or fuzzy matching, tokenization, full-text search or a search engine (`ao thun` does not match `áo thun`);
+- Vietnamese labels as filter values (`category` and `color` still take codes);
 - sorting options;
 - catalog or visual search;
 - ranking;
@@ -51,18 +52,18 @@
 | --- | --- | --- |
 | `GET /api/v1/wardrobe/garments` | `limit` and `cursor` only (`WardrobePageRequest`, `WardrobeCursor` v1); response `{garments, nextCursor}` | Gains `q`, `category` and `color`; the response gains `resultState` and `conditions` |
 | `BrowseWardrobeService` + `GarmentRepository.findCurrentByOwner` | Two complete statements (first page, after position) on `ix_wardrobe_garment_owner_current` | The unfiltered overview keeps this exact path, so `WardrobeFailureIT` keeps covering it |
-| Vocabularies | `ControlledValue` enums with approved **English** labels; no Vietnamese labels anywhere in the backend | OPEN-S4-11: labels and codes are matched in Java |
+| Vocabularies | `ControlledValue` enums with approved **English** labels; no Vietnamese labels anywhere in the backend | OPEN-S4-11 (refined 2026-11-17): labels, codes and the new Vietnamese alias table (P3) are matched in Java |
 | Child sets | `wardrobe_garment_material` and `wardrobe_garment_style` with primary keys `(garment_id, value)` | `EXISTS` probes use the primary keys |
-| `WardrobeTransactions` | One method, `inTransaction`; two fakes implement it (`ImmediateWardrobeTransactions`, `AddGarmentServiceTest.FailingCommit`) | P7 adds a **default** method, so the fakes stay unchanged |
+| `WardrobeTransactions` | One method, `inTransaction`; two fakes implement it (`ImmediateWardrobeTransactions`, `AddGarmentServiceTest.FailingCommit`) | P8 adds a **default** method, so the fakes stay unchanged |
 | `InvalidWardrobePageException` | List of `(field, code)`; handler gives `400 VALIDATION_FAILED` | Reused for every search-condition error |
 | Browse tests | `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` assert `garments`, `nextCursor` and field errors only | Unchanged; they stay green because the unfiltered path is untouched |
 | Migrations | V1–V12 | **None added** (OPEN-S4-15) |
 | OpenAPI | 0.13.0 | → 0.14.0 |
-| CI | 106 entries | +9 entries |
+| CI | 106 entries | +10 entries (116) |
 
 ## 3. Original Business Requirements — Verbatim
 
-> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows show the plan's historical status cell; the Product Owner's approval of 2026-11-16 supersedes it.
+> Sections 3–8 reproduce the cited sources verbatim. Only relative link targets were re-based to this file's location, and heading levels were shifted to nest under this guide; no wording was changed. Sprint 4 decision rows reproduce the plan's register (version 0.2), which records the Product Owner's approval of 2026-11-16. Paragraphs and lines dated 2026-11-17 were added to the sources by the Sprint 4 documentation synchronization.
 
 From [BRD](../../../../01-business/BRD.md):
 
@@ -86,6 +87,7 @@ From [PRD](../../../../02-product/PRD.md):
 2. Garment detail presents confirmed information and recorded utilization without implying observed physical wear.
 3. The user edits inaccurate or changed information and confirms the revision.
 4. The user can remove a garment through an explicit, understandable removal action.
+   - 4a. *(Added 2026-11-17, US-GAR-006.)* The user can add a photo to a garment that has none, after previewing and confirming it.
 5. Subsequent recommendations and assessments reflect the current confirmed wardrobe; removed garments cannot remain selectable as owned items.
 
 **Recovery:** Empty wardrobes prompt Add Garment; no search results offer changes to the search/filter; failed edits/removals retain a clear unconfirmed state and retry. Historical Wear Events/outfit records preserve understandable snapshots, labeling a removed garment “Removed from wardrobe” rather than treating it as currently owned. **Features:** FEAT-WAR-001–FEAT-WAR-003, FEAT-ANL-001.
@@ -120,6 +122,8 @@ From [PRD](../../../../02-product/PRD.md):
 
 **Out of scope / deferred detail:** Exact searchable vocabularies, matching semantics, optional extra filters/sort order, and search implementation are downstream. Visual similarity search is not an MVP requirement.
 
+**Sprint 4 resolution (2026-11-17):** US-WAR-003 settles the searchable vocabularies and matching semantics for the current increment ([SRS Section 3.6.2](../../../../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules)). Users type one phrase in Vietnamese or English. It matches Category, Subtype, Color, Material, Pattern and Style through their Vietnamese search labels and aliases (for example "áo thun", "trắng", "chân váy"), their English labels or codes, and Brand text, ignoring letter case but not accents. A word that names several values, such as "váy", finds all of them. Category and color filters remain available; clearing restores the whole wardrobe. Vietnamese descriptor search was explicitly authorized by the Product Owner on 2026-11-17; the alias wording is a delegated default in the [canonical alias table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). See Section 34.3.
+
 ## 5. Original Software Requirements — Verbatim
 
 From [SRS](../../../../03-requirements/SRS.md):
@@ -141,6 +145,32 @@ From [SRS](../../../../03-requirements/SRS.md):
 |---|---|---|---|---|
 | LOC-004 | The system shall preserve Vietnamese text and diacritics accurately in supported user entry and display. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-010, BR-021, BR-023 | T: Vietnamese names and applicable text round-trip. |
 
+Added to the [SRS](../../../../03-requirements/SRS.md) on 2026-11-17 by the Sprint 4 documentation synchronization (verbatim):
+
+| ID | Requirement | Scope | Source | Verification |
+|---|---|---|---|---|
+| LOC-006 | The system shall let wardrobe search match the Vietnamese search labels and common aliases of Category, Subtype, Color, Material, Pattern and Style listed in Section 4.10.2, ignoring letter case but not accents, and map them to the canonical codes without changing those codes or their meanings. | MVP | FEAT-WAR-003; BR-005, BR-023; added 2026-11-17 | T: every alias row; Vietnamese letter case; unaccented input does not match. |
+
+#### 3.6.2 Wardrobe Search and Filter Rules
+
+Added 2026-11-17 for [US-WAR-003](../../../stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md). The approved decisions S4-WAR-01–04 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-11–15](open-questions.md#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01)). Vietnamese descriptor search was explicitly authorized by the Product Owner on 2026-11-17. These rules refine FR-WAR-007 and FR-WAR-008 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Scope | Search and filters cover only the owner's current garments. They are read-only: they change no garment and record no feedback or Wear Event. |
+| Text condition | One literal phrase of at most 100 Unicode characters, trimmed and normalized to NFC. A blank phrase means no text condition. The phrase is not split into words and has no wildcard characters. |
+| Searchable fields | The code, the approved English label or a Vietnamese search alias (Section 4.10.2) of Category, Subtype, Color, Material, Pattern and Style, and the Brand text. Price, Fit, Neckline, Sleeve Length, Length, Silhouette, personal context and images are never searched. |
+| Matching | A field matches when it contains the phrase, ignoring letter case but not accents: `áo thun` and `ÁO THUN` match the T-shirt Subtypes; `ao thun` does not. Brand is compared literally. |
+| Ambiguity | A phrase contained in the aliases of several values matches all of them (OR). For example, `váy` matches Dresses/Jumpsuits and Skirts, and `xanh` matches every blue and green Color. |
+| Combination | The text condition is satisfied when any field matches. The Category and Color filters take exact codes only; several codes in one filter are combined with OR. The phrase and the two filters are combined with AND. An absent condition means no restriction; clearing every condition restores the whole current wardrobe. |
+| Result states | A result distinguishes matching garments, no match (the owner has current garments), an empty wardrobe and the end of results. A failure or denied access is never presented as no match or an empty wardrobe. |
+| Continuation | Results are paged newest first. A continuation belongs to the conditions and the matching rules it was issued for: continuing with other conditions, or after the matching rules or the Vietnamese aliases change, requires starting again from the first page. |
+| Active conditions | Each result reports its normalized active conditions so that they can be shown, changed and cleared. |
+
+#### 4.10.2 Vietnamese Descriptor Search Aliases
+
+Added 2026-11-17 for [US-WAR-003](../../../stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md) and LOC-006. Wardrobe search also matches the Vietnamese search labels and common aliases of the six searchable vocabularies: Category, Subtype, Color, Material, Pattern and Style. The [canonical Vietnamese alias table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md) lists all 195 values. Aliases are search vocabulary only: they change no code, approved English label, meaning or applicability rule above, they are never stored as garment values, and the category and color filters accept codes only. The capability was explicitly authorized by the Product Owner on 2026-11-17. The alias wording is a delegated default (OPEN-S4-11) awaiting review by the Product Owner or a native-speaker reviewer.
+
 ## 6. Original Business Rules — Verbatim
 
 From [Business Rules](../../../../03-requirements/business-rules.md):
@@ -161,6 +191,8 @@ The [garment-property authority](../../../../../Initial%20files/Image%20to%20Pro
 
 **Source:** FR-GAR-001/002, DATA-GAR-002; FR-PROF-002/004 for separate context.
 
+**Sprint 4 refinement (2026-11-17):** Wardrobe search also accepts Vietnamese search labels and aliases of the Category, Subtype, Color, Material, Pattern and Style values ([canonical alias table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md); LOC-006). An alias is search vocabulary only: it is never stored, never accepted as a code, and never changes a code, label or meaning. A word that names several values matches all of them. The Product Owner authorized this on 2026-11-17; the alias wording is a delegated default (OPEN-S4-11).
+
 ### BRULE-GAR-009 — Accepted Edits and Removal
 
 **Rule:** Only accepted edits/removal change current garment state; canceled, failed, or pending work must not be represented as accepted. Removal excludes the garment from new current outfits, current Coverage, and the current Multiplier baseline. Relevant accepted changes require refresh or an outdated indication for affected advice; historical meaning remains governed by BRULE-HIST-002. Accepted removal takes immediate effect in current ownership, recommendations, Coverage and the Multiplier baseline. Only necessary minimal historical information may remain; original removed-garment images and nonessential removed personal data must be physically deleted within 30 days.
@@ -168,6 +200,8 @@ The [garment-property authority](../../../../../Initial%20files/Image%20to%20Pro
 **Applies To:** wardrobe maintenance and all dependent assessments.
 
 **Source:** FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001.
+
+**Sprint 4 refinement (2026-11-17):** Removal requires explicit confirmation of the reviewed garment revision. Repeating a removal reports "already removed" with the original time and never restarts the 30-day deadline. The retained record is limited to identity, owner, creation identity, Category, Color, provenance, times and revision; the rest is purged at the first cleanup. A replayed creation never recreates a removed garment (approved S4-GAR-01–03; delegated OPEN-S4-01–06; SRS Section 3.6.1).
 
 ## 7. Original User Story and Acceptance Criteria — Verbatim
 
@@ -388,29 +422,29 @@ The earlier review recorded no Use Case-specific blocker. The current revision m
 
 ### 8.3 Sprint 4 decisions — verbatim from the [plan register](../sprint-plan.md#13-consolidated-decision-register)
 
-> **Status update (binding):** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's `PROPOSED — PENDING PO APPROVAL` cells below are reproduced verbatim and are superseded by that approval; see [open-questions.md](open-questions.md#1-decision-authority).
+> **Status:** the Product Owner approved all 30 Sprint 4 recommendations on **2026-11-16**. The plan's register, version 0.2 of 2026-11-17, records that approval and is reproduced below; see [open-questions.md](open-questions.md#1-decision-authority).
 
 | Decision ID | Related Story | Question | Recommended Solution | Decision Status | Approval Owner |
 | --- | --- | --- | --- | --- | --- |
-| [S4-WAR-01](../sprint-plan.md#s4-war-01) | US-WAR-003 | Searchable descriptors and Vietnamese matching semantics | Option B — the stated bounded descriptor set and literal substring semantics, subject to CAT-Q01 approval. | PROPOSED — PENDING PO APPROVAL | Product Owner and BA with Backend Tech Lead |
-| [S4-WAR-02](../sprint-plan.md#s4-war-02) | US-WAR-003 | Combined filters and complete bound SQL | Option B — a small catalogue of complete bound statements for the approved condition shapes. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead |
-| [S4-WAR-03](../sprint-plan.md#s4-war-03) | US-WAR-003 | Filtered cursor continuity and concurrent current state | Option A — current keyset pages with criteria-bound cursors and explicit live-view semantics. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-WAR-04](../sprint-plan.md#s4-war-04) | US-WAR-003 | Proportional search indexing and performance evidence | Option A — measured relational indexing first; retain trigram indexing as an evidence-driven option. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
-| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | PROPOSED — PENDING PO APPROVAL | Product Owner with Backend Tech Lead and QA |
+| [S4-WAR-01](../sprint-plan.md#s4-war-01) | US-WAR-003 | Searchable descriptors and Vietnamese matching semantics | Option B — the stated bounded descriptor set and literal substring semantics, subject to CAT-Q01 approval. | APPROVED — 2026-11-16 | Product Owner and BA with Backend Tech Lead |
+| [S4-WAR-02](../sprint-plan.md#s4-war-02) | US-WAR-003 | Combined filters and complete bound SQL | Option B — a small catalogue of complete bound statements for the approved condition shapes. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead |
+| [S4-WAR-03](../sprint-plan.md#s4-war-03) | US-WAR-003 | Filtered cursor continuity and concurrent current state | Option A — current keyset pages with criteria-bound cursors and explicit live-view semantics. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-WAR-04](../sprint-plan.md#s4-war-04) | US-WAR-003 | Proportional search indexing and performance evidence | Option A — measured relational indexing first; retain trigram indexing as an evidence-driven option. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-02](../sprint-plan.md#s4-int-02) | All six selected stories | Logical action outcomes and uncertainty recovery | Option A — targeted durable identities and explicit current-state review, adding a receipt only where natural state cannot prove the required outcome. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
+| [S4-INT-03](../sprint-plan.md#s4-int-03) | All six selected stories | Compatible command transport and synchronized delivery contracts | Option A — compatible explicit confirmed commands, preserving existing PATCH/body-revision conventions and resource grouping. | APPROVED — 2026-11-16 | Product Owner with Backend Tech Lead and QA |
 
 ## 9. Engineering Interpretation
 
 | Source obligation | Engineering meaning | Where |
 | --- | --- | --- |
-| AC-01: supported descriptors and semantics (CAT-Q01) | Resolved by OPEN-S4-11/12 under delegation:<br>• six controlled vocabularies (label or code) plus Brand;<br>• literal phrase, OR across fields;<br>• case-insensitive, accent-sensitive, NFC;<br>• `%`, `_` and `\` are literal;<br>• Price excluded. | P1–P3, P10, P11; T2, T3, T7 |
-| AC-02: category and color filters over current owned garments only | Exact codes; OR within a group, AND across groups. Every statement carries `owner_account_id = :owner AND removed_at IS NULL`. | P10, P11; T6, T7, T8 |
-| AC-03: understandable, changeable, clearable conditions | Normalized conditions are echoed. A blank `q` and absent groups mean "no condition", so clearing restores the unfiltered overview. A changed condition needs a new first page (`CONDITIONS_CHANGED`). | P1, P12–P16; T4, T8 |
-| AC-04: no match versus empty wardrobe versus failure or denial | `resultState` comes from one snapshot. `401` and `503` are never a result state. | P4, P5, P7–P9; T1, T8, T9 |
-| AC-05: imageless and incomplete entries identifiable | Results use the existing `GarmentSummaryResponse` (Category and Color always present; `NOT_EVALUATED`) | P15; T8 |
-| AC-06: recover without mutation | Read-only. A failure is `503`, never an empty page. A retry with the same cursor works. | P9; T8, T9 |
-| S4-WAR-02: finite catalogue of complete statements | 7 restricted shapes × (first page, after position) = 14 compile-time constant statements. The unrestricted overview keeps the 2 existing statements. | P10; T6 |
-| S4-WAR-03: criteria-bound cursor, live view | `v2` cursor with a 16-hex SHA-256 fingerprint of the canonical conditions; current membership read on every page | P1, P13; T5, T8 |
+| AC-01: supported descriptors and semantics (CAT-Q01) | Resolved by OPEN-S4-11/12 under delegation, with the PO-authorized Vietnamese refinement of 2026-11-17:<br>• six controlled vocabularies (English label, code or **Vietnamese search alias**) plus Brand;<br>• literal phrase, OR across fields; an ambiguous Vietnamese word matches every value it names;<br>• case-insensitive, accent-sensitive, NFC; both standard tone-mark placements of an alias;<br>• `%`, `_` and `\` are literal;<br>• Price excluded. | P1–P4, P11, P12; T2, T3, T7, T8, T10 |
+| AC-02: category and color filters over current owned garments only | Exact codes; OR within a group, AND across groups. Every statement carries `owner_account_id = :owner AND removed_at IS NULL`. | P11, P12; T6, T7, T8 |
+| AC-03: understandable, changeable, clearable conditions | Normalized conditions are echoed. A blank `q` and absent groups mean "no condition", so clearing restores the unfiltered overview. A changed condition needs a new first page (`CONDITIONS_CHANGED`). | P1, P13–P17; T4, T8 |
+| AC-04: no match versus empty wardrobe versus failure or denial | `resultState` comes from one snapshot. `401` and `503` are never a result state. | P5, P6, P8–P10; T1, T8, T9 |
+| AC-05: imageless and incomplete entries identifiable | Results use the existing `GarmentSummaryResponse` (Category and Color always present; `NOT_EVALUATED`) | P16; T8 |
+| AC-06: recover without mutation | Read-only. A failure is `503`, never an empty page. A retry with the same cursor works. | P10; T8, T9 |
+| S4-WAR-02: finite catalogue of complete statements | 7 restricted shapes × (first page, after position) = 14 compile-time constant statements. The unrestricted overview keeps the 2 existing statements. | P11; T6 |
+| S4-WAR-03: criteria-bound cursor, live view | `v2` cursor with a 16-hex SHA-256 fingerprint of the canonical conditions under matching policy `m2`; current membership read on every page | P1, P14; T3, T4, T5, T8 |
 | S4-WAR-04: measured indexes first | No new index; documented EXPLAIN procedure | §14 M6–M7 |
 
 ## 10. Just-in-Time Detailed Design
@@ -423,7 +457,7 @@ flowchart TD
     B -->|any problem| E["400 VALIDATION_FAILED<br/>(q / category / color / limit / cursor)"]
     B --> C{"conditions present?"}
     C -->|no| U["GarmentRepository.findCurrentByOwner<br/>(existing statements; v1 cursor)"]
-    C -->|yes| D["DescriptorMatcher → WardrobeSearchQuery<br/>(code sets + literal Brand text)"]
+    C -->|yes| D["DescriptorMatcher → WardrobeSearchQuery<br/>(labels, codes, Vietnamese aliases → code sets<br/>+ literal Brand text)"]
     D --> S["WardrobeSearchRepository.findCurrentMatching<br/>(one of 14 complete statements; v2 cursor)"]
     U --> R{"page empty?"}
     S --> R
@@ -440,9 +474,12 @@ flowchart TD
 | Aspect | Rule |
 | --- | --- |
 | Input | `q` is stripped of outer Unicode whitespace; blank means no text condition. Then NFC. 1–100 code points, otherwise `OUT_OF_RANGE`. Any ISO control character gives `INVALID_FORMAT`. |
-| Fields | Category, Subtype, Color, Material, Pattern, Style (approved label **or** code) and Brand. Not Price, Fit, Neckline, Sleeve Length, Length or Silhouette. |
-| Case | Controlled values: both sides lower-cased with `Locale.ROOT` in Java. Brand: `lower()` on both sides in PostgreSQL. |
-| Accents | Significant: `"đầm"` matches `"Đầm Xinh"`; `"dam"` does not |
+| Fields | Category, Subtype, Color, Material, Pattern, Style (approved English label, code **or** Vietnamese search alias) and Brand. Not Price, Fit, Neckline, Sleeve Length, Length or Silhouette. |
+| Vietnamese aliases | The 195-row [canonical alias table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md), held in code by `VietnameseDescriptorAliases` (P3). Example: `áo thun` and `áo phông` → `T_SHIRTS` (and the other T-shirt Subtypes); `trắng` → `WHITE` (and `IVORY` through `trắng ngà`); `chân váy` → `SKIRTS`. Aliases are never stored and never accepted as filter values. |
+| Ambiguity | A phrase matches **every** value whose label, code or alias contains it, combined with OR: `váy` → Dresses/Jumpsuits and Skirts; `xanh` → all blues and greens; `tím` → Purple, Lavender and Navy (`xanh tím than`). No value is chosen arbitrarily. |
+| Tone-mark placement | Each alias is also searchable in its other standard placement for open "oa", "oe" and "uy" syllables: `họa tiết hoa` and `hoạ tiết hoa` both match Floral. This adds a correctly accented spelling; it is not accent folding. Brand has no such variant. |
+| Case | Controlled values: the query lower-cased with `Locale.ROOT` (then NFC) in Java and compared with lower-cased labels and codes and with lower-case aliases (`ÁO THUN` matches `áo thun`). Brand: `lower()` on both sides in PostgreSQL. |
+| Accents | Significant: `"đầm"` matches `"Đầm Xinh"`; `"dam"` does not. `"ao thun"` does not match the alias `"áo thun"`. |
 | Normalization | Query in NFC (Java); Brand compared as `normalize(brand, NFC)` (stored text is unchanged) |
 | Literal | The phrase is one substring: no tokens, no wildcards. In the Brand pattern, `\`, `%` and `_` are escaped with `\`. |
 | Combination | Text condition = OR across fields. Filters: OR within `category` and within `color`. AND across text, `category` and `color`. |
@@ -471,7 +508,9 @@ Each statement is a compile-time concatenation of constant text blocks: the guar
 | Conditions | `v2\|createdAt\|id\|fp` | `v2` with the same `fp`. Another `fp`, or a `v1` cursor, gives `CONDITIONS_CHANGED`. |
 | Anything else | — | `INVALID_FORMAT` |
 
-`fp` is the first 16 hex characters of SHA-256 over `m1|q=<NFC, lower-cased>|c=<sorted category codes>|k=<sorted color codes>`. `m1` names the matching policy. Equivalent conditions (reordered codes, different letter case) have the same fingerprint. The cursor is not authorization: every page is owner- and current-scoped.
+`fp` is the first 16 hex characters of SHA-256 over `m2|q=<NFC, lower-cased>|c=<sorted category codes>|k=<sorted color codes>`. `m2` names the matching policy: English labels, codes and the Vietnamese aliases. The original delegated default was `m1` (English labels and codes only). Equivalent conditions (reordered codes, different letter case) have the same fingerprint.
+
+**Policy change and compatibility (OPEN-S4-11, 2026-11-17).** The same `q` can match more garments under `m2` than under `m1`. Continuing an `m1` traversal under `m2` could skip or repeat garments without telling the user. A cursor issued under `m1` therefore carries a fingerprint that never equals the `m2` fingerprint of the same conditions; it is refused with `400 CONDITIONS_CHANGED`, and the client restarts from the first page (T3, T4). Unfiltered `v1` cursors are unaffected. Every later change to the matching rules or to the alias table needs a new tag. The cursor is not authorization: every page is owner- and current-scoped.
 
 ### 10.5 API contract
 
@@ -500,6 +539,26 @@ GET /api/v1/wardrobe/garments?q=uniqlo&category=TOPS&category=OUTERWEAR&color=NA
 }
 ```
 
+Vietnamese example (the client URL-encodes the phrase; the echo keeps the user's own letter case):
+
+```http
+GET /api/v1/wardrobe/garments?q=%C3%81o%20Ph%C3%B4ng&limit=20
+```
+
+```json
+{
+  "garments": [
+    {"id": "7d2e9a14-5b3c-4f6e-8a1d-2c3b4a5d6e7f", "category": "TOPS", "subtype": "T_SHIRTS", "color": "WHITE",
+     "recommendationEligibility": "NOT_EVALUATED", "createdAt": "2026-11-05T09:32:00.123456Z"}
+  ],
+  "nextCursor": null,
+  "resultState": "HAS_RESULTS",
+  "conditions": {"q": "Áo Phông", "categories": [], "colors": []}
+}
+```
+
+`q=ao%20phong` (without accents) answers `NO_MATCH` for the same wardrobe.
+
 ### 10.6 Transactions, security and recovery
 
 - First pages run in `WardrobeTransactions.inReadOnlySnapshot`: PostgreSQL REPEATABLE READ, read-only. The page and the existence fact come from one snapshot.
@@ -512,7 +571,7 @@ GET /api/v1/wardrobe/garments?q=uniqlo&category=TOPS&category=OUTERWEAR&color=NA
 
 | Level | Classes |
 | --- | --- |
-| Application | `SearchWardrobeServiceTest`, `DescriptorMatcherTest`, `WardrobeSearchCriteriaTest` |
+| Application | `SearchWardrobeServiceTest`, `DescriptorMatcherTest` (English and Vietnamese matching), `VietnameseDescriptorAliasesTest` (alias table versus canonical document), `WardrobeSearchCriteriaTest` (including policy `m2`) |
 | Web units | `WardrobeSearchRequestTest`, `FilteredWardrobeCursorTest` |
 | SQL catalogue | `SearchStatementCatalogueTest` |
 | Real PostgreSQL | `JdbcWardrobeSearchRepositoryIT` |
@@ -527,33 +586,35 @@ GET /api/v1/wardrobe/garments?q=uniqlo&category=TOPS&category=OUTERWEAR&color=NA
 | --- | --- | --- | --- | --- |
 | P1 | ADD | `…/wardrobe/application/WardrobeSearchCriteria.java` | Normalized conditions and fingerprint | — |
 | P2 | ADD | `…/wardrobe/application/WardrobeSearchQuery.java` | What the repository executes | — |
-| P3 | ADD | `…/wardrobe/application/DescriptorMatcher.java` | Labels and codes to code sets | P1, P2 |
-| P4 | ADD | `…/wardrobe/application/WardrobeResultState.java` | Result states | — |
-| P5 | ADD | `…/wardrobe/application/WardrobeSearchPage.java` | One page plus state | P4 |
-| P6 | ADD | `…/wardrobe/application/ports/WardrobeSearchRepository.java` | Search port | P2 |
-| P7 | MODIFY | `…/wardrobe/application/ports/WardrobeTransactions.java` | `default inReadOnlySnapshot` | — |
-| P8 | MODIFY | `…/wardrobe/adapter/out/persistence/SpringWardrobeTransactions.java` | REPEATABLE READ snapshot | P7 |
-| P9 | ADD | `…/wardrobe/application/SearchWardrobeService.java` | Use case | P1–P7 |
-| P10 | ADD | `…/wardrobe/adapter/out/persistence/SearchStatementCatalogue.java` | 14 complete statements | — |
-| P11 | ADD | `…/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepository.java` | SQL for P6 | P6, P10 |
-| P12 | ADD | `…/wardrobe/adapter/in/web/WardrobeSearchRequest.java` | Parse and validate the query | P1, P13 |
-| P13 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeCursor.java` | `v2` cursor | — |
-| P14 | ADD | `…/wardrobe/adapter/in/web/WardrobeConditionsResponse.java` | Echoed conditions | P1 |
-| P15 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeResponse.java` | `resultState`, `conditions` | P5, P14 |
-| P16 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeGarmentController.java` | Search parameters | P9, P12, P15 |
-| P17 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java` | Page/condition error text | — |
-| P18 | MODIFY | `…/wardrobe/configuration/WardrobeConfiguration.java` | Beans | P9, P11 |
-| P19 | MODIFY | `docs/05-api/openapi.yaml` | 0.13.0 → 0.14.0 | P12–P16 |
-| P20 | MODIFY | `.github/workflows/backend-ci.yml` | 9 report entries | T1–T9 |
-| T1 | ADD | `…/test/wardrobe/application/SearchWardrobeServiceTest.java` | Result states | P9 |
-| T2 | ADD | `…/test/wardrobe/application/DescriptorMatcherTest.java` | Matching | P3 |
+| P3 | ADD | `…/wardrobe/application/VietnameseDescriptorAliases.java` | Vietnamese search labels and aliases (195 values) | — |
+| P4 | ADD | `…/wardrobe/application/DescriptorMatcher.java` | Labels, codes and Vietnamese aliases to code sets | P1, P2, P3 |
+| P5 | ADD | `…/wardrobe/application/WardrobeResultState.java` | Result states | — |
+| P6 | ADD | `…/wardrobe/application/WardrobeSearchPage.java` | One page plus state | P5 |
+| P7 | ADD | `…/wardrobe/application/ports/WardrobeSearchRepository.java` | Search port | P2 |
+| P8 | MODIFY | `…/wardrobe/application/ports/WardrobeTransactions.java` | `default inReadOnlySnapshot` | — |
+| P9 | MODIFY | `…/wardrobe/adapter/out/persistence/SpringWardrobeTransactions.java` | REPEATABLE READ snapshot | P8 |
+| P10 | ADD | `…/wardrobe/application/SearchWardrobeService.java` | Use case | P1–P8 |
+| P11 | ADD | `…/wardrobe/adapter/out/persistence/SearchStatementCatalogue.java` | 14 complete statements | — |
+| P12 | ADD | `…/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepository.java` | SQL for P7 | P7, P11 |
+| P13 | ADD | `…/wardrobe/adapter/in/web/WardrobeSearchRequest.java` | Parse and validate the query | P1, P14 |
+| P14 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeCursor.java` | `v2` cursor | — |
+| P15 | ADD | `…/wardrobe/adapter/in/web/WardrobeConditionsResponse.java` | Echoed conditions | P1 |
+| P16 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeResponse.java` | `resultState`, `conditions` | P6, P15 |
+| P17 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeGarmentController.java` | Search parameters | P10, P13, P16 |
+| P18 | MODIFY | `…/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java` | Page/condition error text | — |
+| P19 | MODIFY | `…/wardrobe/configuration/WardrobeConfiguration.java` | Beans | P10, P12 |
+| P20 | MODIFY | `docs/05-api/openapi.yaml` | 0.13.0 → 0.14.0 | P13–P17 |
+| P21 | MODIFY | `.github/workflows/backend-ci.yml` | 10 report entries | T1–T10 |
+| T1 | ADD | `…/test/wardrobe/application/SearchWardrobeServiceTest.java` | Result states | P10 |
+| T2 | ADD | `…/test/wardrobe/application/DescriptorMatcherTest.java` | Matching | P4 |
 | T3 | ADD | `…/test/wardrobe/application/WardrobeSearchCriteriaTest.java` | Normalization, limits, fingerprint | P1 |
-| T4 | ADD | `…/test/wardrobe/adapter/in/web/WardrobeSearchRequestTest.java` | Parameter errors | P12 |
-| T5 | ADD | `…/test/wardrobe/adapter/in/web/FilteredWardrobeCursorTest.java` | `v2` cursor | P13 |
-| T6 | ADD | `…/test/wardrobe/adapter/out/persistence/SearchStatementCatalogueTest.java` | Guards in every statement | P10 |
-| T7 | ADD | `…/test/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepositoryIT.java` | Real matching | P11 |
-| T8 | ADD | `…/test/wardrobe/adapter/in/web/SearchWardrobeApiIT.java` | HTTP states and paging | P16, P19 |
-| T9 | ADD | `…/test/wardrobe/adapter/in/web/SearchWardrobeFailureIT.java` | Failure is not "no match" | P16 |
+| T4 | ADD | `…/test/wardrobe/adapter/in/web/WardrobeSearchRequestTest.java` | Parameter errors | P13 |
+| T5 | ADD | `…/test/wardrobe/adapter/in/web/FilteredWardrobeCursorTest.java` | `v2` cursor | P14 |
+| T6 | ADD | `…/test/wardrobe/adapter/out/persistence/SearchStatementCatalogueTest.java` | Guards in every statement | P11 |
+| T7 | ADD | `…/test/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepositoryIT.java` | Real matching | P12 |
+| T8 | ADD | `…/test/wardrobe/adapter/in/web/SearchWardrobeApiIT.java` | HTTP states and paging | P17, P20 |
+| T9 | ADD | `…/test/wardrobe/adapter/in/web/SearchWardrobeFailureIT.java` | Failure is not "no match" | P17 |
+| T10 | ADD | `…/test/wardrobe/application/VietnameseDescriptorAliasesTest.java` | Alias table complete, well formed and identical to the canonical document | P3 |
 
 ## 12. Complete Production Implementation
 
@@ -593,8 +654,14 @@ public record WardrobeSearchCriteria(Optional<String> text, Set<GarmentCategory>
     /** OPEN-S4-12: the longest accepted search text, in Unicode code points. */
     public static final int MAXIMUM_TEXT_CODE_POINTS = 100;
 
-    /** The matching policy the fingerprint is computed for; a later policy change gets a new tag. */
-    static final String MATCHING_POLICY = "m1";
+    /**
+     * The matching policy the fingerprint is computed for. {@code m1} was the original delegated default
+     * (English labels and codes). {@code m2} adds the Vietnamese search aliases (OPEN-S4-11, refined
+     * 2026-11-17). Because the same conditions can match different garments under another policy, a cursor
+     * issued under any other tag no longer matches the fingerprint and is refused with CONDITIONS_CHANGED.
+     * Every later change of the matching rules or of the alias table gets a new tag.
+     */
+    static final String MATCHING_POLICY = "m2";
 
     /** Why a normalized search text is not acceptable. */
     public enum TextProblem {
@@ -651,7 +718,7 @@ public record WardrobeSearchCriteria(Optional<String> text, Set<GarmentCategory>
 
     /**
      * The first 16 hexadecimal characters of SHA-256 over the canonical conditions
-     * {@code m1|q=<lower-cased text>|c=<sorted category codes>|k=<sorted color codes>}.
+     * {@code m2|q=<lower-cased text>|c=<sorted category codes>|k=<sorted color codes>}.
      */
     public String fingerprint() {
         String canonical = MATCHING_POLICY + "|q=" + text.map(value -> value.toLowerCase(Locale.ROOT)).orElse("")
@@ -690,6 +757,7 @@ public record WardrobeSearchCriteria(Optional<String> text, Set<GarmentCategory>
 
 - Outer spaces are removed by code point, including U+00A0 and U+2003. A scratch run of T3 showed that `String.strip()` keeps U+00A0.
 - Text codes are upper-case, while the text is lower-cased in the canonical form, so a text containing `|c=` cannot collide with a category list.
+- **`m2` policy tag.** The Vietnamese aliases (P3) change what a text condition matches, so the policy tag moved from `m1` to `m2`. A cursor issued under `m1` carries an `m1` fingerprint, which never equals the `m2` fingerprint of the same conditions. It is refused with `CONDITIONS_CHANGED`, and the client restarts from the first page instead of continuing a traversal computed under other rules (T3, T4).
 - `java.text`, `java.security` and `HexFormat` are JDK APIs, which the application layer may use. The ArchUnit rule bans only frameworks, JDBC and HTTP.
 
 **Verification.** T3.
@@ -754,7 +822,408 @@ public record WardrobeSearchQuery(Optional<TextMatch> textMatch, Set<GarmentCate
 }
 ```
 
-### Step P3 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/DescriptorMatcher.java`
+### Step P3 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/VietnameseDescriptorAliases.java`
+
+```java
+package com.capsuleai.wardrobe.application;
+
+import com.capsuleai.wardrobe.domain.ControlledValue;
+import com.capsuleai.wardrobe.domain.GarmentCategory;
+import com.capsuleai.wardrobe.domain.GarmentColor;
+import com.capsuleai.wardrobe.domain.GarmentMaterial;
+import com.capsuleai.wardrobe.domain.GarmentPattern;
+import com.capsuleai.wardrobe.domain.GarmentStyle;
+import com.capsuleai.wardrobe.domain.GarmentSubtype;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * US-WAR-003 — the Vietnamese search labels and common aliases of the six searchable garment vocabularies
+ * (S4-WAR-01; OPEN-S4-11 as refined on 2026-11-17 under the Product Owner's explicit authorization).
+ *
+ * <p>The first alias of a value is its Vietnamese search label; the others are common alternatives. The
+ * canonical table is {@code docs/03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md};
+ * {@code VietnameseDescriptorAliasesTest} keeps this class identical to it. Aliases are search vocabulary
+ * only: codes, English labels and stored values are unchanged, and the category and color filters still
+ * accept codes only.
+ *
+ * <p>Every alias is lower-case NFC text, so a lower-cased NFC query is compared without further folding and
+ * accents stay significant. An alias is also searchable in the other standard Vietnamese tone-mark placement
+ * of its open "oa", "oe" and "uy" syllables ("họa" and "hoạ", "khóa" and "khoá"), because keyboards
+ * produce either spelling. That adds a correctly accented spelling; it never removes an accent.
+ */
+public final class VietnameseDescriptorAliases {
+
+    /** The two standard tone-mark placements of an open oa, oe or uy syllable, mapped in both directions. */
+    private static final Map<String, String> OTHER_TONE_PLACEMENT = tonePlacementPairs();
+
+    private static final Map<ControlledValue, List<String>> ALIASES = allAliases();
+
+    private static final Map<ControlledValue, List<String>> SEARCH_SPELLINGS = searchSpellings(ALIASES);
+
+    private VietnameseDescriptorAliases() {
+    }
+
+    /**
+     * The documented aliases of a value, its Vietnamese search label first.
+     *
+     * @throws IllegalArgumentException for a value of a vocabulary that is not searched (for example Fit)
+     */
+    public static List<String> aliasesOf(ControlledValue value) {
+        List<String> aliases = ALIASES.get(value);
+        if (aliases == null) {
+            throw new IllegalArgumentException("Not a value of a searchable vocabulary: " + value.name());
+        }
+        return aliases;
+    }
+
+    /** Every spelling the search compares for a value: each alias and, where different, its other tone placement. */
+    public static List<String> searchSpellingsOf(ControlledValue value) {
+        aliasesOf(value);
+        return SEARCH_SPELLINGS.get(value);
+    }
+
+    /**
+     * The alias with each open oa, oe or uy syllable written in its other standard tone placement, for example
+     * "họa tiết hoa" and "hoạ tiết hoa". A syllable beginning with "qu" keeps its spelling, because its "u"
+     * belongs to the consonant ("quý").
+     */
+    static String withOtherTonePlacement(String alias) {
+        String[] syllables = alias.split(" ", -1);
+        for (int index = 0; index < syllables.length; index++) {
+            syllables[index] = withOtherTonePlacementOfSyllable(syllables[index]);
+        }
+        return String.join(" ", syllables);
+    }
+
+    private static String withOtherTonePlacementOfSyllable(String syllable) {
+        if (syllable.length() < 2 || syllable.startsWith("qu")) {
+            return syllable;
+        }
+        String ending = syllable.substring(syllable.length() - 2);
+        String otherEnding = OTHER_TONE_PLACEMENT.get(ending);
+        return otherEnding == null ? syllable : syllable.substring(0, syllable.length() - 2) + otherEnding;
+    }
+
+    private static Map<String, String> tonePlacementPairs() {
+        String[][] oldAndNewPlacements = {
+                {"òa", "oà"}, {"óa", "oá"}, {"ỏa", "oả"}, {"õa", "oã"}, {"ọa", "oạ"},
+                {"òe", "oè"}, {"óe", "oé"}, {"ỏe", "oẻ"}, {"õe", "oẽ"}, {"ọe", "oẹ"},
+                {"ùy", "uỳ"}, {"úy", "uý"}, {"ủy", "uỷ"}, {"ũy", "uỹ"}, {"ụy", "uỵ"}};
+        Map<String, String> pairs = new HashMap<>();
+        for (String[] pair : oldAndNewPlacements) {
+            pairs.put(pair[0], pair[1]);
+            pairs.put(pair[1], pair[0]);
+        }
+        return Map.copyOf(pairs);
+    }
+
+    private static Map<ControlledValue, List<String>> allAliases() {
+        Map<ControlledValue, List<String>> aliases = new HashMap<>();
+        aliases.putAll(categoryAliases());
+        aliases.putAll(subtypeAliases());
+        aliases.putAll(colorAliases());
+        aliases.putAll(materialAliases());
+        aliases.putAll(patternAliases());
+        aliases.putAll(styleAliases());
+        return Map.copyOf(aliases);
+    }
+
+    private static Map<ControlledValue, List<String>> searchSpellings(Map<ControlledValue, List<String>> aliases) {
+        Map<ControlledValue, List<String>> spellings = new HashMap<>();
+        aliases.forEach((value, valueAliases) -> {
+            Set<String> valueSpellings = new LinkedHashSet<>();
+            for (String alias : valueAliases) {
+                valueSpellings.add(alias);
+                valueSpellings.add(withOtherTonePlacement(alias));
+            }
+            spellings.put(value, List.copyOf(valueSpellings));
+        });
+        return Map.copyOf(spellings);
+    }
+
+    /** One value's aliases; fails fast on text that is not lower-case NFC without outer spaces, or on a repeat. */
+    private static <E extends Enum<E> & ControlledValue> Map.Entry<E, List<String>> vietnamese(
+            E value, String searchLabel, String... furtherAliases) {
+        List<String> aliases = new ArrayList<>();
+        aliases.add(searchLabel);
+        aliases.addAll(List.of(furtherAliases));
+        for (String alias : aliases) {
+            if (alias.isBlank() || !alias.equals(alias.strip()) || !alias.equals(alias.toLowerCase(Locale.ROOT))
+                    || !Normalizer.isNormalized(alias, Normalizer.Form.NFC)) {
+                throw new IllegalStateException("An alias must be lower-case NFC text without outer spaces: " + alias);
+            }
+        }
+        if (new LinkedHashSet<>(aliases).size() != aliases.size()) {
+            throw new IllegalStateException("An alias is repeated for " + value.name());
+        }
+        return Map.entry(value, List.copyOf(aliases));
+    }
+
+    /** The table of one vocabulary; fails fast when a value is missing or listed twice. */
+    private static <E extends Enum<E> & ControlledValue> Map<E, List<String>> complete(
+            Class<E> vocabulary, List<Map.Entry<E, List<String>>> entries) {
+        Map<E, List<String>> table = new EnumMap<>(vocabulary);
+        for (Map.Entry<E, List<String>> entry : entries) {
+            if (table.put(entry.getKey(), entry.getValue()) != null) {
+                throw new IllegalStateException("Aliases are listed twice for " + entry.getKey().name());
+            }
+        }
+        for (E value : vocabulary.getEnumConstants()) {
+            if (!table.containsKey(value)) {
+                throw new IllegalStateException(
+                        "No Vietnamese search label for " + vocabulary.getSimpleName() + "." + value.name());
+            }
+        }
+        return table;
+    }
+
+    /** Category: every GarmentCategory value, in vocabulary order. */
+    private static Map<GarmentCategory, List<String>> categoryAliases() {
+        return complete(GarmentCategory.class, List.of(
+                vietnamese(GarmentCategory.TOPS, "áo"),
+                vietnamese(GarmentCategory.DRESSES_JUMPSUITS, "đầm", "váy liền", "váy đầm", "đồ bay", "bộ liền thân"),
+                vietnamese(GarmentCategory.PANTS, "quần"),
+                vietnamese(GarmentCategory.SKIRTS, "chân váy"),
+                vietnamese(GarmentCategory.OUTERWEAR, "áo khoác", "đồ khoác ngoài"),
+                vietnamese(GarmentCategory.SHOES, "giày dép"),
+                vietnamese(GarmentCategory.BAGS, "túi xách"),
+                vietnamese(GarmentCategory.HEADWEAR, "mũ nón")));
+    }
+
+    /** Subtype: every GarmentSubtype value, in vocabulary order. */
+    private static Map<GarmentSubtype, List<String>> subtypeAliases() {
+        return complete(GarmentSubtype.class, List.of(
+                vietnamese(GarmentSubtype.T_SHIRTS, "áo thun", "áo phông"),
+                vietnamese(GarmentSubtype.LONG_SLEEVE_T_SHIRTS, "áo thun dài tay", "áo phông dài tay"),
+                vietnamese(GarmentSubtype.SLEEVELESS_T_SHIRTS, "áo thun sát nách", "áo phông sát nách"),
+                vietnamese(GarmentSubtype.POLO_SHIRTS, "áo polo", "áo thun có cổ"),
+                vietnamese(GarmentSubtype.TANKS_AND_CAMIS, "áo ba lỗ", "áo hai dây"),
+                vietnamese(GarmentSubtype.CROP_TOPS, "áo croptop", "áo lửng"),
+                vietnamese(GarmentSubtype.BLOUSES, "áo kiểu", "áo blouse"),
+                vietnamese(GarmentSubtype.SHIRTS, "áo sơ mi"),
+                vietnamese(GarmentSubtype.SWEATSHIRTS, "áo nỉ", "áo sweatshirt"),
+                vietnamese(GarmentSubtype.HOODIES, "áo hoodie", "áo nỉ có mũ"),
+                vietnamese(GarmentSubtype.SWEATERS, "áo len"),
+                vietnamese(GarmentSubtype.SWEATER_VESTS, "áo gile len", "áo len không tay"),
+                vietnamese(GarmentSubtype.SPORTS_TOPS, "áo thể thao", "áo tập"),
+                vietnamese(GarmentSubtype.BODYSUITS, "áo bodysuit", "áo liền thân"),
+                vietnamese(GarmentSubtype.DAY_DRESS, "đầm thường ngày", "váy thường ngày", "đầm dạo phố"),
+                vietnamese(GarmentSubtype.T_SHIRT_DRESS, "đầm thun", "váy thun"),
+                vietnamese(GarmentSubtype.SHIRT_DRESS, "đầm sơ mi", "váy sơ mi"),
+                vietnamese(GarmentSubtype.SWEATSHIRT_DRESS, "đầm nỉ", "váy nỉ"),
+                vietnamese(GarmentSubtype.SWEATER_DRESS, "đầm len", "váy len"),
+                vietnamese(GarmentSubtype.JACKET_DRESS, "đầm vest", "váy vest"),
+                vietnamese(GarmentSubtype.SUSPENDER_DRESS, "đầm yếm", "váy yếm"),
+                vietnamese(GarmentSubtype.JUMPSUIT, "đồ bay", "bộ liền thân"),
+                vietnamese(GarmentSubtype.PARTY_DRESS, "đầm dự tiệc", "váy dự tiệc", "đầm dạ hội"),
+                vietnamese(GarmentSubtype.MINI_DRESS, "đầm ngắn", "váy ngắn", "đầm mini"),
+                vietnamese(GarmentSubtype.JEANS, "quần jean", "quần jeans", "quần bò"),
+                vietnamese(GarmentSubtype.TROUSERS, "quần dài", "quần vải"),
+                vietnamese(GarmentSubtype.DRESS_PANTS, "quần âu", "quần tây"),
+                vietnamese(GarmentSubtype.TRACK_PANTS, "quần thể thao", "quần jogger"),
+                vietnamese(GarmentSubtype.LEGGINGS, "quần legging", "quần bó"),
+                vietnamese(GarmentSubtype.SHORTS, "quần short", "quần đùi", "quần soóc", "quần ngắn"),
+                vietnamese(GarmentSubtype.MINI_SKIRTS, "chân váy ngắn", "chân váy mini"),
+                vietnamese(GarmentSubtype.MIDI_SKIRTS, "chân váy midi", "chân váy qua gối"),
+                vietnamese(GarmentSubtype.MAXI_SKIRTS, "chân váy maxi", "chân váy dài"),
+                vietnamese(GarmentSubtype.COATS, "áo măng tô", "áo khoác dài", "áo dạ"),
+                vietnamese(GarmentSubtype.TRENCH_COATS, "áo trench coat", "áo măng tô trench"),
+                vietnamese(GarmentSubtype.FUR_COATS, "áo khoác lông thú", "áo lông thú"),
+                vietnamese(GarmentSubtype.SHEARLING_COATS, "áo khoác lông cừu", "áo da lông cừu"),
+                vietnamese(GarmentSubtype.BLAZERS, "áo blazer", "áo vest"),
+                vietnamese(GarmentSubtype.JACKETS, "áo jacket", "áo khoác ngắn"),
+                vietnamese(GarmentSubtype.BLOUSONS, "áo blouson", "áo khoác bo gấu"),
+                vietnamese(GarmentSubtype.VARSITY_JACKETS, "áo khoác bóng chày", "áo varsity"),
+                vietnamese(GarmentSubtype.TRUCKER_JACKETS, "áo khoác jean", "áo khoác bò"),
+                vietnamese(GarmentSubtype.BIKER_JACKETS, "áo khoác da", "áo khoác biker"),
+                vietnamese(GarmentSubtype.CARDIGANS, "áo cardigan", "áo khoác len"),
+                vietnamese(GarmentSubtype.ZIP_UP_HOODIES, "áo hoodie khóa kéo", "áo khoác nỉ có mũ"),
+                vietnamese(GarmentSubtype.FIELD_JACKETS, "áo khoác field", "áo khoác dã chiến"),
+                vietnamese(GarmentSubtype.SPORT_JACKETS, "áo khoác thể thao", "áo khoác gió"),
+                vietnamese(GarmentSubtype.FLEECE_JACKETS, "áo khoác nỉ lông", "áo fleece"),
+                vietnamese(GarmentSubtype.PARKAS, "áo parka", "áo khoác parka"),
+                vietnamese(GarmentSubtype.DOWN_JACKETS, "áo phao lông vũ", "áo lông vũ"),
+                vietnamese(GarmentSubtype.PUFFER_JACKETS, "áo phao", "áo khoác phao"),
+                vietnamese(GarmentSubtype.VESTS, "áo gile", "áo ghi lê", "áo khoác không tay"),
+                vietnamese(GarmentSubtype.SNEAKERS, "giày sneaker", "giày thể thao thời trang"),
+                vietnamese(GarmentSubtype.SLIP_ONS, "giày slip-on", "giày lười vải"),
+                vietnamese(GarmentSubtype.SPORTS_SHOES, "giày thể thao", "giày chạy bộ"),
+                vietnamese(GarmentSubtype.HIKING_SHOES, "giày leo núi", "giày trekking"),
+                vietnamese(GarmentSubtype.BOOTS, "giày bốt", "giày cao cổ"),
+                vietnamese(GarmentSubtype.COMBAT_BOOTS, "giày bốt combat", "giày bốt quân đội"),
+                vietnamese(GarmentSubtype.UGG_BOOTS, "giày bốt lông"),
+                vietnamese(GarmentSubtype.LOAFERS_AND_LOAFER_MULES, "giày lười", "giày loafer", "giày sục"),
+                vietnamese(GarmentSubtype.BOAT_SHOES_AND_MOCCASINS, "giày mọi", "giày moccasin"),
+                vietnamese(GarmentSubtype.FLAT_SHOES, "giày bệt", "giày búp bê"),
+                vietnamese(GarmentSubtype.HEELS, "giày cao gót"),
+                vietnamese(GarmentSubtype.SANDALS, "giày sandal", "dép quai hậu", "xăng đan"),
+                vietnamese(GarmentSubtype.SANDAL_HEELS, "giày sandal cao gót"),
+                vietnamese(GarmentSubtype.SLIDES, "dép lê", "dép quai ngang"),
+                vietnamese(GarmentSubtype.MULE_HEELS, "giày sục cao gót", "dép sục cao gót"),
+                vietnamese(GarmentSubtype.TOTE, "túi tote"),
+                vietnamese(GarmentSubtype.SHOULDER, "túi đeo vai"),
+                vietnamese(GarmentSubtype.CROSSBODY, "túi đeo chéo"),
+                vietnamese(GarmentSubtype.WAIST, "túi đeo hông", "túi bao tử"),
+                vietnamese(GarmentSubtype.CANVAS, "túi vải canvas", "túi vải bố"),
+                vietnamese(GarmentSubtype.BACKPACKS, "ba lô", "balo"),
+                vietnamese(GarmentSubtype.DUFFEL, "túi trống", "túi du lịch"),
+                vietnamese(GarmentSubtype.CLUTCH, "ví cầm tay", "túi cầm tay"),
+                vietnamese(GarmentSubtype.BRIEFCASES, "cặp tài liệu", "cặp công sở"),
+                vietnamese(GarmentSubtype.DRAWSTRING, "túi dây rút"),
+                vietnamese(GarmentSubtype.SUITCASES, "vali", "va li"),
+                vietnamese(GarmentSubtype.CAP, "mũ lưỡi trai", "nón kết"),
+                vietnamese(GarmentSubtype.HATS, "mũ", "nón"),
+                vietnamese(GarmentSubtype.BEANIES, "mũ len", "nón len"),
+                vietnamese(GarmentSubtype.BERETS, "mũ nồi", "mũ beret"),
+                vietnamese(GarmentSubtype.FEDORAS, "mũ phớt", "mũ fedora"),
+                vietnamese(GarmentSubtype.SUN_HATS, "mũ chống nắng", "mũ rộng vành", "nón rộng vành")));
+    }
+
+    /** Color: every GarmentColor value, in vocabulary order. */
+    private static Map<GarmentColor, List<String>> colorAliases() {
+        return complete(GarmentColor.class, List.of(
+                vietnamese(GarmentColor.WHITE, "trắng", "màu trắng"),
+                vietnamese(GarmentColor.IVORY, "trắng ngà", "màu ngà"),
+                vietnamese(GarmentColor.BEIGE, "be", "màu be"),
+                vietnamese(GarmentColor.LIGHT_GRAY, "xám nhạt", "ghi nhạt"),
+                vietnamese(GarmentColor.DARK_GRAY, "xám đậm", "ghi đậm", "xám lông chuột"),
+                vietnamese(GarmentColor.BLACK, "đen", "màu đen"),
+                vietnamese(GarmentColor.LIGHT_YELLOW, "vàng nhạt"),
+                vietnamese(GarmentColor.YELLOW, "vàng", "màu vàng"),
+                vietnamese(GarmentColor.TURMERIC, "vàng nghệ", "màu nghệ"),
+                vietnamese(GarmentColor.ORANGE, "cam", "màu cam"),
+                vietnamese(GarmentColor.CORAL, "san hô", "màu san hô"),
+                vietnamese(GarmentColor.RED, "đỏ", "màu đỏ"),
+                vietnamese(GarmentColor.PINK, "hồng", "màu hồng"),
+                vietnamese(GarmentColor.HOT_PINK, "hồng đậm", "hồng neon"),
+                vietnamese(GarmentColor.LIGHT_GREEN, "xanh lá nhạt", "xanh nõn chuối"),
+                vietnamese(GarmentColor.GREEN, "xanh lá", "xanh lá cây"),
+                vietnamese(GarmentColor.OLIVE, "xanh ô liu", "xanh rêu"),
+                vietnamese(GarmentColor.DARK_OLIVE, "xanh rêu đậm", "ô liu đậm"),
+                vietnamese(GarmentColor.TEAL, "xanh mòng két", "xanh cổ vịt"),
+                vietnamese(GarmentColor.KHAKI, "kaki", "màu kaki"),
+                vietnamese(GarmentColor.CYAN, "xanh lơ", "xanh ngọc"),
+                vietnamese(GarmentColor.SKY_BLUE, "xanh da trời", "xanh trời"),
+                vietnamese(GarmentColor.BLUE, "xanh dương", "xanh lam"),
+                vietnamese(GarmentColor.NAVY, "xanh navy", "xanh tím than"),
+                vietnamese(GarmentColor.LAVENDER, "tím oải hương", "tím nhạt"),
+                vietnamese(GarmentColor.PURPLE, "tím", "màu tím"),
+                vietnamese(GarmentColor.BURGUNDY, "đỏ đô", "đỏ rượu vang", "đỏ mận"),
+                vietnamese(GarmentColor.CAMEL, "nâu lạc đà", "màu lạc đà"),
+                vietnamese(GarmentColor.BROWN, "nâu", "màu nâu"),
+                vietnamese(GarmentColor.DARK_BROWN, "nâu đậm", "nâu sẫm"),
+                vietnamese(GarmentColor.MAGENTA, "hồng cánh sen", "đỏ tía"),
+                vietnamese(GarmentColor.GOLD, "vàng kim", "nhũ vàng"),
+                vietnamese(GarmentColor.SILVER, "bạc", "màu bạc", "nhũ bạc"),
+                vietnamese(GarmentColor.COLORFUL, "nhiều màu", "sặc sỡ")));
+    }
+
+    /** Material: every GarmentMaterial value, in vocabulary order. */
+    private static Map<GarmentMaterial, List<String>> materialAliases() {
+        return complete(GarmentMaterial.class, List.of(
+                vietnamese(GarmentMaterial.COTTON, "vải cotton", "vải bông"),
+                vietnamese(GarmentMaterial.POLYESTER, "vải polyester", "vải poly"),
+                vietnamese(GarmentMaterial.NYLON, "vải nylon", "ni lông", "vải dù"),
+                vietnamese(GarmentMaterial.DENIM, "vải jean", "vải bò", "vải denim"),
+                vietnamese(GarmentMaterial.LEATHER, "da", "da thật"),
+                vietnamese(GarmentMaterial.WOOL, "len", "vải len", "vải dạ"),
+                vietnamese(GarmentMaterial.SPANDEX_ELASTANE, "vải co giãn", "sợi spandex"),
+                vietnamese(GarmentMaterial.LINEN, "vải lanh", "vải đũi"),
+                vietnamese(GarmentMaterial.ACRYLIC, "vải acrylic", "len acrylic"),
+                vietnamese(GarmentMaterial.SILK, "lụa", "vải lụa", "tơ tằm"),
+                vietnamese(GarmentMaterial.RAYON, "vải rayon", "tơ nhân tạo"),
+                vietnamese(GarmentMaterial.VISCOSE, "vải viscose", "tơ visco"),
+                vietnamese(GarmentMaterial.TWEED, "vải tweed", "dạ tweed"),
+                vietnamese(GarmentMaterial.VELVET, "nhung", "vải nhung"),
+                vietnamese(GarmentMaterial.CHIFFON, "voan", "vải voan"),
+                vietnamese(GarmentMaterial.SUEDE, "da lộn", "da nỉ"),
+                vietnamese(GarmentMaterial.CORDUROY, "nhung tăm", "vải nhung gân"),
+                vietnamese(GarmentMaterial.LACE, "ren", "vải ren"),
+                vietnamese(GarmentMaterial.FUR, "lông thú", "vải lông"),
+                vietnamese(GarmentMaterial.DOWN, "lông vũ", "lông vịt"),
+                vietnamese(GarmentMaterial.LYOCELL, "vải lyocell", "vải tencel"),
+                vietnamese(GarmentMaterial.METAL, "kim loại"),
+                vietnamese(GarmentMaterial.CUPRO, "vải cupro", "lụa cupro"),
+                vietnamese(GarmentMaterial.CASHMERE, "len cashmere"),
+                vietnamese(GarmentMaterial.MOHAIR, "len mohair"),
+                vietnamese(GarmentMaterial.ANGORA, "len angora", "lông thỏ"),
+                vietnamese(GarmentMaterial.ALPACA, "len alpaca"),
+                vietnamese(GarmentMaterial.OTHER_MATERIALS, "chất liệu khác")));
+    }
+
+    /** Pattern: every GarmentPattern value, in vocabulary order. */
+    private static Map<GarmentPattern, List<String>> patternAliases() {
+        return complete(GarmentPattern.class, List.of(
+                vietnamese(GarmentPattern.SOLID, "trơn", "màu trơn", "một màu"),
+                vietnamese(GarmentPattern.STRIPED, "kẻ sọc", "họa tiết sọc"),
+                vietnamese(GarmentPattern.GRAPHIC, "in hình", "hình in"),
+                vietnamese(GarmentPattern.DOTTED, "chấm bi"),
+                vietnamese(GarmentPattern.ANIMAL, "họa tiết da thú", "vằn ngựa", "vằn hổ"),
+                vietnamese(GarmentPattern.FLORAL, "hoa", "họa tiết hoa", "hoa nhí"),
+                vietnamese(GarmentPattern.TROPICAL, "họa tiết nhiệt đới", "lá nhiệt đới"),
+                vietnamese(GarmentPattern.PAISLEY, "họa tiết paisley", "họa tiết giọt nước"),
+                vietnamese(GarmentPattern.ARGYLE, "họa tiết quả trám", "kẻ quả trám"),
+                vietnamese(GarmentPattern.CAMO, "rằn ri", "họa tiết quân đội"),
+                vietnamese(GarmentPattern.COLOR_BLOCK, "khối màu", "phối màu tương phản"),
+                vietnamese(GarmentPattern.REPEATED, "họa tiết lặp lại"),
+                vietnamese(GarmentPattern.CHECKERBOARD, "caro bàn cờ", "kẻ ô bàn cờ"),
+                vietnamese(GarmentPattern.PLAID, "kẻ caro", "kẻ ô"),
+                vietnamese(GarmentPattern.GINGHAM, "caro vichy", "kẻ caro nhỏ"),
+                vietnamese(GarmentPattern.HOUNDSTOOTH, "họa tiết răng chó"),
+                vietnamese(GarmentPattern.HERRINGBONE, "xương cá", "họa tiết xương cá"),
+                vietnamese(GarmentPattern.CHEVRON, "họa tiết chữ v", "zích zắc"),
+                vietnamese(GarmentPattern.TWEED, "họa tiết tweed", "vân tweed"),
+                vietnamese(GarmentPattern.ABSTRACT, "trừu tượng", "họa tiết trừu tượng"),
+                vietnamese(GarmentPattern.TIE_DYE, "loang màu", "nhuộm loang"),
+                vietnamese(GarmentPattern.GEOMETRIC, "hình học", "họa tiết hình học"),
+                vietnamese(GarmentPattern.LACE, "ren", "họa tiết ren"),
+                vietnamese(GarmentPattern.OTHER_PATTERNS, "họa tiết khác")));
+    }
+
+    /** Style: every GarmentStyle value, in vocabulary order. */
+    private static Map<GarmentStyle, List<String>> styleAliases() {
+        return complete(GarmentStyle.class, List.of(
+                vietnamese(GarmentStyle.COMFORTABLE, "thoải mái", "dễ chịu"),
+                vietnamese(GarmentStyle.CASUAL, "thường ngày", "giản dị"),
+                vietnamese(GarmentStyle.BUSINESS_CASUAL, "công sở thanh lịch", "đồ công sở"),
+                vietnamese(GarmentStyle.FORMAL, "trang trọng", "lịch sự"),
+                vietnamese(GarmentStyle.MODERN, "hiện đại"),
+                vietnamese(GarmentStyle.CLASSIC, "cổ điển"),
+                vietnamese(GarmentStyle.MINIMALIST, "tối giản"),
+                vietnamese(GarmentStyle.BOHEMIAN, "du mục", "boho"),
+                vietnamese(GarmentStyle.LUXURY, "sang trọng", "cao cấp"),
+                vietnamese(GarmentStyle.SPORTY, "thể thao", "năng động"),
+                vietnamese(GarmentStyle.ATHLEISURE, "thể thao thường ngày", "đồ tập dạo phố"),
+                vietnamese(GarmentStyle.TRENDY, "hợp mốt", "thời thượng", "theo xu hướng"),
+                vietnamese(GarmentStyle.KIDCORE, "phong cách trẻ thơ"),
+                vietnamese(GarmentStyle.ARTISTIC, "nghệ thuật", "phong cách nghệ sĩ"),
+                vietnamese(GarmentStyle.DRESSY, "điệu đà", "chỉn chu"),
+                vietnamese(GarmentStyle.FEMININE, "nữ tính"),
+                vietnamese(GarmentStyle.STREET, "đường phố")));
+    }
+}
+```
+
+**Explanation.**
+
+- **One table, one source.** The class holds the 195 rows of the [canonical alias document](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md): 8 Categories, 84 Subtypes, 34 Colors, 28 Materials, 24 Patterns and 17 Styles. T10 reads that document and fails on any difference, so a reviewer edits the document and the class together.
+- **Fail fast.** `complete` refuses a vocabulary with a missing or repeated value, and `vietnamese` refuses an alias that is not lower-case NFC without outer spaces. A new enum value without a Vietnamese label therefore breaks the build, not a search request.
+- **Lower-case NFC aliases.** `DescriptorMatcher` lower-cases and NFC-normalizes the query once and compares it without further folding. Accents stay significant: `ao thun` never matches `áo thun`.
+- **Tone-mark placement.** The table is written in the old-style placement (`họa`, `khóa`). `searchSpellingsOf` adds the new-style spelling (`hoạ`, `khoá`) of each open "oa", "oe" and "uy" syllable, because Vietnamese keyboards emit either. A syllable starting with `qu` is left alone (`quý`). The query and Brand are never rewritten.
+- **Application layer.** The class uses only the JDK and the domain enums, which the ArchUnit rules allow. It is not a domain concept: codes and English labels stay the vocabulary authority, and aliases are search vocabulary only.
+- **Ambiguity is data, not a choice.** `váy` is an alias substring of both Dresses/Jumpsuits and Skirts. The matcher returns both, combined with OR (§10.2).
+
+**Verification.** T10, T2.
+
+### Step P4 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/DescriptorMatcher.java`
 
 ```java
 package com.capsuleai.wardrobe.application;
@@ -767,16 +1236,19 @@ import com.capsuleai.wardrobe.domain.GarmentMaterial;
 import com.capsuleai.wardrobe.domain.GarmentPattern;
 import com.capsuleai.wardrobe.domain.GarmentStyle;
 import com.capsuleai.wardrobe.domain.GarmentSubtype;
+import java.text.Normalizer;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * US-WAR-003 (S4-WAR-01, OPEN-S4-11): translates validated conditions into the query the repository runs.
- * A controlled value matches the text when its approved label or its code contains the text, compared
- * case-insensitively with {@link Locale#ROOT} and accent-sensitively. Matching happens here, against the
- * vocabulary authority, so it never depends on the database locale. Brand is matched by the repository.
+ * US-WAR-003 (S4-WAR-01; OPEN-S4-11 as refined on 2026-11-17): translates validated conditions into the query
+ * the repository runs. A controlled value matches the text when its approved English label, its code or one
+ * of its Vietnamese search spellings ({@link VietnameseDescriptorAliases}) contains the text. The comparison
+ * is case-insensitive ({@link Locale#ROOT}, then NFC) and accent-sensitive. A text that names several values
+ * matches all of them (OR). Matching happens here, against the vocabulary authority and the canonical alias
+ * table, so it never depends on the database locale. Brand is matched literally by the repository.
  */
 public final class DescriptorMatcher {
 
@@ -789,7 +1261,7 @@ public final class DescriptorMatcher {
     }
 
     static TextMatch match(String text) {
-        String needle = text.toLowerCase(Locale.ROOT);
+        String needle = Normalizer.normalize(text.toLowerCase(Locale.ROOT), Normalizer.Form.NFC);
         return new TextMatch(
                 matching(GarmentCategory.class, needle),
                 matching(GarmentSubtype.class, needle),
@@ -803,19 +1275,31 @@ public final class DescriptorMatcher {
     private static <E extends Enum<E> & ControlledValue> Set<E> matching(Class<E> vocabulary, String needle) {
         Set<E> matches = EnumSet.noneOf(vocabulary);
         for (E value : vocabulary.getEnumConstants()) {
-            if (value.label().toLowerCase(Locale.ROOT).contains(needle)
-                    || value.name().toLowerCase(Locale.ROOT).contains(needle)) {
+            if (matches(value, needle)) {
                 matches.add(value);
             }
         }
         return matches;
     }
+
+    /** OR across the approved English label, the code and every Vietnamese search spelling of the value. */
+    private static boolean matches(ControlledValue value, String needle) {
+        return value.label().toLowerCase(Locale.ROOT).contains(needle)
+                || value.name().toLowerCase(Locale.ROOT).contains(needle)
+                || VietnameseDescriptorAliases.searchSpellingsOf(value).stream()
+                        .anyMatch(spelling -> spelling.contains(needle));
+    }
 }
 ```
 
-**Explanation.** The approved labels are English (for example `T-shirts`, `Light-Gray`). Matching labels and codes gives useful partial matches (`shirt`, `gray`) without inventing a Vietnamese label table (OPEN-S4-11).
+**Explanation.**
 
-### Step P4 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/WardrobeResultState.java`
+- **Three sources of names, one rule.** The English labels (for example `T-shirts`, `Light-Gray`) and codes give partial matches such as `shirt` and `gray`. The Vietnamese aliases of P3 give `áo thun`, `áo phông`, `trắng` and `chân váy`. All three are compared with the same substring rule.
+- **Normalization.** The query arrives NFC-normalized and stripped (P1). It is lower-cased with `Locale.ROOT`, so `Đ` becomes `đ` and `ÁO THUN` becomes `áo thun`, and normalized to NFC again in case lower-casing changed the composition. The aliases are already lower-case NFC, so nothing else is folded. Accents stay significant.
+- **OR semantics for ambiguous words.** `váy` matches Dresses/Jumpsuits (`váy liền`) and Skirts (`chân váy`); `xanh` matches every blue and green Color. Each matched code goes into its field's code set, and the SQL combines the fields with OR (P11). No single meaning is chosen arbitrarily.
+- **Cost.** The matcher scans 195 values with a few short strings each, in memory, once per first page or continuation. That is negligible beside the database round trip.
+
+### Step P5 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/WardrobeResultState.java`
 
 ```java
 package com.capsuleai.wardrobe.application;
@@ -840,7 +1324,7 @@ public enum WardrobeResultState {
 }
 ```
 
-### Step P5 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/WardrobeSearchPage.java`
+### Step P6 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/WardrobeSearchPage.java`
 
 ```java
 package com.capsuleai.wardrobe.application;
@@ -863,7 +1347,7 @@ public record WardrobeSearchPage(List<Garment> garments, Optional<WardrobePositi
 }
 ```
 
-### Step P6 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/ports/WardrobeSearchRepository.java`
+### Step P7 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/ports/WardrobeSearchRepository.java`
 
 ```java
 package com.capsuleai.wardrobe.application.ports;
@@ -896,7 +1380,7 @@ public interface WardrobeSearchRepository {
 
 **Explanation.** The port imports `WardrobeSearchQuery` from `application`. Ports are part of the application layer, so this is an inward dependency.
 
-### Step P7 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/application/ports/WardrobeTransactions.java`
+### Step P8 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/application/ports/WardrobeTransactions.java`
 
 BEFORE:
 
@@ -928,7 +1412,7 @@ public interface WardrobeTransactions {
 
 **Explanation.** A `default` method keeps `ImmediateWardrobeTransactions` and `AddGarmentServiceTest.FailingCommit` compiling unchanged.
 
-### Step P8 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/SpringWardrobeTransactions.java`
+### Step P9 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/SpringWardrobeTransactions.java`
 
 BEFORE:
 
@@ -987,7 +1471,7 @@ AFTER:
 
 **Explanation.** A read-only REPEATABLE READ transaction never waits for writers and cannot fail with a serialization error, because it writes nothing.
 
-### Step P9 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/SearchWardrobeService.java`
+### Step P10 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/application/SearchWardrobeService.java`
 
 ```java
 package com.capsuleai.wardrobe.application;
@@ -1088,7 +1572,7 @@ public final class SearchWardrobeService {
 
 **Verification.** T1, T8 and T9.
 
-### Step P10 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/SearchStatementCatalogue.java`
+### Step P11 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/SearchStatementCatalogue.java`
 
 ```java
 package com.capsuleai.wardrobe.adapter.out.persistence;
@@ -1227,7 +1711,7 @@ final class SearchStatementCatalogue {
 
 **Common mistake.** Building the statement at run time from request flags with a `StringBuilder`. The catalogue must stay a finite set of constants, so that each statement can be reviewed and tested (T6).
 
-### Step P11 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepository.java`
+### Step P12 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/out/persistence/JdbcWardrobeSearchRepository.java`
 
 ```java
 package com.capsuleai.wardrobe.adapter.out.persistence;
@@ -1330,7 +1814,7 @@ public final class JdbcWardrobeSearchRepository implements WardrobeSearchReposit
 
 **Verification.** T7, plus `PersistenceOwnershipSqlTest`.
 
-### Step P12 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeSearchRequest.java`
+### Step P13 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeSearchRequest.java`
 
 ```java
 package com.capsuleai.wardrobe.adapter.in.web;
@@ -1456,7 +1940,7 @@ record WardrobeSearchRequest(WardrobeSearchCriteria criteria, int pageSize, Opti
 
 **Common mistake.** Reporting an unknown category through the cursor check, which yields a misleading `CONDITIONS_CHANGED`.
 
-### Step P13 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeCursor.java`
+### Step P14 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeCursor.java`
 
 **Edit 1.** Constants.
 
@@ -1565,7 +2049,7 @@ AFTER:
 - A v2 cursor is accepted only in its canonical encoding, as v1 is.
 - The fingerprint is not a secret. Every page stays owner- and current-scoped.
 
-### Step P14 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeConditionsResponse.java`
+### Step P15 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeConditionsResponse.java`
 
 ```java
 package com.capsuleai.wardrobe.adapter.in.web;
@@ -1588,7 +2072,7 @@ public record WardrobeConditionsResponse(String q, List<String> categories, List
 }
 ```
 
-### Step P15 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeResponse.java`
+### Step P16 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeResponse.java`
 
 BEFORE (the whole file):
 
@@ -1646,7 +2130,7 @@ public record WardrobeResponse(List<GarmentSummaryResponse> garments, String nex
 
 **Explanation.** These are compatible additions: existing clients ignore the new fields, and the unfiltered cursor is unchanged.
 
-### Step P16 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeGarmentController.java`
+### Step P17 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeGarmentController.java`
 
 **Edit 1.** Imports. `BrowseWardrobeService` is no longer used by the controller (its bean and unit tests stay).
 
@@ -1766,7 +2250,7 @@ AFTER:
 
 **Explanation.** A repeated `?category=TOPS&category=PANTS` binds to the `List`. `category=TOPS,PANTS` would bind as two values as well, because Spring splits comma-separated text for list parameters; OpenAPI documents the repeated form.
 
-### Step P17 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java`
+### Step P18 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/WardrobeApiExceptionHandler.java`
 
 BEFORE:
 
@@ -1783,7 +2267,7 @@ AFTER:
 
 **Explanation.** One handler serves both the page and condition errors. No test asserts this text (checked: `BrowseWardrobeApiIT` asserts codes only).
 
-### Step P18 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobeConfiguration.java`
+### Step P19 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/configuration/WardrobeConfiguration.java`
 
 BEFORE:
 
@@ -1851,7 +2335,7 @@ AFTER:
 }
 ```
 
-### Step P19 — [MODIFY] `docs/05-api/openapi.yaml` (0.13.0 → 0.14.0)
+### Step P20 — [MODIFY] `docs/05-api/openapi.yaml` (0.13.0 → 0.14.0)
 
 **Edit 1.** Version, coverage and scope.
 
@@ -1916,9 +2400,11 @@ AFTER:
 ```yaml
         Search and filters (US-WAR-003; approved S4-WAR-01–04):
         q is one literal phrase matched, case-insensitively but
-        accent-sensitively, inside the approved label or code of
-        Category, Subtype, Color, Material, Pattern or Style, or
-        inside Brand; Price is never searched. category and color
+        accent-sensitively, inside the approved English label, the
+        code or a Vietnamese search alias of Category, Subtype,
+        Color, Material, Pattern or Style, or inside Brand; Price is
+        never searched. A phrase naming several values (for example
+        "váy" or "xanh") matches all of them. category and color
         are repeatable exact codes: any listed category (OR) and any
         listed color (OR), combined with each other and with q (AND).
         A missing or blank condition means no restriction, so
@@ -1938,15 +2424,22 @@ AFTER:
           required: false
           description: |
             One literal phrase, at most 100 Unicode code points after
-            trimming. Percent, underscore and backslash are literal.
-            Blank means no text condition.
+            trimming, normalized to NFC. It is not split into words.
+            Accents are significant ("ao thun" does not match
+            "áo thun"); letter case is not. The Vietnamese search
+            aliases of the requirements' canonical alias table (for
+            example "áo thun", "trắng", "chân váy") are matched like
+            the English labels. Percent, underscore and backslash are
+            literal. Blank means no text condition.
           schema:
             type: string
             maxLength: 100
         - name: category
           in: query
           required: false
-          description: Repeat for several categories (OR). Exact codes.
+          description: >-
+            Repeat for several categories (OR). Exact codes only;
+            Vietnamese labels are not accepted here.
           style: form
           explode: true
           schema:
@@ -1957,7 +2450,9 @@ AFTER:
         - name: color
           in: query
           required: false
-          description: Repeat for several colors (OR). Exact codes.
+          description: >-
+            Repeat for several colors (OR). Exact codes only;
+            Vietnamese labels are not accepted here.
           style: form
           explode: true
           schema:
@@ -2153,7 +2648,7 @@ AFTER:
 
 **Verification.** `IdentityOpenApiContractIT` checks that the `WardrobeOverview` properties equal the four `WardrobeResponse` components and that all four are required.
 
-### Step P20 — [MODIFY] `.github/workflows/backend-ci.yml`
+### Step P21 — [MODIFY] `.github/workflows/backend-ci.yml`
 
 BEFORE:
 
@@ -2167,22 +2662,23 @@ AFTER:
 ```powershell
             'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 3
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.SearchWardrobeServiceTest.xml' = 5
-            'surefire-reports/TEST-com.capsuleai.wardrobe.application.DescriptorMatcherTest.xml' = 4
-            'surefire-reports/TEST-com.capsuleai.wardrobe.application.WardrobeSearchCriteriaTest.xml' = 6
-            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeSearchRequestTest.xml' = 9
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.DescriptorMatcherTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.VietnameseDescriptorAliasesTest.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.WardrobeSearchCriteriaTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.WardrobeSearchRequestTest.xml' = 10
             'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.FilteredWardrobeCursorTest.xml' = 4
             'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.SearchStatementCatalogueTest.xml' = 3
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcWardrobeSearchRepositoryIT.xml' = 7
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.SearchWardrobeApiIT.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcWardrobeSearchRepositoryIT.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.SearchWardrobeApiIT.xml' = 9
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.SearchWardrobeFailureIT.xml' = 2
           }
 ```
 
-The total is now 115 required entries.
+The total is now 116 required entries (10 added by this story).
 
 ## 13. Complete Automated Test Implementation
 
-The counts in P20 equal the `@Test` methods below. **No test has been run in the repository.**
+The counts in P21 equal the `@Test` methods below. **No test has been run in the repository.**
 
 ### Step T1 — [ADD] `backend/src/test/java/com/capsuleai/wardrobe/application/SearchWardrobeServiceTest.java`
 
@@ -2317,6 +2813,7 @@ import com.capsuleai.wardrobe.application.WardrobeSearchQuery.TextMatch;
 import com.capsuleai.wardrobe.domain.GarmentCategory;
 import com.capsuleai.wardrobe.domain.GarmentColor;
 import com.capsuleai.wardrobe.domain.GarmentMaterial;
+import com.capsuleai.wardrobe.domain.GarmentPattern;
 import com.capsuleai.wardrobe.domain.GarmentStyle;
 import com.capsuleai.wardrobe.domain.GarmentSubtype;
 import java.util.Optional;
@@ -2325,7 +2822,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** US-WAR-003 (S4-WAR-01, OPEN-S4-11): label-or-code substring matching of the controlled vocabularies. */
+/**
+ * US-WAR-003 (S4-WAR-01; OPEN-S4-11 as refined on 2026-11-17): substring matching of the controlled
+ * vocabularies through their English labels, their codes and their Vietnamese search aliases.
+ */
 class DescriptorMatcherTest {
 
     @Test
@@ -2369,6 +2869,52 @@ class DescriptorMatcherTest {
         assertThat(query.categories()).containsExactly(GarmentCategory.TOPS);
         assertThat(query.colors()).containsExactlyInAnyOrder(GarmentColor.NAVY, GarmentColor.BLACK);
     }
+
+    @Test
+    void vietnameseSearchLabelsAndAliasesMatchTheirCodes() {
+        assertThat(DescriptorMatcher.match("áo thun").subtypes()).as("search label")
+                .contains(GarmentSubtype.T_SHIRTS, GarmentSubtype.LONG_SLEEVE_T_SHIRTS);
+        assertThat(DescriptorMatcher.match("áo phông").subtypes()).as("alias").contains(GarmentSubtype.T_SHIRTS);
+        assertThat(DescriptorMatcher.match("trắng").colors()).contains(GarmentColor.WHITE);
+        assertThat(DescriptorMatcher.match("đen").colors()).containsExactly(GarmentColor.BLACK);
+        assertThat(DescriptorMatcher.match("chân váy").categories()).containsExactly(GarmentCategory.SKIRTS);
+        assertThat(DescriptorMatcher.match("chân váy").subtypes()).containsExactlyInAnyOrder(
+                GarmentSubtype.MINI_SKIRTS, GarmentSubtype.MIDI_SKIRTS, GarmentSubtype.MAXI_SKIRTS);
+        assertThat(DescriptorMatcher.match("vải lanh").materials()).containsExactly(GarmentMaterial.LINEN);
+        assertThat(DescriptorMatcher.match("chấm bi").patterns()).containsExactly(GarmentPattern.DOTTED);
+        assertThat(DescriptorMatcher.match("tối giản").styles()).containsExactly(GarmentStyle.MINIMALIST);
+    }
+
+    @Test
+    void vietnameseMatchingIgnoresLetterCaseButNotAccents() {
+        assertThat(DescriptorMatcher.match("ÁO THUN").subtypes()).contains(GarmentSubtype.T_SHIRTS);
+        assertThat(DescriptorMatcher.match("Trắng").colors()).contains(GarmentColor.WHITE);
+        assertThat(DescriptorMatcher.match("ĐEN").colors()).containsExactly(GarmentColor.BLACK);
+
+        TextMatch unaccented = DescriptorMatcher.match("ao thun");
+        assertThat(unaccented.categories()).isEmpty();
+        assertThat(unaccented.subtypes()).isEmpty();
+        assertThat(unaccented.colors()).isEmpty();
+        assertThat(unaccented.materials()).isEmpty();
+        assertThat(unaccented.patterns()).isEmpty();
+        assertThat(unaccented.styles()).isEmpty();
+        assertThat(DescriptorMatcher.match("trang").colors()).as("trắng without accents").isEmpty();
+    }
+
+    @Test
+    void anAmbiguousWordMatchesEveryValueItNamesAndBothTonePlacementsMatch() {
+        assertThat(DescriptorMatcher.match("váy").categories())
+                .containsExactlyInAnyOrder(GarmentCategory.DRESSES_JUMPSUITS, GarmentCategory.SKIRTS);
+        assertThat(DescriptorMatcher.match("xanh").colors()).contains(GarmentColor.GREEN, GarmentColor.BLUE,
+                GarmentColor.NAVY, GarmentColor.SKY_BLUE, GarmentColor.TEAL);
+        assertThat(DescriptorMatcher.match("tím").colors())
+                .containsExactlyInAnyOrder(GarmentColor.PURPLE, GarmentColor.LAVENDER, GarmentColor.NAVY);
+
+        assertThat(DescriptorMatcher.match("họa tiết hoa").patterns()).containsExactly(GarmentPattern.FLORAL);
+        assertThat(DescriptorMatcher.match("hoạ tiết hoa").patterns()).as("new-style tone placement")
+                .containsExactly(GarmentPattern.FLORAL);
+        assertThat(DescriptorMatcher.match("khoá kéo").subtypes()).containsExactly(GarmentSubtype.ZIP_UP_HOODIES);
+    }
 }
 ```
 
@@ -2379,6 +2925,9 @@ package com.capsuleai.wardrobe.application;
 
 import com.capsuleai.wardrobe.domain.GarmentCategory;
 import com.capsuleai.wardrobe.domain.GarmentColor;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -2386,7 +2935,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** US-WAR-003 (OPEN-S4-12/14): text normalization and limits, and the condition fingerprint. */
+/** US-WAR-003 (OPEN-S4-11/12/14): text normalization and limits, and the condition fingerprint and its policy. */
 class WardrobeSearchCriteriaTest {
 
     @Test
@@ -2440,6 +2989,23 @@ class WardrobeSearchCriteriaTest {
         assertThatThrownBy(() -> new WardrobeSearchCriteria(Optional.of(" navy"), Set.of(), Set.of()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void theFingerprintIsComputedUnderTheVietnameseAliasPolicyM2() throws Exception {
+        WardrobeSearchCriteria criteria = new WardrobeSearchCriteria(Optional.of("Áo Thun"),
+                Set.of(GarmentCategory.TOPS), Set.of(GarmentColor.WHITE));
+
+        assertThat(WardrobeSearchCriteria.MATCHING_POLICY).isEqualTo("m2");
+        assertThat(criteria.fingerprint()).isEqualTo(sha256Prefix("m2|q=áo thun|c=TOPS|k=WHITE"));
+        assertThat(criteria.fingerprint()).as("a fingerprint of the English-only policy m1 never matches")
+                .isNotEqualTo(sha256Prefix("m1|q=áo thun|c=TOPS|k=WHITE"));
+    }
+
+    static String sha256Prefix(String canonicalConditions) throws Exception {
+        byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(canonicalConditions.getBytes(StandardCharsets.UTF_8));
+        return HexFormat.of().formatHex(digest).substring(0, 16);
+    }
 }
 ```
 
@@ -2452,8 +3018,11 @@ import com.capsuleai.wardrobe.application.WardrobeSearchCriteria;
 import com.capsuleai.wardrobe.application.ports.WardrobePosition;
 import com.capsuleai.wardrobe.domain.GarmentCategory;
 import com.capsuleai.wardrobe.domain.GarmentColor;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -2545,6 +3114,21 @@ class WardrobeSearchRequestTest {
                 .containsExactly(new InvalidWardrobePageException.FieldError("cursor", "CONDITIONS_CHANGED"));
         assertThat(errorsOf(() -> WardrobeSearchRequest.parse(null, null, null, null, filtered)))
                 .containsExactly(new InvalidWardrobePageException.FieldError("cursor", "CONDITIONS_CHANGED"));
+    }
+
+    @Test
+    void aCursorIssuedUnderTheEnglishOnlyMatchingPolicyIsConditionsChanged() throws Exception {
+        byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest("m1|q=áo thun|c=|k=".getBytes(StandardCharsets.UTF_8));
+        String englishOnlyCursor = WardrobeCursor.encodeFiltered(POSITION,
+                HexFormat.of().formatHex(digest).substring(0, 16));
+
+        assertThat(errorsOf(() -> WardrobeSearchRequest.parse("áo thun", null, null, null, englishOnlyCursor)))
+                .as("the same conditions under another matching policy start again from the first page")
+                .containsExactly(new InvalidWardrobePageException.FieldError("cursor", "CONDITIONS_CHANGED"));
+        assertThat(WardrobeSearchRequest.parse("áo thun", null, null, null,
+                WardrobeCursor.encodeFiltered(POSITION, criteria("áo thun", Set.of()).fingerprint())).after())
+                .contains(POSITION);
     }
 
     private static WardrobeSearchCriteria criteria(String text, Set<GarmentCategory> categories) {
@@ -2750,6 +3334,27 @@ class JdbcWardrobeSearchRepositoryIT extends WardrobeIntegrationTestSupport {
     }
 
     @Test
+    void vietnameseDescriptorAliasesFindGarmentsThroughTheirStoredCodes() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("search-vietnamese-alias@example.com");
+        UUID whiteTShirt = addGarmentAndReturnId(tokens.accessToken(),
+                garment("TOPS", "WHITE", "subtype", "T_SHIRTS"));
+        UUID blackSkirt = addGarmentAndReturnId(tokens.accessToken(),
+                garment("SKIRTS", "BLACK", "subtype", "MINI_SKIRTS"));
+        UUID redDress = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("DRESSES_JUMPSUITS", "RED"));
+        UUID owner = tokens.accountId();
+
+        assertThat(matchingIds(owner, query("áo thun", Set.of(), Set.of()))).containsExactly(whiteTShirt);
+        assertThat(matchingIds(owner, query("ÁO PHÔNG", Set.of(), Set.of()))).containsExactly(whiteTShirt);
+        assertThat(matchingIds(owner, query("trắng", Set.of(), Set.of()))).containsExactly(whiteTShirt);
+        assertThat(matchingIds(owner, query("chân váy", Set.of(), Set.of()))).containsExactly(blackSkirt);
+        assertThat(matchingIds(owner, query("váy", Set.of(), Set.of()))).as("ambiguous word: OR of both meanings")
+                .containsExactlyInAnyOrder(blackSkirt, redDress);
+        assertThat(matchingIds(owner, query("váy", Set.of(GarmentCategory.SKIRTS), Set.of())))
+                .as("the code filter still narrows with AND").containsExactly(blackSkirt);
+        assertThat(matchingIds(owner, query("ao thun", Set.of(), Set.of()))).as("accents are significant").isEmpty();
+    }
+
+    @Test
     void likeMetacharactersInTheTextAreLiteral() throws Exception {
         IssuedTokens tokens = registerAndLogIn("search-literal@example.com");
         UUID percent = addGarmentAndReturnId(tokens.accessToken(), garment("TOPS", "NAVY", "brand", "100% Organic"));
@@ -2891,6 +3496,23 @@ class SearchWardrobeApiIT extends WardrobeIntegrationTestSupport {
                 .andExpect(jsonPath("$.conditions.q").value("UNIQLO"))
                 .andExpect(jsonPath("$.conditions.categories[0]").value("TOPS"))
                 .andExpect(jsonPath("$.conditions.colors").isEmpty());
+    }
+
+    @Test
+    void aVietnameseAliasFindsTheGarmentAndTheConditionIsEchoedAsTyped() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("search-api-vietnamese@example.com");
+        UUID tShirt = addGarmentAndReturnId(tokens.accessToken(), garment("TOPS", "WHITE", "subtype", "T_SHIRTS"));
+
+        search(tokens.accessToken(), Map.of("q", " Áo Phông "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.garments.length()").value(1))
+                .andExpect(jsonPath("$.garments[0].id").value(tShirt.toString()))
+                .andExpect(jsonPath("$.resultState").value("HAS_RESULTS"))
+                .andExpect(jsonPath("$.conditions.q").value("Áo Phông"));
+        search(tokens.accessToken(), Map.of("q", "ao phong"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.garments").isEmpty())
+                .andExpect(jsonPath("$.resultState").value("NO_MATCH"));
     }
 
     @Test
@@ -3164,10 +3786,172 @@ class SearchWardrobeFailureIT extends WardrobeIntegrationTestSupport {
 }
 ```
 
+### Step T10 — [ADD] `backend/src/test/java/com/capsuleai/wardrobe/application/VietnameseDescriptorAliasesTest.java`
+
+```java
+package com.capsuleai.wardrobe.application;
+
+import com.capsuleai.wardrobe.domain.ControlledValue;
+import com.capsuleai.wardrobe.domain.GarmentCategory;
+import com.capsuleai.wardrobe.domain.GarmentColor;
+import com.capsuleai.wardrobe.domain.GarmentFit;
+import com.capsuleai.wardrobe.domain.GarmentMaterial;
+import com.capsuleai.wardrobe.domain.GarmentPattern;
+import com.capsuleai.wardrobe.domain.GarmentStyle;
+import com.capsuleai.wardrobe.domain.GarmentSubtype;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/**
+ * US-WAR-003 (OPEN-S4-11 as refined on 2026-11-17): the Vietnamese alias table is complete, well formed and
+ * identical to its canonical requirements document, so neither can change without the other.
+ */
+class VietnameseDescriptorAliasesTest {
+
+    private static final Path CANONICAL_TABLE =
+            Path.of("..", "docs", "03-requirements", "vocabularies", "vietnamese-descriptor-search-aliases.md");
+
+    private static final Pattern VOCABULARY_HEADING =
+            Pattern.compile("^## \\d+\\. (Category|Subtype|Color|Material|Pattern|Style)$");
+
+    /** The six searchable vocabularies, in the order of the canonical document. */
+    private static final Map<String, ControlledValue[]> SEARCHABLE_VOCABULARIES = searchableVocabularies();
+
+    /** One documented row: the code, the approved English label and the aliases, search label first. */
+    private record DocumentedValue(String code, String englishLabel, List<String> aliases) {
+    }
+
+    @Test
+    void everyValueOfTheSixSearchableVocabulariesHasAVietnameseSearchLabel() {
+        int values = 0;
+        for (ControlledValue[] vocabulary : SEARCHABLE_VOCABULARIES.values()) {
+            for (ControlledValue value : vocabulary) {
+                assertThat(VietnameseDescriptorAliases.aliasesOf(value)).as(value.name()).isNotEmpty();
+                values++;
+            }
+        }
+        assertThat(values).as("8 + 84 + 34 + 28 + 24 + 17 approved values").isEqualTo(195);
+    }
+
+    @Test
+    void everyAliasIsDistinctLowerCaseNfcTextWithoutOuterSpaces() {
+        for (ControlledValue[] vocabulary : SEARCHABLE_VOCABULARIES.values()) {
+            for (ControlledValue value : vocabulary) {
+                List<String> aliases = VietnameseDescriptorAliases.aliasesOf(value);
+                assertThat(new HashSet<>(aliases)).as("%s has no repeated alias", value.name()).hasSameSizeAs(aliases);
+                for (String alias : aliases) {
+                    assertThat(alias).as(value.name()).isNotBlank().isEqualTo(alias.strip())
+                            .isEqualTo(alias.toLowerCase(Locale.ROOT))
+                            .isEqualTo(Normalizer.normalize(alias, Normalizer.Form.NFC));
+                }
+            }
+        }
+    }
+
+    @Test
+    void theTableIsIdenticalToItsCanonicalRequirementsDocument() throws IOException {
+        Map<String, List<DocumentedValue>> documented = documentedTable();
+
+        assertThat(documented.keySet()).containsExactlyElementsOf(SEARCHABLE_VOCABULARIES.keySet());
+        SEARCHABLE_VOCABULARIES.forEach((vocabulary, values) -> {
+            List<DocumentedValue> implemented = Arrays.stream(values)
+                    .map(value -> new DocumentedValue(value.name(), value.label(),
+                            VietnameseDescriptorAliases.aliasesOf(value)))
+                    .toList();
+            assertThat(documented.get(vocabulary)).as(vocabulary).containsExactlyElementsOf(implemented);
+        });
+    }
+
+    @Test
+    void eachAliasIsAlsoSearchableInItsOtherStandardTonePlacement() {
+        assertThat(VietnameseDescriptorAliases.withOtherTonePlacement("họa tiết hoa")).isEqualTo("hoạ tiết hoa");
+        assertThat(VietnameseDescriptorAliases.withOtherTonePlacement("khoá kéo")).isEqualTo("khóa kéo");
+        assertThat(VietnameseDescriptorAliases.withOtherTonePlacement("thủy")).isEqualTo("thuỷ");
+        assertThat(VietnameseDescriptorAliases.withOtherTonePlacement("quý")).as("qu is a consonant").isEqualTo("quý");
+        assertThat(VietnameseDescriptorAliases.withOtherTonePlacement("áo khoác")).as("closed syllable unchanged")
+                .isEqualTo("áo khoác");
+
+        assertThat(VietnameseDescriptorAliases.searchSpellingsOf(GarmentPattern.FLORAL))
+                .contains("họa tiết hoa", "hoạ tiết hoa", "hoa");
+        assertThat(VietnameseDescriptorAliases.searchSpellingsOf(GarmentColor.WHITE))
+                .as("an alias without such a syllable has one spelling").containsExactly("trắng", "màu trắng");
+    }
+
+    @Test
+    void aVocabularyThatIsNotSearchedHasNoAliases() {
+        assertThatThrownBy(() -> VietnameseDescriptorAliases.aliasesOf(GarmentFit.SLIM))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> VietnameseDescriptorAliases.searchSpellingsOf(GarmentFit.SLIM))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static Map<String, ControlledValue[]> searchableVocabularies() {
+        Map<String, ControlledValue[]> vocabularies = new LinkedHashMap<>();
+        vocabularies.put("Category", GarmentCategory.values());
+        vocabularies.put("Subtype", GarmentSubtype.values());
+        vocabularies.put("Color", GarmentColor.values());
+        vocabularies.put("Material", GarmentMaterial.values());
+        vocabularies.put("Pattern", GarmentPattern.values());
+        vocabularies.put("Style", GarmentStyle.values());
+        return vocabularies;
+    }
+
+    /**
+     * The rows of the canonical document: inside each "## n. Vocabulary" section, every table row whose first
+     * cell is a code in backticks. Further aliases are separated by "; ", and "—" means none.
+     */
+    private static Map<String, List<DocumentedValue>> documentedTable() throws IOException {
+        assertThat(CANONICAL_TABLE).as("canonical Vietnamese alias table").isRegularFile();
+        Map<String, List<DocumentedValue>> table = new LinkedHashMap<>();
+        String vocabulary = null;
+        for (String line : Files.readAllLines(CANONICAL_TABLE, StandardCharsets.UTF_8)) {
+            if (line.startsWith("## ")) {
+                Matcher heading = VOCABULARY_HEADING.matcher(line);
+                vocabulary = heading.matches() ? heading.group(1) : null;
+            } else if (vocabulary != null && line.startsWith("| `")) {
+                List<String> cells = Arrays.stream(line.substring(1, line.length() - 1).split("\\|"))
+                        .map(String::strip)
+                        .toList();
+                List<String> aliases = new ArrayList<>();
+                aliases.add(cells.get(2));
+                if (!cells.get(3).equals("—")) {
+                    aliases.addAll(Arrays.asList(cells.get(3).split("; ")));
+                }
+                table.computeIfAbsent(vocabulary, ignored -> new ArrayList<>())
+                        .add(new DocumentedValue(cells.get(0).replace("`", ""), cells.get(1), List.copyOf(aliases)));
+            }
+        }
+        return table;
+    }
+}
+```
+
+**Explanation.**
+
+- **The document is the authority.** Like the existing `ApprovedGarmentVocabularyTest`, which reads the garment-property authority, this test reads the canonical alias table from the repository (`..` is the repository root when Maven runs in `backend/`). CI checks out the whole repository, so the file is present.
+- **What it compares.** For each of the six vocabularies, the code, the approved English label and the alias list of every row, in order. A typo, a missing value, a reordered row or an NFD-encoded alias fails the build.
+- **Tone placement.** `withOtherTonePlacement` is package-private so that its rules (open syllables only, `qu` excluded) are tested directly.
+
 Run:
 
 ```powershell
-.\mvnw.cmd -q "-Dtest=SearchWardrobeServiceTest,DescriptorMatcherTest,WardrobeSearchCriteriaTest,WardrobeSearchRequestTest,FilteredWardrobeCursorTest,SearchStatementCatalogueTest" test
+.\mvnw.cmd -q "-Dtest=SearchWardrobeServiceTest,DescriptorMatcherTest,VietnameseDescriptorAliasesTest,WardrobeSearchCriteriaTest,WardrobeSearchRequestTest,FilteredWardrobeCursorTest,SearchStatementCatalogueTest" test
 .\mvnw.cmd "-Dtest=HarnessSmokeTest" "-Dit.test=JdbcWardrobeSearchRepositoryIT,SearchWardrobeApiIT,SearchWardrobeFailureIT,BrowseWardrobeApiIT,WardrobeFailureIT,IdentityOpenApiContractIT" verify
 ```
 
@@ -3200,7 +3984,20 @@ Check 'M4 category OR, AND color; conditions echoed' ($filtered.Json.garments.Co
 
 $invalid = Invoke-Api GET '/wardrobe/garments?category=SOCKS&color=navy' $null $owner
 Check 'M5 invalid codes -> 400 with two field errors' ($invalid.Status -eq 400 -and $invalid.Json.fieldErrors.Count -eq 2)
+
+$tShirt = Add-Garment '{"confirmed":true,"category":"TOPS","subtype":"T_SHIRTS","color":"WHITE"}'
+$vietnamese = Invoke-Api GET ('/wardrobe/garments?q=' + (Get-Encoded 'ÁO PHÔNG')) $null $owner
+$white = Invoke-Api GET ('/wardrobe/garments?q=' + (Get-Encoded 'trắng')) $null $owner
+$unaccented = Invoke-Api GET ('/wardrobe/garments?q=' + (Get-Encoded 'ao phong')) $null $owner
+Check 'M8 Vietnamese alias (any case) finds the T-shirt; trắng finds White; unaccented is NO_MATCH' (
+    ($vietnamese.Json.garments | Where-Object { $_.id -eq $tShirt }).Count -eq 1 -and
+    ($white.Json.garments | Where-Object { $_.id -eq $tShirt }).Count -eq 1 -and
+    $unaccented.Json.resultState -eq 'NO_MATCH')
+$skirtFilter = Invoke-Api GET ('/wardrobe/garments?category=' + (Get-Encoded 'chân váy')) $null $owner
+Check 'M9 a Vietnamese label is not a filter code -> 400 UNSUPPORTED_VALUE' ($skirtFilter.Status -eq 400)
 ```
+
+The script must be saved as UTF-8 with a byte-order mark, so that Windows PowerShell 5.1 reads the Vietnamese literals correctly.
 
 **M6. Query plans (OPEN-S4-15).** This step needs a measurement; it has not been done. Run it in a local database with synthetic data only.
 
@@ -3216,7 +4013,7 @@ ORDER BY g.created_at DESC, g.id DESC
 LIMIT 21;
 ```
 
-3. Repeat for a text shape: use the full `TEXT_CONDITION` from P10 with `'%navy%'`.
+3. Repeat for a text shape: use the full `TEXT_CONDITION` from P11 with `'%navy%'`.
 
 **M7. Decision rule.** Keep the current indexes if every filtered first page uses `ix_wardrobe_garment_owner_current` or another owner-restricted access path and runs under 50 ms at 5,000 garments on the reference machine. Otherwise add a forward migration, V16 or later, owner `wardrobe`, with the candidate index from OPEN-S4-15, and record the evidence. Do not claim a benchmark threshold from these numbers; they are an engineering trigger only.
 
@@ -3226,9 +4023,9 @@ LIMIT 21;
 
 | AC | Evidence (planned) | Remaining |
 | --- | --- | --- |
-| AC-01 Find supported descriptors | T2; T3; T7 `aGarmentWithSeveralMatchingMaterials…`, `brandMatching…`, `likeMetacharacters…`, `priceAndOtherOptionalDetails…`; T8 `aSearchReturns…`; M2–M3 | CAT-Q01 resolved by delegated defaults OPEN-S4-11/12. A PO/BA review of the examples is advised. The source "no search implementation" wording should be clarified. |
+| AC-01 Find supported descriptors | T2 (including `vietnameseSearchLabelsAndAliases…`, `vietnameseMatchingIgnoresLetterCase…`, `anAmbiguousWord…`); T3; T7 `aGarmentWithSeveralMatchingMaterials…`, `brandMatching…`, `vietnameseDescriptorAliases…`, `likeMetacharacters…`, `priceAndOtherOptionalDetails…`; T8 `aSearchReturns…`, `aVietnameseAliasFinds…`; T10; M2–M3, M8 | CAT-Q01 resolved by delegated defaults OPEN-S4-11/12; Vietnamese descriptor search authorized by the PO on 2026-11-17. A PO or native-speaker review of the alias wording is advised. |
 | AC-02 Filter category and color | T6; T7 `categoryAndColorFilters…`, `removedAndOtherOwners…`; T8 `anotherAccountsGarmentsNeverMatch`; M4 | — |
-| AC-03 Show and clear conditions | T4 (blank `q`); T8 `aSearchReturns…` (echo), `aFilteredCursorContinuesOnly…` | Client: chips, change and reset |
+| AC-03 Show and clear conditions | T4 (blank `q`, `aCursorIssuedUnderTheEnglishOnlyMatchingPolicy…`); T8 `aSearchReturns…` and `aVietnameseAliasFinds…` (echo), `aFilteredCursorContinuesOnly…`; M9 (Vietnamese text is not a filter code) | Client: chips, change and reset |
 | AC-04 Distinguish result states | T1; T8 `noMatchIsDistinguished…`, `aGarmentRemovedBetweenPages…`; T9 | Client: loading, denied and failed states |
 | AC-05 Inspect real results | T8 (summary with `NOT_EVALUATED`; minimum-only garments listed) | Client detail and return navigation |
 | AC-06 Recover without mutation | T8 `searchingChangesNothing`; T9 (failure is `503`; retry works) | Client retry UX |
@@ -3242,15 +4039,18 @@ LIMIT 21;
 | DATA-GAR-005 (unevaluated eligibility kept) | T8 |
 | UI-003/004 (understandable states and conditions) | T8 (`resultState`, `conditions`); client evidence |
 | ERR-NET-001 (failure is not empty) | T9, unchanged `WardrobeFailureIT` |
-| LOC-004 (Vietnamese meanings) | T7 `brandMatching…` (Vietnamese Brand); descriptor labels remain English (OPEN-S4-11) |
+| LOC-002 (canonical codes independent of labels) | T10 (codes and English labels unchanged), T4 (filters accept codes only), M9 |
+| LOC-004 (Vietnamese text preserved) | T7 `brandMatching…` (Vietnamese Brand), T8 `aVietnameseAliasFinds…` (echo with diacritics) |
+| LOC-006 (Vietnamese descriptor search, added 2026-11-17) | T2, T7 `vietnameseDescriptorAliases…`, T8 `aVietnameseAliasFinds…`, T10; M8 |
 | BRULE-AUTH-001 | T7 `removedAndOtherOwners…`, T8 `anotherAccounts…` |
 | BRULE-GAR-004 (controlled vocabularies) | T2, T4 |
 | BRULE-GAR-009 (removed garments excluded) | T7, T8 |
 
 ## 16. Definition of Done
 
-- [ ] P1–P20 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including the unchanged `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 115 required reports with no failure or skip.
+- [ ] P1–P21 and T1–T10 applied. `.\mvnw.cmd clean verify` passes, including the unchanged `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` finds 116 required reports with no failure or skip.
+- [ ] The Vietnamese alias wording in the [canonical table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md) has been reviewed by the PO or a native-speaker reviewer, or the review is recorded as outstanding. Any change goes to the document and P3 together, with a new matching-policy tag.
 - [ ] `JdbcWardrobeSearchRepositoryIT` repeated against the deployed database's collation and ctype (Vietnamese case folding).
 - [ ] M6–M7 query-plan evidence recorded; an index migration added only if the rule requires it.
 - [ ] PO/BA informed of the delegated CAT-Q01 semantics (OPEN-S4-11–14). The source wording "no search implementation" is clarified in refinement.
@@ -3260,14 +4060,19 @@ LIMIT 21;
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `BrowseWardrobeApiIT` fails on the field-error order | `WardrobeSearchRequest` reports `cursor` before `limit` | Keep the `limit` check before the cursor check (P12) |
+| `BrowseWardrobeApiIT` fails on the field-error order | `WardrobeSearchRequest` reports `cursor` before `limit` | Keep the `limit` check before the cursor check (P13) |
 | `WardrobeFailureIT` no longer sees `503` on the overview | The unrestricted path was routed through `WardrobeSearchRepository` | Keep `SearchWardrobeService.find` using `GarmentRepository` for unrestricted criteria |
 | `PSQLException: function normalize(text, unknown)` or a syntax error near `NFC` | Database below PostgreSQL 13, or `NFC` was quoted | Use PostgreSQL 13+ (17.11 here), with `NFC` as a keyword, unquoted |
 | `ERROR: invalid escape string` | `ESCAPE '\'` with `standard_conforming_strings = off` | Keep the default `on`. The text block must contain `'\\'`, which becomes `'\'` in SQL. |
 | A search for `_` returns garments whose Brand has no underscore | Their codes contain underscores (for example `T_SHIRTS`) | Expected under the agreed literal label-or-code semantics |
-| Vietnamese upper-case text does not match | Database ctype `C` or `POSIX` folds only ASCII in `lower()` | Use a UTF-8 ctype (for example `en_US.utf8`), or record the limitation |
-| `IdentityOpenApiContractIT` reports the overview response fields | OpenAPI lacks `resultState` or `conditions` in `required` | Apply P19 edit 4 |
-| `UnsatisfiedDependencyException` for `SearchWardrobeService` | P18 not applied | Add both beans |
+| Vietnamese upper-case Brand text does not match | Database ctype `C` or `POSIX` folds only ASCII in `lower()` | Use a UTF-8 ctype (for example `en_US.utf8`), or record the limitation. Descriptor aliases are folded in Java and are not affected. |
+| `VietnameseDescriptorAliasesTest.theTableIsIdenticalToItsCanonicalRequirementsDocument` fails | The alias document and P3 differ: a changed word, a reordered row, a missing `; ` separator, or an editor that saved NFD text | Change both together. Save the document as UTF-8 NFC. Keep one row per value in vocabulary order. |
+| `ExceptionInInitializerError` from `VietnameseDescriptorAliases` | A vocabulary value has no row, a row is repeated, or an alias has upper-case letters or outer spaces | Read the cause message; it names the value or alias. Add or fix the row in the document and P3. |
+| A Vietnamese query returns more garments than expected | The phrase is contained in aliases of several values (for example `váy`, `xanh`, `da`) | Expected OR semantics (§10.2). Use a longer phrase or the `category` and `color` filters. |
+| A Vietnamese query without accents finds nothing | Matching is accent-sensitive by decision S4-WAR-01 | Expected. Type the accents; the client can suggest aliases. |
+| A cursor from an earlier build answers `CONDITIONS_CHANGED` for unchanged conditions | It was issued under matching policy `m1` | Expected after the `m2` change. Restart from the first page. |
+| `IdentityOpenApiContractIT` reports the overview response fields | OpenAPI lacks `resultState` or `conditions` in `required` | Apply P20 edit 4 |
+| `UnsatisfiedDependencyException` for `SearchWardrobeService` | P19 not applied | Add both beans |
 
 ## 18. Final Checklist
 
@@ -3275,8 +4080,9 @@ LIMIT 21;
 - [ ] 14 constant statements, each with the owner/current guard, order and bound limit (T6). No runtime SQL assembly.
 - [ ] Every value bound. Code sets as comma-joined text. The Brand pattern escaped for `\`, `%` and `_`.
 - [ ] Matching is case-insensitive and accent-sensitive with NFC. Price and the other optional details are not searched.
-- [ ] `v2` cursors are bound to the fingerprint; a mismatch gives `CONDITIONS_CHANGED`.
+- [ ] All 195 values of the six searchable vocabularies have a Vietnamese search label; P3 equals the canonical alias document (T10). Ambiguous words match every named value (OR). Filters still accept codes only.
+- [ ] `v2` cursors are bound to the fingerprint under matching policy `m2`; a mismatch, including an `m1` cursor, gives `CONDITIONS_CHANGED`.
 - [ ] `resultState` comes from one REPEATABLE READ snapshot for filtered first pages.
 - [ ] Read-only: no writes, no locks.
 - [ ] OpenAPI 0.14.0 documents `q`, `category`, `color`, `resultState`, `conditions` and `CONDITIONS_CHANGED`.
-- [ ] CI: 9 entries added; no index migration without M6–M7 evidence.
+- [ ] CI: 10 entries added (116 in total); no index migration without M6–M7 evidence.

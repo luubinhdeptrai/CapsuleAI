@@ -6,13 +6,14 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Nothing here is implemented in the repository or deployed.** The guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy on 2026-11-16 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Nothing here is implemented in the repository or deployed.** The guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
 
 On **2026-11-16** the Product Owner did two things:
 
-1. **Approved all 30 recommended solutions** in [Section 9 of the Sprint 4 plan](../sprint-plan.md#9-decision-analysis--proposed-solutions). Each S4 decision is now binding. The plan's `PROPOSED — PENDING PO APPROVAL` labels are historical and superseded; the plan file itself is not edited.
+1. **Approved all 30 recommended solutions** in [Section 9 of the Sprint 4 plan](../sprint-plan.md#9-decision-analysis--proposed-solutions). Each S4 decision is now binding. Since version 0.2 of 2026-11-17 the plan itself records the approval; its earlier `PROPOSED — PENDING PO APPROVAL` labels are kept as history.
 2. **Delegated the remaining detailed questions** to Claude: "independently select practical, appropriate solutions for unresolved detailed questions". This includes the questions the plan names as blockers:
    - CAT-Q01: search semantics;
    - the supported optional body/gender representation;
@@ -29,6 +30,8 @@ The two authorities are kept apart everywhere in this package:
 | `SELECTED BY CLAUDE — DELEGATED DEFAULT` | A concrete choice made by Claude under the delegation. It is binding for implementation until the Product Owner changes it, but it is **not** a Product Owner approval of the specific value. | All 33 OPEN-S4 entries |
 | `IMPLEMENTATION PENDING` | The guide specifies the code; it has not been applied to the repository. | All 33 entries |
 | `VERIFICATION PENDING` | Tests, measurements, provider terms, storage configuration or client evidence must still establish the claim. | Every entry that names an external, operational or client check |
+
+On **2026-11-17** the Product Owner also **explicitly authorized Vietnamese descriptor search** for US-WAR-003, a refinement of OPEN-S4-11. That authorization covers the capability; the specific alias wording stays a delegated default.
 
 **No delegated default is claimed as Product Owner approved.** Where an entry changes a product-visible meaning (for example the optional body/gender vocabulary or the batch limits), it is a candidate for explicit Product Owner review. The change-impact field says what a later change would touch.
 
@@ -57,14 +60,14 @@ Each entry has these fields:
 | [OPEN-S4-06](#open-s4-06--removal-concurrency-and-lock-order) | GAR-005 | S4-GAR-01, S4-INT-01 | Conditional revision `UPDATE` on the garment, then a read of the photo, then the cleanup row. | Delegated default | Pending | Pending |
 | [OPEN-S4-07](#open-s4-07--attachment-command-transport-and-outcomes) | GAR-006 | S4-GAR-04, S4-INT-02/03 | `POST …/{garmentId}/photo-attachment` returns `GarmentResponse`. A same-pair replay answers `200` without a new revision. | Delegated default | Pending | Pending |
 | [OPEN-S4-08](#open-s4-08--attachment-transaction-check-order-and-lock-order) | GAR-006 | S4-GAR-05, S4-INT-01 | Lock the garment row, then read garment and photo afresh, then lock the photo. Check order: replay, already photographed, revision, usable. | Delegated default | Pending | Pending |
-| [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, labelled provisional and mapped to plan §6.5 | Delegated default | Pending | Pending (formal refinement) |
+| [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, mapped to plan §6.5; since 2026-11-17 formalized one to one as AC-01–AC-06 of the formal story US-GAR-006 (parent PBI-049) | Delegated default | Pending | Pending (PO acceptance of the formalized AC) |
 | [OPEN-S4-10](#open-s4-10--attachment-photo-availability-and-pending-lifecycle-reuse) | GAR-006 | S4-GAR-06 | No object check. Trust READY metadata. A missing object gives `404 GARMENT_PHOTO_UNAVAILABLE`. | Delegated default | Pending | Pending |
-| [OPEN-S4-11](#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) | WAR-003 | S4-WAR-01 | Labels and codes of six vocabularies plus Brand. Literal, case-insensitive, accent-sensitive, NFC. English labels only. | Delegated default | Pending | Pending (PostgreSQL locale) |
+| [OPEN-S4-11](#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) | WAR-003 | S4-WAR-01 | English labels, codes and **Vietnamese search aliases** of six vocabularies, plus Brand. Literal, case-insensitive, accent-sensitive, NFC; ambiguous words match every named value. Cursor policy `m2`. **Refined 2026-11-17** (Vietnamese search authorized by the PO). | Delegated default (wording); capability PO-authorized | Pending | Pending (alias wording review, PostgreSQL locale) |
 | [OPEN-S4-12](#open-s4-12--search-input-limits-and-wildcard-escaping) | WAR-003 | S4-WAR-01 | `q` is trimmed and NFC-normalized; a blank `q` means no condition. 1–100 code points, no control characters. Escape `\`, `%` and `_`. | Delegated default | Pending | Pending |
 | [OPEN-S4-13](#open-s4-13--category-and-color-filters-and-the-statement-catalogue) | WAR-003 | S4-WAR-02 | Repeated `category` and `color` parameters: OR within a group, AND across groups. A catalogue of 14 complete statements for the 7 restricted shapes. | Delegated default | Pending | Pending |
 | [OPEN-S4-14](#open-s4-14--criteria-bound-cursor-and-result-states) | WAR-003 | S4-WAR-03 | `v2` cursor carrying a criteria fingerprint; a mismatch gives `CONDITIONS_CHANGED`. `resultState` is computed in one read snapshot. | Delegated default | Pending | Pending |
 | [OPEN-S4-15](#open-s4-15--search-indexing-evidence) | WAR-003 | S4-WAR-04 | No new index in Sprint 4. Documented `EXPLAIN` procedure and the triggers for adding one. | Delegated default | Pending | Pending (measurement) |
-| [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values.** | Delegated default | Pending | **Pending (inclusive-representation review)** |
+| [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values**, defined canonically in SRS §4.10.1 since 2026-11-17. | Delegated default | Pending | **Pending (inclusive-representation review)** |
 | [OPEN-S4-17](#open-s4-17--optional-context-resource-persistence-and-clearing) | PROF-002 | S4-PROF-02/03/04 | `/optional-context` resource, V13 table, presence-aware PATCH. No published API. | Delegated default | Pending | Pending |
 | [OPEN-S4-18](#open-s4-18--location-representation-precision-and-manual-resolution) | CTX-001 | S4-CTX-01 | 2-decimal point rounded by the server; `DEVICE` or `MANUAL`; a label. The client resolves cities from a bundled reference. | Delegated default | Pending | Pending (client, privacy) |
 | [OPEN-S4-19](#open-s4-19--location-revision-clearing-and-evidence-binding) | CTX-001 | S4-CTX-02 | V14 tables. PATCH `selection`. Weather is acquired after commit, and evidence is published only while the location revision is still current. | Delegated default | Pending | Pending |
@@ -87,8 +90,8 @@ Each entry has these fields:
 
 | Plan blocker ([§12](../sprint-plan.md#12-risks-and-open-questions)) | Resolved by | Remaining non-delegable evidence |
 | --- | --- | --- |
-| R4-02: no formal attachment story | OPEN-S4-07–10 (provisional P-AC labelled as such) | Formal story/PBI mapping by PO/BA before calling GAR-006 Done |
-| R4-03: CAT-Q01 | OPEN-S4-11–14 | Client query/reset evidence; source wording clarification |
+| R4-02: no formal attachment story | OPEN-S4-07–10; since 2026-11-17 the formal [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and [PBI-049](../../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) | PO acceptance of the formalized AC before calling GAR-006 Done |
+| R4-03: CAT-Q01 | OPEN-S4-11–14, with the Vietnamese refinement of 2026-11-17 | Client query/reset evidence; review of the alias wording |
 | R4-04: supported optional values | OPEN-S4-16 | Inclusive-representation review of the selected values |
 | R4-06: location precision and manual source | OPEN-S4-18 | Mobile permission, manual and skip evidence |
 | R4-07: provider terms, access and coverage | OPEN-S4-20, OPEN-S4-24 | **Open-Meteo terms/eligibility for the actual deployment and a real authorized request** |
@@ -563,7 +566,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 
 ## OPEN-S4-09 — Provisional attachment acceptance criteria
 
-**A. Question and decision.** Which acceptance criteria does the GAR-006 guide test, given that no formal story exists? Realizes **S4-GAR-04**.
+**A. Question and decision.** Which acceptance criteria does the GAR-006 guide test, given that no formal story existed when the story was selected? (Since 2026-11-17 the formal story exists; see F.) Realizes **S4-GAR-04**.
 
 **B. Story and requirements.** Plan §6.5 provisional expectations; supporting BR-005, DATA-GAR-004.
 
@@ -591,7 +594,8 @@ The version-aware alternative is described in §17 Troubleshooting.
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
 - `IMPLEMENTATION PENDING`.
-- **`VERIFICATION PENDING`: formal story refinement and PBI mapping by the PO and BA are required before Done.**
+- **`VERIFICATION PENDING`: PO acceptance of the formalized criteria is required before Done.**
+- **Update 2026-11-17:** the formal Draft story [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and its parent [PBI-049](../../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) now exist. The story's AC-01–AC-06 restate P-AC-01–P-AC-06 one to one. The canonical documents gained FR-WAR-009, SRS §3.6.3, BRULE-GAR-011, PRD FEAT-WAR-002 behavior 7 with AC-08–AC-09, and UC-009 A4/E5. The AC are a delegated formalization, not a separate PO approval.
 
 **G. Implementation steps.** US-GAR-006 §7 and §15.
 
@@ -649,60 +653,82 @@ The version-aware alternative is described in §17 Troubleshooting.
 
 ## OPEN-S4-11 — Searchable descriptors and matching semantics (CAT-Q01)
 
+> **Refined on 2026-11-17 — Vietnamese descriptor search.** The Product Owner explicitly authorized adding Vietnamese search labels and common aliases to the matching semantics of US-WAR-003, for all six searchable vocabularies. This entry records the previous delegated default, the refinement and its consequences. The refinement changes only what a text condition matches; every other rule of S4-WAR-01 and OPEN-S4-12–14 is unchanged.
+
 **A. Question and decision.** Which fields match a free-text query, and how? Realizes **S4-WAR-01** (literal, case-insensitive, accent-sensitive substring; one phrase; OR across fields; Price excluded).
 
-**B. Story and requirements.** US-WAR-003 AC-01, AC-03, AC-05; FR-WAR-007/008, DATA-GAR-005, LOC-004; BRULE-GAR-004.
+**B. Story and requirements.** US-WAR-003 AC-01, AC-03, AC-05; FR-WAR-007/008, DATA-GAR-005, LOC-002, LOC-004, LOC-006 (added 2026-11-17), [SRS §3.6.2](../../../../03-requirements/SRS.md#362-wardrobe-search-and-filter-rules); BRULE-GAR-004.
 
 **C. Problem and context.**
 
-- Controlled values are stored as codes. The backend vocabularies carry only the approved English labels; no Vietnamese label table exists anywhere in the repository.
+- Controlled values are stored as codes. The backend vocabularies carry only the approved English labels; before this refinement no Vietnamese label table existed anywhere in the repository.
+- The product's interface is Vietnamese (LOC-001). A user who types `áo thun`, `trắng` or `chân váy` expects to find T-shirts, white garments and skirts. English-only matching would make search unusable for them.
 - Brand is free Unicode text, kept exactly as entered.
 - PostgreSQL `lower()` and `ILIKE` depend on the database ctype.
+- Vietnamese keyboards write the tone mark of an open "oa", "oe" or "uy" syllable in one of two standard positions (`họa` or `hoạ`, `khóa` or `khoá`).
 
 **D. Options.**
 
 | Option | Trade-off |
 | --- | --- |
-| 1. Match controlled values in Java (labels and codes of Category, Subtype, Color, Material, Pattern and Style, lower-cased with `Locale.ROOT`, NFC) into code sets. Bind those code sets. Match Brand in SQL with `lower(normalize(brand, NFC)) LIKE lower(:pattern) ESCAPE '\'`. | Controlled values never depend on database locale. Brand uses one database-side folding for both operands. Compatible with a future trigram index. |
-| 2. Everything in SQL with a code→label table | Needs a new label table, which would duplicate the vocabulary authority |
-| 3. Accent folding (`unaccent`) | Contradicts S4-WAR-01 (accent-sensitive); needs an extension |
+| 1. *(previous default)* Match controlled values in Java through their English labels and codes only, lower-cased with `Locale.ROOT`, NFC, into code sets. Match Brand in SQL with `lower(normalize(brand, NFC)) LIKE lower(:pattern) ESCAPE '\'`. | Simple; never depends on the database locale. But Vietnamese descriptor words find nothing, so the search barely serves Vietnamese users. |
+| 2. *(selected 2026-11-17)* Option 1 plus a centralized, reviewed table of Vietnamese search labels and common aliases for every value of the six vocabularies, held in one application class and in one canonical requirements document that a test keeps identical. An alias matches through the same substring rule. A word that names several values matches all of them (OR). Each alias is also matched in its other standard tone-mark placement. | Vietnamese queries work and stay accent-sensitive. Codes, labels and stored data are unchanged. Costs a 195-row table to maintain and a cursor-policy change. |
+| 3. A database code→label table, joined in SQL | Duplicates the vocabulary authority in a second store; needs a migration and new ownership rules; locale-dependent folding |
+| 4. Accent folding (`unaccent`), tokenization or full-text search | Contradicts S4-WAR-01 (literal, accent-sensitive phrase) and needs an extension or a search engine |
+| 5. Leave Vietnamese to the client: it translates the query into codes and sends filters | Only works for Category and Color, which have filters; the other four vocabularies stay unsearchable in Vietnamese; every client re-implements the table |
 
-**E. Selected solution and rationale.** **Option 1.**
+**E. Selected solution and rationale.** **Option 2** (since 2026-11-17; Option 1 was the delegated default of 2026-11-16).
 
-- The query is one literal phrase. It matches a garment when it is a substring of any participating field: OR across fields.
-- Case-insensitive; accent-sensitive. `"áo"` does not match `"ao"`.
-- Labels are the approved English labels. **Vietnamese descriptor labels are not searchable server-side in Sprint 4.** The client localizes labels and can offer the category/color filters in Vietnamese. Brand matches Vietnamese text literally.
-- Price, Fit, Neckline, Sleeve Length, Length and Silhouette are excluded, as are personal context and images.
+- **Fields.** Category, Subtype, Color, Material, Pattern and Style: each value's code, approved English label and Vietnamese search aliases. Brand literally. Price, Fit, Neckline, Sleeve Length, Length and Silhouette are excluded, as are personal context and images.
+- **Phrase.** One literal phrase, matched when it is a substring of any participating field (OR across fields). No tokens, no wildcards. `áo thun trắng` is not split into two conditions.
+- **Case and accents.** Case-insensitive; accent-sensitive; NFC. `ÁO THUN` matches `áo thun`; `ao thun` does not. `trắng` matches White; `trang` does not.
+- **Aliases.** The [canonical alias table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md) lists, for all 195 values, a Vietnamese search label and common aliases, for example `T_SHIRTS` → `áo thun`, `áo phông`; `WHITE` → `trắng`, `màu trắng`; `SKIRTS` → `chân váy`; `TOPS` → `áo`. Aliases are search vocabulary only: they are never stored, never returned as codes and never accepted by the `category` and `color` filters, which keep taking exact codes.
+- **Ambiguity.** An alias substring shared by several values is not resolved to one meaning. `váy` matches Dresses/Jumpsuits and Skirts; `xanh` matches every blue and green Color; `tím` matches Purple, Lavender and Navy (`xanh tím than`). Each matched value enters its field's code set, and the fields are combined with OR. The canonical table documents these cases.
+- **Tone-mark placement.** The table is written in one placement; the class also matches each alias in the other standard placement of its open "oa", "oe" and "uy" syllables. This adds a correctly accented spelling. It is not accent folding: `hoa` still never matches `họa`.
+- **Brand** keeps its literal behavior, with no alias and no placement variant.
+- **Cursor policy.** Because the same phrase can match more garments, the matching-policy tag in the cursor fingerprint changes from `m1` to `m2` (see OPEN-S4-14). A cursor issued under `m1` is refused with `CONDITIONS_CHANGED`.
+
+Rationale: matching in Java against one reviewed table keeps the database locale out of descriptor matching, keeps S4-WAR-01's literal and accent-sensitive semantics, and makes the Vietnamese words reviewable in one place. The test that compares the class with the requirements document prevents the two from drifting.
 
 **F. Authority and status.**
 
-- `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-WAR-01.
+- The **capability** (Vietnamese descriptor search for the six vocabularies) was **explicitly authorized by the Product Owner on 2026-11-17**. It refines the approved S4-WAR-01. It does not change any of the 30 approved decisions.
+- The **specific alias wording** remains `SELECTED BY CLAUDE — DELEGATED DEFAULT`. It is not a Product Owner approval of each Vietnamese word. A review by the PO or a native-speaker reviewer is recommended before release.
 - `IMPLEMENTATION PENDING`.
-- `VERIFICATION PENDING`. This includes the database-ctype behavior of `lower()` for Vietnamese characters on the deployed PostgreSQL.
+- `VERIFICATION PENDING`. This includes the database-ctype behavior of `lower()` for Vietnamese Brand text on the deployed PostgreSQL. Descriptor aliases are folded in Java and do not depend on it.
 
 **G. Implementation steps.** US-WAR-003:
 
-- Production: P1, P2, P3, P11.
-- Tests: T2, T7.
+- Production: P1 (policy `m2`), P2, P3 (`VietnameseDescriptorAliases`), P4 (`DescriptorMatcher`), P12, P20 (OpenAPI descriptions).
+- Tests: T2, T3, T4, T7, T8, T10.
 
-**H. Affected files.** `WardrobeSearchCriteria.java`, `WardrobeSearchQuery.java`, `DescriptorMatcher.java`, `JdbcWardrobeSearchRepository.java`.
+**H. Affected files.**
 
-**I. Required verification.** `JdbcWardrobeSearchRepositoryIT`:
+- `WardrobeSearchCriteria.java`, `WardrobeSearchQuery.java`, `VietnameseDescriptorAliases.java` (new), `DescriptorMatcher.java`, `JdbcWardrobeSearchRepository.java`;
+- `docs/05-api/openapi.yaml` (descriptions of `q`, `category`, `color` and the overview, in the guide's step P20);
+- the canonical table `docs/03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md` (created 2026-11-17).
 
-- Vietnamese Brand with `Đ` and `ạ`;
-- case;
-- accent sensitivity;
-- NFC versus NFD input;
-- each descriptor field;
-- Price excluded.
+**I. Required verification.**
 
-Run it on the deployed database's collation.
+- `VietnameseDescriptorAliasesTest`: every one of the 195 values has a search label; every alias is lower-case NFC without outer spaces; the class equals the canonical document; both tone placements; unsearchable vocabularies rejected.
+- `DescriptorMatcherTest`: Vietnamese labels and aliases, letter case, accent sensitivity, ambiguous words, tone placement.
+- `WardrobeSearchCriteriaTest` and `WardrobeSearchRequestTest`: the `m2` fingerprint; an `m1` cursor gives `CONDITIONS_CHANGED`.
+- `JdbcWardrobeSearchRepositoryIT`:
+  - Vietnamese aliases find garments through their stored codes;
+  - an ambiguous word returns both meanings, and a code filter still narrows them;
+  - Vietnamese Brand with `Đ` and `ạ`; case; accent sensitivity; NFC versus NFD input; each descriptor field; Price excluded.
+- `SearchWardrobeApiIT`: a Vietnamese alias over HTTP, echoed as typed; the unaccented phrase gives `NO_MATCH`.
+- Run the integration tests on the deployed database's collation.
+- A wording review of the alias table (PO or native speaker).
 
-**J. Change impact.** Adding Vietnamese labels later means:
+Scratch evidence of 2026-11-17: the six guides, including this refinement, were applied to an isolated copy together with the canonical alias document. `clean verify` passed there, including every test listed above (687 unit and 435 integration tests, none failed or skipped; [README §11](README.md#11-status)). Nothing was run in the repository, and the alias wording has not been reviewed.
 
-- a reviewed label table or vocabulary extension;
-- a `DescriptorMatcher` change;
-- a new matching-policy tag in the cursor fingerprint (`m2`).
+**J. Change impact.**
+
+- **Changing an alias** means editing the canonical document and `VietnameseDescriptorAliases` together (T10 fails otherwise), moving the matching-policy tag to the next value (`m3`), and updating this entry.
+- **A new approved vocabulary value** needs a row; the class refuses to initialize without one.
+- **Making another vocabulary searchable**, or **accent-insensitive matching**, would change S4-WAR-01 and needs a Product Owner decision.
+- **A client** can reuse the Vietnamese search labels as display labels or suggestions; the client keeps final display wording (LOC-002).
 
 ---
 
@@ -738,7 +764,7 @@ Run it on the deployed database's collation.
 
 **G. Implementation steps.** US-WAR-003:
 
-- Production: P1, P11, P12.
+- Production: P1, P12, P13.
 - Tests: T3, T4, T7.
 
 **H. Affected files.** `WardrobeSearchCriteria.java`, `JdbcWardrobeSearchRepository.java`, `WardrobeSearchRequest.java`.
@@ -781,7 +807,7 @@ Run it on the deployed database's collation.
 
 **G. Implementation steps.** US-WAR-003:
 
-- Production: P10, P11, P12.
+- Production: P11, P12, P13.
 - Tests: T4, T6, T7.
 
 **H. Affected files.** `SearchStatementCatalogue.java`, `JdbcWardrobeSearchRepository.java`, `WardrobeSearchRequest.java`.
@@ -812,13 +838,14 @@ Run it on the deployed database's collation.
 
 | Option | Trade-off |
 | --- | --- |
-| 1. Unfiltered requests keep v1 cursors unchanged. Filtered requests issue `v2|createdAt|id|fp`, where `fp` is the first 16 hex characters of SHA-256 over `m1|q=<NFC lower>|c=<sorted codes>|k=<sorted codes>`. A mismatched or v1-on-filtered cursor → `400`, cursor `CONDITIONS_CHANGED`. `resultState`: `HAS_RESULTS`, `NO_MATCH`, `EMPTY_WARDROBE` or `END_OF_RESULTS`. An empty first page is resolved in one REPEATABLE READ read-only transaction (the page query plus an existence query). | Backward compatible; coherent snapshot; explicit reset path |
+| 1. Unfiltered requests keep v1 cursors unchanged. Filtered requests issue `v2|createdAt|id|fp`, where `fp` is the first 16 hex characters of SHA-256 over `m2|q=<NFC lower>|c=<sorted codes>|k=<sorted codes>` (policy tag `m1` until the Vietnamese refinement of OPEN-S4-11 on 2026-11-17). A mismatched or v1-on-filtered cursor → `400`, cursor `CONDITIONS_CHANGED`. `resultState`: `HAS_RESULTS`, `NO_MATCH`, `EMPTY_WARDROBE` or `END_OF_RESULTS`. An empty first page is resolved in one REPEATABLE READ read-only transaction (the page query plus an existence query). | Backward compatible; coherent snapshot; explicit reset path |
 | 2. Always v2 | Breaks clients holding v1 cursors mid-traversal |
 
 **E. Selected solution and rationale.** **Option 1.**
 
 - `END_OF_RESULTS` appears only on a later page that came back empty, because garments were removed meanwhile.
 - The fingerprint is not authorization: every page is still owner- and current-scoped.
+- **Matching-policy tag.** The tag names the matching rules the cursor was computed under. The Vietnamese aliases of OPEN-S4-11 (2026-11-17) moved it from `m1` to `m2`. A cursor issued under `m1` never matches an `m2` fingerprint, so it is refused with `CONDITIONS_CHANGED` instead of continuing a traversal under different rules. Unfiltered `v1` cursors are unaffected.
 
 **F. Authority and status.**
 
@@ -828,8 +855,8 @@ Run it on the deployed database's collation.
 
 **G. Implementation steps.** US-WAR-003:
 
-- Production: P1, P4, P5, P7, P8, P9, P13, P15, P16.
-- Tests: T3, T5, T8.
+- Production: P1, P5, P6, P8, P9, P10, P14, P16, P17.
+- Tests: T3, T4, T5, T8.
 
 **H. Affected files.**
 
@@ -843,10 +870,10 @@ Run it on the deployed database's collation.
 - page boundaries;
 - removal before and after the cursor;
 - reordered equivalent filters giving the same cursor;
-- a mismatched cursor;
+- a mismatched cursor, including an `m1` cursor for unchanged conditions;
 - no-match versus empty.
 
-**J. Change impact.** `resultState` is a new response field: compatible addition, OpenAPI 0.14.0.
+**J. Change impact.** `resultState` is a new response field: compatible addition, OpenAPI 0.14.0. Any later change to the matching rules or to the Vietnamese alias table needs a new policy tag (`m3`, …).
 
 ---
 
@@ -931,7 +958,7 @@ Run it on the deployed database's collation.
 - Production: P1 (CHECK constraints), P2, P3.
 - Tests: T1, T6, T7.
 
-**H. Affected files.** V13, `GenderContext.java`, `BodyShape.java`.
+**H. Affected files.** V13, `GenderContext.java`, `BodyShape.java`. Canonical definition since 2026-11-17: [SRS §4.10.1](../../../../03-requirements/SRS.md#4101-optional-personal-context-vocabularies), with proposed Vietnamese display labels.
 
 **I. Required verification.**
 
@@ -1599,7 +1626,7 @@ Existing stored values must be migrated or kept.
 | --- | --- | --- |
 | GAR-005 | P22 | P23 |
 | GAR-006 | P12 | P13 |
-| WAR-003 | P19 | P20 |
+| WAR-003 | P20 | P21 |
 | PROF-002 | P21 | P22 |
 | CTX-001 | P32 | P33 |
 | BULK-001 | P34 | P35 |
@@ -1663,7 +1690,7 @@ BULK-001 reuses `REVISION_CONFLICT` for a stale item revision, with item wording
 
 - GAR-005: P16.
 - GAR-006: P10.
-- WAR-003: P12.
+- WAR-003: P13.
 - PROF-002: P18.
 - CTX-001: P28.
 - BULK-001: P30.

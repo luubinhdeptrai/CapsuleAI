@@ -8,6 +8,12 @@ This package tells a backend developer exactly how to implement the six selected
 
 **It is documentation only. No source file, test, migration, OpenAPI file or workflow in the repository was changed to produce it.**
 
+**Revision of 2026-11-17.** The package was synchronized with the canonical documentation:
+
+- **Vietnamese descriptor search.** The Product Owner explicitly authorized Vietnamese search labels and aliases for US-WAR-003. OPEN-S4-11 is refined, and the WAR-003 guide gains step P3, the `VietnameseDescriptorAliases` class (195 values). The canonical table is in [vietnamese-descriptor-search-aliases.md](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). The cursor matching policy moves from `m1` to `m2`. Test T10 is new, and T2, T3, T4, T7 and T8 are extended. WAR-003's former steps P3–P20 are now P4–P21, and the CI totals grow by one.
+- **US-GAR-006.** The story now has a formal Draft story file and a parent, PBI-049. Its acceptance criteria are a delegated formalization awaiting Product Owner acceptance.
+- **Canonical documents.** The plan (version 0.2), PRD, SRS, Business Rules, Use Cases, backlog, stories and ADD were updated, and the verbatim sections of the guides were refreshed from them.
+
 ## 1. Sprint Goal
 
 From the [Sprint 4 plan](../sprint-plan.md#2-sprint-goal):
@@ -19,11 +25,11 @@ From the [Sprint 4 plan](../sprint-plan.md#2-sprint-goal):
 | Order | Story | Guide | Migration | OpenAPI | CI entries after |
 | --- | --- | --- | --- | --- | --- |
 | 1 | US-GAR-005 — Remove a garment while preserving minimal history | [US-GAR-005-guide.md](US-GAR-005-guide.md) | V12 (`wardrobe`) | 0.12.0 | 102 |
-| 2 | US-GAR-006 (provisional) — Attach a photo to an existing garment | [US-GAR-006-guide.md](US-GAR-006-guide.md) | — | 0.13.0 | 106 |
-| 3 | US-WAR-003 — Find owned garments through search and filters | [US-WAR-003-guide.md](US-WAR-003-guide.md) | — | 0.14.0 | 115 |
-| 4 | US-PROF-002 — Control optional body and gender context | [US-PROF-002-guide.md](US-PROF-002-guide.md) | V13 (`personal_context`) | 0.15.0 | 121 |
-| 5 | US-CTX-001 — Choose environmental context with safe fallback | [US-CTX-001-guide.md](US-CTX-001-guide.md) | V14 (`personal_context`) | 0.16.0 | 130 |
-| 6 | US-BULK-001 — Review and confirm a bulk garment-photo import | [US-BULK-001-guide.md](US-BULK-001-guide.md) | V15 (`wardrobe`) | 0.17.0 | 137 |
+| 2 | US-GAR-006 — Attach a photo to an existing imageless garment (Draft story since 2026-11-17; PBI-049) | [US-GAR-006-guide.md](US-GAR-006-guide.md) | — | 0.13.0 | 106 |
+| 3 | US-WAR-003 — Find owned garments through search and filters | [US-WAR-003-guide.md](US-WAR-003-guide.md) | — | 0.14.0 | 116 |
+| 4 | US-PROF-002 — Control optional body and gender context | [US-PROF-002-guide.md](US-PROF-002-guide.md) | V13 (`personal_context`) | 0.15.0 | 122 |
+| 5 | US-CTX-001 — Choose environmental context with safe fallback | [US-CTX-001-guide.md](US-CTX-001-guide.md) | V14 (`personal_context`) | 0.16.0 | 131 |
+| 6 | US-BULK-001 — Review and confirm a bulk garment-photo import | [US-BULK-001-guide.md](US-BULK-001-guide.md) | V15 (`wardrobe`) | 0.17.0 | 138 |
 
 The CI baseline before Sprint 4 is 95 required report entries.
 
@@ -78,7 +84,9 @@ The guides are written against branch `sprint_04` at commit `33c579ce52008da8fd6
 - Story decisions: S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06 and S4-BULK-01–07.
 - Integration decisions: S4-INT-01–03.
 
-The approval is binding. The plan's "PROPOSED — PENDING PO APPROVAL" cells are historical; each guide quotes them verbatim with a note.
+The approval is binding. Since version 0.2 (2026-11-17) the plan records it in its decision register, which each guide quotes; the earlier "PROPOSED — PENDING PO APPROVAL" status is kept there as history.
+
+**Explicitly authorized by the Product Owner on 2026-11-17:** Vietnamese descriptor search for US-WAR-003 (refinement of OPEN-S4-11). The capability is authorized; the alias wording remains a delegated default.
 
 **Delegated to Claude: 33 detailed decisions, OPEN-S4-01 to OPEN-S4-33.** Each is labeled `SELECTED BY CLAUDE — DELEGATED DEFAULT`, `IMPLEMENTATION PENDING` and `VERIFICATION PENDING` in [open-questions.md](open-questions.md). **None is Product Owner–approved.** The defaults most worth a review are:
 
@@ -86,7 +94,7 @@ The approval is binding. The plan's "PROPOSED — PENDING PO APPROVAL" cells are
 | --- | --- | --- |
 | Removal command and outcomes | `POST …/garments/{id}/removal` → `REMOVED` / `ALREADY_REMOVED`; replay of a removed creation → `410` | OPEN-S4-01, 03 |
 | Removal cleanup | Every `PT5M`, batch 50, retry `PT15M`, physical deletion within `P30D`, warning at `P21D` | OPEN-S4-04, 05 |
-| Search | `q` of 1–100 code points over labels, codes and Brand; filtered cursor bound to its conditions (`CONDITIONS_CHANGED`) | OPEN-S4-10–14 |
+| Search | `q` of 1–100 code points over English labels, codes and **Vietnamese search aliases** of six vocabularies, plus Brand; case-insensitive, accent-sensitive; ambiguous words match every named value; filtered cursor bound to its conditions under matching policy `m2` (`CONDITIONS_CHANGED`). **Review of the alias wording advised.** | OPEN-S4-11–15 |
 | Optional context vocabularies | `GenderContext` and `BodyShape` codes: **newly selected; an inclusive-representation review is advised** | OPEN-S4-16 |
 | Location and weather | Rounded to 2 decimals; Open-Meteo `current` data; inclusive 30 minutes on the provider's evidence time; one `PT2S` deadline, 8 concurrent requests, 64 KiB | OPEN-S4-18–24 |
 | Bulk limits | 20 items, 3 active batches, `P7D`, derived 300,000,000 bytes, no drafts: **Product Owner review advised** | OPEN-S4-25 |
@@ -174,9 +182,10 @@ After each guide, CI on a pull request to `sprint_04` must find the cumulative n
 
 | Item | Status |
 | --- | --- |
-| Repository source, tests, migrations, OpenAPI, CI | **Unchanged.** Only this directory was added. |
+| Repository source, tests, migrations, OpenAPI, CI | **Unchanged.** This directory was added on 2026-11-16; on 2026-11-17 it and the canonical documentation under `docs/` were updated. No backend file changed. |
 | Guides applied in the repository | **No.** Implementation is pending. |
-| Scratch verification | **Done on 2026-11-16 in an isolated copy.** All 204 steps of the six guides applied in order with every BEFORE anchor matching exactly once. `./mvnw -o clean verify` (the same Maven Wrapper, offline, run from Git Bash) gave BUILD SUCCESS: 677 unit tests (Surefire) and 433 integration tests (Failsafe, Testcontainers PostgreSQL 17.11), with 0 failures, 0 errors and 0 skipped. Of the 137 required CI reports, 136 existed with at least their minimum count. The 137th, the Sprint 3 `HeifDecodingIT`, ran 0 tests because libheif is not installed on that machine; CI installs it. |
+| Scratch verification (2026-11-17) | **Re-run after the Vietnamese search refinement, in an isolated copy.** All 206 steps of the six guides applied in order, with every BEFORE anchor matching exactly once, plus the canonical alias document that T10 reads. `./mvnw -o clean verify` gave BUILD SUCCESS: 687 unit tests and 435 integration tests, with 0 failures, 0 errors and 0 skipped; this includes the new `VietnameseDescriptorAliasesTest` (5) and the extended WAR-003 tests. Of the 138 required CI reports, 137 existed with at least their minimum count; the 138th is again the Sprint 3 `HeifDecodingIT` (libheif not installed on that machine). |
+| Scratch verification (2026-11-16, superseded) | **Done on 2026-11-16 in an isolated copy.** All 204 steps of the six guides applied in order with every BEFORE anchor matching exactly once. `./mvnw -o clean verify` (the same Maven Wrapper, offline, run from Git Bash) gave BUILD SUCCESS: 677 unit tests (Surefire) and 433 integration tests (Failsafe, Testcontainers PostgreSQL 17.11), with 0 failures, 0 errors and 0 skipped. Of the 137 required CI reports, 136 existed with at least their minimum count. The 137th, the Sprint 3 `HeifDecodingIT`, ran 0 tests because libheif is not installed on that machine; CI installs it. |
 | Delegated decisions | `VERIFICATION PENDING` until implemented in the repository and confirmed by its CI |
 
 **What the scratch run is, and is not.**
@@ -200,17 +209,20 @@ None of these is satisfied by this package.
 
 ## 13. Known Limitations
 
-- US-GAR-006 is **provisional**: its acceptance criteria await formal refinement (P-AC-01–06 are working criteria).
+- US-GAR-006's acceptance criteria (story AC-01–AC-06, the guide's P-AC-01–06) are a delegated formalization of 2026-11-17 and await Product Owner acceptance.
 - No outfit recommendation, Coverage, Multiplier or other result consumer exists. AC parts that need one (CTX-001 AC-04/AC-05 reevaluation, PROF-002 soft influence) are recorded as gaps, never as passes.
 - No AI extraction is added: bulk review values always come from the user.
 - Bulk batches are kept as minimal action identity while the account exists; a purge is deferred to account-lifecycle work.
-- The PROF-002 vocabularies and the BULK-001 limits are delegated defaults awaiting review.
+- The PROF-002 vocabularies, the BULK-001 limits and the WAR-003 Vietnamese alias wording are delegated defaults awaiting review. Approved S4-PROF-01 and S4-BULK-06 expect explicit confirmation of those values before release.
+- Search stays accent-sensitive and literal: `ao thun` does not match `áo thun`, and a two-descriptor phrase such as `áo thun trắng` is not split.
 
 ## 14. Final Checklist
 
 - [ ] The six guides are applied in order, each followed by `.\mvnw.cmd clean verify` and a pull request to `sprint_04`.
-- [ ] CI finds 137 required reports after the sixth guide.
+- [ ] CI finds 138 required reports after the sixth guide.
 - [ ] Every OPEN-S4 default is either confirmed by the team or changed through its record in `open-questions.md`.
+- [ ] The Vietnamese alias wording is reviewed; any change goes to the canonical table and WAR-003 P3 together, with a new matching-policy tag.
+- [ ] The Product Owner accepts or amends the US-GAR-006 acceptance criteria.
 - [ ] Open-Meteo terms reviewed. CTX-001 M7 and M8 recorded.
 - [ ] Bucket versioning checked (GAR-005 M9). BULK-001 M11 recorded.
 - [ ] Client evidence gathered for each story's Definition of Done.

@@ -94,3 +94,16 @@ Provider and supported-city realization details remain JIT. Developers establish
 ## 11. Status
 
 **Draft.** PO/BA and Developers/QA review is pending. No approval, formal readiness, estimate, Sprint assignment or implemented outcome is claimed. Necessary implementation-level design follows selection and remains Just-In-Time during Sprint execution.
+
+## 12. Sprint 4 Decision Record (2026-11-17)
+
+This record is appended on 2026-11-17 and does not change the story, scope or acceptance criteria above. The Product Owner selected this story for Sprint 4 and, on 2026-11-16, approved the [Sprint 4 decisions](../../sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register) listed below. Delegated details are `SELECTED BY CLAUDE — DELEGATED DEFAULT` and are not Product Owner approvals of the specific values. The implementation is proposed in the guide below and has not been applied to the repository; the status in Section 11 is unchanged.
+
+| Item | Record |
+| --- | --- |
+| Approved decisions | S4-CTX-01–06 |
+| Delegated details | OPEN-S4-18–24, OPEN-S4-31–33 |
+| Provider and supported-city realization (Section 10) | Settled for Sprint 4: Open-Meteo is the intended provider; manual cities come from a bundled client reference list; the location is a point rounded to two decimal places with its source and label; no continuous tracking ([SRS Section 3.3.1](../../../03-requirements/SRS.md#331-location-and-weather-rules)). |
+| Weather rules | Current at age ≤30 minutes from the provider's observation time, inclusive; one 2-second acquisition limit; an explicit unavailable state with a reason; late results for a changed selection are never shown as current. |
+| Remaining evidence | **Open-Meteo terms and eligibility for the deployment and a real request**; deadline measurement; mobile permission, manual and skip evidence; future advice consumers (AC on reevaluation) do not exist yet. |
+| Implementation guide | [US-CTX-001 guide](../../sprints/sprint-04/implementation-guides/US-CTX-001-guide.md) |

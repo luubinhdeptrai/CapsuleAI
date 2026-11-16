@@ -6,9 +6,9 @@
 
 | Field | Value |
 |---|---|
-| Version / Status | 0.5 / Baseline Draft |
+| Version / Status | 0.6 / Baseline Draft |
 | Product revision | 2026-11-05: final 13-property/source-vocabulary approval; all applicable properties included in Sprint 2; obsolete attributes and eligibility/composition predicates superseded with IDs retained. |
-| Last Updated | 2026-11-09 |
+| Last Updated | 2026-11-17 |
 | Primary Owner | Business Analyst / Product Owner |
 | Reviewers | Engineering / QA |
 | Business Source | [BRD](../01-business/BRD.md) |
@@ -25,6 +25,7 @@
 | 0.3 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.4 | 2026-11-07 | Product Owner decisions: multiple Styles, Brand/Price validation, recovery rate limits, active-session-only revocation on reset, 30-day reset-record retention. Existing IDs retained. |
 | 0.5 | 2026-11-09 | Propagated approved PR #4 / DD-007 into typed feedback, stored history/time interpretation and bounded MVP capability rules; obsolete ranking obligations removed while original IDs and retention policies remain. |
+| 0.6 | 2026-11-17 | Sprint 4 documentation synchronization: dated refinements of BRULE-PROF-001, BRULE-PROF-003, BRULE-GAR-004, BRULE-GAR-009 and BRULE-BULK-002 from the approved Sprint 4 decisions and the delegated OPEN-S4 details; new BRULE-GAR-011 for existing-garment photo attachment (US-GAR-006). Existing rule statements are unchanged. |
 
 ### 1.1 Purpose
 
@@ -149,6 +150,8 @@ Only an approved shared outfit/creator/media projection may be exposed to its au
 
 **Source:** FR-AUTH-011, FR-PROF-005, FR-PROF-006, FR-PROF-007, FR-PERS-010, DATA-AUTH-004.
 
+**Sprint 4 refinement (2026-11-17):** Gender Context and Body Shape use the controlled optional vocabularies of [SRS Section 4.10.1](SRS.md#4101-optional-personal-context-vocabularies). Those values are delegated defaults (OPEN-S4-16), not Product Owner-approved values. Absence means "not provided"; there is no separate "prefer not to say" value. Values are only declared, never inferred, and neither is derived from the other. Optional context has its own revision, separate from style preferences and common needs. No consumer uses it in Sprint 4, so it has no ranking effect yet (approved S4-PROF-01–04; SRS Section 3.2.1).
+
 ### BRULE-PROF-002 — Declared Preferences and Request Context
 
 **Rule:** Style and occasion use the controlled vocabularies in BRULE-GAR-004. Common capsule need priorities remain distinct from the current request occasion; a request must not automatically overwrite ongoing priorities. The need scale is Not Relevant=0, Low=1, Medium=2, High=3, as used by BRULE-COV-002.
@@ -166,6 +169,8 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 **Applies To:** context selection, recommendation, Coverage and Multiplier.
 
 **Source:** FR-WEATHER-001, FR-WEATHER-002, FR-WEATHER-003, FR-WEATHER-004, FR-WEATHER-005, SI-002, ERR-WEATHER-001.
+
+**Sprint 4 refinement (2026-11-17):** The "applicable retrieval/observation timestamp" is the provider's observation time, and the 30-minute boundary is inclusive. An observation more than 5 minutes in the future is invalid. The 2-second limit covers the whole acquisition, including any wait for capacity. A location is a point rounded to two decimal places with its source and an optional label; there is no continuous tracking or location history, and only the rounded point is sent to the weather provider. Weather is bound to the location revision it was acquired for. Open-Meteo is the intended provider, pending verification of its terms (approved S4-CTX-01–06; delegated OPEN-S4-18–24; SRS Section 3.3.1).
 
 ## 4. Garment Rules
 
@@ -208,6 +213,8 @@ Weather is current at age ≤30 minutes from its applicable retrieval/observatio
 The [garment-property authority](../../Initial%20files/Image%20to%20Properties%20Extraction.md) owns garment values. Profile style preferences, request Occasion and common needs keep their separate SRS Section 4.10 vocabularies; they are not garment Style or a garment Occasion property.
 
 **Source:** FR-GAR-001/002, DATA-GAR-002; FR-PROF-002/004 for separate context.
+
+**Sprint 4 refinement (2026-11-17):** Wardrobe search also accepts Vietnamese search labels and aliases of the Category, Subtype, Color, Material, Pattern and Style values ([canonical alias table](vocabularies/vietnamese-descriptor-search-aliases.md); LOC-006). An alias is search vocabulary only: it is never stored, never accepted as a code, and never changes a code, label or meaning. A word that names several values matches all of them. The Product Owner authorized this on 2026-11-17; the alias wording is a delegated default (OPEN-S4-11).
 
 ### BRULE-GAR-005 — Bounded Garment Descriptors
 
@@ -275,6 +282,8 @@ High Confidence is prohibited when evidence is unavailable/materially conflictin
 
 **Source:** FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001.
 
+**Sprint 4 refinement (2026-11-17):** Removal requires explicit confirmation of the reviewed garment revision. Repeating a removal reports "already removed" with the original time and never restarts the 30-day deadline. The retained record is limited to identity, owner, creation identity, Category, Color, provenance, times and revision; the rest is purged at the first cleanup. A replayed creation never recreates a removed garment (approved S4-GAR-01–03; delegated OPEN-S4-01–06; SRS Section 3.6.1).
+
 ### 4.7 Optional Brand and Purchase Price
 
 ### BRULE-GAR-010 — Optional Brand and Purchase Price Authority
@@ -286,6 +295,16 @@ Future edits may revise or clear these properties with explicit user confirmatio
 **Applies To:** manual entry, inspection, future editing and assisted-review protection across all eight categories.
 
 **Source:** FR-GAR-012, FR-GAR-013, FR-GAR-011, DATA-GAR-002, DATA-GAR-003, DATA-INT-001, DATA-INT-004; PRD Sections 13.5/34.1.
+
+### 4.8 Existing-Garment Photo Attachment
+
+### BRULE-GAR-011 — Existing-Garment Photo Attachment
+
+**Rule:** A current owned garment without a photo may receive exactly one photo, and only through the owner's explicit confirmation of that garment and a validated, privately staged photo that is ready, unexpired and unused. The attachment changes no confirmed property, creation time or creation identity, and it advances the garment's revision once, together with claiming the photo, as one indivisible change. A garment that already has a photo is never given another one or a replacement; a staged photo is consumed by at most one garment. A repeated identical confirmation has the same outcome and no further effect. A competing accepted change is reported rather than overwritten. Pending-photo cleanup never removes an attached photo; the garment's removal deletes it under BRULE-GAR-009. No property is derived from the photo.
+
+**Applies To:** maintenance of existing garments and private photo lifecycle (added 2026-11-17 for US-GAR-006; approved S4-GAR-04–06 and S4-INT-01–03; delegated OPEN-S4-07–10).
+
+**Source:** FR-WAR-009, DATA-GAR-004, DATA-INT-004, FR-AI-012, NFR-PRIV-001, NFR-PRIV-002.
 
 ## 5. Outfit Validity Rules
 
@@ -837,6 +856,8 @@ PR #4 / DD-007 approves these bounded capabilities. [PRD Section 34.2](../02-pro
 
 **Source:** FR-BULK-002/005/006; DATA-BULK-001; DATA-INT-004.
 
+**Sprint 4 refinement (2026-11-17):** For US-BULK-001, the delegated defaults of OPEN-S4-25–30 provisionally settle the MVP-Q08 parts it needs: at most 20 items per batch, 3 active batches per owner, a 7-day batch lifetime and a 300,000,000-byte aggregate ceiling, with sequential staging, independent item acceptance, item cancellation, batch stop and resumption. The existing 24-hour staged-photo expiry is unchanged. These numbers are configuration awaiting Product Owner review and do not introduce a broker or asynchronous topology (approved S4-BULK-01–07; SRS Section 3.23.1).
+
 
 ## 14. Decision Tables
 
@@ -988,6 +1009,7 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 | BRULE-GAR-008 | AI-REQ-006, AI-REQ-007, AI-REQ-009, FR-GAR-010, DATA-GAR-003 | FEAT-GAR-001, FEAT-AI-002 | BR-002, BR-003, BR-022 | CAP-04, CAP-02, CAP-03 |
 | BRULE-GAR-009 | FR-WAR-003, FR-WAR-004, FR-WAR-005, FR-WAR-006, DATA-INT-002, DATA-INT-004, DATA-RET-002, DATA-HIST-001 | FEAT-WAR-002, FEAT-MULT-001, FEAT-ANL-002, FEAT-AI-002, FEAT-PERS-002, FEAT-ANL-001 | BR-002, BR-005, BR-014, BR-016, BR-011, BR-006 | CAP-03, CAP-04, CAP-09, CAP-08, CAP-07, CAP-02, CAP-06 |
 | BRULE-GAR-010 | FR-GAR-012, FR-GAR-013, FR-GAR-011, DATA-GAR-002, DATA-GAR-003, DATA-INT-001, DATA-INT-004 | FEAT-GAR-001, FEAT-AI-002, FEAT-WAR-001, FEAT-WAR-002 | BR-002, BR-003, BR-005 | CAP-02, CAP-03, CAP-04 |
+| BRULE-GAR-011 | FR-WAR-009, DATA-GAR-004, DATA-INT-004, FR-AI-012, NFR-PRIV-001, NFR-PRIV-002 | FEAT-WAR-002 | BR-005, BR-001, BR-021 | CAP-03, CAP-04 |
 | BRULE-OUT-001 | FR-OUT-004, DATA-OUT-001 | FEAT-OUT-001, FEAT-MULT-001 | BR-007, BR-009, BR-008, BR-016 | CAP-05, CAP-06, CAP-09, CAP-08 |
 | BRULE-OUT-002 | FR-OUT-001, FR-WAR-005, FR-MULT-001, DATA-INT-002 | FEAT-OUT-001, FEAT-WAR-002, FEAT-MULT-001, FEAT-ANL-002 | BR-007, BR-005, BR-015, BR-016, BR-014 | CAP-05, CAP-06, CAP-03, CAP-04, CAP-09, CAP-08, CAP-07 |
 | BRULE-OUT-003 | FR-OUT-004, FR-GAR-005, FR-OUT-015 | FEAT-OUT-001, FEAT-GAR-001, FEAT-OUT-003 | BR-007, BR-009, BR-003 | CAP-05, CAP-06, CAP-04 |
@@ -1049,7 +1071,7 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 |---|---|---|
 | AUTH | BRULE-AUTH-001–BRULE-AUTH-007 | 7 |
 | PROF | BRULE-PROF-001–BRULE-PROF-003 | 3 |
-| GAR | BRULE-GAR-001–BRULE-GAR-010 | 10 |
+| GAR | BRULE-GAR-001–BRULE-GAR-011 | 11 |
 | OUT | BRULE-OUT-001–BRULE-OUT-010 | 10 |
 | PERS | BRULE-PERS-001–BRULE-PERS-006 | 6 |
 | WEAR | BRULE-WEAR-001–BRULE-WEAR-006 | 6 |
@@ -1064,7 +1086,7 @@ The matrix covers domain rules rather than every SRS requirement. SRS IDs identi
 | CAT | BRULE-CAT-001–BRULE-CAT-002 | 2 |
 | BULK | BRULE-BULK-001–BRULE-BULK-002 | 2 |
 
-Coverage: **76 rules across 16 families**. Each defining rule cites its SRS source and the traceability table links product/business/capability intent. Retained superseded IDs are history, not active compatibility obligations; coverage does not claim executed verification.
+Coverage: **77 rules across 16 families** (BRULE-GAR-011 added 2026-11-17). Each defining rule cites its SRS source and the traceability table links product/business/capability intent. Retained superseded IDs are history, not active compatibility obligations; coverage does not claim executed verification.
 
 ## 17. Rule Validation Boundaries
 

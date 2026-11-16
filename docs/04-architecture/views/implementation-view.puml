@@ -312,11 +312,19 @@ legend bottom
   No dedicated cache/broker, shared entities, internal network calls or unrestricted DB access.
   Exact packages, libraries, versions, enforcement, event/transaction mechanics remain open.
   2026-11-06 AR-01-AR-08: one schema per owner; api-only imports and owner-only SQL are test-enforced.
-  Current: Sprint 1-2 backend exists; refine candidates and open policies.
+  Current: Sprint 1-3 backend exists; Sprint 4 is planned, not implemented (ADD Section 16).
   Story JIT design follows actual Sprint selection; new MVP features remain unimplemented.
   Final property model: exactly 13 source-approved properties; all applicable
   creation/persistence/detail fields belong to selected Sprint 2 work.
   Future composition/compatibility/eligibility policy is deferred.
   No ready/ineligible predicate or fixed category-role mapping is selected.
 endlegend
+note as Sprint4Planned
+  2026-11-17 - Sprint 4: PLANNED, NOT IMPLEMENTED (ADD Section 16).
+  wardrobe: removal command and in-process cleanup job, photo attachment, search statement catalogue,
+  bulk import services. personalcontext: optional-context and location resources; adapter.out.weather
+  (Open-Meteo, RestClient on the JDK client, one 2-second deadline).
+  ADA-001-018 and AR-01-AR-08 unchanged; implemented baseline is Sprint 1-3 (V1-V11).
+end note
+
 @enduml

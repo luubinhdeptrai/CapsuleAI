@@ -142,3 +142,13 @@ No unresolved Use Case-specific issue currently blocks this interaction.
 [Master Use Case Diagram](use-case-diagram.puml)
 
 The master diagram defines actor participation. This textual specification and the relevant existing Activity Diagram define workflow behavior; no duplicate focused projection is required.
+
+## 17. Sprint 4 Refinement (2026-11-17)
+
+The flows above are unchanged. On 2026-11-16 the Product Owner approved the Sprint 4 decisions named below; the delegated OPEN-S4 details complete them. They are summarized here so that this Use Case stays consistent with the [SRS](../SRS.md). Delegated values are not Product Owner approvals of the specific values. Nothing below is implemented yet.
+
+- **Story:** [US-GAR-005](../../06-scrum/stories/garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md). **Decisions:** S4-GAR-01–03 (approved); [OPEN-S4-01–06](../../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-01--removal-command-transport-and-outcomes) (delegated).
+- **Confirmation:** removal confirms the garment version the User reviewed; a garment changed since then is not removed, and the User is told.
+- **Retry:** repeating the removal reports "already removed" with the original removal time; it never removes anything else or restarts the deletion deadline.
+- **Minimal history:** only identity, Category, Color and times remain to label the garment "Removed from wardrobe". Other information and the photo are purged, and the photo is deleted from storage within 30 days. A repeated creation request never brings the garment back ([SRS Section 3.6.1](../SRS.md#361-garment-removal-rules)).
+- **Absent consumers:** no recommendation, Coverage or Multiplier consumer exists in Sprint 4; their refresh obligations apply when they arrive.

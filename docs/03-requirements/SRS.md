@@ -7,8 +7,8 @@
 | Field | Value |
 |---|---|
 | Document | CapsuleAI — Software Requirements Specification |
-| Version / Status | 0.7 / Baseline Draft |
-| Last Updated | 2026-11-09 |
+| Version / Status | 0.8 / Baseline Draft |
+| Last Updated | 2026-11-17 |
 | Primary Owner | Requirements Engineer / Business Analyst / System Analyst |
 | Decision Authority | Product Owner, with Engineering and QA review |
 | Business Baseline | [BRD](../01-business/BRD.md) |
@@ -28,6 +28,7 @@
 | 0.5 | 2026-11-05 | Final source-owned 13-property model, complete vocabularies, multiple Materials, category applicability, deferred eligibility and full applicable Sprint 2 property scope; existing IDs retained. |
 | 0.6 | 2026-11-07 | Product Owner decisions: multiple Styles (FR-GAR-009, DATA-GAR-002), Brand/Price validation (FR-GAR-012/013, Section 3.5.2), paged overview (FR-WAR-001), recovery abuse protection (FR-AUTH-019), recovery link (FR-AUTH-020), reset-record retention (DATA-AUTH-006); obsolete SOLID-density verification removed. Existing IDs retained. |
 | 0.7 | 2026-11-09 | Synchronized approved PR #4 / DD-007: expanded functional/data/privacy coverage, typed feedback targets, removal of residual ranking-policy contradictions, and downstream traceability; existing IDs and implemented contracts preserved. |
+| 0.8 | 2026-11-17 | Sprint 4 documentation synchronization with the 30 approved Sprint 4 decisions (2026-11-16) and the delegated OPEN-S4 details: rule subsections 3.2.1, 3.3.1, 3.6.1–3.6.3 and 3.23.1; new FR-WAR-009 (US-GAR-006 photo attachment) and LOC-006 (Vietnamese descriptor search, authorized by the Product Owner on 2026-11-17); optional personal-context vocabularies and the Vietnamese alias reference in 4.10.1–4.10.2. Delegated values are labeled as such. Existing IDs and statements are unchanged; nothing here is implemented yet. |
 
 ### 1.1 Purpose
 
@@ -218,6 +219,21 @@ JRN-01 and OPQ-001/OPQ-003/OPQ-009 define context. Long-term needs and the curre
 | FR-PROF-007 | The system shall stop using removed optional personal information as current personalization input. | MVP | FEAT-PROF-001, FEAT-PERS-003; BR-012, BR-021 | T: subsequent request after removal. |
 | FR-PROF-008 | The system shall allow skipped optional setup to be completed later and make first-garment creation a recommended action rather than an access or garment-quota gate. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-012, BR-021 | D: skip and return. |
 
+#### 3.2.1 Optional Personal Context Rules
+
+Added 2026-11-17 for [US-PROF-002](../06-scrum/stories/profile/US-PROF-002-control-optional-personal-context.md). The approved decisions S4-PROF-01–04 ([Sprint 4 plan](../06-scrum/sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register), approved 2026-11-16) govern. The vocabulary values are delegated defaults ([OPEN-S4-16](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-16--optional-genderbody-vocabulary), [OPEN-S4-17](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-17--optional-context-resource-persistence-and-clearing)). These rules refine FR-PROF-005–FR-PROF-007 and DATA-AUTH-004 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Vocabularies | Gender Context and Body Shape are each optional and single-valued, chosen only from the exact codes in Section 4.10.1. No free text, measurement (height, weight, size) or other numeric body data is collected. |
+| Absence | Absence means "not provided". There is no separate "prefer not to say" code: leaving a value empty or clearing it expresses that choice. |
+| Declared only | Values are only ever declared by the user. They are never inferred from photos, garments, names, devices or behavior, and one is never derived from the other. |
+| Separate record | Optional context is kept apart from style preferences and common needs, with its own revision. A change based on a stale revision is refused; a request that changes nothing creates no new revision. |
+| Change and clearing | Each value can be set, changed or cleared independently. An omitted value is kept; a cleared value becomes absent for every later read, and no copy of it remains as current context. |
+| No restriction | No value restricts a garment category, a garment addition, account access or any validity rule. |
+| Permitted use | Values may be used only as personalization input for the owner's own future advice, once an approved consumer exists. In Sprint 4 no consumer exists: the values are stored and shown to their owner only. They are never sent to an external provider, written to logs, shared, published to other modules or used for AI training. |
+| Privacy | The values are sensitive personal context. They are shown only to their authenticated owner and follow the existing account retention rules. |
+
 ### 3.3 Location & Environmental Context
 
 Environmental context may be consented device location or manual city/location. Unavailable weather is distinct from a denied permission.
@@ -229,6 +245,23 @@ Environmental context may be consented device location or manual city/location. 
 | FR-WEATHER-003 | The system shall request environmental information for the selected location when available, use it as current only at age ≤30 minutes from its applicable retrieval/observation timestamp, attempt refresh when older, and allow an external weather request to delay the assessment by no more than 2 seconds. | Conditional | FEAT-PROF-002; BR-007, BR-013 | T: age 30 minutes versus older; fresh/stale responses; usable result within 2 seconds versus unavailable fallback. |
 | FR-WEATHER-004 | The system shall identify the selected location, environmental information and applicable retrieval/observation timestamp actually used, disclosing unavailable environmental context when usable current information is not obtained within the 2-second boundary. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | I/T: displayed context/timestamp matches evaluation; no invented forecast at timeout. |
 | FR-WEATHER-005 | The system shall reevaluate or mark affected advice outdated when its location/environmental context changes, attempting refresh before stale weather is used as current. | MVP | FEAT-PROF-002, FEAT-OUT-001; BR-007, BR-022 | T: changed location/context and stale-weather refresh; failed refresh retains an explicit limited/outdated state. |
+
+#### 3.3.1 Location and Weather Rules
+
+Added 2026-11-17 for [US-CTX-001](../06-scrum/stories/context/US-CTX-001-choose-location-and-recover-limited-context.md). The approved decisions S4-CTX-01–06 (approved 2026-11-16) govern; the concrete values are delegated defaults ([OPEN-S4-18–24](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-18--location-representation-precision-and-manual-resolution)). These rules refine FR-WEATHER-001–FR-WEATHER-005 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| One current location | Each user has at most one current location selection, from the device or chosen manually, with its own revision. Skipping sends nothing; clearing removes the selection. |
+| Precision | Only a point rounded to two decimal places of latitude and longitude (about 1.1 km), its source (device or manual) and, for a manual choice, a label of at most 80 characters are stored and used. Exact device coordinates are not retained. |
+| Manual choice | A manual city is chosen in the client from a bundled reference list and sent as a rounded point with its label. The backend performs no geocoding. |
+| No tracking | No continuous or background location tracking and no location history: a new selection replaces the previous one. |
+| Provider | The intended weather provider is Open-Meteo (current conditions). Only the rounded point is sent to it. **The provider's terms and eligibility for the actual deployment are not yet verified.** Until they are, a deployment runs with weather disabled, which reports weather as not configured. |
+| Freshness | Weather is current when the provider's observation time is at most 30 minutes old, inclusive. An observation more than 5 minutes in the future is invalid. Older weather is refreshed before it is used as current; a newly fetched reading that is already older than 30 minutes is not current. Retrieval time and observation time are both kept. |
+| Deadline | One acquisition takes at most 2 seconds in total, including any wait for capacity, the connection, the response and its interpretation. |
+| Truthful state | The user sees the selected location and, separately, either current weather with its observation time, no selection, or weather unavailable with a reason: deadline exceeded, provider unavailable, invalid provider data, stale provider data, selection changed or not configured. No weather value is invented. |
+| Revision binding | Weather is bound to the location revision it was acquired for. A late result for a changed or cleared selection is never shown as current. |
+| Consumers | No advice, Coverage or Multiplier consumer exists in Sprint 4. FR-WEATHER-005's reevaluation obligation applies when such a consumer arrives. |
 
 ### 3.4 Garment Ingestion
 
@@ -318,6 +351,50 @@ JRN-03 operates on the current owned wardrobe; historical information remains di
 | FR-WAR-006 | The system shall refresh or mark affected prior advice for reevaluation after relevant edits/removal. | MVP | FEAT-WAR-002; BR-005 | T: affected assessment state. |
 | FR-WAR-007 | The system shall provide descriptor search and category/color filtering of confirmed garments with visible conditions and reset. | MVP | FEAT-WAR-003; BR-005 | T: match, filter, clear. |
 | FR-WAR-008 | The system shall distinguish an empty wardrobe, no matching results, loading, and unavailable data with applicable Add Garment or reset/retry actions. | MVP | FEAT-WAR-001, FEAT-WAR-003; BR-005 | T: empty/no-match/failure states. |
+| FR-WAR-009 | The system shall allow the owner to attach one validated, privately staged photo to a current owned garment that has no photo, through explicit confirmation of the target garment and its reviewed revision, as one indivisible change that preserves all confirmed properties, the creation time and the creation identity. It shall refuse a garment that already has a photo, a removed garment, another account's garment or photo and an unusable photo without any partial change, and repeating the same confirmation shall not create a second association or revision. | MVP | FEAT-WAR-002; BR-005, BR-001, BR-021; US-GAR-006 (Sprint 4 selection; added 2026-11-17) | T: eligible attachment, confirm/cancel, refusals, same-pair retry and races; I: unchanged properties. |
+
+#### 3.6.1 Garment Removal Rules
+
+Added 2026-11-17 for [US-GAR-005](../06-scrum/stories/garment/US-GAR-005-remove-current-garment-preserve-minimal-history.md). The approved decisions S4-GAR-01–03 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-01–06](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-01--removal-command-transport-and-outcomes)). These rules refine FR-WAR-004–FR-WAR-006, DATA-HIST-001 and DATA-RET-002 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Explicit confirmation | Removal requires the owner's explicit confirmation and the garment revision the owner reviewed. A garment changed since that review is not removed; the owner is told and can review it. |
+| Immediate exclusion | An accepted removal immediately excludes the garment from the current wardrobe, search, detail, edits, photo delivery and photo attachment. |
+| Monotonic outcome | Repeating the removal of an already removed garment reports that it is already removed, with the original removal time. It creates no second removal and never restarts the 30-day deadline. |
+| Minimal retained record | Only the identity, owner, creation identity, Category, Color, value provenance, creation and removal times and the revision are retained, so that history can show "Removed from wardrobe". Every other property, the Material and Style sets and the photo record are purged at the first cleanup after removal. |
+| No resurrection | Replaying the original creation request of a removed garment never recreates it; it reports that the garment is no longer current. |
+| Physical deletion | The photo object is deleted from private storage outside the database transaction, with retries, within 30 days of removal. Incomplete deletions older than 21 days are reported as overdue. Proof that no recoverable copy remains (storage versioning, object lock, replication, backups) is an operational verification obligation. |
+| Ownership | Another account's garment is indistinguishable from an unknown one. |
+
+#### 3.6.2 Wardrobe Search and Filter Rules
+
+Added 2026-11-17 for [US-WAR-003](../06-scrum/stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md). The approved decisions S4-WAR-01–04 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-11–15](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01)). Vietnamese descriptor search was explicitly authorized by the Product Owner on 2026-11-17. These rules refine FR-WAR-007 and FR-WAR-008 without changing them.
+
+| Rule | Requirement |
+|---|---|
+| Scope | Search and filters cover only the owner's current garments. They are read-only: they change no garment and record no feedback or Wear Event. |
+| Text condition | One literal phrase of at most 100 Unicode characters, trimmed and normalized to NFC. A blank phrase means no text condition. The phrase is not split into words and has no wildcard characters. |
+| Searchable fields | The code, the approved English label or a Vietnamese search alias (Section 4.10.2) of Category, Subtype, Color, Material, Pattern and Style, and the Brand text. Price, Fit, Neckline, Sleeve Length, Length, Silhouette, personal context and images are never searched. |
+| Matching | A field matches when it contains the phrase, ignoring letter case but not accents: `áo thun` and `ÁO THUN` match the T-shirt Subtypes; `ao thun` does not. Brand is compared literally. |
+| Ambiguity | A phrase contained in the aliases of several values matches all of them (OR). For example, `váy` matches Dresses/Jumpsuits and Skirts, and `xanh` matches every blue and green Color. |
+| Combination | The text condition is satisfied when any field matches. The Category and Color filters take exact codes only; several codes in one filter are combined with OR. The phrase and the two filters are combined with AND. An absent condition means no restriction; clearing every condition restores the whole current wardrobe. |
+| Result states | A result distinguishes matching garments, no match (the owner has current garments), an empty wardrobe and the end of results. A failure or denied access is never presented as no match or an empty wardrobe. |
+| Continuation | Results are paged newest first. A continuation belongs to the conditions and the matching rules it was issued for: continuing with other conditions, or after the matching rules or the Vietnamese aliases change, requires starting again from the first page. |
+| Active conditions | Each result reports its normalized active conditions so that they can be shown, changed and cleared. |
+
+#### 3.6.3 Existing-Garment Photo Attachment Rules
+
+Added 2026-11-17 for [US-GAR-006](../06-scrum/stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and FR-WAR-009. The approved decisions S4-GAR-04–06 and S4-INT-01–03 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-07–10](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-07--attachment-command-transport-and-outcomes)). The story's acceptance criteria are a delegated formalization awaiting Product Owner acceptance.
+
+| Rule | Requirement |
+|---|---|
+| Eligibility | Only the owner's current garment without a photo can receive one; one photo per garment. Replacing or removing a photo and several photos per garment are not supported. |
+| Photo | A photo staged through the existing intake (Section 3.4.1 limits, normalization and private storage) that is ready, unexpired and not used by another garment. It is not analyzed again and no property is derived from it. |
+| Confirmation | Explicit confirmation with the reviewed garment revision. Cancelling changes nothing; the staged photo expires after 24 hours as usual. |
+| Atomicity | The photo is claimed and linked, and the garment revision advances once, in one indivisible change. Confirmed properties, creation time and creation identity are unchanged. |
+| Retry and conflicts | The same garment-and-photo confirmation repeated after a lost response returns the same result without a new revision. A competing accepted change (an edit, a removal, another attachment) is reported, never overwritten. |
+| Privacy and lifecycle | The photo is delivered only through the application to its owner. A missing stored photo is reported as a photo limitation while the garment stays readable. Pending-photo cleanup never removes an attached photo; removal deletes it under Section 3.6.1. |
 
 ### 3.7 Outfit Recommendation
 
@@ -669,7 +746,7 @@ Scope is approved by PR #4 / DD-007. These are required observable outcomes, not
 
 ### 3.23 Bulk Garment Import
 
-Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred.
+Scope is approved by PR #4 / DD-007. These are required observable outcomes, not implemented endpoints. [PRD Section 34.2](../02-product/PRD.md#342-mvp-expansion-open-decisions) owns unresolved policies; no default/provider/limit is inferred. Since 2026-11-17, Section 3.23.1 records the Sprint 4 delegated defaults for the parts of MVP-Q08 that US-BULK-001 needs; they await Product Owner review.
 
 | ID | Requirement | Scope | Source | Verification |
 |---|---|---|---|---|
@@ -679,6 +756,23 @@ Scope is approved by PR #4 / DD-007. These are required observable outcomes, not
 | FR-BULK-004 | The system shall save only entries explicitly confirmed by the user with Category and one Color, retaining all accepted optional information and truthful unevaluated recommendation eligibility; upload or AI completion alone shall not confirm an item. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: confirmed versus uploaded/proposed entries. |
 | FR-BULK-005 | The system shall distinguish each failed or uncertain item from accepted additions, preserve known accepted outcomes and offer correction/outcome review/safe retry without falsely claiming the whole batch succeeded. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: partial failure, uncertain acknowledgment and accepted survivors. |
 | FR-BULK-006 | The system shall preserve one accepted garment per logical confirmed item action across retries/reprocessing, while permitting separately intentional additions, enforcing affected-user/media authorization and preventing cross-item association errors. | MVP | FEAT-BULK-001; BR-031, BR-021, BR-022 | T/I: item retry versus separate intent; cross-account/cross-item checks. |
+
+#### 3.23.1 Bulk Import Rules
+
+Added 2026-11-17 for [US-BULK-001](../06-scrum/stories/bulk-import/US-BULK-001-review-and-confirm-bulk-garment-import.md). The approved decisions S4-BULK-01–07 (approved 2026-11-16) govern; details are delegated defaults ([OPEN-S4-25–30](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-25--bulk-admission-limits-and-retention)). The numeric limits are configuration awaiting Product Owner review; they resolve the corresponding parts of MVP-Q08 provisionally ([PRD Section 34.3](../02-product/PRD.md#343-sprint-4-resolutions-2026-11-17)). FR-BULK-001–FR-BULK-006 and DATA-BULK-001 are unchanged.
+
+| Rule | Requirement |
+|---|---|
+| Batch | The owner starts a batch by stating how many photos it will contain. Starting the same batch again with the same request key returns the same batch. |
+| Limits (delegated defaults) | At most 20 items per batch, at most 3 active batches per owner, a batch lifetime of 7 days, and an aggregate ceiling of 300,000,000 original bytes per batch (20 × the existing 15,000,000-byte photo limit). The existing 24-hour expiry of a staged photo is unchanged. |
+| Items | Each item is waiting for a photo, reviewable, accepted or cancelled. A reviewable item's photo is shown as ready or expired; an expired photo must be selected again. |
+| Sequential processing | Photos are staged one at a time through the existing intake. There is no background worker, parallel decoding or AI analysis. |
+| Review and confirmation | Each reviewable item is reviewed and confirmed individually, with Category and one Color plus any valid optional properties under the 13-property rules. Upload alone never creates a garment. |
+| Partial success | Item outcomes are independent: accepting one item never depends on another, a failed or cancelled item does not undo accepted ones, and the batch never reports items as accepted that were not. |
+| Retry | Repeating an item confirmation after a lost response returns the same accepted garment and never creates a second one. Confirming an accepted item again with different values is refused. |
+| Cancellation and stopping | The owner can cancel one item or stop the whole batch. Stopping cancels the remaining items and releases their unclaimed photos; accepted garments stay. |
+| Resumption | The owner can list active batches and reopen one to continue after leaving the app, within the batch lifetime. An expired batch accepts no further work but keeps its accepted garments. Purging old batches together with the account lifecycle is deferred. |
+| Ownership | Another account's batch, item or photo is indistinguishable from an unknown one. A staged photo belongs to at most one item. |
 
 
 ## 4. Data Requirements
@@ -794,11 +888,50 @@ Profile Style preferences and Occasion/request context are separate from garment
 |---|---|
 | Profile Style preference | `MINIMAL`, `CASUAL`, `SMART_CASUAL`, `CLASSIC`, `STREETWEAR`, `SPORTY`, `FORMAL` |
 | Request Occasion | `EVERYDAY`, `WORK`, `SCHOOL_UNIVERSITY`, `DATE`, `SOCIAL_EVENT`, `FORMAL_EVENT`, `TRAVEL`, `SPORT_ACTIVITY` |
+| Gender Context (optional; delegated default, Section 4.10.1) | `WOMAN`, `MAN`, `NON_BINARY`, `ANOTHER_GENDER` |
+| Body Shape (optional; delegated default, Section 4.10.1) | `RECTANGLE`, `TRIANGLE`, `INVERTED_TRIANGLE`, `HOURGLASS`, `ROUND` |
 | Capsule Need Dimensions | Everyday / Casual; Work / Professional; School / University; Formal / Special Event; Travel; Sport / Active. |
 | AI Confidence (metadata) | High Confidence; Needs Review; Uncertain. |
 | Attribute Provenance (metadata) | AI Suggested; User Confirmed; User Corrected; User Entered. |
 
 Unknown optional information is absent, not an extra enum value. Etc is explanatory, not accepted as Style. Real fallback labels remain only where listed. Technical metadata and optional media are outside the 13 properties; no automatic cross-property inference or extra readiness field is selected.
+
+#### 4.10.1 Optional Personal Context Vocabularies
+
+Added 2026-11-17 for [US-PROF-002](../06-scrum/stories/profile/US-PROF-002-control-optional-personal-context.md) (approved decision S4-PROF-01). **Decision authority:** the values below are `SELECTED BY CLAUDE — DELEGATED DEFAULT` under [OPEN-S4-16](../06-scrum/sprints/sprint-04/implementation-guides/open-questions.md#open-s4-16--optional-genderbody-vocabulary). They are new: no earlier source defined them, and the Product Owner has not approved the individual values. An inclusive-representation and privacy review of the values and their Vietnamese labels is advised before release. The Vietnamese labels are proposed display labels; the client owns the final wording (LOC-002).
+
+**Gender Context** — how the user describes their gender, if they choose to:
+
+| Code | English meaning | Proposed Vietnamese label |
+|---|---|---|
+| `WOMAN` | Woman | Nữ |
+| `MAN` | Man | Nam |
+| `NON_BINARY` | Non-binary | Phi nhị nguyên giới |
+| `ANOTHER_GENDER` | Another gender, not listed | Giới tính khác |
+
+**Body Shape** — a general geometric silhouette the user may choose to describe themselves with. It is not a measurement and implies no judgment:
+
+| Code | English meaning | Proposed Vietnamese label |
+|---|---|---|
+| `RECTANGLE` | Shoulders, waist and hips of similar width | Dáng chữ nhật |
+| `TRIANGLE` | Hips wider than shoulders | Dáng tam giác |
+| `INVERTED_TRIANGLE` | Shoulders wider than hips | Dáng tam giác ngược |
+| `HOURGLASS` | Shoulders and hips of similar width, with a narrower waist | Dáng đồng hồ cát |
+| `ROUND` | Fuller midsection relative to shoulders and hips | Dáng tròn |
+
+Both vocabularies follow Section 3.2.1:
+
+- **Optionality:** each is optional and single-valued; absence means "not provided".
+- **Validation:** only these exact upper-case codes are accepted; anything else is refused field by field.
+- **Clearing:** a cleared value becomes absent; it is not replaced by an inferred or default value.
+- **Privacy:** declared, sensitive context, shown only to its owner, never inferred from images and never shared or used for training.
+- **Permitted usage:** personalization input for the owner's own future advice once a consumer exists; no consumer exists in Sprint 4.
+- **No garment restriction:** no value makes any garment category, garment or outfit unavailable.
+- **Independence:** Gender Context and Body Shape are separate concepts; neither is derived from the other.
+
+#### 4.10.2 Vietnamese Descriptor Search Aliases
+
+Added 2026-11-17 for [US-WAR-003](../06-scrum/stories/wardrobe/US-WAR-003-find-garments-with-search-and-filters.md) and LOC-006. Wardrobe search also matches the Vietnamese search labels and common aliases of the six searchable vocabularies: Category, Subtype, Color, Material, Pattern and Style. The [canonical Vietnamese alias table](vocabularies/vietnamese-descriptor-search-aliases.md) lists all 195 values. Aliases are search vocabulary only: they change no code, approved English label, meaning or applicability rule above, they are never stored as garment values, and the category and color filters accept codes only. The capability was explicitly authorized by the Product Owner on 2026-11-17. The alias wording is a delegated default (OPEN-S4-11) awaiting review by the Product Owner or a native-speaker reviewer.
 
 ### 4.11 Approved MVP Extension Information Boundaries
 
@@ -965,6 +1098,7 @@ The English canonical terms in this document describe meaning; equivalent unders
 | LOC-003 | The system shall allow later label-language additions without redefining those established domain meanings or changing existing confirmed information. | MVP | FEAT-PROF-001, FEAT-GAR-001, FEAT-AUTH-001; BR-003, BR-010, BR-023 | I: localization readiness; no second MVP language. |
 | LOC-004 | The system shall preserve Vietnamese text and diacritics accurately in supported user entry and display. | MVP | FEAT-AUTH-001, FEAT-PROF-001; BR-010, BR-021, BR-023 | T: Vietnamese names and applicable text round-trip. |
 | LOC-005 | The system shall present event-local date/time in understandable Vietnamese while preserving the original event timezone/offset/day through travel, in-day correction and multiple intentional same-day reports. | MVP | FEAT-PERS-002, FEAT-ANL-001; BR-006, BR-011, BR-022 | T/I: original-local date after travel; future/cross-day correction rejected. |
+| LOC-006 | The system shall let wardrobe search match the Vietnamese search labels and common aliases of Category, Subtype, Color, Material, Pattern and Style listed in Section 4.10.2, ignoring letter case but not accents, and map them to the canonical codes without changing those codes or their meanings. | MVP | FEAT-WAR-003; BR-005, BR-023; added 2026-11-17 | T: every alias row; Vietnamese letter case; unaccented input does not match. |
 
 Project documentation remains in English. Event-local time, travel behavior, and correction limits follow Section 3.11.1; scheduling/calendar capabilities are outside MVP scope.
 
@@ -1198,6 +1332,7 @@ These audits establish specification coverage; implementation and successful ver
 | FR-WAR-006 | FEAT-WAR-002 | BR-005 | CAP-03, CAP-04 | T: affected assessment state. |
 | FR-WAR-007 | FEAT-WAR-003 | BR-005 | CAP-03 | T: match, filter, clear. |
 | FR-WAR-008 | FEAT-WAR-001, FEAT-WAR-003 | BR-005 | CAP-03, CAP-07 | T: empty/no-match/failure states. |
+| FR-WAR-009 | FEAT-WAR-002 | BR-005, BR-001, BR-021 | CAP-03, CAP-04 | T: eligible attachment, refusals, same-pair retry and races. |
 | FR-OUT-001 | FEAT-OUT-001 | BR-007 | CAP-05, CAP-06 | T/A: ownership/confirmation / unevaluated eligibility/candidate eligibility fixtures. |
 | FR-OUT-002 | FEAT-OUT-001 | BR-007, BR-010 | CAP-05, CAP-06 | T/A: context variation. |
 | FR-OUT-003 | FEAT-OUT-001 | BR-009 | CAP-05, CAP-06 | A: invalid high-preference fixture. |
@@ -1343,8 +1478,8 @@ All 29 MVP features have source-linked specification coverage; new Draft capabil
 | FEAT-AI-002 — Confirmation/manual entry | FR-AI-003, FR-AI-007–FR-AI-010, FR-AI-012; FR-GAR-002–FR-GAR-003, FR-GAR-011 | DATA-GAR-003, DATA-INT-001, UI-005, SI-001, HW-001 | Covered — MVP |
 | FEAT-GAR-001 — Rich garment intelligence | FR-GAR-001–FR-GAR-013 | DATA-GAR-001, DATA-INT-001, UI-004, NFR-ACC-001, NFR-MNT-001 | Covered — MVP |
 | FEAT-WAR-001 — Wardrobe overview/detail | FR-WAR-001–FR-WAR-002, FR-WAR-008 | DATA-GAR-001, UI-001, NFR-SEC-001, NFR-AVL-001, NFR-USE-001 | Covered — MVP |
-| FEAT-WAR-002 — Edit/remove garments | FR-WAR-003–FR-WAR-006 | DATA-GAR-005, DATA-INT-002, DATA-RET-002 | Covered — MVP |
-| FEAT-WAR-003 — Search/filter | FR-WAR-007–FR-WAR-008 | See defining FR rows. | Covered — MVP |
+| FEAT-WAR-002 — Edit/remove garments | FR-WAR-003–FR-WAR-006, FR-WAR-009 | DATA-GAR-005, DATA-INT-002, DATA-RET-002 | Covered — MVP |
+| FEAT-WAR-003 — Search/filter | FR-WAR-007–FR-WAR-008, LOC-006 | See defining FR rows and Section 3.6.2. | Covered — MVP |
 | FEAT-OUT-001 — Valid personalized choices | FR-PROF-004; FR-WEATHER-004–FR-WEATHER-005; FR-GAR-004–FR-GAR-005; FR-OUT-001–FR-OUT-009; FR-PERS-011; FR-MET-001, FR-MET-004 | DATA-OUT-001, UI-001, NFR-PERF-002, NFR-AVL-001, NFR-USE-001 | Covered — MVP |
 | FEAT-OUT-002 — Outfit detail/reasoning | FR-OUT-010–FR-OUT-013 | DATA-OUT-002 | Covered — MVP |
 | FEAT-OUT-003 — Single-item shuffle | FR-OUT-014–FR-OUT-017 | ERR-OUT-003 | Covered — MVP |
@@ -1372,11 +1507,11 @@ BR-001–BR-031 remain accounted for. Conditional BR-020 information depends on 
 
 | BRD Requirement | Direct Functional Coverage | Result / Relevant Boundary |
 |---|---|---|
-| BR-001 | FR-AI-001–FR-AI-002, FR-AI-004–FR-AI-006, FR-AI-009, FR-AI-011–FR-AI-012; FR-MET-001, FR-MET-004 | Covered — direct software behavior. |
+| BR-001 | FR-AI-001–FR-AI-002, FR-AI-004–FR-AI-006, FR-AI-009, FR-AI-011–FR-AI-012; FR-MET-001, FR-MET-004; FR-WAR-009 (photo intake reused for attachment) | Covered — direct software behavior. |
 | BR-002 | FR-AI-007–FR-AI-009; FR-GAR-002–FR-GAR-003, FR-GAR-011; FR-WAR-003 | Covered — direct software behavior. |
 | BR-003 | FR-AI-006; FR-GAR-001–FR-GAR-010, FR-GAR-012–FR-GAR-013 | Covered — direct software behavior. |
 | BR-004 | FR-AI-003, FR-AI-012 | Covered — direct software behavior. |
-| BR-005 | FR-AI-008, FR-AI-010; FR-WAR-001–FR-WAR-008 | Covered — direct software behavior. |
+| BR-005 | FR-AI-008, FR-AI-010; FR-WAR-001–FR-WAR-009 | Covered — direct software behavior. |
 | BR-006 | FR-WAR-002; FR-WEAR-001, FR-WEAR-004, FR-WEAR-006–FR-WEAR-008, FR-WEAR-010, FR-WEAR-012; FR-PERS-009; FR-ANL-001–FR-ANL-007; FR-MET-004 | Covered — direct software behavior. |
 | BR-007 | FR-WEATHER-003–FR-WEATHER-005; FR-OUT-001–FR-OUT-002, FR-OUT-004–FR-OUT-005, FR-OUT-009–FR-OUT-010, FR-OUT-015; FR-MET-001, FR-MET-004 | Covered — direct software behavior. |
 | BR-008 | FR-OUT-006–FR-OUT-008, FR-OUT-014, FR-OUT-016–FR-OUT-017 | Covered — direct software behavior. |
@@ -1476,6 +1611,10 @@ Coverage totals: **187 retained functional identifiers (including superseded/def
 | User-Linked Measurement | Personal engagement/measurement information linked to a User, retained at most 90 days before deletion or aggregation/de-identification; distinct from necessary functional history/feedback state. |
 | Current Weather | Usable environmental evidence at age ≤30 minutes from its applicable retrieval/observation timestamp; older evidence needs refresh before current use. |
 | Current Commercial Guidance | Credible price/availability up to 24 hours from last retrieval/check, without guaranteed price/stock; older information is refreshed, marked stale/last checked, or omitted. |
+| Gender Context | Optional, user-declared description of the user's gender from the Section 4.10.1 vocabulary; absence means not provided. It never restricts garment categories. |
+| Body Shape | Optional, user-declared general geometric silhouette from the Section 4.10.1 vocabulary. It is not a measurement and is never inferred. |
+| Vietnamese Search Alias | A Vietnamese word or phrase that wardrobe search matches for a controlled garment value (Section 4.10.2). It is search vocabulary only and never a stored code. |
+| Import Batch | A bounded set of bulk-import items with independent outcomes; uploading into a batch never confirms a garment (Section 3.23.1). |
 
 ## 12. Verification and Acceptance Conditions
 

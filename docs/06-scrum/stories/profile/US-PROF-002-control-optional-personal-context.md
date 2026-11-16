@@ -91,3 +91,15 @@ No unresolved policy is identified. The source allows supported optional informa
 ## 11. Status
 
 **Draft.** PO/BA and Developers/QA review is pending. No approval, formal readiness, estimate, Sprint assignment or implemented outcome is claimed. Necessary implementation-level design follows selection and remains Just-In-Time during Sprint execution.
+
+## 12. Sprint 4 Decision Record (2026-11-17)
+
+This record is appended on 2026-11-17 and does not change the story, scope or acceptance criteria above. The Product Owner selected this story for Sprint 4 and, on 2026-11-16, approved the [Sprint 4 decisions](../../sprints/sprint-04/sprint-plan.md#13-consolidated-decision-register) listed below. Delegated details are `SELECTED BY CLAUDE — DELEGATED DEFAULT` and are not Product Owner approvals of the specific values. The implementation is proposed in the guide below and has not been applied to the repository; the status in Section 11 is unchanged.
+
+| Item | Record |
+| --- | --- |
+| Approved decisions | S4-PROF-01–04 |
+| Delegated details | OPEN-S4-16, OPEN-S4-17 |
+| Supported optional information (Section 10) | Section 10 says the source prescribes no taxonomy and the AC must not create one. The AC above are unchanged. Under the Product Owner's delegation, the supported values are defined outside the AC, in [SRS Section 4.10.1](../../../03-requirements/SRS.md#4101-optional-personal-context-vocabularies): Gender Context `WOMAN`, `MAN`, `NON_BINARY`, `ANOTHER_GENDER`; Body Shape `RECTANGLE`, `TRIANGLE`, `INVERTED_TRIANGLE`, `HOURGLASS`, `ROUND`. They are new delegated defaults, not approved values. Approved S4-PROF-01 expects explicit confirmation of supported choices, so a Product Owner and inclusive-representation review is required before release. |
+| Behavior | Optional, single-valued, clearable; absence means "not provided"; separate revision from preferences; never inferred; never restricts a garment category; no consumer in Sprint 4 ([SRS Section 3.2.1](../../../03-requirements/SRS.md#321-optional-personal-context-rules)). |
+| Implementation guide | [US-PROF-002 guide](../../sprints/sprint-04/implementation-guides/US-PROF-002-guide.md) |
