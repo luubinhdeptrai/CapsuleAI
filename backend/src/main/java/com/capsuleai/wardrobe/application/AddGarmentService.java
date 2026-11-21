@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -43,6 +44,8 @@ public final class AddGarmentService {
      * @throws IdempotencyKeyReusedException if the key was used for different values or another photo
      * @throws PhotoUploadNotFoundException  if the named staged photo is not the owner's
      * @throws PhotoUploadNotUsableException if the staged photo is not READY, has expired or is attached
+     * @throws GarmentNoLongerCurrentException if this logical addition was accepted earlier and its garment
+     *                                         has since been removed (US-GAR-005, OPEN-S4-03)
      */
     public GarmentCreation add(AddGarmentCommand command) {
         UUID owner = Objects.requireNonNull(command.ownerAccountId(), "ownerAccountId");
@@ -70,11 +73,13 @@ public final class AddGarmentService {
     private GarmentCreation addWithPhoto(UUID owner, ValidatedGarmentEntry entry, UUID photoUploadId,
                                          String fingerprint, Instant now) {
         return transactions.inTransaction(() -> {
-            PhotoUpload upload = photoUploads.lockOwned(owner, photoUploadId)
-                    .orElseThrow(PhotoUploadNotFoundException::new);
+            // Lock first (when the row still exists), then look for an earlier acceptance: after a removal
+            // and its cleanup the photo row is gone, but the replay must still be recognized (OPEN-S4-03).
+            Optional<PhotoUpload> lockedUpload = photoUploads.lockOwned(owner, photoUploadId);
             if (garments.findCreation(owner, entry.creationKey()).isPresent()) {
                 return replay(owner, entry.creationKey(), fingerprint);
             }
+            PhotoUpload upload = lockedUpload.orElseThrow(PhotoUploadNotFoundException::new);
             if (!upload.isUsableAt(now)) {
                 throw new PhotoUploadNotUsableException();
             }
@@ -95,6 +100,11 @@ public final class AddGarmentService {
                 .orElseThrow(() -> new IllegalStateException("A used creation key has no recorded garment"));
         if (!earlier.creationFingerprint().equals(fingerprint)) {
             throw new IdempotencyKeyReusedException();
+        }
+        if (!earlier.garment().isCurrent()) {
+            // US-GAR-005 (OPEN-S4-03): accepted earlier and removed since. A retry never recreates the
+            // garment and never presents a removed garment as the current result of the addition.
+            throw new GarmentNoLongerCurrentException();
         }
         return new GarmentCreation(earlier.garment(), false);
     }

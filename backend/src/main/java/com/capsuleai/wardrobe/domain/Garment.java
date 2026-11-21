@@ -82,6 +82,24 @@ public record Garment(
                 Math.addExact(revision, 1), photo);
     }
 
+    /**
+     * US-GAR-005 (S4-GAR-01): the same garment after an accepted removal from the current wardrobe.
+     * Identity, owner, profile, provenance, creation time and photo are kept; the revision advances by
+     * one, because leaving the current wardrobe changes what the owner reviewed. Removal is monotonic:
+     * an already removed garment cannot be removed again (callers report ALREADY_REMOVED instead). A
+     * removal time before the creation time (clock skew) is recorded as the creation time, which keeps
+     * the V8 constraint removed_at >= created_at.
+     */
+    public Garment withRemovalAt(Instant removalTime) {
+        Objects.requireNonNull(removalTime, "removalTime");
+        if (!isCurrent()) {
+            throw new IllegalStateException("Only a garment in the current wardrobe can be removed");
+        }
+        Instant effectiveRemovalTime = removalTime.isBefore(createdAt) ? createdAt : removalTime;
+        return new Garment(id, ownerAccountId, profile, provenance, createdAt, effectiveRemovalTime,
+                Math.addExact(revision, 1), photo);
+    }
+
     public boolean isCurrent() {
         return removedAt == null;
     }

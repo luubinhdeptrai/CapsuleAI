@@ -7,6 +7,7 @@ import com.capsuleai.wardrobe.application.GarmentCreation;
 import com.capsuleai.wardrobe.application.GarmentPhotoContentService;
 import com.capsuleai.wardrobe.application.GarmentRevision;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
+import com.capsuleai.wardrobe.application.RemoveGarmentService;
 import com.capsuleai.wardrobe.application.ReviseGarmentService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -40,17 +41,20 @@ public class WardrobeGarmentController {
     private final InspectGarmentService inspectGarmentService;
     private final ReviseGarmentService reviseGarmentService;
     private final GarmentPhotoContentService garmentPhotoContentService;
+    private final RemoveGarmentService removeGarmentService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
                                      BrowseWardrobeService browseWardrobeService,
                                      InspectGarmentService inspectGarmentService,
                                      ReviseGarmentService reviseGarmentService,
-                                     GarmentPhotoContentService garmentPhotoContentService) {
+                                     GarmentPhotoContentService garmentPhotoContentService,
+                                     RemoveGarmentService removeGarmentService) {
         this.addGarmentService = addGarmentService;
         this.browseWardrobeService = browseWardrobeService;
         this.inspectGarmentService = inspectGarmentService;
         this.reviseGarmentService = reviseGarmentService;
         this.garmentPhotoContentService = garmentPhotoContentService;
+        this.removeGarmentService = removeGarmentService;
     }
 
     /**
@@ -104,6 +108,18 @@ public class WardrobeGarmentController {
                                          @RequestBody GarmentRevisionRequest request) {
         GarmentRevision revision = reviseGarmentService.revise(request.toCommand(owner.accountId(), garmentId));
         return GarmentResponse.from(revision.garment());
+    }
+
+    /**
+     * US-GAR-005 — removes one current garment after explicit confirmation of the reviewed revision
+     * (S4-GAR-01, S4-INT-03). 200 REMOVED, or 200 ALREADY_REMOVED with the original time when the garment
+     * was already removed (safe repeat after a lost response). A stale revision is 409 and removes nothing.
+     */
+    @PostMapping("/{garmentId}/removal")
+    public GarmentRemovalResponse removeGarment(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                                @PathVariable String garmentId,
+                                                @RequestBody GarmentRemovalRequest request) {
+        return GarmentRemovalResponse.from(removeGarmentService.remove(request.toCommand(owner.accountId(), garmentId)));
     }
 
     /**

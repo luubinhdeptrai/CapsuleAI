@@ -95,8 +95,8 @@ public class WardrobeApiExceptionHandler {
     @ExceptionHandler(GarmentRevisionConflictException.class)
     public ResponseEntity<ProblemDetail> handleRevisionConflict(GarmentRevisionConflictException exception) {
         return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
-                "This garment changed after you opened it, so your edit was not applied. Reload it, review the "
-                        + "current values and confirm your changes again."));
+                "This garment changed after you opened it, so your change was not applied. Reload it, review the "
+                        + "current values and confirm again."));
     }
 
     /** US-GAR-003 (FR-AI-012, ERR-AI-001): the photo was not accepted; replace it or continue manually. */
@@ -200,8 +200,9 @@ public class WardrobeApiExceptionHandler {
     private static ResponseEntity<ProblemDetail> outcomeNotConfirmed() {
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
                 "The wardrobe could not be reached, so the outcome is not confirmed. Check the current state before "
-                        + "retrying: an addition repeated with the same Idempotency-Key is never added twice, and an "
-                        + "edit repeated with the same expectedRevision is never applied twice."));
+                        + "retrying: an addition repeated with the same Idempotency-Key is never added twice, an edit "
+                        + "repeated with the same expectedRevision is never applied twice, and a repeated removal "
+                        + "never removes anything else."));
     }
 
     private static ProblemDetail problem(HttpStatus status, String code, String detail) {
