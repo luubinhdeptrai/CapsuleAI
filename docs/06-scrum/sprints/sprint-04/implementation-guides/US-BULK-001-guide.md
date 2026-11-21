@@ -53,7 +53,7 @@
 | `GarmentSchemaIT` | Exact `wardrobe` table list (US-GAR-005 T7) | T5 adds the two V15 tables |
 | Migrations | V1–V14 | This guide adds **V15** |
 | OpenAPI | 0.16.0 | → 0.17.0 |
-| CI | 131 entries | +7 entries (138) |
+| CI | 132 entries | +7 entries (139) |
 
 ## 3. Original Business Requirements — Verbatim
 
@@ -3655,7 +3655,7 @@ AFTER:
           }
 ```
 
-This brings the total to 138 required entries, the final count for Sprint 4.
+This brings the total to 139 required entries, the final count for Sprint 4.
 
 ## 13. Complete Automated Test Implementation
 
@@ -4908,7 +4908,7 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 ## 16. Definition of Done
 
 - [ ] P1–P35 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including the unchanged creation suites, `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 138 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 139 required reports with no failure or skip.
 - [ ] **Product Owner review of the OPEN-S4-25 values** (20 items, 3 active batches, `P7D`, derived 300,000,000 bytes) and M11 resource evidence. Changes are configuration only.
 - [ ] Client evidence (M12).
 - [ ] Batch purge with account lifecycle is recorded as deferred, not done.
@@ -4936,5 +4936,5 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 - [ ] Lock order: batch → item → photo → garment. A stop holds the batch `FOR UPDATE`.
 - [ ] A retried confirmation, link or cancellation is safe; stop is idempotent.
 - [ ] No AI, outfit recommendation, worker or parallel decoding was added.
-- [ ] OpenAPI 0.17.0; 7 CI entries (total 138).
+- [ ] OpenAPI 0.17.0; 7 CI entries (total 139).
 - [ ] The OPEN-S4-25 values are labeled as delegated defaults awaiting Product Owner review.

@@ -59,7 +59,7 @@
 | Browse tests | `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` assert `garments`, `nextCursor` and field errors only | Unchanged; they stay green because the unfiltered path is untouched |
 | Migrations | V1–V12 | **None added** (OPEN-S4-15) |
 | OpenAPI | 0.13.0 | → 0.14.0 |
-| CI | 106 entries | +10 entries (116) |
+| CI | 107 entries | +10 entries (117) |
 
 ## 3. Original Business Requirements — Verbatim
 
@@ -2674,7 +2674,7 @@ AFTER:
           }
 ```
 
-The total is now 116 required entries (10 added by this story).
+The total is now 117 required entries (10 added by this story).
 
 ## 13. Complete Automated Test Implementation
 
@@ -4049,7 +4049,7 @@ LIMIT 21;
 ## 16. Definition of Done
 
 - [ ] P1–P21 and T1–T10 applied. `.\mvnw.cmd clean verify` passes, including the unchanged `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 116 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 117 required reports with no failure or skip.
 - [ ] The Vietnamese alias wording in the [canonical table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md) has been reviewed by the PO or a native-speaker reviewer, or the review is recorded as outstanding. Any change goes to the document and P3 together, with a new matching-policy tag.
 - [ ] `JdbcWardrobeSearchRepositoryIT` repeated against the deployed database's collation and ctype (Vietnamese case folding).
 - [ ] M6–M7 query-plan evidence recorded; an index migration added only if the rule requires it.
@@ -4085,4 +4085,4 @@ LIMIT 21;
 - [ ] `resultState` comes from one REPEATABLE READ snapshot for filtered first pages.
 - [ ] Read-only: no writes, no locks.
 - [ ] OpenAPI 0.14.0 documents `q`, `category`, `color`, `resultState`, `conditions` and `CONDITIONS_CHANGED`.
-- [ ] CI: 10 entries added (116 in total); no index migration without M6–M7 evidence.
+- [ ] CI: 10 entries added (117 in total); no index migration without M6–M7 evidence.

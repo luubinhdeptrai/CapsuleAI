@@ -51,7 +51,7 @@
 | `PersonalContextIntegrationTestSupport` | Truncates the three V11 tables | T5 adds the new table and helpers |
 | Migrations | V1–V12 | This guide adds **V13** |
 | OpenAPI | 0.14.0; tag `PersonalContext` "own declared preferences" | → 0.15.0 |
-| CI | 116 entries | +6 entries (122) |
+| CI | 117 entries | +6 entries (123) |
 
 ## 3. Original Business Requirements — Verbatim
 
@@ -1707,7 +1707,7 @@ AFTER:
           }
 ```
 
-This brings the total to 122 required entries. That is six new classes; `PersonalContextIntegrationTestSupport` is support code, not a report.
+This brings the total to 123 required entries. That is six new classes; `PersonalContextIntegrationTestSupport` is support code, not a report.
 
 ## 13. Complete Automated Test Implementation
 
@@ -2545,7 +2545,7 @@ Check 'M6 preferences untouched (still undeclared)' ($null -eq $prefs.Json.revis
 ## 16. Definition of Done
 
 - [ ] P1–P22 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `CurrentPersonalContextIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 122 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 123 required reports with no failure or skip.
 - [ ] **Inclusive-representation and privacy review of `GenderContextCode` and `BodyShapeCode` and their client labels (OPEN-S4-16).** Any change goes through a new migration plus the enum and OpenAPI.
 - [ ] The AC-03/AC-04 consumer gap is recorded as untriggered or outstanding; it is never reported as passing.
 - [ ] Client evidence: skip, initial and later entry, clear, cancel, uncertain review, account switch, Vietnamese and accessibility.

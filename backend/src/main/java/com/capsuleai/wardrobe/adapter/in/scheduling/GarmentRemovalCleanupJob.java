@@ -31,7 +31,7 @@ public class GarmentRemovalCleanupJob {
             CleanupResult result = garmentRemovalCleanupService.run();
             if (result.minimized() + result.objectsDeleted() + result.completed() + result.failed() > 0) {
                 log.info("Removal cleanup minimized {} garments, deleted {} photo objects, completed {} obligations, "
-                                + "{} deletions to retry",
+                                + "{} obligations to retry",
                         result.minimized(), result.objectsDeleted(), result.completed(), result.failed());
             }
             if (result.overdue() > 0) {

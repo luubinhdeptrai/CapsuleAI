@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, sprint_02, sprint_03]
+    branches: [main, sprint_02, sprint_03, sprint_04]
 
 permissions:
   contents: read
@@ -150,6 +150,14 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.in.web.PreferencesApiIT.xml' = 9
             'failsafe-reports/TEST-com.capsuleai.personalcontext.application.ConcurrentPreferencesIT.xml' = 3
             'failsafe-reports/TEST-com.capsuleai.personalcontext.application.CurrentPersonalContextIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentRemovalTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.RemoveGarmentServiceTest.xml' = 8
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentRemovalCleanupServiceTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.scheduling.GarmentRemovalCleanupJobTest.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalSchemaIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentRemovalApiIT.xml' = 10
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentRemovalIT.xml' = 2
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 5
           }
 
           foreach ($entry in $required.GetEnumerator()) {

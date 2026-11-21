@@ -24,12 +24,12 @@ From the [Sprint 4 plan](../sprint-plan.md#2-sprint-goal):
 
 | Order | Story | Guide | Migration | OpenAPI | CI entries after |
 | --- | --- | --- | --- | --- | --- |
-| 1 | US-GAR-005 — Remove a garment while preserving minimal history | [US-GAR-005-guide.md](US-GAR-005-guide.md) | V12 (`wardrobe`) | 0.12.0 | 102 |
-| 2 | US-GAR-006 — Attach a photo to an existing imageless garment (Draft story since 2026-11-17; PBI-049) | [US-GAR-006-guide.md](US-GAR-006-guide.md) | — | 0.13.0 | 106 |
-| 3 | US-WAR-003 — Find owned garments through search and filters | [US-WAR-003-guide.md](US-WAR-003-guide.md) | — | 0.14.0 | 116 |
-| 4 | US-PROF-002 — Control optional body and gender context | [US-PROF-002-guide.md](US-PROF-002-guide.md) | V13 (`personal_context`) | 0.15.0 | 122 |
-| 5 | US-CTX-001 — Choose environmental context with safe fallback | [US-CTX-001-guide.md](US-CTX-001-guide.md) | V14 (`personal_context`) | 0.16.0 | 131 |
-| 6 | US-BULK-001 — Review and confirm a bulk garment-photo import | [US-BULK-001-guide.md](US-BULK-001-guide.md) | V15 (`wardrobe`) | 0.17.0 | 138 |
+| 1 | US-GAR-005 — Remove a garment while preserving minimal history | [US-GAR-005-guide.md](US-GAR-005-guide.md) | V12 (`wardrobe`) | 0.12.0 | 103 |
+| 2 | US-GAR-006 — Attach a photo to an existing imageless garment (Draft story since 2026-11-17; PBI-049) | [US-GAR-006-guide.md](US-GAR-006-guide.md) | — | 0.13.0 | 107 |
+| 3 | US-WAR-003 — Find owned garments through search and filters | [US-WAR-003-guide.md](US-WAR-003-guide.md) | — | 0.14.0 | 117 |
+| 4 | US-PROF-002 — Control optional body and gender context | [US-PROF-002-guide.md](US-PROF-002-guide.md) | V13 (`personal_context`) | 0.15.0 | 123 |
+| 5 | US-CTX-001 — Choose environmental context with safe fallback | [US-CTX-001-guide.md](US-CTX-001-guide.md) | V14 (`personal_context`) | 0.16.0 | 132 |
+| 6 | US-BULK-001 — Review and confirm a bulk garment-photo import | [US-BULK-001-guide.md](US-BULK-001-guide.md) | V15 (`wardrobe`) | 0.17.0 | 139 |
 
 The CI baseline before Sprint 4 is 95 required report entries.
 
@@ -182,8 +182,8 @@ After each guide, CI on a pull request to `sprint_04` must find the cumulative n
 
 | Item | Status |
 | --- | --- |
-| Repository source, tests, migrations, OpenAPI, CI | **Unchanged.** This directory was added on 2026-11-16; on 2026-11-17 it and the canonical documentation under `docs/` were updated. No backend file changed. |
-| Guides applied in the repository | **No.** Implementation is pending. |
+| Repository source, tests, migrations, OpenAPI, CI | **US-GAR-005 applied on 2026-11-21:** V12, OpenAPI 0.12.0, the CI trigger `sprint_04` and 103 required reports. The other five guides are not applied. |
+| Guides applied in the repository | **US-GAR-005 only** (2026-11-21). `./mvnw -o clean verify` passed in the repository: 579 unit and 356 integration tests, none failed or skipped; 102 of 103 required reports present locally (the Sprint 3 `HeifDecodingIT` needs libheif, which CI installs). The other five guides: implementation pending. |
 | Scratch verification (2026-11-17) | **Re-run after the Vietnamese search refinement, in an isolated copy.** All 206 steps of the six guides applied in order, with every BEFORE anchor matching exactly once, plus the canonical alias document that T10 reads. `./mvnw -o clean verify` gave BUILD SUCCESS: 687 unit tests and 435 integration tests, with 0 failures, 0 errors and 0 skipped; this includes the new `VietnameseDescriptorAliasesTest` (5) and the extended WAR-003 tests. Of the 138 required CI reports, 137 existed with at least their minimum count; the 138th is again the Sprint 3 `HeifDecodingIT` (libheif not installed on that machine). |
 | Scratch verification (2026-11-16, superseded) | **Done on 2026-11-16 in an isolated copy.** All 204 steps of the six guides applied in order with every BEFORE anchor matching exactly once. `./mvnw -o clean verify` (the same Maven Wrapper, offline, run from Git Bash) gave BUILD SUCCESS: 677 unit tests (Surefire) and 433 integration tests (Failsafe, Testcontainers PostgreSQL 17.11), with 0 failures, 0 errors and 0 skipped. Of the 137 required CI reports, 136 existed with at least their minimum count. The 137th, the Sprint 3 `HeifDecodingIT`, ran 0 tests because libheif is not installed on that machine; CI installs it. |
 | Delegated decisions | `VERIFICATION PENDING` until implemented in the repository and confirmed by its CI |
@@ -219,7 +219,7 @@ None of these is satisfied by this package.
 ## 14. Final Checklist
 
 - [ ] The six guides are applied in order, each followed by `.\mvnw.cmd clean verify` and a pull request to `sprint_04`.
-- [ ] CI finds 138 required reports after the sixth guide.
+- [ ] CI finds 139 required reports after the sixth guide.
 - [ ] Every OPEN-S4 default is either confirmed by the team or changed through its record in `open-questions.md`.
 - [ ] The Vietnamese alias wording is reviewed; any change goes to the canonical table and WAR-003 P3 together, with a new matching-policy tag.
 - [ ] The Product Owner accepts or amends the US-GAR-006 acceptance criteria.

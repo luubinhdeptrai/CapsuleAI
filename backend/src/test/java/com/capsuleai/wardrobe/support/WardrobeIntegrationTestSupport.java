@@ -41,8 +41,9 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 
     @BeforeEach
     protected void resetWardrobeState() {
-        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_photo_upload, wardrobe.wardrobe_garment_material, "
-                + "wardrobe.wardrobe_garment_style, wardrobe.wardrobe_garment").update();
+        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_removal_cleanup, wardrobe.wardrobe_photo_upload, "
+                + "wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment_style, wardrobe.wardrobe_garment")
+                .update();
         photoStorage.reset();
     }
 

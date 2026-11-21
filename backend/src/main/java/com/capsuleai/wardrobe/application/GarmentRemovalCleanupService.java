@@ -3,7 +3,6 @@ package com.capsuleai.wardrobe.application;
 import com.capsuleai.wardrobe.application.ports.GarmentRemovalCleanupTarget;
 import com.capsuleai.wardrobe.application.ports.GarmentRemovalRepository;
 import com.capsuleai.wardrobe.application.ports.PhotoStorage;
-import com.capsuleai.wardrobe.application.ports.PhotoStorageUnavailableException;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
 import java.time.Instant;
@@ -17,13 +16,17 @@ import java.util.Objects;
  * any transaction, records each step and completes the obligation when everything is done.
  *
  * <p>Separate from the pending-photo lifecycle: it never touches RECEIVING, READY or DISCARDED uploads,
- * and pending expiry never touches the garments it cleans. A storage failure leaves the lease to expire,
- * so a later run retries the deletion; a crash between deleting the object and recording it only repeats
- * an idempotent delete. The deadline was fixed at removal and is never extended by a retry.
+ * and pending expiry never touches the garments it cleans. A failure of one obligation (for example a storage
+ * outage) leaves its lease to expire, so a later run retries it, and does not stop the other obligations of
+ * the run; a crash between deleting the object and recording it only repeats an idempotent delete. The
+ * deadline was fixed at removal and is never extended by a retry.
  */
 public final class GarmentRemovalCleanupService {
 
-    /** What one run did. {@code overdue} counts incomplete obligations older than the warning age. */
+    /**
+     * What one run did. {@code failed} counts obligations whose processing failed in this run and will be retried
+     * after their lease; {@code overdue} counts incomplete obligations older than the warning age.
+     */
     public record CleanupResult(int minimized, int objectsDeleted, int completed, int failed, int overdue) {
     }
 
@@ -53,25 +56,28 @@ public final class GarmentRemovalCleanupService {
         int completed = 0;
         int failed = 0;
         for (GarmentRemovalCleanupTarget obligation : dueObligations) {
-            if (!obligation.dataMinimized() && wardrobeTransactions.inTransaction(() ->
-                    garmentRemovalRepository.minimizeRemovedGarment(obligation.garmentId(), now()))) {
-                minimized++;
-            }
-            if (obligation.needsObjectDeletion()) {
-                try {
+            try {
+                if (!obligation.dataMinimized() && wardrobeTransactions.inTransaction(() ->
+                        garmentRemovalRepository.minimizeRemovedGarment(obligation.garmentId(), now()))) {
+                    minimized++;
+                }
+                if (obligation.needsObjectDeletion()) {
                     photoStorage.delete(obligation.photoObjectKey().orElseThrow());
-                } catch (PhotoStorageUnavailableException unavailable) {
-                    failed++; // The lease expires and a later run retries this deletion.
-                    continue;
+                    if (wardrobeTransactions.inTransaction(() ->
+                            garmentRemovalRepository.markObjectDeleted(obligation.garmentId(), now()))) {
+                        objectsDeleted++;
+                    }
                 }
                 if (wardrobeTransactions.inTransaction(() ->
-                        garmentRemovalRepository.markObjectDeleted(obligation.garmentId(), now()))) {
-                    objectsDeleted++;
+                        garmentRemovalRepository.completeIfFinished(obligation.garmentId(), now()))) {
+                    completed++;
                 }
-            }
-            if (wardrobeTransactions.inTransaction(() ->
-                    garmentRemovalRepository.completeIfFinished(obligation.garmentId(), now()))) {
-                completed++;
+            } catch (RuntimeException stepFailure) {
+                // A storage outage (PhotoStorageUnavailableException), a lost database connection or any other
+                // failure of this obligation only. Each finished step was committed on its own; the lease expires
+                // and a later run resumes from the recorded progress. The other claimed obligations continue, so
+                // one failing obligation never holds back the rest; the overdue warning reports what stays stuck.
+                failed++;
             }
         }
         int overdue = wardrobeTransactions.inTransaction(() ->

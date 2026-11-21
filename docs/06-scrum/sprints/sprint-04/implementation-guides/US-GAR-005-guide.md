@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-GAR-01, S4-GAR-02, S4-GAR-03, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-01, 02, 03, 04, 05, 06, 31, 32, 33. These are `SELECTED BY CLAUDE — DELEGATED DEFAULT`, **not** Product Owner approvals ([record](open-questions.md)). |
 | Shared conventions | [shared-architecture.md](shared-architecture.md), especially §5 (lock order) and §6 (logical-action identity) |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. The storage deletion boundary (OPEN-S4-05) needs operational evidence that no test can provide. |
+| Verification status | **Applied to the repository on 2026-11-21** (P1–P21 by the developer in commit `a607c66`, reviewed against this guide; P22, P23 and T1–T12 plus the review fixes added afterwards). `./mvnw -o clean verify` passed in the repository on 2026-11-21: 579 unit and 356 integration tests, none failed, errored or was skipped. Of the 103 required CI reports, 102 were present with at least their minimum; the 103rd is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. **Still required:** a CI run on a pull request to `sprint_04`, the storage deletion boundary (OPEN-S4-05, operational evidence that no test can provide), the client evidence, and the consumers that do not exist yet (§15). |
 
 ## 1. Story Overview
 
@@ -49,7 +49,7 @@
 | `PhotoStorage.delete(objectKey)` | Idempotent key-only delete (`S3PhotoStorage`) | Reused. Versioning boundary: OPEN-S4-05. |
 | Migrations | V1–V11 | This guide adds **V12** |
 | OpenAPI | 0.11.0; description says removal is not introduced | P22 → 0.12.0 |
-| CI | 95 report entries; PR trigger `[main, sprint_02, sprint_03]` | P23 adds `sprint_04` and 7 entries |
+| CI | 95 report entries; PR trigger `[main, sprint_02, sprint_03]` | P23 adds `sprint_04` and 8 entries |
 | Test support | `WardrobeIntegrationTestSupport` truncates 4 Wardrobe tables; `GarmentSchemaIT` lists them with `containsExactly` | T6 and T7 add the new table |
 
 ## 3. Original Business Requirements — Verbatim
@@ -586,6 +586,7 @@ The test profile disables the scheduler.
 | HTTP (real filter chain) | `GarmentRemovalApiIT` |
 | Concurrency | `ConcurrentGarmentRemovalIT` |
 | Cleanup (real PostgreSQL, fault-injecting storage) | `GarmentRemovalCleanupIT` |
+| Scheduled trigger | `GarmentRemovalCleanupJobTest` |
 | Contract | Existing `IdentityOpenApiContractIT` covers the new operation automatically |
 
 ## 11. File Change Matrix
@@ -616,7 +617,7 @@ Paths are relative to the repository root. `…/wardrobe/` is `backend/src/main/
 | P20 | ADD | `…/wardrobe/configuration/WardrobeRemovalCleanupConfiguration.java` | Conditional scheduling | P17 |
 | P21 | MODIFY | `backend/src/main/resources/application.properties` | Default values | P18 |
 | P22 | MODIFY | `docs/05-api/openapi.yaml` | 0.11.0 → 0.12.0 | P13–P15 |
-| P23 | MODIFY | `.github/workflows/backend-ci.yml` | `sprint_04` trigger; 7 report entries | T1–T11 |
+| P23 | MODIFY | `.github/workflows/backend-ci.yml` | `sprint_04` trigger; 8 report entries | T1–T12 |
 | T1 | ADD | `…/test/wardrobe/domain/GarmentRemovalTest.java` | Domain transition | P2, P3 |
 | T2 | ADD | `…/test/wardrobe/application/InMemoryGarmentRemovalRepository.java` | Fake of P4 | P4 |
 | T3 | ADD | `…/test/wardrobe/application/RemoveGarmentServiceTest.java` | Removal rules | P9, T2 |
@@ -627,7 +628,8 @@ Paths are relative to the repository root. `…/wardrobe/` is `backend/src/main/
 | T8 | ADD | `…/test/wardrobe/adapter/out/persistence/GarmentRemovalSchemaIT.java` | V12 constraints and upgrade | P1 |
 | T9 | ADD | `…/test/wardrobe/adapter/in/web/GarmentRemovalApiIT.java` | HTTP behavior | P15, P22 |
 | T10 | ADD | `…/test/wardrobe/application/ConcurrentGarmentRemovalIT.java` | Races | P9, P12 |
-| T11 | ADD | `…/test/wardrobe/adapter/out/persistence/GarmentRemovalCleanupIT.java` | Worker on real PostgreSQL | P10, P12 |
+| T11 | ADD | `…/test/wardrobe/adapter/out/persistence/GarmentRemovalCleanupIT.java` | Worker on real PostgreSQL, including concurrent claims | P10, P12 |
+| T12 | ADD | `…/test/wardrobe/adapter/in/scheduling/GarmentRemovalCleanupJobTest.java` | Scheduled trigger: no escape, counts-only logs, overdue warning, conditional scheduling | P17, P20 |
 
 ## 12. Complete Production Implementation
 
@@ -1159,7 +1161,6 @@ package com.capsuleai.wardrobe.application;
 import com.capsuleai.wardrobe.application.ports.GarmentRemovalCleanupTarget;
 import com.capsuleai.wardrobe.application.ports.GarmentRemovalRepository;
 import com.capsuleai.wardrobe.application.ports.PhotoStorage;
-import com.capsuleai.wardrobe.application.ports.PhotoStorageUnavailableException;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
 import java.time.Instant;
@@ -1173,13 +1174,17 @@ import java.util.Objects;
  * any transaction, records each step and completes the obligation when everything is done.
  *
  * <p>Separate from the pending-photo lifecycle: it never touches RECEIVING, READY or DISCARDED uploads,
- * and pending expiry never touches the garments it cleans. A storage failure leaves the lease to expire,
- * so a later run retries the deletion; a crash between deleting the object and recording it only repeats
- * an idempotent delete. The deadline was fixed at removal and is never extended by a retry.
+ * and pending expiry never touches the garments it cleans. A failure of one obligation (for example a storage
+ * outage) leaves its lease to expire, so a later run retries it, and does not stop the other obligations of
+ * the run; a crash between deleting the object and recording it only repeats an idempotent delete. The
+ * deadline was fixed at removal and is never extended by a retry.
  */
 public final class GarmentRemovalCleanupService {
 
-    /** What one run did. {@code overdue} counts incomplete obligations older than the warning age. */
+    /**
+     * What one run did. {@code failed} counts obligations whose processing failed in this run and will be retried
+     * after their lease; {@code overdue} counts incomplete obligations older than the warning age.
+     */
     public record CleanupResult(int minimized, int objectsDeleted, int completed, int failed, int overdue) {
     }
 
@@ -1209,25 +1214,28 @@ public final class GarmentRemovalCleanupService {
         int completed = 0;
         int failed = 0;
         for (GarmentRemovalCleanupTarget obligation : dueObligations) {
-            if (!obligation.dataMinimized() && wardrobeTransactions.inTransaction(() ->
-                    garmentRemovalRepository.minimizeRemovedGarment(obligation.garmentId(), now()))) {
-                minimized++;
-            }
-            if (obligation.needsObjectDeletion()) {
-                try {
+            try {
+                if (!obligation.dataMinimized() && wardrobeTransactions.inTransaction(() ->
+                        garmentRemovalRepository.minimizeRemovedGarment(obligation.garmentId(), now()))) {
+                    minimized++;
+                }
+                if (obligation.needsObjectDeletion()) {
                     photoStorage.delete(obligation.photoObjectKey().orElseThrow());
-                } catch (PhotoStorageUnavailableException unavailable) {
-                    failed++; // The lease expires and a later run retries this deletion.
-                    continue;
+                    if (wardrobeTransactions.inTransaction(() ->
+                            garmentRemovalRepository.markObjectDeleted(obligation.garmentId(), now()))) {
+                        objectsDeleted++;
+                    }
                 }
                 if (wardrobeTransactions.inTransaction(() ->
-                        garmentRemovalRepository.markObjectDeleted(obligation.garmentId(), now()))) {
-                    objectsDeleted++;
+                        garmentRemovalRepository.completeIfFinished(obligation.garmentId(), now()))) {
+                    completed++;
                 }
-            }
-            if (wardrobeTransactions.inTransaction(() ->
-                    garmentRemovalRepository.completeIfFinished(obligation.garmentId(), now()))) {
-                completed++;
+            } catch (RuntimeException stepFailure) {
+                // A storage outage (PhotoStorageUnavailableException), a lost database connection or any other
+                // failure of this obligation only. Each finished step was committed on its own; the lease expires
+                // and a later run resumes from the recorded progress. The other claimed obligations continue, so
+                // one failing obligation never holds back the rest; the overdue warning reports what stays stuck.
+                failed++;
             }
         }
         int overdue = wardrobeTransactions.inTransaction(() ->
@@ -1241,14 +1249,18 @@ public final class GarmentRemovalCleanupService {
 }
 ```
 
-**Explanation.** Minimization needs no network call, so it happens at the first run after removal ("prompt minimization"), even while storage is down. The object step is skipped when there is no photo.
+**Explanation.**
+
+- Minimization needs no network call, so it happens at the first run after removal ("prompt minimization"), even while storage is down. The object step is skipped when there is no photo.
+- **Each obligation is isolated (revised on 2026-11-21).** The first version caught only `PhotoStorageUnavailableException`. Any other failure of one obligation, such as a lost database connection, a constraint violation or an untranslated storage exception, aborted the whole run. The rest of the batch then waited for the lease, and an obligation that keeps failing and sorts first would hold back every later one on every run, risking their 30-day deadline. Now every `RuntimeException` of one obligation is counted in `failed`; its lease drives the retry, and the other obligations continue. Every finished step was already committed on its own, so the retry resumes from the recorded progress. `Error`s are not caught. Spring's `DataAccessException` is not named, because the application layer may not depend on Spring (ArchUnit).
 
 **Common mistakes.**
 
 - Calling `photoStorage.delete` inside `inTransaction`: a slow store would hold row locks.
 - Marking the object deleted before the delete call returns.
+- Letting one obligation's exception end the loop.
 
-**Verification.** T4 and T11.
+**Verification.** T4 (including `oneObligationThatKeepsFailingNeverHoldsBackTheOthers` and `aFailureAfterTheObjectIsDeletedOnlyRepeatsTheIdempotentDeletionAfterTheLease`) and T11.
 
 ### Step P11 — [MODIFY] `backend/src/main/java/com/capsuleai/wardrobe/application/AddGarmentService.java`
 
@@ -1823,7 +1835,7 @@ public class GarmentRemovalCleanupJob {
             CleanupResult result = garmentRemovalCleanupService.run();
             if (result.minimized() + result.objectsDeleted() + result.completed() + result.failed() > 0) {
                 log.info("Removal cleanup minimized {} garments, deleted {} photo objects, completed {} obligations, "
-                                + "{} deletions to retry",
+                                + "{} obligations to retry",
                         result.minimized(), result.objectsDeleted(), result.completed(), result.failed());
             }
             if (result.overdue() > 0) {
@@ -2347,15 +2359,16 @@ AFTER:
             'failsafe-reports/TEST-com.capsuleai.personalcontext.application.CurrentPersonalContextIT.xml' = 2
             'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentRemovalTest.xml' = 4
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.RemoveGarmentServiceTest.xml' = 8
-            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentRemovalCleanupServiceTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.GarmentRemovalCleanupServiceTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.wardrobe.adapter.in.scheduling.GarmentRemovalCleanupJobTest.xml' = 3
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalSchemaIT.xml' = 4
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentRemovalApiIT.xml' = 10
             'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentRemovalIT.xml' = 2
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 5
           }
 ```
 
-**Explanation.** There are now 102 required entries. Existing entries and counts are unchanged; `GarmentSchemaIT` keeps 12 tests, because T7 changes one assertion and adds no test.
+**Explanation.** There are now 103 required entries (eight added by this story; the job test T12 and the extra tests in T4 and T11 were added on 2026-11-21). Existing entries and counts are unchanged; `GarmentSchemaIT` keeps 12 tests, because T7 changes one assertion and adds no test.
 
 ## 13. Complete Automated Test Implementation
 
@@ -2453,10 +2466,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -2494,6 +2509,8 @@ final class InMemoryGarmentRemovalRepository implements GarmentRemovalRepository
     private final Map<UUID, PhotoCleanupTarget> attachedPhotos = new HashMap<>();
     private final Map<UUID, Obligation> obligations = new LinkedHashMap<>();
     private Instant competingRemovalTime;
+    private boolean crashOnNextObjectDeletionRecord;
+    private final Set<UUID> garmentsWhoseMinimizationFails = new HashSet<>();
 
     InMemoryGarmentRemovalRepository(InMemoryGarmentRepository garmentRepository) {
         this.garmentRepository = garmentRepository;
@@ -2547,6 +2564,9 @@ final class InMemoryGarmentRemovalRepository implements GarmentRemovalRepository
 
     @Override
     public synchronized boolean minimizeRemovedGarment(UUID garmentId, Instant minimizedAt) {
+        if (garmentsWhoseMinimizationFails.contains(garmentId)) {
+            throw new IllegalStateException("simulated permanent failure while minimizing one garment");
+        }
         Obligation obligation = obligations.get(garmentId);
         if (obligation == null || obligation.dataMinimized) {
             return false;
@@ -2557,6 +2577,10 @@ final class InMemoryGarmentRemovalRepository implements GarmentRemovalRepository
 
     @Override
     public synchronized boolean markObjectDeleted(UUID garmentId, Instant deletedAt) {
+        if (crashOnNextObjectDeletionRecord) {
+            crashOnNextObjectDeletionRecord = false;
+            throw new IllegalStateException("simulated crash after the object was deleted");
+        }
         Obligation obligation = obligations.get(garmentId);
         if (obligation == null || obligation.attachedPhoto.isEmpty() || obligation.objectDeleted) {
             return false;
@@ -2591,6 +2615,19 @@ final class InMemoryGarmentRemovalRepository implements GarmentRemovalRepository
     /** TEST HELPER: a competing removal at {@code removalTime} commits just before the next conditional removal. */
     synchronized void removeConcurrentlyBeforeNextAttempt(Instant removalTime) {
         competingRemovalTime = removalTime;
+    }
+
+    /**
+     * TEST HELPER: the process stops after the next photo object is deleted but before its deletion is
+     * recorded, as a crash or a lost database connection would.
+     */
+    synchronized void crashOnNextObjectDeletionRecord() {
+        crashOnNextObjectDeletionRecord = true;
+    }
+
+    /** TEST HELPER: minimizing this garment always fails, like data the minimization cannot process. */
+    synchronized void failMinimizationOf(UUID garmentId) {
+        garmentsWhoseMinimizationFails.add(garmentId);
     }
 
     synchronized Optional<Obligation> obligation(UUID garmentId) {
@@ -2791,8 +2828,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** US-GAR-005 (S4-GAR-03, OPEN-S4-04): prompt minimization, retried deletion, completion and overdue counting. */
+/**
+ * US-GAR-005 (S4-GAR-03, OPEN-S4-04/33): prompt minimization, retried deletion, completion, overdue counting,
+ * recovery after a crash between deletion and its record, and the startup limits of the policy.
+ */
 class GarmentRemovalCleanupServiceTest {
 
     private static final UUID OWNER = UUID.randomUUID();
@@ -2864,6 +2905,78 @@ class GarmentRemovalCleanupServiceTest {
 
         assertThat(result.failed()).isEqualTo(2);
         assertThat(result.overdue()).as("only the obligation removed 22 days ago is overdue").isOne();
+    }
+
+    @Test
+    void aFailureAfterTheObjectIsDeletedOnlyRepeatsTheIdempotentDeletionAfterTheLease() {
+        UUID garmentId = UUID.randomUUID();
+        String objectKey = recordWithPhoto(garmentId, NOW);
+        garmentRemovalRepository.crashOnNextObjectDeletionRecord();
+
+        assertThat(garmentRemovalCleanupService.run()).as("minimized, deleted, but the deletion record failed")
+                .isEqualTo(new CleanupResult(1, 0, 0, 1, 0));
+        assertThat(photoStorage.contains(objectKey)).as("the object was deleted before the failure").isFalse();
+        InMemoryGarmentRemovalRepository.Obligation afterCrash = garmentRemovalRepository.obligation(garmentId)
+                .orElseThrow();
+        assertThat(afterCrash.dataMinimized).isTrue();
+        assertThat(afterCrash.objectDeleted).as("the deletion was not recorded").isFalse();
+        assertThat(afterCrash.completed).isFalse();
+
+        assertThat(garmentRemovalCleanupService.run()).as("the claim stays leased until the retry delay")
+                .isEqualTo(new CleanupResult(0, 0, 0, 0, 0));
+
+        clock.advance(Duration.ofMinutes(16));
+        assertThat(garmentRemovalCleanupService.run())
+                .as("minimization is not repeated; the deletion is repeated, recorded and the obligation completed")
+                .isEqualTo(new CleanupResult(0, 1, 1, 0, 0));
+        assertThat(photoStorage.deletionCount()).as("the idempotent delete ran once more").isEqualTo(2);
+        InMemoryGarmentRemovalRepository.Obligation recovered = garmentRemovalRepository.obligation(garmentId)
+                .orElseThrow();
+        assertThat(recovered.completed).isTrue();
+        assertThat(recovered.purgeDeadline).as("the deadline never moves").isEqualTo(NOW.plus(Duration.ofDays(30)));
+        assertThat(recovered.attempts).isEqualTo(2);
+    }
+
+    @Test
+    void oneObligationThatKeepsFailingNeverHoldsBackTheOthers() {
+        UUID failingGarmentId = UUID.randomUUID();
+        UUID healthyGarmentId = UUID.randomUUID();
+        garmentRemovalRepository.recordCleanup(failingGarmentId, OWNER, NOW.minusSeconds(1),
+                NOW.plus(Duration.ofDays(30)), Optional.empty());
+        String healthyObjectKey = recordWithPhoto(healthyGarmentId, NOW);
+        garmentRemovalRepository.failMinimizationOf(failingGarmentId);
+
+        assertThat(garmentRemovalCleanupService.run())
+                .as("the failing obligation is claimed first, yet the healthy one is fully processed")
+                .isEqualTo(new CleanupResult(1, 1, 1, 1, 0));
+        assertThat(garmentRemovalRepository.obligation(healthyGarmentId).orElseThrow().completed).isTrue();
+        assertThat(photoStorage.contains(healthyObjectKey)).isFalse();
+        assertThat(garmentRemovalRepository.obligation(failingGarmentId).orElseThrow().completed).isFalse();
+
+        clock.advance(Duration.ofMinutes(16));
+        assertThat(garmentRemovalCleanupService.run()).as("the failing obligation is retried after its lease")
+                .isEqualTo(new CleanupResult(0, 0, 0, 1, 0));
+        assertThat(garmentRemovalRepository.obligation(failingGarmentId).orElseThrow().attempts).isEqualTo(2);
+    }
+
+    @Test
+    void thePolicyAcceptsOnlyLimitsWithinTheApprovedThirtyDayObligation() {
+        Duration fifteenMinutes = Duration.ofMinutes(15);
+        assertThat(new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ofDays(29), 1, Duration.ofSeconds(1)))
+                .as("the 30-day boundary itself is allowed").isNotNull();
+
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ofDays(30).plusSeconds(1), Duration.ofDays(21), 50,
+                fifteenMinutes)).as("longer than the approved 30 days").isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ZERO, Duration.ofDays(21), 50, fifteenMinutes))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ofDays(30), 50,
+                fifteenMinutes)).as("the warning must come before the limit").isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ZERO, 50, fifteenMinutes))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ofDays(21), 0, fifteenMinutes))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ofDays(21), 50,
+                Duration.ZERO)).isInstanceOf(IllegalArgumentException.class);
     }
 
     private String recordWithPhoto(UUID garmentId, Instant removedAt) {
@@ -3459,23 +3572,32 @@ import com.capsuleai.wardrobe.application.GarmentRemovalCleanupService;
 import com.capsuleai.wardrobe.application.GarmentRemovalCleanupService.CleanupResult;
 import com.capsuleai.wardrobe.application.RemoveGarmentCommand;
 import com.capsuleai.wardrobe.application.RemoveGarmentService;
+import com.capsuleai.wardrobe.application.ports.GarmentRemovalCleanupTarget;
 import com.capsuleai.wardrobe.application.ports.GarmentRemovalRepository;
+import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import com.capsuleai.wardrobe.support.TestImages;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * US-GAR-005 removal cleanup on real PostgreSQL with fault-injecting private storage (S4-GAR-03,
- * OPEN-S4-02/04): minimization, object deletion, retry after the lease, leased work exclusion and overdue
- * counting. Unrelated garments are never touched.
+ * OPEN-S4-02/04): minimization, object deletion, retry after the lease, leased work exclusion, concurrent
+ * claims with FOR UPDATE SKIP LOCKED, and overdue counting. Unrelated garments are never touched.
  */
 class GarmentRemovalCleanupIT extends WardrobeIntegrationTestSupport {
 
@@ -3487,6 +3609,9 @@ class GarmentRemovalCleanupIT extends WardrobeIntegrationTestSupport {
 
     @Autowired
     private GarmentRemovalRepository garmentRemovalRepository;
+
+    @Autowired
+    private WardrobeTransactions wardrobeTransactions;
 
     @Test
     void cleanupMinimizesTheRemovedGarmentDeletesItsPhotoAndCompletes() throws Exception {
@@ -3561,6 +3686,50 @@ class GarmentRemovalCleanupIT extends WardrobeIntegrationTestSupport {
     }
 
     @Test
+    void twoWorkersClaimingAtTheSameTimeNeverTakeTheSameObligation() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("cleanup-concurrent-claims@example.com");
+        Set<UUID> removedGarments = new HashSet<>();
+        for (String color : List.of("BLACK", "WHITE", "RED")) {
+            UUID garmentId = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("SHOES", color));
+            remove(tokens.accountId(), garmentId);
+            removedGarments.add(garmentId);
+        }
+        Instant now = clock.instant();
+        Instant leaseUntil = now.plus(Duration.ofMinutes(15));
+        CountDownLatch firstWorkerHoldsItsClaim = new CountDownLatch(1);
+        CountDownLatch secondWorkerFinished = new CountDownLatch(1);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            // The first worker claims two obligations and keeps its transaction (and row locks) open.
+            Future<List<UUID>> firstWorker = executor.submit(() -> wardrobeTransactions.inTransaction(() -> {
+                List<UUID> claimed = garmentIds(garmentRemovalRepository.claimDueCleanup(now, leaseUntil, 2));
+                firstWorkerHoldsItsClaim.countDown();
+                awaitWithin(secondWorkerFinished);
+                return claimed;
+            }));
+            assertThat(firstWorkerHoldsItsClaim.await(20, SECONDS)).isTrue();
+
+            // Meanwhile the second worker skips the locked rows instead of waiting for them or taking them again.
+            List<UUID> secondClaim = wardrobeTransactions.inTransaction(() ->
+                    garmentIds(garmentRemovalRepository.claimDueCleanup(now, leaseUntil, 10)));
+            secondWorkerFinished.countDown();
+            List<UUID> firstClaim = firstWorker.get(20, SECONDS);
+
+            assertThat(firstClaim).hasSize(2);
+            assertThat(secondClaim).as("only the obligation the first worker did not lock").hasSize(1)
+                    .doesNotContainAnyElementsOf(firstClaim);
+            Set<UUID> allClaimed = new HashSet<>(firstClaim);
+            allClaimed.addAll(secondClaim);
+            assertThat(allClaimed).isEqualTo(removedGarments);
+        } finally {
+            secondWorkerFinished.countDown();
+            executor.shutdownNow();
+        }
+        assertThat(jdbc.sql("SELECT sum(attempts) FROM wardrobe.wardrobe_garment_removal_cleanup")
+                .query(Long.class).single()).as("each obligation was claimed exactly once").isEqualTo(3L);
+    }
+
+    @Test
     void anOverdueObligationIsCountedAndItsDeadlineNeverMoves() throws Exception {
         IssuedTokens tokens = registerAndLogIn("cleanup-overdue@example.com");
         UUID photoUploadId = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(800, 600));
@@ -3578,6 +3747,21 @@ class GarmentRemovalCleanupIT extends WardrobeIntegrationTestSupport {
 
     private void remove(UUID owner, UUID garmentId) {
         removeGarmentService.remove(new RemoveGarmentCommand(owner, garmentId.toString(), true, "1"));
+    }
+
+    private static List<UUID> garmentIds(List<GarmentRemovalCleanupTarget> claimed) {
+        return claimed.stream().map(GarmentRemovalCleanupTarget::garmentId).toList();
+    }
+
+    private static void awaitWithin(CountDownLatch latch) {
+        try {
+            if (!latch.await(20, SECONDS)) {
+                throw new IllegalStateException("The second worker did not finish while the first held its claim");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(interrupted);
+        }
     }
 
     private static Map<String, Object> richGarmentWithPhoto(UUID photoUploadId) {
@@ -3612,11 +3796,190 @@ class GarmentRemovalCleanupIT extends WardrobeIntegrationTestSupport {
 
 - `photoStorage` is the `@Primary FaultInjectingPhotoStorage` that every integration context uses. It is reset before each test by `WardrobeIntegrationTestSupport`.
 - The clock starts at `MutableClock.DEFAULT_START` in every test.
+- `twoWorkersClaimingAtTheSameTimeNeverTakeTheSameObligation` holds the first worker's claim transaction open while the second worker claims. It proves `FOR UPDATE SKIP LOCKED`: without it the second worker blocks on the locked rows and the test fails with "The second worker did not finish while the first held its claim" (verified by temporarily removing `SKIP LOCKED` on 2026-11-21).
 - Run the integration tests:
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=HarnessSmokeTest" "-Dit.test=GarmentRemovalSchemaIT,GarmentRemovalApiIT,ConcurrentGarmentRemovalIT,GarmentRemovalCleanupIT,GarmentSchemaIT" verify
 ```
+
+### Step T12 — [ADD] `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/scheduling/GarmentRemovalCleanupJobTest.java`
+
+Added on 2026-11-21 during the repository implementation. P17 and P20 had no test of their own.
+
+```java
+package com.capsuleai.wardrobe.adapter.in.scheduling;
+
+import com.capsuleai.wardrobe.application.GarmentRemovalCleanupService;
+import com.capsuleai.wardrobe.application.GarmentRemovalPolicy;
+import com.capsuleai.wardrobe.application.ports.GarmentRemovalCleanupTarget;
+import com.capsuleai.wardrobe.application.ports.GarmentRemovalRepository;
+import com.capsuleai.wardrobe.application.ports.PhotoCleanupTarget;
+import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
+import com.capsuleai.wardrobe.configuration.WardrobeRemovalCleanupConfiguration;
+import com.capsuleai.wardrobe.support.FaultInjectingPhotoStorage;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * US-GAR-005 (S4-GAR-03, OPEN-S4-04/33): the scheduled trigger of the removal cleanup. A failed run never
+ * escapes the scheduler, overdue obligations are reported as a warning, every log line carries counts only
+ * (no garment id, owner id or object key), and the job exists only while the cleanup is enabled.
+ */
+@ExtendWith(OutputCaptureExtension.class)
+class GarmentRemovalCleanupJobTest {
+
+    private static final Instant NOW = Instant.parse("2026-11-16T09:30:00Z");
+    private static final GarmentRemovalPolicy POLICY =
+            new GarmentRemovalPolicy(Duration.ofDays(30), Duration.ofDays(21), 50, Duration.ofMinutes(15));
+    private static final String OBJECT_KEY = "photos/" + UUID.randomUUID() + ".jpg";
+
+    @Test
+    void aFailedRunIsLoggedWithoutIdentifiersAndNeverEscapesTheScheduler(CapturedOutput output) {
+        ScriptedGarmentRemovalRepository garmentRemovalRepository = new ScriptedGarmentRemovalRepository();
+        garmentRemovalRepository.failClaims = true;
+        GarmentRemovalCleanupJob garmentRemovalCleanupJob = jobUsing(garmentRemovalRepository);
+
+        garmentRemovalCleanupJob.run();
+
+        assertThat(output).contains("Removal cleanup failed and will run again at its next interval")
+                .contains("IllegalStateException")
+                .doesNotContain(ScriptedGarmentRemovalRepository.FAILURE_DETAIL);
+    }
+
+    @Test
+    void completedWorkIsLoggedAsCountsAndOverdueObligationsAsAWarning(CapturedOutput output) {
+        ScriptedGarmentRemovalRepository garmentRemovalRepository = new ScriptedGarmentRemovalRepository();
+        UUID garmentId = UUID.randomUUID();
+        garmentRemovalRepository.claimable = List.of(new GarmentRemovalCleanupTarget(garmentId,
+                NOW.minus(Duration.ofDays(22)), NOW.plus(Duration.ofDays(8)), Optional.of(OBJECT_KEY), false, false));
+        garmentRemovalRepository.overdueCount = 1;
+        GarmentRemovalCleanupJob garmentRemovalCleanupJob = jobUsing(garmentRemovalRepository);
+
+        garmentRemovalCleanupJob.run();
+
+        assertThat(output)
+                .contains("Removal cleanup minimized 1 garments, deleted 1 photo objects, completed 1 obligations, "
+                        + "0 obligations to retry")
+                .contains("1 removal cleanup obligations are overdue and approach the 30-day deletion limit")
+                .doesNotContain(garmentId.toString())
+                .doesNotContain(OBJECT_KEY);
+    }
+
+    @Test
+    void theJobIsScheduledOnlyWhileTheCleanupIsEnabled() {
+        ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+                .withBean(GarmentRemovalCleanupService.class, () -> serviceUsing(new ScriptedGarmentRemovalRepository()))
+                .withUserConfiguration(WardrobeRemovalCleanupConfiguration.class)
+                .withPropertyValues("capsuleai.wardrobe.removal-cleanup.initial-delay=PT1H",
+                        "capsuleai.wardrobe.removal-cleanup.interval=PT1H");
+
+        contextRunner.withPropertyValues("capsuleai.wardrobe.removal-cleanup.enabled=true")
+                .run(context -> assertThat(context).hasSingleBean(GarmentRemovalCleanupJob.class));
+        contextRunner.withPropertyValues("capsuleai.wardrobe.removal-cleanup.enabled=false")
+                .run(context -> assertThat(context).doesNotHaveBean(GarmentRemovalCleanupJob.class));
+        contextRunner.run(context -> assertThat(context).as("disabled unless explicitly enabled")
+                .doesNotHaveBean(GarmentRemovalCleanupJob.class));
+    }
+
+    private static GarmentRemovalCleanupJob jobUsing(GarmentRemovalRepository garmentRemovalRepository) {
+        return new GarmentRemovalCleanupJob(serviceUsing(garmentRemovalRepository));
+    }
+
+    private static GarmentRemovalCleanupService serviceUsing(GarmentRemovalRepository garmentRemovalRepository) {
+        FaultInjectingPhotoStorage photoStorage = new FaultInjectingPhotoStorage();
+        photoStorage.put(OBJECT_KEY, new byte[] {1, 2, 3});
+        return new GarmentRemovalCleanupService(garmentRemovalRepository, photoStorage, new DirectTransactions(),
+                Clock.fixed(NOW, ZoneOffset.UTC), POLICY);
+    }
+
+    /** Runs the work directly, as the cleanup service's own transaction boundary would. */
+    private static final class DirectTransactions implements WardrobeTransactions {
+
+        @Override
+        public <T> T inTransaction(Supplier<T> work) {
+            return work.get();
+        }
+    }
+
+    /** A repository whose claim result, failure and overdue count are scripted by each test. */
+    private static final class ScriptedGarmentRemovalRepository implements GarmentRemovalRepository {
+
+        static final String FAILURE_DETAIL = "connection to wardrobe_garment_removal_cleanup lost";
+
+        private List<GarmentRemovalCleanupTarget> claimable = List.of();
+        private boolean failClaims;
+        private int overdueCount;
+
+        @Override
+        public boolean removeIfCurrentAt(UUID ownerAccountId, UUID garmentId, long expectedRevision, Instant removedAt) {
+            throw new UnsupportedOperationException("not used by the cleanup");
+        }
+
+        @Override
+        public Optional<PhotoCleanupTarget> findAttachedPhoto(UUID garmentId) {
+            throw new UnsupportedOperationException("not used by the cleanup");
+        }
+
+        @Override
+        public void recordCleanup(UUID garmentId, UUID ownerAccountId, Instant removedAt, Instant purgeDeadline,
+                                  Optional<PhotoCleanupTarget> attachedPhoto) {
+            throw new UnsupportedOperationException("not used by the cleanup");
+        }
+
+        @Override
+        public List<GarmentRemovalCleanupTarget> claimDueCleanup(Instant now, Instant leaseUntil, int limit) {
+            if (failClaims) {
+                throw new IllegalStateException(FAILURE_DETAIL);
+            }
+            List<GarmentRemovalCleanupTarget> claimed = claimable;
+            claimable = List.of();
+            return claimed;
+        }
+
+        @Override
+        public boolean minimizeRemovedGarment(UUID garmentId, Instant minimizedAt) {
+            return true;
+        }
+
+        @Override
+        public boolean markObjectDeleted(UUID garmentId, Instant deletedAt) {
+            return true;
+        }
+
+        @Override
+        public boolean completeIfFinished(UUID garmentId, Instant completedAt) {
+            return true;
+        }
+
+        @Override
+        public int countOverdue(Instant removedBefore) {
+            return overdueCount;
+        }
+    }
+}
+```
+
+**Explanation.**
+
+- **No escape.** A failed run is logged with the exception class only and never propagates into Spring's scheduler, so the next interval runs again.
+- **Counts only.** The test asserts that neither the garment id nor the object key appears in the output (OPEN-S4-04 privacy rule).
+- **Overdue warning.** An overdue count produces the warning that operations rely on before the 30-day limit.
+- **Conditional scheduling.** `ApplicationContextRunner` shows that the job bean exists only with `capsuleai.wardrobe.removal-cleanup.enabled=true`; a missing property means disabled.
+- The class uses its own small fakes, because the in-memory fake of T2 is package-private in `application`.
 
 Then the full build:
 
@@ -3725,15 +4088,15 @@ Also confirm from the backup inventory that no backup keeps photo objects longer
 
 ### 15.1 Acceptance criteria to evidence
 
-| AC | Backend evidence (planned, not run) | Status after this guide | Remaining evidence |
+| AC | Backend evidence (run in the repository on 2026-11-21) | Status | Remaining evidence |
 | --- | --- | --- | --- |
-| AC-01 Confirm the intended removal | T3 `anUnconfirmedOrRevisionlessRemovalIsRejectedBeforeAnyRead`; T9 `anUnconfirmedRemovalChangesNothing`, `aStaleRevisionIsAConflictAndTheGarmentStaysCurrent`; M2 | Backend specified | Client: identification, explanation, cancel |
-| AC-02 Exclude immediately | T9 `aConfirmedRemovalExcludesTheGarmentFromTheOverviewDetailAndEdits`, `thePhotoOfARemovedGarmentIsNoLongerServed`; M6 | Backend specified for inventory and photo | **New current outfits, Coverage, Multiplier baseline: no consumer exists.** Untriggered in this increment; must be proved when those engines arrive. |
+| AC-01 Confirm the intended removal | T3 `anUnconfirmedOrRevisionlessRemovalIsRejectedBeforeAnyRead`; T9 `anUnconfirmedRemovalChangesNothing`, `aStaleRevisionIsAConflictAndTheGarmentStaysCurrent`; M2 | Backend verified (tests pass) | Client: identification, explanation, cancel |
+| AC-02 Exclude immediately | T9 `aConfirmedRemovalExcludesTheGarmentFromTheOverviewDetailAndEdits`, `thePhotoOfARemovedGarmentIsNoLongerServed`; T10; M6 | Backend verified for inventory, detail, edits and photo | **New current outfits, Coverage, Multiplier baseline: no consumer exists.** Untriggered in this increment; must be proved when those engines arrive. |
 | AC-03 Refresh dependent results | — | **Not demonstrable**: no advice or assessment store exists | Recorded gap; PO/QA applicability review (plan §11.2) |
-| AC-04 Keep minimal historical meaning | T1 `theRemovedRepresentationKeepsOnlyTheMinimalMeaning…`; T11 `cleanupMinimizesTheRemovedGarment…` (Category and Color kept; unrelated garments untouched in T11 `aFailedDeletion…`) | Minimal representation specified | **Report rendering "Removed from wardrobe": no report exists.** Wear Events and outfits do not exist to be preserved. |
-| AC-05 Delete applicable removed data | T4, T11 (minimization, object deletion, retry, overdue, fixed deadline); T9 `removalRecordsOneCleanupObligation…`; M8 | Mechanism specified | **M9 storage boundary (OPEN-S4-05)**; deployed job monitoring |
-| AC-06 Resolve failure or uncertainty | T3 `repeatingARemoval…`, `aRemovalRefusedBecauseOfACompetingRemoval…`; T9 `repeatingTheRemovalAfterALostResponse…`, `replayingTheOriginalAddition…`; T10 | Specified | Client outcome-review UX |
-| AC-07 Enforce ownership | T3 `anotherOwnersGarmentAndAnUnknownGarmentAreNotFound`; T9 `anotherAccountsGarmentIsNotFound…`, `withoutAUsableSessionNothingIsRemoved`; M3 | Specified | — |
+| AC-04 Keep minimal historical meaning | T1 `theRemovedRepresentationKeepsOnlyTheMinimalMeaning…`; T11 `cleanupMinimizesTheRemovedGarment…` (Category and Color kept; unrelated garments untouched in T11 `aFailedDeletion…`) | Minimal representation verified | **Report rendering "Removed from wardrobe": no report exists.** Wear Events and outfits do not exist to be preserved. |
+| AC-05 Delete applicable removed data | T4 (including crash after deletion and failure isolation), T11 (minimization, object deletion, retry, concurrent claims, overdue, fixed deadline), T12 (scheduled trigger, overdue warning); T9 `removalRecordsOneCleanupObligation…`; existing `S3PhotoStorageIT` (real adapter on S3Mock: delete removes the object, idempotent); M8 | Mechanism verified; **AC-05 not met until M9** | **M9 storage boundary (OPEN-S4-05)**; deployed job monitoring |
+| AC-06 Resolve failure or uncertainty | T3 `repeatingARemoval…`, `aRemovalRefusedBecauseOfACompetingRemoval…`; T9 `repeatingTheRemovalAfterALostResponse…`, `replayingTheOriginalAddition…`; T10 | Backend verified | Client outcome-review UX |
+| AC-07 Enforce ownership | T3 `anotherOwnersGarmentAndAnUnknownGarmentAreNotFound`; T9 `anotherAccountsGarmentIsNotFound…`, `withoutAUsableSessionNothingIsRemoved`; M3 | Backend verified | — |
 
 ### 15.2 Requirements to tests
 
@@ -3755,10 +4118,10 @@ Also confirm from the backup inventory that no backup keeps photo objects longer
 
 ## 16. Definition of Done
 
-- [ ] P1–P23 applied exactly. No source, migration or test outside §11 changed.
-- [ ] T1–T11 written. Each class passes on its own, and `.\mvnw.cmd clean verify` passes, including `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest`, `DatabaseSchemaOwnershipIT` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` runs and finds all 102 required reports with no failures or skips.
-- [ ] V12 applied to a copy of a V11 database: the upgrade test passes, and V1–V11 checksums are unchanged.
+- [x] P1–P23 applied exactly (2026-11-21; the repository files equal this guide's steps). No source, migration or test outside §11 changed.
+- [x] T1–T12 written. Each class passes on its own, and `./mvnw -o clean verify` passed in the repository on 2026-11-21 (579 unit, 356 integration tests), including `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest`, `DatabaseSchemaOwnershipIT` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` runs and finds all 103 required reports with no failures or skips. (Locally 102 of 103; `HeifDecodingIT` needs libheif, which CI installs.)
+- [x] V12 applied on top of V11 in Testcontainers: `GarmentRemovalSchemaIT.existingGarmentsSurviveTheUpgradeFromV11Unminimized` passes, and V1–V11 are unchanged since `33c579c`.
 - [ ] **Storage deletion boundary verified (M9, OPEN-S4-05)**, or version-aware deletion implemented. Without this, AC-05 is not met.
 - [ ] Cleanup job observed running in the deployment, with overdue warnings routed to operations.
 - [ ] The AC-02 consumer and AC-03/AC-04 report evidence gaps are recorded in the story review and accepted or deferred by the PO. They must not be reported as passing.
@@ -3776,7 +4139,7 @@ Also confirm from the backup inventory that no backup keeps photo objects longer
 | Removal answers `409` right after a successful edit | The client sent the pre-edit revision | Reread the detail and use its `revision` |
 | Replay of a photo-backed addition answers `404 PHOTO_UPLOAD_NOT_FOUND` after a removal | P11 edit 2 not applied | Apply the `lockedUpload` change |
 | `PersistenceOwnershipSqlTest` reports an unqualified table | A table name without `wardrobe.` in a Java string | Qualify it, including in comments inside strings |
-| Cleanup never completes; logs show "deletions to retry" | Storage unreachable or misconfigured | Fix the storage configuration. Obligations retry every `retry-delay`; watch for the overdue warning. |
+| Cleanup never completes; logs show "obligations to retry" | Storage unreachable or misconfigured, or one obligation keeps failing | Fix the storage configuration or the failing data. Each failing obligation retries every `retry-delay` without holding back the others; watch for the overdue warning. |
 | **M9: versioning is `Enabled` or `Suspended`** | The bucket keeps noncurrent versions | AC-05 is not met. Either move photos to a never-versioned bucket (migration of objects is an operations task), or implement version-aware deletion: add `PhotoStorage.deleteAllVersions(objectKey)` using `ListObjectVersions` and `DeleteObject` with `versionId` for every version and delete marker, grant `s3:DeleteObjectVersion`, and test against a versioned S3-compatible fixture. Record this as a new delegated decision before implementing it. |
 | `IdentityOpenApiContractIT.successResponseSchemas…` fails for the removal | `GarmentRemovalResponse` schema properties differ from the record | Make the property set and `required` list equal to the six record components |
 
@@ -3789,8 +4152,8 @@ Also confirm from the backup inventory that no backup keeps photo objects longer
 - [ ] A repeat answers `ALREADY_REMOVED` with the original time; the deadline is never reset.
 - [ ] A replay of a removed garment's creation answers `410` after the fingerprint check.
 - [ ] Minimization nulls exactly the ten purgeable columns, deletes both child sets and the ATTACHED photo row, and keeps Category, Color and the creation identity.
-- [ ] The object is deleted outside any transaction; failures are retried after the lease.
+- [ ] The object is deleted outside any transaction; failures are retried after the lease, and one failing obligation never stops the others.
 - [ ] Logs contain counts only.
 - [ ] OpenAPI is 0.12.0; the removal schemas match the records; `410` is documented on `addGarment`.
-- [ ] CI: `sprint_04` is in the trigger; 7 entries added.
+- [ ] CI: `sprint_04` is in the trigger; 8 entries added (103 in total).
 - [ ] The storage boundary is verified, or the gap is recorded as blocking AC-05.

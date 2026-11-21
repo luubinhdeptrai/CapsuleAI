@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.11.0
+  version: 0.12.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -19,6 +19,7 @@ info:
       - US-GAR-002: Correct and enrich garment information
       - US-GAR-003: Add a photo-supported garment with manual confirmation
       - US-PROF-001: Set and revise style preferences and common needs
+      - US-GAR-005: Remove a garment while preserving minimal history
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -59,10 +60,18 @@ info:
     owner, through the application.
 
     This specification does not introduce endpoints for
-    session listing, all-device logout, garment removal,
-    attaching a photo to an existing garment, replacing a
-    confirmed photo, search, filtering, body or gender
-    profiles, location, or public profiles.
+    session listing, all-device logout, attaching a photo to
+    an existing garment, replacing a confirmed photo, search,
+    filtering, body or gender profiles, location, or public
+    profiles.
+
+    Garment removal (US-GAR-005) is an explicitly confirmed
+    command protected by the garment revision. It is
+    monotonic: a repeated removal answers ALREADY_REMOVED with
+    the original removal time and never restores the garment.
+    Only minimal historical meaning (Category, Color, removal
+    time) remains; the photo and other details are physically
+    deleted within 30 days of the removal.
 
     Personal preferences (US-PROF-001) are the account's own
     declared profile styles and common-need priorities. Unset
@@ -813,6 +822,9 @@ paths:
         "409":
           $ref: "#/components/responses/PhotoUploadNotUsable"
 
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
+
         "422":
           $ref: "#/components/responses/IdempotencyKeyReused"
 
@@ -959,6 +971,98 @@ paths:
 
         "410":
           $ref: "#/components/responses/GarmentNoLongerCurrent"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments/{garmentId}/removal:
+    post:
+      tags:
+        - Wardrobe
+      operationId: removeGarment
+      summary: Remove one owned garment from the current wardrobe
+      description: |
+        US-GAR-005 (FR-WAR-004–006, DATA-RET-002, BRULE-GAR-009;
+        approved S4-GAR-01/02/03 and S4-INT-01/02/03).
+
+        Removes one current garment of the authenticated account
+        after explicit confirmation (confirmed: true) of the revision
+        the user reviewed. From that moment the garment is excluded
+        from the wardrobe overview, detail, edits and its photo.
+
+        - 200 REMOVED: this request removed the garment.
+        - 200 ALREADY_REMOVED: the garment had been removed before;
+          removedAt is the original time and nothing changed. This
+          is the safe answer to a repeated request after a lost
+          response, whatever expectedRevision it carries.
+        - 409 REVISION_CONFLICT: the garment changed after the user
+          reviewed it; nothing was removed. Reload, review, confirm
+          again.
+        - 404 GARMENT_NOT_FOUND: unknown, malformed or another
+          account's id (indistinguishable).
+
+        Only the minimal historical meaning is returned. The photo,
+        Brand, Price and other details are physically deleted
+        within 30 days of the removal. Cancelling before sending
+        this request changes nothing.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview or detail.
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentRemovalRequest"
+            example:
+              confirmed: true
+              expectedRevision: "3"
+
+      responses:
+        "200":
+          description: The garment is not in the current wardrobe (removed now or before).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarmentRemovalResponse"
+              examples:
+                removed:
+                  summary: Removed by this request
+                  value:
+                    id: "4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69"
+                    outcome: "REMOVED"
+                    state: "REMOVED_FROM_WARDROBE"
+                    category: "TOPS"
+                    color: "NAVY"
+                    removedAt: "2026-11-16T09:30:00.123456Z"
+                alreadyRemoved:
+                  summary: Removed earlier (repeated request)
+                  value:
+                    id: "4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69"
+                    outcome: "ALREADY_REMOVED"
+                    state: "REMOVED_FROM_WARDROBE"
+                    category: "TOPS"
+                    color: "NAVY"
+                    removedAt: "2026-11-16T09:30:00.123456Z"
+
+        "400":
+          $ref: "#/components/responses/GarmentRemovalRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/GarmentNotFound"
+
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
 
         "503":
           $ref: "#/components/responses/Unavailable"
@@ -2593,6 +2697,56 @@ components:
         TRAVEL (TRAVEL), SPORT_ACTIVE (SPORT_ACTIVITY).
       enum: [EVERYDAY_CASUAL, WORK_PROFESSIONAL, SCHOOL_UNIVERSITY, FORMAL_SPECIAL_EVENT, TRAVEL, SPORT_ACTIVE]
 
+    GarmentRemovalRequest:
+      type: object
+      description: |
+        Explicit confirmation of removing one current garment
+        (US-GAR-005). There is no owner field.
+      required:
+        - confirmed
+        - expectedRevision
+      properties:
+        confirmed:
+          type: boolean
+          const: true
+          description: Must be true; false is rejected with NOT_CONFIRMED.
+        expectedRevision:
+          type: string
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: The revision of the garment the user reviewed (opaque).
+
+    GarmentRemovalResponse:
+      type: object
+      description: |
+        The minimal historical meaning of a garment that is not in
+        the current wardrobe. Every field is always present.
+      required:
+        - id
+        - outcome
+        - state
+        - category
+        - color
+        - removedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: [REMOVED, ALREADY_REMOVED]
+        state:
+          type: string
+          const: REMOVED_FROM_WARDROBE
+          description: Label code clients show as "Removed from wardrobe".
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        removedAt:
+          type: string
+          format: date-time
+          description: The original removal time; never reset by a repeated request.
+
     FieldError:
       type: object
       description: A validation failure associated with a request field.
@@ -2806,9 +2960,31 @@ components:
           example:
             title: "Conflict"
             status: 409
-            detail: "This garment changed after you opened it, so your edit was not applied. Reload it, review the current values and confirm your changes again."
+            detail: "This garment changed after you opened it, so your change was not applied. Reload it, review the current values and confirm again."
             instance: "/api/v1/wardrobe/garments/1d2c3b4a-0000-4000-8000-000000000001"
             code: "REVISION_CONFLICT"
+
+    GarmentRemovalRejected:
+      description: |
+        The removal was not applied; the garment is unchanged.
+        VALIDATION_FAILED lists a missing or false confirmation
+        (REQUIRED, NOT_CONFIRMED) and a missing or malformed
+        expectedRevision (REQUIRED, INVALID_FORMAT). These are
+        checked before the garment is looked up.
+        MALFORMED_REQUEST means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+            instance: "/api/v1/wardrobe/garments/4b9f3c7e-2a1d-4c8e-9f6a-1e2d3c4b5a69/removal"
+            code: "VALIDATION_FAILED"
+            fieldErrors:
+              - field: "confirmed"
+                code: "NOT_CONFIRMED"
 
     PhotoRejected:
       description: |

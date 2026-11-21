@@ -52,7 +52,7 @@
 | `WardrobeGarmentController` | Includes removal (GAR-005 P15) | P9 adds the attachment endpoint |
 | Migrations | V1–V12 | **None added** |
 | OpenAPI | 0.12.0 | → 0.13.0 |
-| CI | 102 entries; `sprint_04` trigger present | +4 entries |
+| CI | 103 entries; `sprint_04` trigger present | +4 entries (107) |
 
 ## 3. Original Business Requirements — Verbatim
 
@@ -1249,14 +1249,14 @@ AFTER:
 BEFORE:
 
 ```powershell
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 5
           }
 ```
 
 AFTER:
 
 ```powershell
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 4
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 5
             'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentPhotoAttachmentTest.xml' = 3
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.AttachGarmentPhotoServiceTest.xml' = 8
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentPhotoAttachmentApiIT.xml' = 10
@@ -1264,7 +1264,7 @@ AFTER:
           }
 ```
 
-This brings the total to 106 required entries.
+This brings the total to 107 required entries.
 
 ## 13. Complete Automated Test Implementation
 
@@ -1997,7 +1997,7 @@ P-AC-0n is the story's AC-0n.
 
 - [ ] **The Product Owner accepts (or amends) the formalized AC-01–AC-06 of [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md).** The story file and its parent PBI-049 were created on 2026-11-17 under delegation; until the PO accepts the AC, this story cannot be Done.
 - [ ] P1–P13 and T1–T5 applied. `.\mvnw.cmd clean verify` passes, including `IdentityOpenApiContractIT`, `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest`.
-- [ ] CI on a PR to `sprint_04` finds 106 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 107 required reports with no failure or skip.
 - [ ] US-GAR-005 regression stays green: removal of an attached photo is purged by the cleanup worker (GAR-005 T11 covers photo-backed removal).
 - [ ] Client evidence: offered only for imageless garments; preview; confirm; cancel; conflict and outcome review, in Vietnamese with accessibility.
 - [ ] No real personal photo in tests or evidence.

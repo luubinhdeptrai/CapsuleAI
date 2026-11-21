@@ -59,7 +59,7 @@
 | `PreferencesSchemaIT` | Exact `personal_context` table list (US-PROF-002 T9) | T14 adds the two new tables |
 | Migrations | V1–V13 | This guide adds **V14** |
 | OpenAPI | 0.15.0 | → 0.16.0 |
-| CI | 122 entries | +9 entries (131) |
+| CI | 123 entries | +9 entries (132) |
 
 ## 3. Original Business Requirements — Verbatim
 
@@ -3084,7 +3084,7 @@ AFTER:
           }
 ```
 
-This brings the total to 131 required entries. `OpenMeteoWeatherProviderTest` runs as a unit test (Surefire) against an in-process HTTP server and needs no Docker.
+This brings the total to 132 required entries. `OpenMeteoWeatherProviderTest` runs as a unit test (Surefire) against an in-process HTTP server and needs no Docker.
 
 ## 13. Complete Automated Test Implementation
 
@@ -4534,7 +4534,7 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 ## 16. Definition of Done
 
 - [ ] P1–P33 and T1–T15 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `OptionalContextApiIT`, `PreferencesSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 131 required reports with no failure or skip.
+- [ ] CI on a PR to `sprint_04` finds 132 required reports with no failure or skip.
 - [ ] **The Open-Meteo terms, attribution and eligibility for the deployment are reviewed.** Either M7 is recorded, or production runs with `enabled=false` and reports `NOT_CONFIGURED`.
 - [ ] **M8 deadline measurement recorded.** OPEN-S4-22 moves from `VERIFICATION PENDING` only with that evidence.
 - [ ] The AC-04 and AC-05 consumer gaps are recorded as outstanding and never reported as passing.
@@ -4565,5 +4565,5 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 - [ ] One elapsed deadline covers capacity wait, connection, headers, body and translation; there is no retry.
 - [ ] Every failure is an explicit `UNAVAILABLE` reason. No invented weather.
 - [ ] No coordinates, labels or URLs in logs. Integration tests never call the internet.
-- [ ] OpenAPI 0.16.0; 9 CI entries (total 131).
+- [ ] OpenAPI 0.16.0; 9 CI entries (total 132).
 - [ ] Open-Meteo terms, M7 and M8 are listed as outstanding until done.

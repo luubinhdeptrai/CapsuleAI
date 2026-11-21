@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Nothing here is implemented in the repository or deployed.** The guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Only US-GAR-005 (OPEN-S4-01–06 and its parts of OPEN-S4-31–33) is implemented in the repository, since 2026-11-21; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -52,12 +52,12 @@ Each entry has these fields:
 
 | ID | Story | Realizes | Selected solution (short) | Authority | Implementation | Verification |
 | --- | --- | --- | --- | --- | --- | --- |
-| [OPEN-S4-01](#open-s4-01--removal-command-transport-and-outcomes) | GAR-005 | S4-GAR-01, S4-INT-02/03 | `POST …/{garmentId}/removal` with `confirmed` and `expectedRevision`. The outcome is `REMOVED` or `ALREADY_REMOVED`; a repeated removal is monotonic. | Delegated default | Pending | Pending |
-| [OPEN-S4-02](#open-s4-02--retained-minimal-removed-representation) | GAR-005 | S4-GAR-02 | Keep id, owner, creation key and fingerprint, Category, Color, provenance, the times and the revision. Purge the rest. | Delegated default | Pending | Pending (privacy review) |
-| [OPEN-S4-03](#open-s4-03--creation-replay-after-removal) | GAR-005 | S4-GAR-02, S4-INT-02 | Replaying a removed garment's creation checks the fingerprint (`422` on mismatch), then answers `410`; it never recreates the garment. | Delegated default | Pending | Pending |
-| [OPEN-S4-04](#open-s4-04--durable-removal-cleanup-work-and-schedule) | GAR-005 | S4-GAR-03 | Cleanup table with lease and retry. Minimize at the first claim; delete the object outside the transaction. `P30D` limit, `P21D` warning. | Delegated default | Pending | Pending |
-| [OPEN-S4-05](#open-s4-05--storage-versioning-and-physical-deletion-boundary) | GAR-005 | S4-GAR-03 | Deletion boundary: an unversioned bucket with no object lock and no replication or backup copies, proven operationally. | Delegated default | Pending | **Pending (operations)** |
-| [OPEN-S4-06](#open-s4-06--removal-concurrency-and-lock-order) | GAR-005 | S4-GAR-01, S4-INT-01 | Conditional revision `UPDATE` on the garment, then a read of the photo, then the cleanup row. | Delegated default | Pending | Pending |
+| [OPEN-S4-01](#open-s4-01--removal-command-transport-and-outcomes) | GAR-005 | S4-GAR-01, S4-INT-02/03 | `POST …/{garmentId}/removal` with `confirmed` and `expectedRevision`. The outcome is `REMOVED` or `ALREADY_REMOVED`; a repeated removal is monotonic. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
+| [OPEN-S4-02](#open-s4-02--retained-minimal-removed-representation) | GAR-005 | S4-GAR-02 | Keep id, owner, creation key and fingerprint, Category, Color, provenance, the times and the revision. Purge the rest. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (privacy review; CI run) |
+| [OPEN-S4-03](#open-s4-03--creation-replay-after-removal) | GAR-005 | S4-GAR-02, S4-INT-02 | Replaying a removed garment's creation checks the fingerprint (`422` on mismatch), then answers `410`; it never recreates the garment. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
+| [OPEN-S4-04](#open-s4-04--durable-removal-cleanup-work-and-schedule) | GAR-005 | S4-GAR-03 | Cleanup table with lease and retry. Minimize at the first claim; delete the object outside the transaction. `P30D` limit, `P21D` warning. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
+| [OPEN-S4-05](#open-s4-05--storage-versioning-and-physical-deletion-boundary) | GAR-005 | S4-GAR-03 | Deletion boundary: an unversioned bucket with no object lock and no replication or backup copies, proven operationally. | Delegated default | No code needed; checked by the operations step | **Pending (operations)** |
+| [OPEN-S4-06](#open-s4-06--removal-concurrency-and-lock-order) | GAR-005 | S4-GAR-01, S4-INT-01 | Conditional revision `UPDATE` on the garment, then a read of the photo, then the cleanup row. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
 | [OPEN-S4-07](#open-s4-07--attachment-command-transport-and-outcomes) | GAR-006 | S4-GAR-04, S4-INT-02/03 | `POST …/{garmentId}/photo-attachment` returns `GarmentResponse`. A same-pair replay answers `200` without a new revision. | Delegated default | Pending | Pending |
 | [OPEN-S4-08](#open-s4-08--attachment-transaction-check-order-and-lock-order) | GAR-006 | S4-GAR-05, S4-INT-01 | Lock the garment row, then read garment and photo afresh, then lock the photo. Check order: replay, already photographed, revision, usable. | Delegated default | Pending | Pending |
 | [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, mapped to plan §6.5; since 2026-11-17 formalized one to one as AC-01–AC-06 of the formal story US-GAR-006 (parent PBI-049) | Delegated default | Pending | Pending (PO acceptance of the formalized AC) |
@@ -138,7 +138,7 @@ The monotonic answer is the natural outcome identity S4-INT-02 prefers. No recei
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-GAR-01, S4-INT-02 and S4-INT-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-21** (US-GAR-005; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-GAR-005:
@@ -214,7 +214,7 @@ The fingerprint is a one-way digest kept for anti-duplication. For a minimum-onl
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-GAR-02.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-21** (US-GAR-005; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`. A privacy review of the retained set is advised.
 
 **G. Implementation steps.** US-GAR-005:
@@ -259,7 +259,7 @@ Retaining fewer facts, for example dropping the fingerprint: replay can then onl
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-GAR-02 and S4-INT-02.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-21** (US-GAR-005; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-GAR-005:
@@ -322,7 +322,7 @@ Schedule: `initial-delay` `PT2M`, `interval` `PT5M`. Rows older than `overdue-wa
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-GAR-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-21** (US-GAR-005; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-GAR-005:
@@ -382,7 +382,7 @@ If any check fails, removal is not compliant. Option 2 must then be implemented 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-GAR-03.
-- `IMPLEMENTATION PENDING` (no code change).
+- No code change is needed; the US-GAR-005 code that relies on this boundary was implemented on 2026-11-21.
 - **`VERIFICATION PENDING`: an operations check is required. It is not done and not claimed.**
 
 **G. Implementation steps.** US-GAR-005:
@@ -433,7 +433,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-GAR-01 and S4-INT-01.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-21** (US-GAR-005; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.**
