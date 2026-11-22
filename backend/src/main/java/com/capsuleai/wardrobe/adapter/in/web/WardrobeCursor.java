@@ -25,6 +25,11 @@ final class WardrobeCursor {
     static final int MAXIMUM_LENGTH = 200;
 
     private static final String VERSION = "v1";
+
+    /** US-WAR-003 (OPEN-S4-14): a cursor issued for a page with conditions carries their fingerprint. */
+    private static final String FILTERED_VERSION = "v2";
+    private static final Pattern FINGERPRINT = Pattern.compile("[0-9a-f]{16}");
+
     private static final Pattern CANONICAL_UUID =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
@@ -63,6 +68,63 @@ final class WardrobeCursor {
             return encode(position).equals(cursor) ? Optional.of(position) : Optional.empty();
         } catch (IllegalArgumentException | DateTimeParseException notACursor) {
             return Optional.empty();
+        }
+    }
+
+    /** US-WAR-003: the outcome of reading a cursor for given search conditions. */
+    sealed interface Reading permits Reading.At, Reading.Malformed, Reading.ConditionsChanged {
+
+        /** A usable position for these conditions. */
+        record At(WardrobePosition position) implements Reading {
+        }
+
+        /** Not a cursor this API issued. */
+        record Malformed() implements Reading {
+        }
+
+        /** A real cursor, issued for other conditions (or without any): start again from the first page. */
+        record ConditionsChanged() implements Reading {
+        }
+    }
+
+    /** A {@code v2|<createdAt>|<garment id>|<conditions fingerprint>} cursor for a filtered page. */
+    static String encodeFiltered(WardrobePosition position, String conditionsFingerprint) {
+        String text = FILTERED_VERSION + "|" + position.createdAt() + "|" + position.garmentId() + "|"
+                + conditionsFingerprint;
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Reads a cursor for a request whose conditions have {@code conditionsFingerprint} (empty: no conditions).
+     * An unfiltered request accepts only v1 cursors and a filtered one only v2 cursors with its own fingerprint.
+     */
+    static Reading read(String cursor, Optional<String> conditionsFingerprint) {
+        if (cursor == null || cursor.isEmpty() || cursor.length() > MAXIMUM_LENGTH) {
+            return new Reading.Malformed();
+        }
+        Optional<WardrobePosition> unfiltered = decode(cursor);
+        if (unfiltered.isPresent()) {
+            return conditionsFingerprint.isEmpty() ? new Reading.At(unfiltered.get()) : new Reading.ConditionsChanged();
+        }
+        try {
+            String text = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
+            String[] parts = text.split("\\|", -1);
+            if (parts.length != 4 || !parts[0].equals(FILTERED_VERSION) || !CANONICAL_UUID.matcher(parts[2]).matches()
+                    || !FINGERPRINT.matcher(parts[3]).matches()) {
+                return new Reading.Malformed();
+            }
+            Instant createdAt = Instant.parse(parts[1]);
+            if (createdAt.isBefore(EARLIEST_POSITION) || createdAt.isAfter(LATEST_POSITION)) {
+                return new Reading.Malformed();
+            }
+            WardrobePosition position = new WardrobePosition(createdAt, UUID.fromString(parts[2]));
+            if (!encodeFiltered(position, parts[3]).equals(cursor)) {
+                return new Reading.Malformed();
+            }
+            return conditionsFingerprint.filter(parts[3]::equals).isPresent()
+                    ? new Reading.At(position) : new Reading.ConditionsChanged();
+        } catch (IllegalArgumentException | DateTimeParseException notACursor) {
+            return new Reading.Malformed();
         }
     }
 }

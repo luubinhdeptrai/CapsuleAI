@@ -3,13 +3,16 @@ package com.capsuleai.wardrobe.configuration;
 
 import com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentRepository;
 import com.capsuleai.wardrobe.adapter.out.persistence.JdbcPhotoUploadRepository;
+import com.capsuleai.wardrobe.adapter.out.persistence.JdbcWardrobeSearchRepository;
 import com.capsuleai.wardrobe.adapter.out.persistence.SpringWardrobeTransactions;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
 import com.capsuleai.wardrobe.application.ReviseGarmentService;
+import com.capsuleai.wardrobe.application.SearchWardrobeService;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
+import com.capsuleai.wardrobe.application.ports.WardrobeSearchRepository;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
@@ -59,5 +62,18 @@ public class WardrobeConfiguration {
     @Bean
     ReviseGarmentService reviseGarmentService(GarmentRepository garments, WardrobeTransactions transactions) {
         return new ReviseGarmentService(garments, transactions);
+    }
+
+    /** US-WAR-003: read access for searches with conditions. */
+    @Bean
+    WardrobeSearchRepository wardrobeSearchRepository(JdbcClient jdbcClient) {
+        return new JdbcWardrobeSearchRepository(jdbcClient);
+    }
+
+    @Bean
+    SearchWardrobeService searchWardrobeService(GarmentRepository garmentRepository,
+                                                WardrobeSearchRepository wardrobeSearchRepository,
+                                                WardrobeTransactions wardrobeTransactions) {
+        return new SearchWardrobeService(garmentRepository, wardrobeSearchRepository, wardrobeTransactions);
     }
 }

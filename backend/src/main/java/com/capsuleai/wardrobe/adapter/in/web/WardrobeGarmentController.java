@@ -10,6 +10,8 @@ import com.capsuleai.wardrobe.application.GarmentRevision;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
 import com.capsuleai.wardrobe.application.RemoveGarmentService;
 import com.capsuleai.wardrobe.application.ReviseGarmentService;
+import com.capsuleai.wardrobe.application.SearchWardrobeService;
+import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +40,7 @@ public class WardrobeGarmentController {
     static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
 
     private final AddGarmentService addGarmentService;
-    private final BrowseWardrobeService browseWardrobeService;
+    private final SearchWardrobeService searchWardrobeService;
     private final InspectGarmentService inspectGarmentService;
     private final ReviseGarmentService reviseGarmentService;
     private final GarmentPhotoContentService garmentPhotoContentService;
@@ -46,14 +48,14 @@ public class WardrobeGarmentController {
     private final AttachGarmentPhotoService attachGarmentPhotoService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
-                                     BrowseWardrobeService browseWardrobeService,
+                                     SearchWardrobeService searchWardrobeService,
                                      InspectGarmentService inspectGarmentService,
                                      ReviseGarmentService reviseGarmentService,
                                      GarmentPhotoContentService garmentPhotoContentService,
                                      RemoveGarmentService removeGarmentService,
                                      AttachGarmentPhotoService attachGarmentPhotoService) {
         this.addGarmentService = addGarmentService;
-        this.browseWardrobeService = browseWardrobeService;
+        this.searchWardrobeService = searchWardrobeService;
         this.inspectGarmentService = inspectGarmentService;
         this.reviseGarmentService = reviseGarmentService;
         this.garmentPhotoContentService = garmentPhotoContentService;
@@ -77,18 +79,25 @@ public class WardrobeGarmentController {
     }
 
     /**
-     * US-WAR-001 — one page of the current wardrobe, newest first. A genuinely empty
-     * wardrobe is 200 with an empty list; a failure or an unusable page request is never
-     * turned into an empty list.
+     * US-WAR-001 / US-WAR-003 — one page of the current wardrobe, newest first, optionally restricted by a
+     * literal text phrase and category/color conditions. A genuinely empty wardrobe, no match and the end of
+     * a traversal are told apart by resultState; a failure or an unusable request is never an empty list.
      */
     @GetMapping
     public WardrobeResponse browseWardrobe(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                           @RequestParam(name = WardrobeSearchRequest.QUERY, required = false)
+                                           String query,
+                                           @RequestParam(name = WardrobeSearchRequest.CATEGORY, required = false)
+                                           List<String> categories,
+                                           @RequestParam(name = WardrobeSearchRequest.COLOR, required = false)
+                                           List<String> colors,
                                            @RequestParam(name = WardrobePageRequest.LIMIT, required = false)
                                            String limit,
                                            @RequestParam(name = WardrobePageRequest.CURSOR, required = false)
                                            String cursor) {
-        WardrobePageRequest page = WardrobePageRequest.parse(limit, cursor);
-        return WardrobeResponse.from(browseWardrobeService.browse(owner.accountId(), page.pageSize(), page.after()));
+        WardrobeSearchRequest request = WardrobeSearchRequest.parse(query, categories, colors, limit, cursor);
+        return WardrobeResponse.from(searchWardrobeService.search(owner.accountId(), request.criteria(),
+                request.pageSize(), request.after()), request.criteria());
     }
 
     /**

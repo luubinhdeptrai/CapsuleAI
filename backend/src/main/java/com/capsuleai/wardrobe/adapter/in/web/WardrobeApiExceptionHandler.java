@@ -59,7 +59,8 @@ public class WardrobeApiExceptionHandler {
     @ExceptionHandler(InvalidWardrobePageException.class)
     public ResponseEntity<ProblemDetail> handleInvalidPage(InvalidWardrobePageException exception) {
         ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED",
-                "This page of the wardrobe cannot be loaded. Load the wardrobe again from the first page.");
+                "These wardrobe conditions or this page cannot be used. Correct the conditions, or load the wardrobe "
+                        + "again from the first page.");
         problem.setProperty("fieldErrors", exception.errors().stream()
                 .map(error -> {
                     Map<String, String> fieldError = new LinkedHashMap<>();
