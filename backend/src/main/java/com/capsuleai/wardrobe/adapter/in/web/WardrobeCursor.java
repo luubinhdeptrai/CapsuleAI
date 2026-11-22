@@ -29,7 +29,6 @@ final class WardrobeCursor {
     /** US-WAR-003 (OPEN-S4-14): a cursor issued for a page with conditions carries their fingerprint. */
     private static final String FILTERED_VERSION = "v2";
     private static final Pattern FINGERPRINT = Pattern.compile("[0-9a-f]{16}");
-
     private static final Pattern CANONICAL_UUID =
             Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 

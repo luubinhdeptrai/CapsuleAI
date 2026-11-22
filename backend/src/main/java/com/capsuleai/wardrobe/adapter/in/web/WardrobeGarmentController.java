@@ -3,7 +3,6 @@ package com.capsuleai.wardrobe.adapter.in.web;
 import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.wardrobe.application.AddGarmentService;
 import com.capsuleai.wardrobe.application.AttachGarmentPhotoService;
-import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.GarmentCreation;
 import com.capsuleai.wardrobe.application.GarmentPhotoContentService;
 import com.capsuleai.wardrobe.application.GarmentRevision;

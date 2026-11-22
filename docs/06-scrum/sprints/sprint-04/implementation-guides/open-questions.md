@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21) and US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22) and US-WAR-003 (OPEN-S4-11–15, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -62,11 +62,11 @@ Each entry has these fields:
 | [OPEN-S4-08](#open-s4-08--attachment-transaction-check-order-and-lock-order) | GAR-006 | S4-GAR-05, S4-INT-01 | Lock the garment row, then read garment and photo afresh, then lock the photo. Check order: replay, already photographed, revision, usable. | Delegated default | Implemented 2026-11-22 (US-GAR-006); tests pass locally | Pending (CI run; client evidence) |
 | [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, mapped to plan §6.5; since 2026-11-17 formalized one to one as AC-01–AC-06 of the formal story US-GAR-006 (parent PBI-049) | Delegated default | Implemented 2026-11-22 (US-GAR-006 tests map AC-01–AC-06) | Pending (PO acceptance of the formalized AC) |
 | [OPEN-S4-10](#open-s4-10--attachment-photo-availability-and-pending-lifecycle-reuse) | GAR-006 | S4-GAR-06 | No object check. Trust READY metadata. A missing object gives `404 GARMENT_PHOTO_UNAVAILABLE`. | Delegated default | Implemented 2026-11-22 (US-GAR-006); tests pass locally | Pending (CI run; client evidence) |
-| [OPEN-S4-11](#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) | WAR-003 | S4-WAR-01 | English labels, codes and **Vietnamese search aliases** of six vocabularies, plus Brand. Literal, case-insensitive, accent-sensitive, NFC; ambiguous words match every named value. Cursor policy `m2`. **Refined 2026-11-17** (Vietnamese search authorized by the PO). | Delegated default (wording); capability PO-authorized | Pending | Pending (alias wording review, PostgreSQL locale) |
-| [OPEN-S4-12](#open-s4-12--search-input-limits-and-wildcard-escaping) | WAR-003 | S4-WAR-01 | `q` is trimmed and NFC-normalized; a blank `q` means no condition. 1–100 code points, no control characters. Escape `\`, `%` and `_`. | Delegated default | Pending | Pending |
-| [OPEN-S4-13](#open-s4-13--category-and-color-filters-and-the-statement-catalogue) | WAR-003 | S4-WAR-02 | Repeated `category` and `color` parameters: OR within a group, AND across groups. A catalogue of 14 complete statements for the 7 restricted shapes. | Delegated default | Pending | Pending |
-| [OPEN-S4-14](#open-s4-14--criteria-bound-cursor-and-result-states) | WAR-003 | S4-WAR-03 | `v2` cursor carrying a criteria fingerprint; a mismatch gives `CONDITIONS_CHANGED`. `resultState` is computed in one read snapshot. | Delegated default | Pending | Pending |
-| [OPEN-S4-15](#open-s4-15--search-indexing-evidence) | WAR-003 | S4-WAR-04 | No new index in Sprint 4. Documented `EXPLAIN` procedure and the triggers for adding one. | Delegated default | Pending | Pending (measurement) |
+| [OPEN-S4-11](#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) | WAR-003 | S4-WAR-01 | English labels, codes and **Vietnamese search aliases** of six vocabularies, plus Brand. Literal, case-insensitive, accent-sensitive, NFC; ambiguous words match every named value. Cursor policy `m2`. **Refined 2026-11-17** (Vietnamese search authorized by the PO). | Delegated default (wording); capability PO-authorized | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending (alias wording review, PostgreSQL locale) |
+| [OPEN-S4-12](#open-s4-12--search-input-limits-and-wildcard-escaping) | WAR-003 | S4-WAR-01 | `q` is trimmed and NFC-normalized; a blank `q` means no condition. 1–100 code points, no control characters. Escape `\`, `%` and `_`. | Delegated default | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending |
+| [OPEN-S4-13](#open-s4-13--category-and-color-filters-and-the-statement-catalogue) | WAR-003 | S4-WAR-02 | Repeated `category` and `color` parameters: OR within a group, AND across groups. A catalogue of 14 complete statements for the 7 restricted shapes. | Delegated default | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending |
+| [OPEN-S4-14](#open-s4-14--criteria-bound-cursor-and-result-states) | WAR-003 | S4-WAR-03 | `v2` cursor carrying a criteria fingerprint; a mismatch gives `CONDITIONS_CHANGED`. `resultState` is computed in one read snapshot. | Delegated default | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending |
+| [OPEN-S4-15](#open-s4-15--search-indexing-evidence) | WAR-003 | S4-WAR-04 | No new index in Sprint 4. Documented `EXPLAIN` procedure and the triggers for adding one. | Delegated default | Measured 2026-11-22: no index; the child-set comparison changed (US-WAR-003 §14) | Pending (repeat on deployed data) |
 | [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values**, defined canonically in SRS §4.10.1 since 2026-11-17. | Delegated default | Pending | **Pending (inclusive-representation review)** |
 | [OPEN-S4-17](#open-s4-17--optional-context-resource-persistence-and-clearing) | PROF-002 | S4-PROF-02/03/04 | `/optional-context` resource, V13 table, presence-aware PATCH. No published API. | Delegated default | Pending | Pending |
 | [OPEN-S4-18](#open-s4-18--location-representation-precision-and-manual-resolution) | CTX-001 | S4-CTX-01 | 2-decimal point rounded by the server; `DEVICE` or `MANUAL`; a label. The client resolves cities from a bundled reference. | Delegated default | Pending | Pending (client, privacy) |
@@ -694,7 +694,7 @@ Rationale: matching in Java against one reviewed table keeps the database locale
 
 - The **capability** (Vietnamese descriptor search for the six vocabularies) was **explicitly authorized by the Product Owner on 2026-11-17**. It refines the approved S4-WAR-01. It does not change any of the 30 approved decisions.
 - The **specific alias wording** remains `SELECTED BY CLAUDE — DELEGATED DEFAULT`. It is not a Product Owner approval of each Vietnamese word. A review by the PO or a native-speaker reviewer is recommended before release.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-WAR-003; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`. This includes the database-ctype behavior of `lower()` for Vietnamese Brand text on the deployed PostgreSQL. Descriptor aliases are folded in Java and do not depend on it.
 
 **G. Implementation steps.** US-WAR-003:
@@ -759,7 +759,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-WAR-003; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-WAR-003:
@@ -777,7 +777,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 
 ## OPEN-S4-13 — Category and color filters and the statement catalogue
 
-**A. Question and decision.** How are filters encoded and combined, and how is SQL kept complete and bound? Realizes **S4-WAR-02** (finite catalogue; OR within a group, AND across groups; an empty group means no restriction; EXISTS for sets).
+**A. Question and decision.** How are filters encoded and combined, and how is SQL kept complete and bound? Realizes **S4-WAR-02** (finite catalogue; OR within a group, AND across groups; an empty group means no restriction; existence semantics for sets).
 
 **B. Story and requirements.** US-WAR-003 AC-02, AC-03; FR-WAR-001/007/008; AR-01–08.
 
@@ -802,7 +802,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-WAR-02.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-WAR-003; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-WAR-003:
@@ -850,7 +850,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-WAR-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-WAR-003; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-WAR-003:
@@ -886,7 +886,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **C. Problem and context.**
 
 - `ix_wardrobe_garment_owner_current` already orders the owner's current garments.
-- The child sets have primary keys `(garment_id, value)` that serve the `EXISTS` probes.
+- The child sets have primary keys `(garment_id, value)` that serve the per-garment probes.
 - There is no measured wardrobe scale.
 
 **D. Options.**
@@ -904,8 +904,8 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-WAR-04.
-- `IMPLEMENTATION PENDING`.
-- **`VERIFICATION PENDING`: the measurement is required before release.**
+- **Implemented in the repository on 2026-11-22** (US-WAR-003; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
+- **Measured on 2026-11-22** (US-WAR-003 guide §14, synthetic data, local PostgreSQL 17.11). The first statement version used `EXISTS` for Materials and Styles. PostgreSQL planned it as a hashed subplan that read every account's child rows on each text search, which is this entry's trigger: 82.8 ms for `cotton` at 5,000 garments with 248,105 in total. The fix was a statement change, not an index: the sets are compared per garment (an `ARRAY` subquery, never hashed), and each comparison is skipped when its code set is empty. Afterwards, all 88 measured cases are under 50 ms at both fixture sizes, and every page statement reads the owner's rows through `ix_wardrobe_garment_owner_current`. No index migration. A repeat on the deployed database is advised once real data exists.
 
 **G. Implementation steps.** US-WAR-003 §14 steps M6–M7; §16 DoD item.
 

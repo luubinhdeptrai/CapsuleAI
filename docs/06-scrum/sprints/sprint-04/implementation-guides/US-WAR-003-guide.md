@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-WAR-01, S4-WAR-02, S4-WAR-03, S4-WAR-04, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-11, 12, 13, 14, 15, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)). Together they settle CAT-Q01 for this increment. |
 | Revision of 2026-11-17 | **Vietnamese descriptor search.** The Product Owner explicitly authorized Vietnamese search labels and aliases for all six searchable vocabularies. OPEN-S4-11 is refined accordingly: new step P3 (`VietnameseDescriptorAliases`, 195 values), changed P1 (matching policy `m2`), P4 (`DescriptorMatcher`), P20 (OpenAPI descriptions) and P21 (CI). New test T10; extended T2, T3, T4, T7 and T8. The former P3–P20 are now P4–P21. The canonical alias table is [vietnamese-descriptor-search-aliases.md](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md). The specific Vietnamese words remain a delegated default; the capability is PO-authorized. |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. The index decision (OPEN-S4-15) needs a measurement. |
+| Verification status | **Applied to the repository on 2026-11-22** (P1–P19 by the developer in commit `5ecaf50`, reviewed against this guide; P20, P21, T1–T10 and the review corrections afterwards). `./mvnw -o clean verify` passed in the repository on 2026-11-22: 632 unit and 391 integration tests, none failed, errored or was skipped. Of the 117 required CI reports, 116 were present with at least their minimum; the missing one is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. The M6–M7 measurement was made on 2026-11-22 (§14): it changed the Material and Style comparison in P11, and no index was added. **Still required:** a CI run on a pull request to `sprint_04`, the alias wording review, the deployed-database ctype check, the manual script M1–M5 and M8–M9 (not run; `SearchWardrobeApiIT` covers the same requests) and client evidence. |
 
 ## 1. Story Overview
 
@@ -53,7 +53,7 @@
 | `GET /api/v1/wardrobe/garments` | `limit` and `cursor` only (`WardrobePageRequest`, `WardrobeCursor` v1); response `{garments, nextCursor}` | Gains `q`, `category` and `color`; the response gains `resultState` and `conditions` |
 | `BrowseWardrobeService` + `GarmentRepository.findCurrentByOwner` | Two complete statements (first page, after position) on `ix_wardrobe_garment_owner_current` | The unfiltered overview keeps this exact path, so `WardrobeFailureIT` keeps covering it |
 | Vocabularies | `ControlledValue` enums with approved **English** labels; no Vietnamese labels anywhere in the backend | OPEN-S4-11 (refined 2026-11-17): labels, codes and the new Vietnamese alias table (P3) are matched in Java |
-| Child sets | `wardrobe_garment_material` and `wardrobe_garment_style` with primary keys `(garment_id, value)` | `EXISTS` probes use the primary keys |
+| Child sets | `wardrobe_garment_material` and `wardrobe_garment_style` with primary keys `(garment_id, value)` | The per-garment set comparisons (P11) read them through the primary keys |
 | `WardrobeTransactions` | One method, `inTransaction`; two fakes implement it (`ImmediateWardrobeTransactions`, `AddGarmentServiceTest.FailingCommit`) | P8 adds a **default** method, so the fakes stay unchanged |
 | `InvalidWardrobePageException` | List of `(field, code)`; handler gives `400 VALIDATION_FAILED` | Reused for every search-condition error |
 | Browse tests | `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` assert `garments`, `nextCursor` and field errors only | Unchanged; they stay green because the unfiltered path is untouched |
@@ -483,7 +483,7 @@ flowchart TD
 | Normalization | Query in NFC (Java); Brand compared as `normalize(brand, NFC)` (stored text is unchanged) |
 | Literal | The phrase is one substring: no tokens, no wildcards. In the Brand pattern, `\`, `%` and `_` are escaped with `\`. |
 | Combination | Text condition = OR across fields. Filters: OR within `category` and within `color`. AND across text, `category` and `color`. |
-| Duplicates | `EXISTS` for Materials and Styles, so a garment appears once |
+| Duplicates | Materials and Styles are compared per garment (the overlap of its set with the matching codes), so a garment appears once |
 
 ### 10.3 Statement catalogue (S4-WAR-02, OPEN-S4-13)
 
@@ -1593,21 +1593,30 @@ final class SearchStatementCatalogue {
             """;
 
     /**
-     * The text condition: the garment matches when any participating field does (OR). EXISTS keeps a garment
-     * with several matching Materials or Styles to one row. Brand is folded with lower() on both sides
-     * after NFC normalization; the pattern escapes backslash, percent and underscore with a backslash.
+     * The text condition: the garment matches when any participating field does (OR). Brand is folded with
+     * lower() on both sides after NFC normalization; the pattern escapes backslash, percent and underscore
+     * with a backslash.
+     *
+     * <p>Materials and Styles are compared per garment, as the overlap of the garment's own set with the
+     * matching codes, so a garment with several matching values is still one row. The comparison is skipped
+     * when the text names no value of that vocabulary. This keeps every read restricted to the owner's
+     * garments (OPEN-S4-15, measured 2026-11-22): an EXISTS here was planned as a hashed subplan that read
+     * the whole child table, every account's rows, on each text search, even when the set was empty. An
+     * ARRAY subquery is never hashed; it reads the garment's rows through the child table's primary key.
      */
     static final String TEXT_CONDITION = """
               AND (g.category = ANY(string_to_array(CAST(:textCategories AS text), ','))
                    OR g.subtype = ANY(string_to_array(CAST(:textSubtypes AS text), ','))
                    OR g.color = ANY(string_to_array(CAST(:textColors AS text), ','))
                    OR g.pattern = ANY(string_to_array(CAST(:textPatterns AS text), ','))
-                   OR EXISTS (SELECT 1 FROM wardrobe.wardrobe_garment_material tm
-                              WHERE tm.garment_id = g.id
-                                AND tm.material = ANY(string_to_array(CAST(:textMaterials AS text), ',')))
-                   OR EXISTS (SELECT 1 FROM wardrobe.wardrobe_garment_style ts
-                              WHERE ts.garment_id = g.id
-                                AND ts.style = ANY(string_to_array(CAST(:textStyles AS text), ',')))
+                   OR (CAST(:textMaterials AS text) <> ''
+                       AND ARRAY(SELECT tm.material FROM wardrobe.wardrobe_garment_material tm
+                                 WHERE tm.garment_id = g.id)
+                           && string_to_array(CAST(:textMaterials AS text), ','))
+                   OR (CAST(:textStyles AS text) <> ''
+                       AND ARRAY(SELECT ts.style FROM wardrobe.wardrobe_garment_style ts
+                                 WHERE ts.garment_id = g.id)
+                           && string_to_array(CAST(:textStyles AS text), ','))
                    OR lower(normalize(g.brand, NFC)) LIKE lower(CAST(:brandPattern AS text)) ESCAPE '\\')
             """;
 
@@ -1707,6 +1716,7 @@ final class SearchStatementCatalogue {
 
 - In a Java text block `'\\'` is the two characters `'\'`. With PostgreSQL's default `standard_conforming_strings = on`, that is a one-character escape string.
 - `string_to_array('', ',')` returns an empty array, so an empty code set matches nothing in its own field. The other text fields can still match.
+- Materials and Styles use `ARRAY(SELECT … WHERE garment_id = g.id) && codes`, skipped when the code text is empty. The first version used `EXISTS`. The M6 measurement on 2026-11-22 showed PostgreSQL planning that `EXISTS` as a hashed subplan, which read the whole child table (every account's rows) on each text search, even with an empty code set. An `ARRAY` subquery is never hashed, and the guard removes it from custom plans when the set is empty (§14 M6–M7 results).
 - The single-letter aliases (`g`, `tm`, `ts`) follow the existing `SELECT_GARMENT`.
 
 **Common mistake.** Building the statement at run time from request flags with a `StringBuilder`. The catalogue must stay a finite set of constants, so that each statement can be reviewed and tested (T6).
@@ -2522,6 +2532,16 @@ AFTER:
                       q: "linen"
                       categories: ["SHOES"]
                       colors: []
+                vietnameseNoMatch:
+                  summary: A Vietnamese phrase with filters that match nothing (illustrative)
+                  value:
+                    garments: []
+                    nextCursor: null
+                    resultState: "NO_MATCH"
+                    conditions:
+                      q: "áo thun"
+                      categories: ["TOPS"]
+                      colors: ["WHITE"]
 ```
 
 **Edit 4.** The overview schema.
@@ -3265,6 +3285,20 @@ class SearchStatementCatalogueTest {
     }
 
     @Test
+    void materialsAndStylesAreComparedPerGarmentOnlyWhenTheTextNamesSuchValues() {
+        // OPEN-S4-15, measured 2026-11-22: an EXISTS over a child table was planned as a hashed subplan that
+        // read every account's rows on each text search. The guarded per-garment ARRAY form is never hashed.
+        assertThat(SearchStatementCatalogue.TEXT_CONDITION)
+                .doesNotContain("EXISTS")
+                .contains("CAST(:textMaterials AS text) <> ''")
+                .contains("FROM wardrobe.wardrobe_garment_material tm")
+                .contains("WHERE tm.garment_id = g.id")
+                .contains("CAST(:textStyles AS text) <> ''")
+                .contains("FROM wardrobe.wardrobe_garment_style ts")
+                .contains("WHERE ts.garment_id = g.id");
+    }
+
+    @Test
     void onlyContinuationStatementsUseTheKeysetPosition() {
         for (SearchShape shape : SearchShape.values()) {
             assertThat(shape.statement(true)).contains(KEYSET);
@@ -3317,6 +3351,24 @@ class JdbcWardrobeSearchRepositoryIT extends WardrobeIntegrationTestSupport {
         addGarmentAndReturnId(tokens.accessToken(), minimumGarment("SHOES", "BLACK"));
 
         assertThat(matchingIds(tokens.accountId(), query("co", Set.of(), Set.of()))).containsExactly(matching);
+    }
+
+    @Test
+    void aGarmentIsFoundThroughAStyleOrAMaterialAloneAndOnlyInTheOwnersWardrobe() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("search-child-sets@example.com");
+        IssuedTokens other = registerAndLogIn("search-child-sets-other@example.com");
+        UUID minimalist = addGarmentAndReturnId(tokens.accessToken(),
+                garment("SHOES", "BLACK", "styles", List.of("CASUAL", "MINIMALIST")));
+        UUID linen = addGarmentAndReturnId(tokens.accessToken(),
+                garment("PANTS", "BEIGE", "materials", List.of("COTTON", "LINEN")));
+        addGarmentAndReturnId(tokens.accessToken(), minimumGarment("TOPS", "RED"));
+        addGarmentAndReturnId(other.accessToken(), garment("SHOES", "BLACK", "styles", List.of("MINIMALIST")));
+        UUID owner = tokens.accountId();
+
+        assertThat(matchingIds(owner, query("minimalist", Set.of(), Set.of()))).containsExactly(minimalist);
+        assertThat(matchingIds(owner, query("linen", Set.of(), Set.of()))).containsExactly(linen);
+        assertThat(matchingIds(owner, query("linen", Set.of(GarmentCategory.SHOES), Set.of())))
+                .as("a Material match is still narrowed by the filters").isEmpty();
     }
 
     @Test
@@ -4017,14 +4069,66 @@ LIMIT 21;
 
 **M7. Decision rule.** Keep the current indexes if every filtered first page uses `ix_wardrobe_garment_owner_current` or another owner-restricted access path and runs under 50 ms at 5,000 garments on the reference machine. Otherwise add a forward migration, V16 or later, owner `wardrobe`, with the candidate index from OPEN-S4-15, and record the evidence. Do not claim a benchmark threshold from these numbers; they are an engineering trigger only.
 
+**M6–M7 results (measured 2026-11-22; synthetic data only).**
+
+- **Environment.**
+  - A disposable `postgres:17.11-bookworm` container (`en_US.utf8`, `shared_buffers` 128 MB), Docker Desktop 29.4.0.
+  - Developer machine: AMD Ryzen 5 5600H, 12 logical CPUs, 7.4 GB RAM.
+  - V1–V12 applied with `psql`.
+- **Method.**
+  - The 14 statements were read from the compiled `SearchStatementCatalogue`, with the existence check and the unrestricted overview as a baseline.
+  - They ran as prepared statements under forced custom and forced generic plans. PgJDBC uses server-prepared statements after five executions, so both plan kinds occur.
+  - Each case ran twice before the measured `EXPLAIN (ANALYZE, BUFFERS)`.
+  - The times below are planning plus execution under `EXPLAIN ANALYZE`.
+- **Fixture.**
+  - Owners with 0, 50, 500 and 5,000 current garments, plus one removed garment for every ten current ones, and 200 other owners with 100 garments each.
+  - In total: 28,105 garments, 32,911 Materials, 27,648 Styles and 9,386 attached photos.
+  - Repeated after adding 2,000 more owners: 248,105 garments, 291,601 Materials and 242,349 Styles.
+- **Cases.** 11 per owner, each under both plan modes, so 88 per run:
+  - category `TOPS,PANTS`;
+  - color `NAVY`;
+  - text `navy`;
+  - text with no match;
+  - a text that names a Material and a Style and matches nothing;
+  - `cotton`;
+  - `áo thun` with `TOPS` and `WHITE`;
+  - `TOPS` with `WHITE`;
+  - the page after the middle for `navy`;
+  - the existence check;
+  - the unrestricted overview.
+- **Finding (first P11 version, with `EXISTS`).**
+  - PostgreSQL planned the Material and Style `EXISTS` as hashed subplans. Each one read the whole child table, every account's rows, even when the text named no Material or Style.
+  - Affected: 44 of the 88 plans at 28,105 garments.
+  - At 248,105 garments, for the 5,000-garment owner: `cotton` took 82.8 ms, which breaks the rule, and `navy` took 34.3 ms with 3,800 buffers.
+  - A sequential scan of other owners' rows is the OPEN-S4-15 trigger.
+- **Decision.**
+  - No index. An index on the child tables would still read other owners' rows.
+  - P11 now compares the sets per garment and skips each comparison when its code set is empty (P11 explanation).
+  - With this version, no page statement scans other owners' rows, and all 88 cases are under 50 ms at both fixture sizes. Every page statement reads the garment table through `ix_wardrobe_garment_owner_current`: 156 index scans and 4 bitmap scans over the two runs.
+
+| 5,000 garments, 248,105 in total | First P11 (`EXISTS`): buffers, ms | Current P11: buffers, ms |
+| --- | --- | --- |
+| text `navy`, custom plan | 3,800, 34.3 | 226, 1.1 |
+| text with no match, custom | 3,775, 30.8 | 201, 3.9 |
+| `cotton` (a common Material), custom | 3,775, 82.8 | 343, 0.8 |
+| page after the middle, `navy`, custom | 3,802, 33.1 | 228, 1.5 |
+| `áo thun` + `TOPS` + `WHITE`, custom | 318, 2.3 | 313, 1.8 |
+| a Material and a Style, no match, custom | 3,781, 29.8 | 30,203, 33.9 |
+| a Material and a Style, no match, generic | 30,201, 35.6 | 30,203, 40.6 |
+| category `TOPS,PANTS`, custom | 200, 0.6 | 200, 0.5 |
+| unrestricted overview (baseline), custom | 202, 0.8 | 202, 0.6 |
+
+- **The costliest case.** A text that names a Material and a Style and matches nothing reads both child sets of each of the owner's current garments. It took 33.9 ms (custom) and 40.6 ms (generic) at 5,000 garments under `EXPLAIN ANALYZE`, and about 25 ms in plain timed executions. Its cost grows with the owner's wardrobe, not with other accounts' data.
+- **The existence check (`HAS_CURRENT_GARMENT`, unchanged).** In the small fixture one owner holds 18% of all rows. For that owner, the planner chose a sequential scan that stops at the first current garment: 16 buffers, 0.2 ms. At 248,105 garments it used the index (4 buffers). It is not a page statement and stays as it is.
+
 ## 15. Acceptance Criteria and Requirements-to-Test Matrices
 
 ### 15.1 Acceptance criteria to evidence
 
-| AC | Evidence (planned) | Remaining |
+| AC | Evidence (run in the repository on 2026-11-22) | Remaining |
 | --- | --- | --- |
 | AC-01 Find supported descriptors | T2 (including `vietnameseSearchLabelsAndAliases…`, `vietnameseMatchingIgnoresLetterCase…`, `anAmbiguousWord…`); T3; T7 `aGarmentWithSeveralMatchingMaterials…`, `brandMatching…`, `vietnameseDescriptorAliases…`, `likeMetacharacters…`, `priceAndOtherOptionalDetails…`; T8 `aSearchReturns…`, `aVietnameseAliasFinds…`; T10; M2–M3, M8 | CAT-Q01 resolved by delegated defaults OPEN-S4-11/12; Vietnamese descriptor search authorized by the PO on 2026-11-17. A PO or native-speaker review of the alias wording is advised. |
-| AC-02 Filter category and color | T6; T7 `categoryAndColorFilters…`, `removedAndOtherOwners…`; T8 `anotherAccountsGarmentsNeverMatch`; M4 | — |
+| AC-02 Filter category and color | T6; T7 `categoryAndColorFilters…`, `removedAndOtherOwners…`, `aGarmentIsFoundThroughAStyleOrAMaterialAlone…`; T8 `anotherAccountsGarmentsNeverMatch`; M4; M6–M7 (owner-restricted plans) | — |
 | AC-03 Show and clear conditions | T4 (blank `q`, `aCursorIssuedUnderTheEnglishOnlyMatchingPolicy…`); T8 `aSearchReturns…` and `aVietnameseAliasFinds…` (echo), `aFilteredCursorContinuesOnly…`; M9 (Vietnamese text is not a filter code) | Client: chips, change and reset |
 | AC-04 Distinguish result states | T1; T8 `noMatchIsDistinguished…`, `aGarmentRemovedBetweenPages…`; T9 | Client: loading, denied and failed states |
 | AC-05 Inspect real results | T8 (summary with `NOT_EVALUATED`; minimum-only garments listed) | Client detail and return navigation |
@@ -4048,11 +4152,11 @@ LIMIT 21;
 
 ## 16. Definition of Done
 
-- [ ] P1–P21 and T1–T10 applied. `.\mvnw.cmd clean verify` passes, including the unchanged `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 117 required reports with no failure or skip.
+- [x] P1–P21 and T1–T10 applied (2026-11-22; the repository files equal this guide's steps). `./mvnw -o clean verify` passed in the repository on 2026-11-22: 632 unit and 391 integration tests, none failed, errored or was skipped, including the unchanged `BrowseWardrobeApiIT`, `WardrobeCursorTest`, `WardrobePageRequestTest`, `WardrobeFailureIT` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` finds 117 required reports with no failure or skip. (Locally 116 of 117; `HeifDecodingIT` needs libheif, which CI installs.)
 - [ ] The Vietnamese alias wording in the [canonical table](../../../../03-requirements/vocabularies/vietnamese-descriptor-search-aliases.md) has been reviewed by the PO or a native-speaker reviewer, or the review is recorded as outstanding. Any change goes to the document and P3 together, with a new matching-policy tag.
 - [ ] `JdbcWardrobeSearchRepositoryIT` repeated against the deployed database's collation and ctype (Vietnamese case folding).
-- [ ] M6–M7 query-plan evidence recorded; an index migration added only if the rule requires it.
+- [x] M6–M7 query-plan evidence recorded (§14, 2026-11-22). The rule was broken by the first P11 version and fixed in P11; no index migration is needed.
 - [ ] PO/BA informed of the delegated CAT-Q01 semantics (OPEN-S4-11–14). The source wording "no search implementation" is clarified in refinement.
 - [ ] Client evidence: active conditions, change and reset, the five states (loading, results, no match, empty, failed or denied), detail and return; Vietnamese and accessibility.
 
@@ -4076,13 +4180,13 @@ LIMIT 21;
 
 ## 18. Final Checklist
 
-- [ ] The unrestricted overview path, cursor and error order are unchanged.
-- [ ] 14 constant statements, each with the owner/current guard, order and bound limit (T6). No runtime SQL assembly.
-- [ ] Every value bound. Code sets as comma-joined text. The Brand pattern escaped for `\`, `%` and `_`.
-- [ ] Matching is case-insensitive and accent-sensitive with NFC. Price and the other optional details are not searched.
-- [ ] All 195 values of the six searchable vocabularies have a Vietnamese search label; P3 equals the canonical alias document (T10). Ambiguous words match every named value (OR). Filters still accept codes only.
-- [ ] `v2` cursors are bound to the fingerprint under matching policy `m2`; a mismatch, including an `m1` cursor, gives `CONDITIONS_CHANGED`.
-- [ ] `resultState` comes from one REPEATABLE READ snapshot for filtered first pages.
-- [ ] Read-only: no writes, no locks.
-- [ ] OpenAPI 0.14.0 documents `q`, `category`, `color`, `resultState`, `conditions` and `CONDITIONS_CHANGED`.
-- [ ] CI: 10 entries added (117 in total); no index migration without M6–M7 evidence.
+- [x] The unrestricted overview path, cursor and error order are unchanged.
+- [x] 14 constant statements, each with the owner/current guard, order and bound limit (T6). No runtime SQL assembly.
+- [x] Every value bound. Code sets as comma-joined text. The Brand pattern escaped for `\`, `%` and `_`.
+- [x] Matching is case-insensitive and accent-sensitive with NFC. Price and the other optional details are not searched.
+- [x] All 195 values of the six searchable vocabularies have a Vietnamese search label; P3 equals the canonical alias document (T10). Ambiguous words match every named value (OR). Filters still accept codes only.
+- [x] `v2` cursors are bound to the fingerprint under matching policy `m2`; a mismatch, including an `m1` cursor, gives `CONDITIONS_CHANGED`.
+- [x] `resultState` comes from one REPEATABLE READ snapshot for filtered first pages.
+- [x] Read-only: no writes, no locks.
+- [x] OpenAPI 0.14.0 documents `q`, `category`, `color`, `resultState`, `conditions` and `CONDITIONS_CHANGED`.
+- [x] CI: 10 entries added (117 in total); no index migration without M6–M7 evidence.

@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.13.0
+  version: 0.14.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -21,6 +21,7 @@ info:
       - US-PROF-001: Set and revise style preferences and common needs
       - US-GAR-005: Remove a garment while preserving minimal history
       - US-GAR-006: Attach a photo to an existing imageless garment
+      - US-WAR-003: Find owned garments through search and filters
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -62,8 +63,8 @@ info:
 
     This specification does not introduce endpoints for
     session listing, all-device logout, replacing or removing a
-    garment's photo, search, filtering, body or gender
-    profiles, location, or public profiles.
+    garment's photo, body or gender profiles, location, or
+    public profiles.
 
     A staged photo can be attached to an existing garment that
     has no photo (US-GAR-006) through an explicitly
@@ -631,12 +632,68 @@ paths:
         from the first page; a removed garment disappears; no
         current garment is repeated or skipped.
 
-        200 with an empty first page means the wardrobe is
-        genuinely empty. A 400, 401 or 503 is never an empty
-        wardrobe. Browsing changes nothing. There is no sorting
-        option, filter or search in this release.
+        Search and filters (US-WAR-003; approved S4-WAR-01–04):
+        q is one literal phrase matched, case-insensitively but
+        accent-sensitively, inside the approved English label, the
+        code or a Vietnamese search alias of Category, Subtype,
+        Color, Material, Pattern or Style, or inside Brand; Price is
+        never searched. A phrase naming several values (for example
+        "váy" or "xanh") matches all of them. category and color
+        are repeatable exact codes: any listed category (OR) and any
+        listed color (OR), combined with each other and with q (AND).
+        A missing or blank condition means no restriction, so
+        clearing every condition shows the whole current wardrobe.
+        A cursor belongs to the conditions it was issued for; reuse
+        with other conditions is 400 CONDITIONS_CHANGED.
+
+        resultState: HAS_RESULTS; NO_MATCH (conditions matched
+        nothing, the wardrobe has garments); EMPTY_WARDROBE (no
+        current garment); END_OF_RESULTS (a later page is empty).
+        A 400, 401 or 503 is never an empty wardrobe or no match.
+        Searching changes nothing. There is no sorting option.
 
       parameters:
+        - name: q
+          in: query
+          required: false
+          description: |
+            One literal phrase, at most 100 Unicode code points after
+            trimming, normalized to NFC. It is not split into words.
+            Accents are significant ("ao thun" does not match
+            "áo thun"); letter case is not. The Vietnamese search
+            aliases of the requirements' canonical alias table (for
+            example "áo thun", "trắng", "chân váy") are matched like
+            the English labels. Percent, underscore and backslash are
+            literal. Blank means no text condition.
+          schema:
+            type: string
+            maxLength: 100
+        - name: category
+          in: query
+          required: false
+          description: >-
+            Repeat for several categories (OR). Exact codes only;
+            Vietnamese labels are not accepted here.
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 50
+            items:
+              $ref: "#/components/schemas/GarmentCategoryCode"
+        - name: color
+          in: query
+          required: false
+          description: >-
+            Repeat for several colors (OR). Exact codes only;
+            Vietnamese labels are not accepted here.
+          style: form
+          explode: true
+          schema:
+            type: array
+            maxItems: 50
+            items:
+              $ref: "#/components/schemas/GarmentColorCode"
         - name: limit
           in: query
           required: false
@@ -650,9 +707,11 @@ paths:
           in: query
           required: false
           description: |
-            The nextCursor of the previous page, unchanged. An
-            altered or unknown value is rejected with 400; it
-            never restarts or ends the overview silently.
+            The nextCursor of the previous page, unchanged, sent
+            with the same conditions. An altered or unknown value is
+            400 INVALID_FORMAT; a cursor of other conditions is 400
+            CONDITIONS_CHANGED. Neither restarts or ends the
+            overview silently.
           schema:
             type: string
             maxLength: 200
@@ -685,11 +744,41 @@ paths:
                         recommendationEligibility: "NOT_EVALUATED"
                         createdAt: "2026-11-05T09:30:00.123456Z"
                     nextCursor: "djF8MjAyNi0xMS0wNVQwOTozMDowMC4xMjM0NTZafDlhOGI3YzZkLTVlNGYtNGEzYi04YzJkLTFlMGY5YThiN2M2ZA"
+                    resultState: "HAS_RESULTS"
+                    conditions:
+                      q: null
+                      categories: []
+                      colors: []
                 empty:
                   summary: A genuinely empty wardrobe
                   value:
                     garments: []
                     nextCursor: null
+                    resultState: "EMPTY_WARDROBE"
+                    conditions:
+                      q: null
+                      categories: []
+                      colors: []
+                noMatch:
+                  summary: Conditions that match nothing in a non-empty wardrobe
+                  value:
+                    garments: []
+                    nextCursor: null
+                    resultState: "NO_MATCH"
+                    conditions:
+                      q: "linen"
+                      categories: ["SHOES"]
+                      colors: []
+                vietnameseNoMatch:
+                  summary: A Vietnamese phrase with filters that match nothing (illustrative)
+                  value:
+                    garments: []
+                    nextCursor: null
+                    resultState: "NO_MATCH"
+                    conditions:
+                      q: "áo thun"
+                      categories: ["TOPS"]
+                      colors: ["WHITE"]
 
         "400":
           $ref: "#/components/responses/PageRequestRejected"
@@ -2095,11 +2184,18 @@ components:
 
     WardrobeOverview:
       type: object
-      description: One page of the current wardrobe, newest first.
+      description: One page of the current wardrobe, newest first, optionally restricted by conditions.
       required:
         - garments
         - nextCursor
+        - resultState
+        - conditions
       properties:
+        resultState:
+          type: string
+          enum: [HAS_RESULTS, NO_MATCH, EMPTY_WARDROBE, END_OF_RESULTS]
+        conditions:
+          $ref: "#/components/schemas/WardrobeConditions"
         garments:
           type: array
           maxItems: 100
@@ -2114,6 +2210,26 @@ components:
             Opaque position after the last garment of this page.
             Send it as cursor to load the next page; null on the
             last page.
+
+    WardrobeConditions:
+      type: object
+      description: The active, normalized conditions of the page.
+      required:
+        - q
+        - categories
+        - colors
+      properties:
+        q:
+          type: [string, "null"]
+          description: The normalized text; null without a text condition.
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/GarmentCategoryCode"
+        colors:
+          type: array
+          items:
+            $ref: "#/components/schemas/GarmentColorCode"
 
     GarmentSummary:
       type: object
@@ -2893,6 +3009,7 @@ components:
             - TOO_MANY_DECIMALS
             - UNSUPPORTED_CURRENCY
             - OUT_OF_RANGE
+            - CONDITIONS_CHANGED
 
     Problem:
       type: object
@@ -3243,10 +3360,14 @@ components:
 
     PageRequestRejected:
       description: |
-        The limit is not an integer from 1 to 100, or the cursor
-        is not a nextCursor this API issued (INVALID_FORMAT). No
-        garment was read; load the wardrobe again from the first
-        page.
+        A condition or page parameter is unusable; no garment was
+        read. q longer than 100 code points (OUT_OF_RANGE) or with
+        a control character (INVALID_FORMAT); an unknown category
+        or color code (UNSUPPORTED_VALUE) or more than 50 values
+        (OUT_OF_RANGE); a limit outside 1–100; a cursor this API
+        did not issue (INVALID_FORMAT) or issued for other
+        conditions (CONDITIONS_CHANGED). Correct the conditions or
+        load the wardrobe again from the first page.
       content:
         application/problem+json:
           schema:
@@ -3254,7 +3375,7 @@ components:
           example:
             title: "Bad Request"
             status: 400
-            detail: "This page of the wardrobe cannot be loaded. Load the wardrobe again from the first page."
+            detail: "These wardrobe conditions or this page cannot be used. Correct the conditions, or load the wardrobe again from the first page."
             instance: "/api/v1/wardrobe/garments"
             code: "VALIDATION_FAILED"
             fieldErrors:

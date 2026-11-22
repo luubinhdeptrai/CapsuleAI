@@ -16,21 +16,30 @@ final class SearchStatementCatalogue {
             """;
 
     /**
-     * The text condition: the garment matches when any participating field does (OR). EXISTS keeps a garment
-     * with several matching Materials or Styles to one row. Brand is folded with lower() on both sides
-     * after NFC normalization; the pattern escapes backslash, percent and underscore with a backslash.
+     * The text condition: the garment matches when any participating field does (OR). Brand is folded with
+     * lower() on both sides after NFC normalization; the pattern escapes backslash, percent and underscore
+     * with a backslash.
+     *
+     * <p>Materials and Styles are compared per garment, as the overlap of the garment's own set with the
+     * matching codes, so a garment with several matching values is still one row. The comparison is skipped
+     * when the text names no value of that vocabulary. This keeps every read restricted to the owner's
+     * garments (OPEN-S4-15, measured 2026-11-22): an EXISTS here was planned as a hashed subplan that read
+     * the whole child table, every account's rows, on each text search, even when the set was empty. An
+     * ARRAY subquery is never hashed; it reads the garment's rows through the child table's primary key.
      */
     static final String TEXT_CONDITION = """
               AND (g.category = ANY(string_to_array(CAST(:textCategories AS text), ','))
                    OR g.subtype = ANY(string_to_array(CAST(:textSubtypes AS text), ','))
                    OR g.color = ANY(string_to_array(CAST(:textColors AS text), ','))
                    OR g.pattern = ANY(string_to_array(CAST(:textPatterns AS text), ','))
-                   OR EXISTS (SELECT 1 FROM wardrobe.wardrobe_garment_material tm
-                              WHERE tm.garment_id = g.id
-                                AND tm.material = ANY(string_to_array(CAST(:textMaterials AS text), ',')))
-                   OR EXISTS (SELECT 1 FROM wardrobe.wardrobe_garment_style ts
-                              WHERE ts.garment_id = g.id
-                                AND ts.style = ANY(string_to_array(CAST(:textStyles AS text), ',')))
+                   OR (CAST(:textMaterials AS text) <> ''
+                       AND ARRAY(SELECT tm.material FROM wardrobe.wardrobe_garment_material tm
+                                 WHERE tm.garment_id = g.id)
+                           && string_to_array(CAST(:textMaterials AS text), ','))
+                   OR (CAST(:textStyles AS text) <> ''
+                       AND ARRAY(SELECT ts.style FROM wardrobe.wardrobe_garment_style ts
+                                 WHERE ts.garment_id = g.id)
+                           && string_to_array(CAST(:textStyles AS text), ','))
                    OR lower(normalize(g.brand, NFC)) LIKE lower(CAST(:brandPattern AS text)) ESCAPE '\\')
             """;
 
