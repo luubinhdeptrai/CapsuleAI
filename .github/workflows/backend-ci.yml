@@ -158,6 +158,10 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentRemovalApiIT.xml' = 10
             'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentRemovalIT.xml' = 2
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.GarmentRemovalCleanupIT.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentPhotoAttachmentTest.xml' = 3
+            'surefire-reports/TEST-com.capsuleai.wardrobe.application.AttachGarmentPhotoServiceTest.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentPhotoAttachmentApiIT.xml' = 10
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 5
           }
 
           foreach ($entry in $required.GetEnumerator()) {

@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.12.0
+  version: 0.13.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -20,6 +20,7 @@ info:
       - US-GAR-003: Add a photo-supported garment with manual confirmation
       - US-PROF-001: Set and revise style preferences and common needs
       - US-GAR-005: Remove a garment while preserving minimal history
+      - US-GAR-006: Attach a photo to an existing imageless garment
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -60,10 +61,15 @@ info:
     owner, through the application.
 
     This specification does not introduce endpoints for
-    session listing, all-device logout, attaching a photo to
-    an existing garment, replacing a confirmed photo, search,
-    filtering, body or gender profiles, location, or public
-    profiles.
+    session listing, all-device logout, replacing or removing a
+    garment's photo, search, filtering, body or gender
+    profiles, location, or public profiles.
+
+    A staged photo can be attached to an existing garment that
+    has no photo (US-GAR-006) through an explicitly
+    confirmed command protected by the garment revision. The
+    photo is not uploaded again; repeating the same garment and
+    photo pair changes nothing.
 
     Garment removal (US-GAR-005) is an explicitly confirmed
     command protected by the garment revision. It is
@@ -1063,6 +1069,82 @@ paths:
 
         "409":
           $ref: "#/components/responses/RevisionConflict"
+
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/garments/{garmentId}/photo-attachment:
+    post:
+      tags:
+        - Wardrobe
+      operationId: attachGarmentPhoto
+      summary: Attach a reviewed staged photo to an existing garment
+      description: |
+        US-GAR-006 (approved S4-GAR-04/05/06 and S4-INT-01/02/03).
+        Its acceptance criteria were formalized on 2026-11-17 and
+        await Product Owner acceptance.
+
+        Attaches the account's READY, unexpired staged photo to the
+        account's current garment that has no photo, after explicit
+        confirmation of the revision the user reviewed. Every garment
+        property, the creation time and provenance are kept; the
+        revision increases by one. The photo is not uploaded or
+        processed again.
+
+        - 200: the garment as it now is, with photo metadata. The
+          same garment and photo pair repeated after a lost response
+          returns the same garment without another revision.
+        - 409 GARMENT_ALREADY_HAS_PHOTO: the garment has a photo;
+          it is never replaced.
+        - 409 REVISION_CONFLICT: the garment changed after review.
+        - 409 PHOTO_UPLOAD_NOT_USABLE: the photo is not READY, has
+          expired or belongs to another garment.
+        - 404 GARMENT_NOT_FOUND / PHOTO_UPLOAD_NOT_FOUND: unknown or
+          another account's resource (indistinguishable).
+        - 410 GARMENT_NO_LONGER_CURRENT: the garment was removed.
+
+      parameters:
+        - name: garmentId
+          in: path
+          required: true
+          description: The garment id from the wardrobe overview or detail.
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentPhotoAttachmentRequest"
+            example:
+              confirmed: true
+              expectedRevision: "2"
+              photoUploadId: "7c2e4b1a-9d3f-4e6a-8b5c-0a1b2c3d4e5f"
+
+      responses:
+        "200":
+          description: The photo is attached (now or by an earlier identical request).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Garment"
+
+        "400":
+          $ref: "#/components/responses/GarmentPhotoAttachmentRejected"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "404":
+          $ref: "#/components/responses/AttachmentTargetNotFound"
+
+        "409":
+          $ref: "#/components/responses/AttachmentConflict"
+
+        "410":
+          $ref: "#/components/responses/GarmentNoLongerCurrent"
 
         "503":
           $ref: "#/components/responses/Unavailable"
@@ -2747,6 +2829,30 @@ components:
           format: date-time
           description: The original removal time; never reset by a repeated request.
 
+    GarmentPhotoAttachmentRequest:
+      type: object
+      description: |
+        Explicit confirmation of attaching one reviewed staged photo
+        to one existing garment (US-GAR-006). There is
+        no owner field.
+      required:
+        - confirmed
+        - expectedRevision
+        - photoUploadId
+      properties:
+        confirmed:
+          type: boolean
+          const: true
+          description: Must be true; false is rejected with NOT_CONFIRMED.
+        expectedRevision:
+          type: string
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: The revision of the garment the user reviewed (opaque).
+        photoUploadId:
+          type: string
+          format: uuid
+          description: The account's READY staged photo the user reviewed.
+
     FieldError:
       type: object
       description: A validation failure associated with a request field.
@@ -2985,6 +3091,58 @@ components:
             fieldErrors:
               - field: "confirmed"
                 code: "NOT_CONFIRMED"
+
+    GarmentPhotoAttachmentRejected:
+      description: |
+        The attachment was not applied. VALIDATION_FAILED lists a
+        missing or false confirmation, a missing or malformed
+        expectedRevision and a missing or malformed photoUploadId,
+        checked before anything is looked up. MALFORMED_REQUEST
+        means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+            code: "VALIDATION_FAILED"
+            fieldErrors:
+              - field: "photoUploadId"
+                code: "REQUIRED"
+
+    AttachmentTargetNotFound:
+      description: |
+        GARMENT_NOT_FOUND: the account has no garment with this id.
+        PHOTO_UPLOAD_NOT_FOUND: the photo is not among the account's
+        staged photos. Another account's resources give the same
+        answers.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This photo is not among your staged photos. Choose the photo again."
+            code: "PHOTO_UPLOAD_NOT_FOUND"
+
+    AttachmentConflict:
+      description: |
+        Nothing changed. GARMENT_ALREADY_HAS_PHOTO: the garment has a
+        photo (never replaced). REVISION_CONFLICT: the garment changed
+        after review. PHOTO_UPLOAD_NOT_USABLE: the photo is not READY,
+        expired or belongs to another garment.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This garment already has a photo, so the chosen photo was not attached. Reload the garment to see its current photo."
+            code: "GARMENT_ALREADY_HAS_PHOTO"
 
     PhotoRejected:
       description: |

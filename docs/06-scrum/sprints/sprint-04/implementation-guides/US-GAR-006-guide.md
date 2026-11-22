@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-GAR-04, S4-GAR-05, S4-GAR-06, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-07, 08, 09, 10, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
 | Acceptance criteria | P-AC-01–P-AC-06 (named under OPEN-S4-09) correspond one to one to the story's AC-01–AC-06. **The AC are a delegated formalization of 2026-11-17 and have not been separately approved by the Product Owner;** PO acceptance is required before Done. |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. |
+| Verification status | **Applied to the repository on 2026-11-22** (P1–P11 by the developer in commit `45ebaab`, reviewed against this guide; P12, P13, T1–T5 and the review additions afterwards). `./mvnw -o clean verify` passed in the repository on 2026-11-22: 590 unit and 371 integration tests, none failed, errored or was skipped. Of the 107 required CI reports, 106 were present with at least their minimum; the 107th is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. **Still required:** Product Owner acceptance of the formalized AC, a CI run on a pull request to `sprint_04`, and client evidence. |
 
 ## 1. Story Overview
 
@@ -347,7 +347,7 @@ plus the garment revision. Removal (GAR-005) later copies the attached photo's k
 | Domain | `GarmentPhotoAttachmentTest` |
 | Application with fakes | `AttachGarmentPhotoServiceTest` |
 | HTTP | `GarmentPhotoAttachmentApiIT` |
-| Concurrency | `ConcurrentGarmentPhotoAttachmentIT` |
+| Concurrency and atomicity | `ConcurrentGarmentPhotoAttachmentIT` (four races, rollback after the photo claim) |
 | Contract | `IdentityOpenApiContractIT` (existing) |
 
 ## 11. File Change Matrix
@@ -371,7 +371,7 @@ plus the garment revision. Removal (GAR-005) later copies the attached photo's k
 | T2 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/InMemoryGarmentPhotoAttachmentRepository.java` | Fake of P2 | P2 |
 | T3 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/AttachGarmentPhotoServiceTest.java` | Use-case rules | P6, T2 |
 | T4 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/adapter/in/web/GarmentPhotoAttachmentApiIT.java` | HTTP behavior | P9, P12 |
-| T5 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentPhotoAttachmentIT.java` | Races | P6, P7 |
+| T5 | ADD | `backend/src/test/java/com/capsuleai/wardrobe/application/ConcurrentGarmentPhotoAttachmentIT.java` | Races (photos, garments, removal, edit) and rollback | P6, P7 |
 
 ## 12. Complete Production Implementation
 
@@ -1010,7 +1010,7 @@ AFTER:
 
 ```yaml
       - US-GAR-005: Remove a garment while preserving minimal history
-      - US-GAR-006 (provisional): Attach a photo to an existing garment
+      - US-GAR-006: Attach a photo to an existing imageless garment
 ```
 
 **Edit 2.** Scope statement.
@@ -1034,7 +1034,7 @@ AFTER:
     profiles, location, or public profiles.
 
     A staged photo can be attached to an existing garment that
-    has no photo (provisional US-GAR-006) through an explicitly
+    has no photo (US-GAR-006) through an explicitly
     confirmed command protected by the garment revision. The
     photo is not uploaded again; repeating the same garment and
     photo pair changes nothing.
@@ -1059,9 +1059,9 @@ AFTER:
       operationId: attachGarmentPhoto
       summary: Attach a reviewed staged photo to an existing garment
       description: |
-        Provisional US-GAR-006 (approved S4-GAR-04/05/06 and
-        S4-INT-01/02/03; acceptance criteria pending formal story
-        refinement).
+        US-GAR-006 (approved S4-GAR-04/05/06 and S4-INT-01/02/03).
+        Its acceptance criteria were formalized on 2026-11-17 and
+        await Product Owner acceptance.
 
         Attaches the account's READY, unexpired staged photo to the
         account's current garment that has no photo, after explicit
@@ -1149,7 +1149,7 @@ AFTER:
       type: object
       description: |
         Explicit confirmation of attaching one reviewed staged photo
-        to one existing garment (provisional US-GAR-006). There is
+        to one existing garment (US-GAR-006). There is
         no owner field.
       required:
         - confirmed
@@ -1260,7 +1260,7 @@ AFTER:
             'surefire-reports/TEST-com.capsuleai.wardrobe.domain.GarmentPhotoAttachmentTest.xml' = 3
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.AttachGarmentPhotoServiceTest.xml' = 8
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.GarmentPhotoAttachmentApiIT.xml' = 10
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 5
           }
 ```
 
@@ -1794,9 +1794,15 @@ class GarmentPhotoAttachmentApiIT extends WardrobeIntegrationTestSupport {
 ```java
 package com.capsuleai.wardrobe.application;
 
+import com.capsuleai.wardrobe.application.ports.GarmentPhotoAttachmentRepository;
+import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
+import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
+import com.capsuleai.wardrobe.domain.Garment;
 import com.capsuleai.wardrobe.support.TestImages;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -1808,11 +1814,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Provisional US-GAR-006 with real transactions on PostgreSQL READ COMMITTED (S4-GAR-05, S4-INT-01,
- * OPEN-S4-08): competing photos for one garment, one photo for competing garments, and attachment against
- * removal each have exactly one coherent winner and no half-association.
+ * US-GAR-006 with real transactions on PostgreSQL READ COMMITTED (S4-GAR-05, S4-INT-01, OPEN-S4-08):
+ * competing photos for one garment, one photo for competing garments, and attachment against removal or an
+ * edit each have exactly one coherent winner and no half-association; a failure after the photo is claimed
+ * rolls back the whole attachment.
  */
 class ConcurrentGarmentPhotoAttachmentIT extends WardrobeIntegrationTestSupport {
 
@@ -1821,6 +1829,18 @@ class ConcurrentGarmentPhotoAttachmentIT extends WardrobeIntegrationTestSupport 
 
     @Autowired
     private RemoveGarmentService removeGarmentService;
+
+    @Autowired
+    private ReviseGarmentService reviseGarmentService;
+
+    @Autowired
+    private GarmentPhotoAttachmentRepository garmentPhotoAttachmentRepository;
+
+    @Autowired
+    private PhotoUploadRepository photoUploadRepository;
+
+    @Autowired
+    private WardrobeTransactions wardrobeTransactions;
 
     @Test
     void ofTwoPhotosCompetingForOneGarmentExactlyOneIsAttached() throws Exception {
@@ -1874,6 +1894,61 @@ class ConcurrentGarmentPhotoAttachmentIT extends WardrobeIntegrationTestSupport 
                 .isEqualTo(outcomes.getFirst().equals("attached") ? "ATTACHED" : "READY");
     }
 
+    @Test
+    void anAttachmentAndAnEditOfTheSameRevisionHaveOneCoherentWinner() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-attach-edit@example.com");
+        UUID garmentId = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("TOPS", "WHITE"));
+        UUID photoUploadId = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(800, 600));
+
+        List<String> outcomes = race(attachment(tokens.accountId(), garmentId, photoUploadId),
+                edit(tokens.accountId(), garmentId));
+
+        assertThat(outcomes)
+                .as("attachment wins (the edit conflicts) or the edit wins (the attachment conflicts)")
+                .isIn(List.of("attached", "conflict"), List.of("conflict", "edited"));
+        boolean attachmentWon = outcomes.getFirst().equals("attached");
+        Map<String, Object> garmentRow = jdbc.sql("SELECT revision, color FROM wardrobe.wardrobe_garment WHERE id = :id")
+                .param("id", garmentId).query().singleRow();
+        assertThat(((Number) garmentRow.get("revision")).longValue()).as("exactly one change applied").isEqualTo(2L);
+        assertThat(garmentRow.get("color")).isEqualTo(attachmentWon ? "WHITE" : "RED");
+        assertThat(photoUploadStatus(photoUploadId)).isEqualTo(attachmentWon ? "ATTACHED" : "READY");
+    }
+
+    @Test
+    void aFailureAfterThePhotoIsClaimedRollsBackTheWholeAttachment() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("attach-rollback@example.com");
+        UUID garmentId = addGarmentAndReturnId(tokens.accessToken(), minimumGarment("TOPS", "WHITE"));
+        UUID photoUploadId = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(800, 600));
+        GarmentPhotoAttachmentRepository failingAfterThePhotoIsClaimed = new GarmentPhotoAttachmentRepository() {
+            @Override
+            public Optional<Garment> lockOwnedGarment(UUID ownerAccountId, UUID lockedGarmentId) {
+                return garmentPhotoAttachmentRepository.lockOwnedGarment(ownerAccountId, lockedGarmentId);
+            }
+
+            @Override
+            public boolean advanceRevisionIfCurrentAt(UUID ownerAccountId, UUID revisedGarmentId, long expectedRevision) {
+                throw new IllegalStateException("simulated failure after the photo was claimed");
+            }
+        };
+        AttachGarmentPhotoService attachmentFailingMidway = new AttachGarmentPhotoService(failingAfterThePhotoIsClaimed,
+                photoUploadRepository, wardrobeTransactions, clock);
+
+        assertThatThrownBy(() -> attachmentFailingMidway.attach(new AttachGarmentPhotoCommand(tokens.accountId(),
+                garmentId.toString(), true, "1", photoUploadId.toString())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(photoUploadStatus(photoUploadId)).as("the photo claim was rolled back").isEqualTo("READY");
+        assertThat(jdbc.sql("SELECT garment_id FROM wardrobe.wardrobe_photo_upload WHERE id = :id")
+                .param("id", photoUploadId).query(UUID.class).optional()).as("no half-association").isEmpty();
+        assertThat(jdbc.sql("SELECT revision FROM wardrobe.wardrobe_garment WHERE id = :id")
+                .param("id", garmentId).query(Long.class).single()).isEqualTo(1L);
+
+        attachGarmentPhotoService.attach(new AttachGarmentPhotoCommand(tokens.accountId(), garmentId.toString(), true,
+                "1", photoUploadId.toString()));
+        assertThat(photoUploadStatus(photoUploadId)).as("the same reviewed pair still attaches afterwards")
+                .isEqualTo("ATTACHED");
+    }
+
     private List<String> race(Callable<String> first, Callable<String> second) throws Exception {
         CyclicBarrier start = new CyclicBarrier(2);
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -1904,6 +1979,22 @@ class ConcurrentGarmentPhotoAttachmentIT extends WardrobeIntegrationTestSupport 
                 return "not-usable";
             } catch (GarmentNoLongerCurrentException gone) {
                 return "gone";
+            } catch (GarmentRevisionConflictException conflict) {
+                return "conflict";
+            }
+        };
+    }
+
+    private Callable<String> edit(UUID owner, UUID garmentId) {
+        GarmentChanges recolor = new GarmentChanges(FieldChange.keep(), FieldChange.keep(), FieldChange.replace("RED"),
+                FieldChange.keep(), FieldChange.keep(), FieldChange.keep(), FieldChange.keep(), FieldChange.keep(),
+                FieldChange.keep(), FieldChange.keep(), FieldChange.keep(), FieldChange.keep(), FieldChange.keep());
+        return () -> {
+            try {
+                reviseGarmentService.revise(new ReviseGarmentCommand(owner, garmentId.toString(), true, "1", recolor));
+                return "edited";
+            } catch (GarmentRevisionConflictException conflict) {
+                return "conflict";
             }
         };
     }
@@ -1921,6 +2012,13 @@ class ConcurrentGarmentPhotoAttachmentIT extends WardrobeIntegrationTestSupport 
     }
 }
 ```
+
+**Explanation.**
+
+- **Three races from §10.4**, each started together through a barrier: two photos for one garment, one photo for two garments, and attachment against removal. Each must have exactly one coherent winner.
+- **Attachment against an edit (added 2026-11-22).** §10.4 lists this race, but the first version of T5 did not test it. Exactly one change applies, the revision ends at 2, and the color and photo show which change won.
+- **Rollback (added 2026-11-22).** A service built with a garment port that fails after the photo has been claimed proves the transaction on real PostgreSQL: the photo is READY again with no garment, the revision is unchanged, and the same reviewed pair attaches afterwards.
+- **Guard for P7.** On 2026-11-22, replacing the two-statement lock of P7 with one `SELECT … FOR UPDATE OF g` that also joins the photo made `ofTwoPhotosCompetingForOneGarmentExactlyOneIsAttached` fail in 3 of 3 runs. The loser answered `REVISION_CONFLICT` instead of `GARMENT_ALREADY_HAS_PHOTO`, exactly the stale-snapshot defect that P7 explains.
 
 ```powershell
 .\mvnw.cmd "-Dtest=HarnessSmokeTest" "-Dit.test=GarmentPhotoAttachmentApiIT,ConcurrentGarmentPhotoAttachmentIT,IdentityOpenApiContractIT" verify
@@ -1970,14 +2068,14 @@ Check 'M4 private photo delivery -> 200' ($photoStatus -eq '200')
 
 P-AC-0n is the story's AC-0n.
 
-| Criterion | Evidence (planned) | Remaining |
+| Criterion | Evidence (run in the repository on 2026-11-22) | Remaining |
 | --- | --- | --- |
 | P-AC-01 / AC-01 Eligibility | T1; T3 `aRemovedGarmentIsNoLongerCurrent`, `anotherOwnersPhotoOrGarmentIsNotFound`, `aGarmentThatAlreadyHasAnotherPhoto…`; T4 equivalents | **PO acceptance of the formalized AC** |
 | P-AC-02 / AC-02 Confirm / cancel | T3 `missingFieldsAreRejectedBeforeAnyLookup`; T4 `missingFields…`, `aCancelledPhotoCannotBeAttached` | Client preview, confirm and cancel |
-| P-AC-03 / AC-03 Atomicity / authority | T1; T3 `aConfirmedAttachment…`; T4 `attachingAReviewedPhoto…` (properties kept); T5 (no half-association) | — |
-| P-AC-04 / AC-04 Retry / uncertainty | T3 `repeatingTheSamePair…`; T4 `repeatingTheSameAttachment…`; T5 | Client outcome review |
-| P-AC-05 / AC-05 Privacy / availability | T4 `attachingAReviewedPhoto…` (private route), `aMissingObjectAfterAttachmentLimitsOnlyThePhoto` | — |
-| P-AC-06 / AC-06 Cleanup / races | T4 `pendingCleanupNeverTouchesAnAttachedPhoto`; T3 `anExpiredOrCancelledPhotoIsNotUsable`; T5 (all three races) | — |
+| P-AC-03 / AC-03 Atomicity / authority | T1; T3 `aConfirmedAttachment…`; T4 `attachingAReviewedPhoto…` (properties kept); T5 (no half-association; `aFailureAfterThePhotoIsClaimedRollsBackTheWholeAttachment`) | PO acceptance |
+| P-AC-04 / AC-04 Retry / uncertainty | T3 `repeatingTheSamePair…`; T4 `repeatingTheSameAttachment…`; T5 | Client outcome review; PO acceptance |
+| P-AC-05 / AC-05 Privacy / availability | T4 `attachingAReviewedPhoto…` (private route), `aMissingObjectAfterAttachmentLimitsOnlyThePhoto`, `anotherAccountsPhotoOrGarmentIsNotFound` | PO acceptance |
+| P-AC-06 / AC-06 Cleanup / races | T4 `pendingCleanupNeverTouchesAnAttachedPhoto`; T3 `anExpiredOrCancelledPhotoIsNotUsable`; T5 (two photos, two garments, removal and edit races); US-GAR-005 `GarmentRemovalCleanupIT` (attached photo deleted after removal) | PO acceptance |
 
 ### 15.2 Requirements to tests
 
@@ -1996,9 +2094,9 @@ P-AC-0n is the story's AC-0n.
 ## 16. Definition of Done
 
 - [ ] **The Product Owner accepts (or amends) the formalized AC-01–AC-06 of [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md).** The story file and its parent PBI-049 were created on 2026-11-17 under delegation; until the PO accepts the AC, this story cannot be Done.
-- [ ] P1–P13 and T1–T5 applied. `.\mvnw.cmd clean verify` passes, including `IdentityOpenApiContractIT`, `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest`.
-- [ ] CI on a PR to `sprint_04` finds 107 required reports with no failure or skip.
-- [ ] US-GAR-005 regression stays green: removal of an attached photo is purged by the cleanup worker (GAR-005 T11 covers photo-backed removal).
+- [x] P1–P13 and T1–T5 applied (2026-11-22; the repository files equal this guide's steps). `./mvnw -o clean verify` passed in the repository (590 unit, 371 integration tests), including `IdentityOpenApiContractIT`, `ArchitectureDependencyTest` and `PersistenceOwnershipSqlTest`.
+- [ ] CI on a PR to `sprint_04` finds 107 required reports with no failure or skip. (Locally 106 of 107; `HeifDecodingIT` needs libheif, which CI installs.)
+- [x] US-GAR-005 regression stays green: `GarmentRemovalCleanupIT` (5 tests) and every other US-GAR-005 suite passed in the same run.
 - [ ] Client evidence: offered only for imageless garments; preview; confirm; cancel; conflict and outcome review, in Vietnamese with accessibility.
 - [ ] No real personal photo in tests or evidence.
 

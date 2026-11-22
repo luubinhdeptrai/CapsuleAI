@@ -2354,13 +2354,13 @@ AFTER:
 BEFORE:
 
 ```yaml
-      - US-GAR-006 (provisional): Attach a photo to an existing garment
+      - US-GAR-006: Attach a photo to an existing imageless garment
 ```
 
 AFTER:
 
 ```yaml
-      - US-GAR-006 (provisional): Attach a photo to an existing garment
+      - US-GAR-006: Attach a photo to an existing imageless garment
       - US-WAR-003: Find owned garments through search and filters
 ```
 
@@ -2653,14 +2653,14 @@ AFTER:
 BEFORE:
 
 ```powershell
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 5
           }
 ```
 
 AFTER:
 
 ```powershell
-            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.wardrobe.application.ConcurrentGarmentPhotoAttachmentIT.xml' = 5
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.SearchWardrobeServiceTest.xml' = 5
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.DescriptorMatcherTest.xml' = 7
             'surefire-reports/TEST-com.capsuleai.wardrobe.application.VietnameseDescriptorAliasesTest.xml' = 5

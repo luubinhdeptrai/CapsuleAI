@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Only US-GAR-005 (OPEN-S4-01–06 and its parts of OPEN-S4-31–33) is implemented in the repository, since 2026-11-21; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21) and US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -58,10 +58,10 @@ Each entry has these fields:
 | [OPEN-S4-04](#open-s4-04--durable-removal-cleanup-work-and-schedule) | GAR-005 | S4-GAR-03 | Cleanup table with lease and retry. Minimize at the first claim; delete the object outside the transaction. `P30D` limit, `P21D` warning. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
 | [OPEN-S4-05](#open-s4-05--storage-versioning-and-physical-deletion-boundary) | GAR-005 | S4-GAR-03 | Deletion boundary: an unversioned bucket with no object lock and no replication or backup copies, proven operationally. | Delegated default | No code needed; checked by the operations step | **Pending (operations)** |
 | [OPEN-S4-06](#open-s4-06--removal-concurrency-and-lock-order) | GAR-005 | S4-GAR-01, S4-INT-01 | Conditional revision `UPDATE` on the garment, then a read of the photo, then the cleanup row. | Delegated default | Implemented 2026-11-21 (US-GAR-005); tests pass locally | Pending (CI run; client evidence) |
-| [OPEN-S4-07](#open-s4-07--attachment-command-transport-and-outcomes) | GAR-006 | S4-GAR-04, S4-INT-02/03 | `POST …/{garmentId}/photo-attachment` returns `GarmentResponse`. A same-pair replay answers `200` without a new revision. | Delegated default | Pending | Pending |
-| [OPEN-S4-08](#open-s4-08--attachment-transaction-check-order-and-lock-order) | GAR-006 | S4-GAR-05, S4-INT-01 | Lock the garment row, then read garment and photo afresh, then lock the photo. Check order: replay, already photographed, revision, usable. | Delegated default | Pending | Pending |
-| [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, mapped to plan §6.5; since 2026-11-17 formalized one to one as AC-01–AC-06 of the formal story US-GAR-006 (parent PBI-049) | Delegated default | Pending | Pending (PO acceptance of the formalized AC) |
-| [OPEN-S4-10](#open-s4-10--attachment-photo-availability-and-pending-lifecycle-reuse) | GAR-006 | S4-GAR-06 | No object check. Trust READY metadata. A missing object gives `404 GARMENT_PHOTO_UNAVAILABLE`. | Delegated default | Pending | Pending |
+| [OPEN-S4-07](#open-s4-07--attachment-command-transport-and-outcomes) | GAR-006 | S4-GAR-04, S4-INT-02/03 | `POST …/{garmentId}/photo-attachment` returns `GarmentResponse`. A same-pair replay answers `200` without a new revision. | Delegated default | Implemented 2026-11-22 (US-GAR-006); tests pass locally | Pending (CI run; client evidence) |
+| [OPEN-S4-08](#open-s4-08--attachment-transaction-check-order-and-lock-order) | GAR-006 | S4-GAR-05, S4-INT-01 | Lock the garment row, then read garment and photo afresh, then lock the photo. Check order: replay, already photographed, revision, usable. | Delegated default | Implemented 2026-11-22 (US-GAR-006); tests pass locally | Pending (CI run; client evidence) |
+| [OPEN-S4-09](#open-s4-09--provisional-attachment-acceptance-criteria) | GAR-006 | S4-GAR-04 | Provisional P-AC-01–P-AC-06, mapped to plan §6.5; since 2026-11-17 formalized one to one as AC-01–AC-06 of the formal story US-GAR-006 (parent PBI-049) | Delegated default | Implemented 2026-11-22 (US-GAR-006 tests map AC-01–AC-06) | Pending (PO acceptance of the formalized AC) |
+| [OPEN-S4-10](#open-s4-10--attachment-photo-availability-and-pending-lifecycle-reuse) | GAR-006 | S4-GAR-06 | No object check. Trust READY metadata. A missing object gives `404 GARMENT_PHOTO_UNAVAILABLE`. | Delegated default | Implemented 2026-11-22 (US-GAR-006); tests pass locally | Pending (CI run; client evidence) |
 | [OPEN-S4-11](#open-s4-11--searchable-descriptors-and-matching-semantics-cat-q01) | WAR-003 | S4-WAR-01 | English labels, codes and **Vietnamese search aliases** of six vocabularies, plus Brand. Literal, case-insensitive, accent-sensitive, NFC; ambiguous words match every named value. Cursor policy `m2`. **Refined 2026-11-17** (Vietnamese search authorized by the PO). | Delegated default (wording); capability PO-authorized | Pending | Pending (alias wording review, PostgreSQL locale) |
 | [OPEN-S4-12](#open-s4-12--search-input-limits-and-wildcard-escaping) | WAR-003 | S4-WAR-01 | `q` is trimmed and NFC-normalized; a blank `q` means no condition. 1–100 code points, no control characters. Escape `\`, `%` and `_`. | Delegated default | Pending | Pending |
 | [OPEN-S4-13](#open-s4-13--category-and-color-filters-and-the-statement-catalogue) | WAR-003 | S4-WAR-02 | Repeated `category` and `color` parameters: OR within a group, AND across groups. A catalogue of 14 complete statements for the 7 restricted shapes. | Delegated default | Pending | Pending |
@@ -492,7 +492,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-GAR-04, S4-INT-02 and S4-INT-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-GAR-006; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`. Formal story refinement is still needed (OPEN-S4-09).
 
 **G. Implementation steps.** US-GAR-006:
@@ -543,7 +543,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-GAR-05 and S4-INT-01.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-GAR-006; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-GAR-006:
@@ -593,7 +593,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-GAR-006; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - **`VERIFICATION PENDING`: PO acceptance of the formalized criteria is required before Done.**
 - **Update 2026-11-17:** the formal Draft story [US-GAR-006](../../../stories/garment/US-GAR-006-attach-photo-to-existing-imageless-garment.md) and its parent [PBI-049](../../../product-backlog.md#pbi-049--attach-a-photo-to-an-existing-imageless-garment) now exist. The story's AC-01–AC-06 restate P-AC-01–P-AC-06 one to one. The canonical documents gained FR-WAR-009, SRS §3.6.3, BRULE-GAR-011, PRD FEAT-WAR-002 behavior 7 with AC-08–AC-09, and UC-009 A4/E5. The AC are a delegated formalization, not a separate PO approval.
 
@@ -635,7 +635,7 @@ The version-aware alternative is described in §17 Troubleshooting.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-GAR-06.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-GAR-006; `clean verify` passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-GAR-006:
