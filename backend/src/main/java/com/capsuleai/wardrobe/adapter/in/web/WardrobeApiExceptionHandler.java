@@ -1,5 +1,6 @@
 package com.capsuleai.wardrobe.adapter.in.web;
 
+import com.capsuleai.wardrobe.application.GarmentAlreadyHasPhotoException;
 import com.capsuleai.wardrobe.application.GarmentFieldViolation;
 import com.capsuleai.wardrobe.application.GarmentNoLongerCurrentException;
 import com.capsuleai.wardrobe.application.GarmentNotFoundException;
@@ -97,6 +98,14 @@ public class WardrobeApiExceptionHandler {
         return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
                 "This garment changed after you opened it, so your change was not applied. Reload it, review the "
                         + "current values and confirm again."));
+    }
+
+    /** Provisional US-GAR-006 (OPEN-S4-07/32): attachment never replaces an existing photo. */
+    @ExceptionHandler(GarmentAlreadyHasPhotoException.class)
+    public ResponseEntity<ProblemDetail> handleGarmentAlreadyHasPhoto(GarmentAlreadyHasPhotoException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "GARMENT_ALREADY_HAS_PHOTO",
+                "This garment already has a photo, so the chosen photo was not attached. Reload the garment to see "
+                        + "its current photo."));
     }
 
     /** US-GAR-003 (FR-AI-012, ERR-AI-001): the photo was not accepted; replace it or continue manually. */

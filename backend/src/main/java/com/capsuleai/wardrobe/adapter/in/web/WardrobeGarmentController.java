@@ -2,6 +2,7 @@ package com.capsuleai.wardrobe.adapter.in.web;
 
 import com.capsuleai.identity.api.AuthenticatedAccount;
 import com.capsuleai.wardrobe.application.AddGarmentService;
+import com.capsuleai.wardrobe.application.AttachGarmentPhotoService;
 import com.capsuleai.wardrobe.application.BrowseWardrobeService;
 import com.capsuleai.wardrobe.application.GarmentCreation;
 import com.capsuleai.wardrobe.application.GarmentPhotoContentService;
@@ -42,19 +43,22 @@ public class WardrobeGarmentController {
     private final ReviseGarmentService reviseGarmentService;
     private final GarmentPhotoContentService garmentPhotoContentService;
     private final RemoveGarmentService removeGarmentService;
+    private final AttachGarmentPhotoService attachGarmentPhotoService;
 
     public WardrobeGarmentController(AddGarmentService addGarmentService,
                                      BrowseWardrobeService browseWardrobeService,
                                      InspectGarmentService inspectGarmentService,
                                      ReviseGarmentService reviseGarmentService,
                                      GarmentPhotoContentService garmentPhotoContentService,
-                                     RemoveGarmentService removeGarmentService) {
+                                     RemoveGarmentService removeGarmentService,
+                                     AttachGarmentPhotoService attachGarmentPhotoService) {
         this.addGarmentService = addGarmentService;
         this.browseWardrobeService = browseWardrobeService;
         this.inspectGarmentService = inspectGarmentService;
         this.reviseGarmentService = reviseGarmentService;
         this.garmentPhotoContentService = garmentPhotoContentService;
         this.removeGarmentService = removeGarmentService;
+        this.attachGarmentPhotoService = attachGarmentPhotoService;
     }
 
     /**
@@ -120,6 +124,19 @@ public class WardrobeGarmentController {
                                                 @PathVariable String garmentId,
                                                 @RequestBody GarmentRemovalRequest request) {
         return GarmentRemovalResponse.from(removeGarmentService.remove(request.toCommand(owner.accountId(), garmentId)));
+    }
+
+    /**
+     * Provisional US-GAR-006 — attaches the owner's reviewed READY photo to the owner's current garment without
+     * a photo, under the reviewed revision (S4-GAR-04/05). 200 with the garment as it now is; repeating the
+     * same pair returns the same garment without another revision.
+     */
+    @PostMapping("/{garmentId}/photo-attachment")
+    public GarmentResponse attachGarmentPhoto(@AuthenticationPrincipal AuthenticatedAccount owner,
+                                              @PathVariable String garmentId,
+                                              @RequestBody GarmentPhotoAttachmentRequest request) {
+        return GarmentResponse.from(
+                attachGarmentPhotoService.attach(request.toCommand(owner.accountId(), garmentId)).garment());
     }
 
     /**

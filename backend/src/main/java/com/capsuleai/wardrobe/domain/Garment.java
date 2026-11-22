@@ -100,6 +100,24 @@ public record Garment(
                 Math.addExact(revision, 1), photo);
     }
 
+    /**
+     * Provisional US-GAR-006 (S4-GAR-05): the same garment with the reviewed photo attached. Every property,
+     * the creation time and provenance are kept; the revision advances by one, because the attached photo
+     * is part of the garment's visible current state. Only a current garment without a photo can receive
+     * one: attachment never replaces a photo and never applies to a removed garment.
+     */
+    public Garment withAttachedPhoto(GarmentPhoto attachedPhoto) {
+        Objects.requireNonNull(attachedPhoto, "attachedPhoto");
+        if (!isCurrent()) {
+            throw new IllegalStateException("Only a garment in the current wardrobe can receive a photo");
+        }
+        if (photo.isPresent()) {
+            throw new IllegalStateException("A garment that already has a photo cannot receive another");
+        }
+        return new Garment(id, ownerAccountId, profile, provenance, createdAt, removedAt,
+                Math.addExact(revision, 1), Optional.of(attachedPhoto));
+    }
+
     public boolean isCurrent() {
         return removedAt == null;
     }

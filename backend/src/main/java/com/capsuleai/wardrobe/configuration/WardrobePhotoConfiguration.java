@@ -2,7 +2,9 @@ package com.capsuleai.wardrobe.configuration;
 
 import com.capsuleai.wardrobe.adapter.out.imaging.HeifDecoder;
 import com.capsuleai.wardrobe.adapter.out.imaging.ImageIoPhotoInspector;
+import com.capsuleai.wardrobe.adapter.out.persistence.JdbcGarmentPhotoAttachmentRepository;
 import com.capsuleai.wardrobe.adapter.out.storage.S3PhotoStorage;
+import com.capsuleai.wardrobe.application.AttachGarmentPhotoService;
 import com.capsuleai.wardrobe.application.CancelPhotoUploadService;
 import com.capsuleai.wardrobe.application.GarmentPhotoContentService;
 import com.capsuleai.wardrobe.application.InspectGarmentService;
@@ -10,6 +12,7 @@ import com.capsuleai.wardrobe.application.PhotoUploadCleanupService;
 import com.capsuleai.wardrobe.application.PhotoUploadPolicy;
 import com.capsuleai.wardrobe.application.StagePhotoUploadService;
 import com.capsuleai.wardrobe.application.ViewPhotoUploadService;
+import com.capsuleai.wardrobe.application.ports.GarmentPhotoAttachmentRepository;
 import com.capsuleai.wardrobe.application.ports.PhotoInspector;
 import com.capsuleai.wardrobe.application.ports.PhotoStorage;
 import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
@@ -20,6 +23,7 @@ import java.time.Duration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -120,6 +124,20 @@ public class WardrobePhotoConfiguration {
                                                         WardrobeTransactions transactions, Clock clock,
                                                         PhotoUploadPolicy policy) {
         return new PhotoUploadCleanupService(uploads, storage, transactions, clock, policy);
+    }
+
+    /** Provisional US-GAR-006: the garment side of attachment (garment lock before photo lock). */
+    @Bean
+    GarmentPhotoAttachmentRepository garmentPhotoAttachmentRepository(JdbcClient jdbcClient) {
+        return new JdbcGarmentPhotoAttachmentRepository(jdbcClient);
+    }
+
+    @Bean
+    AttachGarmentPhotoService attachGarmentPhotoService(GarmentPhotoAttachmentRepository garmentPhotoAttachmentRepository,
+                                                        PhotoUploadRepository photoUploadRepository,
+                                                        WardrobeTransactions wardrobeTransactions, Clock clock) {
+        return new AttachGarmentPhotoService(garmentPhotoAttachmentRepository, photoUploadRepository,
+                wardrobeTransactions, clock);
     }
 
     private static boolean hasText(String value) {
