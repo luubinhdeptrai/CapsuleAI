@@ -12,12 +12,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PreferencesSchemaIT extends PersonalContextIntegrationTestSupport {
 
     @Test
-    void theMigrationCreatesOnlyThePersonalContextSchemaAndItsThreeTables() {
+    void theMigrationsCreateOnlyThePersonalContextSchemaAndItsTables() {
         assertThat(jdbc.sql("""
                         SELECT table_name FROM information_schema.tables
                         WHERE table_schema = 'personal_context' ORDER BY table_name
                         """).query(String.class).list())
-                .containsExactly("personal_context_common_need", "personal_context_preferences",
+                .containsExactly("personal_context_common_need",
+                        "personal_context_optional_context", // V13, US-PROF-002
+                        "personal_context_preferences",
                         "personal_context_preferred_style");
     }
 

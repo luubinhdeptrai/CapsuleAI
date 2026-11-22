@@ -7,7 +7,7 @@
 | Starting point | After US-GAR-005, US-GAR-006 and US-WAR-003 |
 | Approved decisions applied | S4-PROF-01, S4-PROF-02, S4-PROF-03, S4-PROF-04, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-16 (**newly selected values**), OPEN-S4-17, 31, 32 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. An inclusive-representation and privacy review of the selected values is strongly advised before release. |
+| Verification status | **Applied to the repository on 2026-11-22** (P1–P17 by the developer in commit `1f03d64`, P18–P19 in `2c9fb8e`, all reviewed against this guide; P20–P22, T1–T10 and the review's additional tests afterwards). `./mvnw -o clean verify` passed in the repository on 2026-11-22: 651 unit and 413 integration tests, none failed, errored or was skipped. Of the 123 required CI reports, 122 were present with at least their minimum; the missing one is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. The manual checks M1–M7 passed on a throwaway stack (§14). **Still required:** a CI run on a pull request to `sprint_04`, the inclusive-representation and privacy review of the delegated vocabularies (OPEN-S4-16; the Product Owner has not approved the individual values), client evidence, and a future recommendation consumer for the soft-influence part of AC-03/AC-04. |
 
 ## 1. Story Overview
 
@@ -535,6 +535,7 @@ There is no foreign key to Identity (AR-04) and none to preferences, so the two 
 | Web unit | `OptionalContextRevisionRequestTest` |
 | Schema | `OptionalContextSchemaIT` |
 | HTTP | `OptionalContextApiIT` |
+| Failure | `OptionalContextFailureIT` (T10, added by the 2026-11-22 review) |
 | Concurrency | `ConcurrentOptionalContextIT` |
 | Regression | `PreferencesApiIT`, `CurrentPersonalContextIT`, `IdentityOpenApiContractIT` (unchanged) |
 
@@ -575,6 +576,7 @@ There is no foreign key to Identity (AR-04) and none to preferences, so the two 
 | T7 | ADD | `…/test/pc/adapter/in/web/OptionalContextApiIT.java` | HTTP | P17 |
 | T8 | ADD | `…/test/pc/application/ConcurrentOptionalContextIT.java` | Races | P13, P14 |
 | T9 | MODIFY | `…/test/pc/adapter/out/persistence/PreferencesSchemaIT.java` | Exact table list | P1 |
+| T10 | ADD | `…/test/pc/adapter/in/web/OptionalContextFailureIT.java` | Known failures: `503`, rollback (added by the 2026-11-22 review) | P13, P17, P18 |
 
 ## 12. Complete Production Implementation
 
@@ -1711,7 +1713,26 @@ This brings the total to 123 required entries. That is six new classes; `Persona
 
 ## 13. Complete Automated Test Implementation
 
-The counts in P22 equal the `@Test` methods below. **No test has been run in the repository.**
+The counts in P22 are the CI minimums. The review of 2026-11-22 added tests, so four classes now hold more than their minimum:
+
+| Class | Tests | CI minimum |
+| --- | ---: | ---: |
+| `ReviseOptionalContextServiceTest` | 11 | 8 |
+| `OptionalContextRevisionRequestTest` | 4 | 3 |
+| `OptionalContextSchemaIT` | 4 | 3 |
+| `OptionalContextApiIT` | 12 | 8 |
+
+The review also added T10.
+
+The added tests cover:
+
+- every combination of omitted, `null` and a code;
+- an empty string;
+- column nullability, one row per owner, timestamp order and the absence of foreign keys;
+- an empty first change and a no-op over HTTP;
+- clearing both values;
+- malformed values and bodies;
+- an automated M7 log check.
 
 ### Step T1 — [ADD] `backend/src/test/java/com/capsuleai/personalcontext/domain/OptionalContextTest.java`
 
@@ -1835,7 +1856,10 @@ import com.capsuleai.personalcontext.domain.PreferenceValueProblem;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -1952,6 +1976,100 @@ class ReviseOptionalContextServiceTest {
                                 new PreferenceFieldViolation("expectedRevision", PreferenceValueProblem.INVALID_FORMAT)));
     }
 
+    /**
+     * Every combination of omitted, null, the current code and another code, field by field, against a record
+     * that declares both values: each field follows only its own change, and the revision advances exactly when
+     * the resulting values differ (S4-PROF-03).
+     */
+    @Test
+    void everyCombinationOfOmittedNullAndACodeIsAppliedFieldByField() {
+        List<ValueChange<String>> genderChanges = List.of(ValueChange.keep(), ValueChange.clear(),
+                ValueChange.replace("WOMAN"), ValueChange.replace("MAN"));
+        List<ValueChange<String>> bodyShapeChanges = List.of(ValueChange.keep(), ValueChange.clear(),
+                ValueChange.replace("ROUND"), ValueChange.replace("HOURGLASS"));
+        for (ValueChange<String> genderChange : genderChanges) {
+            for (ValueChange<String> bodyShapeChange : bodyShapeChanges) {
+                setUp();
+                revise(new ExpectedRevision.Unset(), ValueChange.replace("WOMAN"), ValueChange.replace("ROUND"));
+                Optional<GenderContext> expectedGender =
+                        expected(Optional.of(GenderContext.WOMAN), genderChange, GenderContext::fromCode);
+                Optional<BodyShape> expectedBodyShape =
+                        expected(Optional.of(BodyShape.ROUND), bodyShapeChange, BodyShape::fromCode);
+                boolean changes = !expectedGender.equals(Optional.of(GenderContext.WOMAN))
+                        || !expectedBodyShape.equals(Optional.of(BodyShape.ROUND));
+                String combination = genderChange + " / " + bodyShapeChange;
+
+                OptionalContextRevision revision = revise(new ExpectedRevision.At(1), genderChange, bodyShapeChange);
+
+                OptionalContextProfile profile = revision.profile().orElseThrow();
+                assertThat(profile.values().genderContext()).as(combination).isEqualTo(expectedGender);
+                assertThat(profile.values().bodyShape()).as(combination).isEqualTo(expectedBodyShape);
+                assertThat(revision.changed()).as(combination).isEqualTo(changes);
+                assertThat(profile.revision()).as(combination).isEqualTo(changes ? 2 : 1);
+                assertThat(optionalContextRepository.writes()).as(combination).isEqualTo(changes ? 2 : 1);
+                assertThat(optionalContextRepository.find(OWNER)).as(combination).contains(profile);
+            }
+        }
+    }
+
+    /** Without a record, a first declaration is created only when some code is submitted; null only is a no-op. */
+    @Test
+    void aFirstDeclarationIsCreatedOnlyWhenACodeIsSubmitted() {
+        List<ValueChange<String>> genderChanges = List.of(ValueChange.keep(), ValueChange.clear(),
+                ValueChange.replace("ANOTHER_GENDER"));
+        List<ValueChange<String>> bodyShapeChanges = List.of(ValueChange.keep(), ValueChange.clear(),
+                ValueChange.replace("INVERTED_TRIANGLE"));
+        for (ValueChange<String> genderChange : genderChanges) {
+            for (ValueChange<String> bodyShapeChange : bodyShapeChanges) {
+                setUp();
+                Optional<GenderContext> expectedGender = expected(Optional.empty(), genderChange, GenderContext::fromCode);
+                Optional<BodyShape> expectedBodyShape = expected(Optional.empty(), bodyShapeChange, BodyShape::fromCode);
+                boolean declares = expectedGender.isPresent() || expectedBodyShape.isPresent();
+                String combination = genderChange + " / " + bodyShapeChange;
+
+                OptionalContextRevision revision = revise(new ExpectedRevision.Unset(), genderChange, bodyShapeChange);
+
+                assertThat(revision.changed()).as(combination).isEqualTo(declares);
+                assertThat(optionalContextRepository.writes()).as(combination).isEqualTo(declares ? 1 : 0);
+                assertThat(revision.profile()).as(combination).isEqualTo(optionalContextRepository.find(OWNER));
+                if (declares) {
+                    OptionalContextProfile created = revision.profile().orElseThrow();
+                    assertThat(created.revision()).as(combination).isEqualTo(OptionalContextProfile.FIRST_REVISION);
+                    assertThat(created.values().genderContext()).as(combination).isEqualTo(expectedGender);
+                    assertThat(created.values().bodyShape()).as(combination).isEqualTo(expectedBodyShape);
+                } else {
+                    assertThat(revision.profile()).as(combination).isEmpty();
+                }
+            }
+        }
+    }
+
+    /** An empty string is not an undocumented way to clear (S4-PROF-03): it is unsupported and changes nothing. */
+    @Test
+    void anEmptyStringIsAnUnsupportedValueNotAClear() {
+        revise(new ExpectedRevision.Unset(), ValueChange.replace("WOMAN"), ValueChange.keep());
+
+        assertThatThrownBy(() -> revise(new ExpectedRevision.At(1), ValueChange.replace(""), ValueChange.keep()))
+                .isInstanceOfSatisfying(OptionalContextValidationException.class, rejected ->
+                        assertThat(rejected.violations()).containsExactly(
+                                new PreferenceFieldViolation("genderContext", PreferenceValueProblem.UNSUPPORTED_VALUE)));
+        OptionalContextProfile current = optionalContextRepository.find(OWNER).orElseThrow();
+        assertThat(current.values().genderContext()).contains(GenderContext.WOMAN);
+        assertThat(current.revision()).isEqualTo(1);
+    }
+
+    /** The specification of one field: omitted keeps, null clears, a code sets. */
+    private static <V> Optional<V> expected(Optional<V> current, ValueChange<String> change,
+                                            Function<String, Optional<V>> fromCode) {
+        if (change instanceof ValueChange.Clear<?>) {
+            return Optional.empty();
+        }
+        if (change instanceof ValueChange.Replace<String> replace) {
+            return Optional.of(fromCode.apply(replace.value()).orElseThrow());
+        }
+        return current;
+    }
+
     private OptionalContextRevision revise(ExpectedRevision expectedRevision, ValueChange<String> genderContext,
                                            ValueChange<String> bodyShape) {
         return reviseOptionalContextService.revise(new ReviseOptionalContextCommand(OWNER, expectedRevision,
@@ -2004,6 +2122,19 @@ class OptionalContextRevisionRequestTest {
                 .isInstanceOf(ExpectedRevision.Unset.class);
         assertThat(command("{\"expectedRevision\":\"3\"}").expectedRevision()).isEqualTo(new ExpectedRevision.At(3));
         assertThat(command("{\"expectedRevision\":3}").expectedRevision())
+                .isInstanceOf(ExpectedRevision.Malformed.class);
+    }
+
+    /** An empty string is a submitted value (the service rejects it); booleans and objects are malformed. */
+    @Test
+    void anEmptyStringIsAValueWhileBooleansAndObjectsAreMalformed() {
+        assertThat(changes("{\"genderContext\":\"\"}").genderContext()).isEqualTo(ValueChange.replace(""));
+        OptionalContextChanges changes = changes("{\"genderContext\":true,\"bodyShape\":{\"code\":\"ROUND\"}}");
+
+        assertThat(changes.genderContext()).isInstanceOf(ValueChange.Malformed.class);
+        assertThat(changes.bodyShape()).isInstanceOf(ValueChange.Malformed.class);
+        assertThat(command("{\"expectedRevision\":\"0\"}").expectedRevision()).isInstanceOf(ExpectedRevision.Malformed.class);
+        assertThat(command("{\"expectedRevision\":\"abc\"}").expectedRevision())
                 .isInstanceOf(ExpectedRevision.Malformed.class);
     }
 
@@ -2144,6 +2275,38 @@ class OptionalContextSchemaIT extends PersonalContextIntegrationTestSupport {
         assertThat(countRows("personal_context.personal_context_optional_context")).isEqualTo(2);
     }
 
+    /**
+     * One record per owner; only the two values are nullable; the update time never precedes the creation time;
+     * and no foreign key ties the record to Identity (AR-04) or to the preferences (S4-PROF-02).
+     */
+    @Test
+    void oneRecordPerOwnerWithOnlyTheValuesNullableOrderedTimesAndNoForeignKey() {
+        assertThat(jdbc.sql("""
+                        SELECT column_name || ':' || data_type || ':' || is_nullable FROM information_schema.columns
+                        WHERE table_schema = 'personal_context' AND table_name = 'personal_context_optional_context'
+                        ORDER BY ordinal_position
+                        """).query(String.class).list())
+                .containsExactly("owner_account_id:uuid:NO", "gender_context:text:YES", "body_shape:text:YES",
+                        "revision:bigint:NO", "created_at:timestamp with time zone:NO",
+                        "updated_at:timestamp with time zone:NO");
+        assertThat(jdbc.sql("""
+                        SELECT count(*) FROM information_schema.table_constraints
+                        WHERE table_schema = 'personal_context' AND table_name = 'personal_context_optional_context'
+                          AND constraint_type = 'FOREIGN KEY'
+                        """).query(Long.class).single()).isZero();
+
+        UUID owner = UUID.randomUUID();
+        insert(owner, "WOMAN", null, 1);
+        assertThatThrownBy(() -> insert(owner, "MAN", null, 1)).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.sql("""
+                        INSERT INTO personal_context.personal_context_optional_context (owner_account_id,
+                            gender_context, body_shape, revision, created_at, updated_at)
+                        VALUES (:owner, NULL, NULL, 1, now(), now() - interval '1 second')
+                        """).param("owner", UUID.randomUUID()).update())
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(countRows("personal_context.personal_context_optional_context")).isOne();
+    }
+
     @Test
     void existingPreferencesSurviveTheUpgradeFromV12() {
         try (IsolatedMigrationDatabase database = IsolatedMigrationDatabase.create(server, jdbc)) {
@@ -2195,7 +2358,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import tools.jackson.databind.json.JsonMapper;
@@ -2205,6 +2372,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -2338,6 +2506,119 @@ class OptionalContextApiIT extends PersonalContextIntegrationTestSupport {
         mockMvc.perform(get(OPTIONAL_CONTEXT)).andExpect(status().isUnauthorized());
         postJson("/api/v1/auth/logout", Map.of(), owner.accessToken()).andExpect(status().is2xxSuccessful());
         viewOptionalContext(owner.accessToken()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void anEmptyFirstChangeAndANoOpWriteNothing() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-noop@example.com");
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", null,
+                "bodyShape", null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value(nullValue()))
+                .andExpect(jsonPath("$.genderContext").value(nullValue()))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+        assertThat(countRows("personal_context.personal_context_optional_context"))
+                .as("an empty first change creates no record").isZero();
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "bodyShape", "ROUND"))
+                .andExpect(status().isOk());
+        String stored = storedState(tokens.accountId());
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "genderContext", null,
+                "bodyShape", "ROUND"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value("1"))
+                .andExpect(jsonPath("$.bodyShape").value("ROUND"));
+        assertThat(storedState(tokens.accountId())).as("a no-op keeps the revision and the update time")
+                .isEqualTo(stored);
+    }
+
+    @Test
+    void clearingBothValuesKeepsTheRevisionLineSoAStaleFirstDeclarationStillConflicts() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-clear-both@example.com");
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "WOMAN",
+                "bodyShape", "RECTANGLE")).andExpect(status().isOk());
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "genderContext", null,
+                "bodyShape", null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value("2"))
+                .andExpect(jsonPath("$.genderContext").value(nullValue()))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+
+        viewOptionalContext(tokens.accessToken())
+                .andExpect(jsonPath("$.revision").value("2"))
+                .andExpect(jsonPath("$.genderContext").value(nullValue()))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+        assertThat(storedState(tokens.accountId())).as("no copy of a cleared value remains").startsWith("2|null|null|");
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "MAN"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("REVISION_CONFLICT"));
+    }
+
+    @Test
+    void malformedValuesAndBodiesAreRejectedAndChangeNothing() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-malformed@example.com");
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "NON_BINARY"))
+                .andExpect(status().isOk());
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "genderContext", 3))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("genderContext"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("UNSUPPORTED_VALUE"));
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "bodyShape", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("bodyShape"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("UNSUPPORTED_VALUE"));
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", 1, "genderContext", "MAN"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("expectedRevision"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("INVALID_FORMAT"));
+        mockMvc.perform(patch(OPTIONAL_CONTEXT)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"expectedRevision\":\"1\",\"genderContext\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
+
+        viewOptionalContext(tokens.accessToken())
+                .andExpect(jsonPath("$.revision").value("1"))
+                .andExpect(jsonPath("$.genderContext").value("NON_BINARY"))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+    }
+
+    /** M7 automated: declared, rejected and conflicting values never reach the application log. */
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void declaredAndRejectedValuesNeverReachTheLog(CapturedOutput output) throws Exception {
+        LoggerFactory.getLogger(OptionalContextApiIT.class).info("optional-context log capture is active");
+        IssuedTokens tokens = registerAndLogIn("optional-log@example.com");
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "NON_BINARY",
+                "bodyShape", "INVERTED_TRIANGLE")).andExpect(status().isOk());
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "genderContext", "agender-typo",
+                "bodyShape", "HOURGLASS")).andExpect(status().isBadRequest());
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "bodyShape", "TRIANGLE"))
+                .andExpect(status().isConflict());
+        viewOptionalContext(tokens.accessToken()).andExpect(status().isOk());
+
+        assertThat(output.getAll())
+                .as("the capture must see this class's own log line, or the check below proves nothing")
+                .contains("optional-context log capture is active")
+                .doesNotContain("NON_BINARY")
+                .doesNotContain("TRIANGLE")
+                .doesNotContain("agender-typo")
+                .doesNotContain("HOURGLASS");
+    }
+
+    /** revision|gender_context|body_shape|updated_at of the owner's stored record. */
+    private String storedState(UUID owner) {
+        return jdbc.sql("""
+                        SELECT revision || '|' || coalesce(gender_context, 'null') || '|' || coalesce(body_shape, 'null')
+                               || '|' || updated_at
+                        FROM personal_context.personal_context_optional_context WHERE owner_account_id = :owner
+                        """)
+                .param("owner", owner).query(String.class).single();
     }
 }
 ```
@@ -2484,11 +2765,179 @@ AFTER:
 
 **Explanation.** The method is renamed because "three tables" is no longer true. The class keeps its 3 tests, so its CI count is unchanged.
 
+### Step T10 — [ADD] `backend/src/test/java/com/capsuleai/personalcontext/adapter/in/web/OptionalContextFailureIT.java`
+
+Added by the review of 2026-11-22. No Personal Context test covered the `503` path, and UC-005 E2/E3 require two things: a read failure is never shown as an empty context, and a known failure keeps the accepted context. The class uses the pattern of `WardrobeFailureIT`: a `@Primary` test repository that wraps the real one and can lose the connection on reads or after a write ran.
+
+```java
+package com.capsuleai.personalcontext.adapter.in.web;
+
+import com.capsuleai.personalcontext.adapter.out.persistence.JdbcOptionalContextRepository;
+import com.capsuleai.personalcontext.application.ports.OptionalContextRepository;
+import com.capsuleai.personalcontext.domain.OptionalContext;
+import com.capsuleai.personalcontext.domain.OptionalContextProfile;
+import com.capsuleai.personalcontext.support.PersonalContextIntegrationTestSupport;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.jdbc.core.simple.JdbcClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * US-PROF-002 known failures through the real API (AC-05; UC-005 E2/E3): an unreachable record is 503, never an
+ * empty context, and a write whose connection is lost after its statement ran is rolled back and reported as not
+ * confirmed, never as saved. Authentication keeps working, because it uses Identity's own repositories.
+ */
+@Import(OptionalContextFailureIT.FailureInjectionConfiguration.class)
+class OptionalContextFailureIT extends PersonalContextIntegrationTestSupport {
+
+    @Autowired
+    private FailingOptionalContextRepository failingOptionalContextRepository;
+
+    @AfterEach
+    void stopFailing() {
+        failingOptionalContextRepository.reset();
+    }
+
+    @Test
+    void anUnreachableRecordIsUnavailableNeverEmpty() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-outage-read@example.com");
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "WOMAN"))
+                .andExpect(status().isOk());
+        failingOptionalContextRepository.failReadsUntilReset();
+
+        viewOptionalContext(tokens.accessToken())
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.revision").doesNotExist())
+                .andExpect(jsonPath("$.genderContext").doesNotExist());
+    }
+
+    @Test
+    void aRevisionWhoseConnectionIsLostIsRolledBackAndAppliedOnceOnRetry() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-outage-revision@example.com");
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "genderContext", "WOMAN"))
+                .andExpect(status().isOk());
+        failingOptionalContextRepository.failNextWriteAfterItRan();
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "bodyShape", "ROUND"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("TEMPORARILY_UNAVAILABLE"));
+
+        viewOptionalContext(tokens.accessToken())
+                .andExpect(jsonPath("$.revision").value("1"))
+                .andExpect(jsonPath("$.genderContext").value("WOMAN"))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", "1", "bodyShape", "ROUND"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value("2"))
+                .andExpect(jsonPath("$.bodyShape").value("ROUND"));
+    }
+
+    @Test
+    void aFirstDeclarationWhoseConnectionIsLostCreatesNothing() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("optional-outage-first@example.com");
+        failingOptionalContextRepository.failNextWriteAfterItRan();
+
+        reviseOptionalContext(tokens.accessToken(), json("expectedRevision", null, "bodyShape", "HOURGLASS"))
+                .andExpect(status().isServiceUnavailable());
+
+        assertThat(countRows("personal_context.personal_context_optional_context")).isZero();
+        viewOptionalContext(tokens.accessToken())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.revision").value(nullValue()))
+                .andExpect(jsonPath("$.bodyShape").value(nullValue()));
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class FailureInjectionConfiguration {
+
+        @Bean
+        @Primary
+        FailingOptionalContextRepository failingOptionalContextRepository(JdbcClient jdbcClient) {
+            return new FailingOptionalContextRepository(new JdbcOptionalContextRepository(jdbcClient));
+        }
+    }
+
+    /** TEST-ONLY. The real repository, which can be told to lose the connection on reads or after a write ran. */
+    static final class FailingOptionalContextRepository implements OptionalContextRepository {
+
+        private final OptionalContextRepository delegate;
+        private final AtomicBoolean failReads = new AtomicBoolean();
+        private final AtomicBoolean failAfterWrite = new AtomicBoolean();
+
+        FailingOptionalContextRepository(OptionalContextRepository delegate) {
+            this.delegate = delegate;
+        }
+
+        void failReadsUntilReset() {
+            failReads.set(true);
+        }
+
+        void failNextWriteAfterItRan() {
+            failAfterWrite.set(true);
+        }
+
+        void reset() {
+            failReads.set(false);
+            failAfterWrite.set(false);
+        }
+
+        @Override
+        public Optional<OptionalContextProfile> find(UUID ownerAccountId) {
+            if (failReads.get()) {
+                throw new DataAccessResourceFailureException("Simulated loss of the database connection");
+            }
+            return delegate.find(ownerAccountId);
+        }
+
+        @Override
+        public boolean createIfAbsent(OptionalContextProfile profile) {
+            boolean created = delegate.createIfAbsent(profile);
+            failIfRequested();
+            return created;
+        }
+
+        @Override
+        public boolean reviseIfCurrentAt(UUID ownerAccountId, long expectedRevision, OptionalContext values,
+                                         Instant updatedAt) {
+            boolean revised = delegate.reviseIfCurrentAt(ownerAccountId, expectedRevision, values, updatedAt);
+            failIfRequested();
+            return revised;
+        }
+
+        private void failIfRequested() {
+            if (failAfterWrite.getAndSet(false)) {
+                throw new DataAccessResourceFailureException("Simulated loss of the database connection after the write");
+            }
+        }
+    }
+}
+```
+
+**Explanation.**
+
+- `@Import` gives this class its own Spring context, which costs one extra application start.
+- CI runs the class, because Failsafe runs every `*IT`, but it is not one of the 123 required reports of P22. Adding it as a required report is a separate decision.
+
 Run:
 
 ```powershell
 .\mvnw.cmd -q "-Dtest=OptionalContextTest,ReviseOptionalContextServiceTest,OptionalContextRevisionRequestTest" test
-.\mvnw.cmd "-Dtest=HarnessSmokeTest" "-Dit.test=OptionalContextSchemaIT,OptionalContextApiIT,ConcurrentOptionalContextIT,PreferencesApiIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT" verify
+.\mvnw.cmd "-Dtest=HarnessSmokeTest" "-Dit.test=OptionalContextSchemaIT,OptionalContextApiIT,OptionalContextFailureIT,ConcurrentOptionalContextIT,PreferencesApiIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT" verify
 ```
 
 ## 14. Manual Verification
@@ -2517,18 +2966,33 @@ Check 'M6 preferences untouched (still undeclared)' ($null -eq $prefs.Json.revis
 
 **M7. Privacy check.** Search the application log of the run for the codes used (`NON_BINARY`, `ROUND`). Expect no occurrence.
 
+**Results (run on 2026-11-22).**
+
+- **Setup.** The script above, with extra checks X1–X7, ran against a throwaway stack: its own `postgres:17.11-bookworm` container and the built jar, with generated credentials. It did not use the developer's `.env`.
+- **Outcome.** All 24 checks passed.
+  - M1–M6, plus a check that the cleared row is stored with both columns NULL.
+  - X1: a stale revision and a stale first declaration both give `409`.
+  - X2: clearing an absent value is a no-op; the row is unchanged.
+  - X3: a missing `expectedRevision` gives `400 REQUIRED`.
+  - X4: another account sees absent context.
+  - X5: an empty first change creates nothing.
+  - X6: all eight garment categories can be created with declared context.
+  - X7: no token, or a logged-out session, gives `401` and changes nothing.
+  - Flyway records V13.
+- **M7.** The application log (49 lines) contained none of the submitted codes: `NON_BINARY`, `ROUND`, `TRIANGLE`, `HOURGLASS` and `woman`. T7 `declaredAndRejectedValuesNeverReachTheLog` repeats this check automatically.
+
 ## 15. Acceptance Criteria and Requirements-to-Test Matrices
 
 ### 15.1 Acceptance criteria to evidence
 
-| AC | Evidence (planned) | Remaining |
+| AC | Evidence (run in the repository on 2026-11-22) | Remaining |
 | --- | --- | --- |
-| AC-01 Omit without penalty | T1 `absenceIsTheDefault…`; T7 `anAccountThatDeclaredNothing…`, `everyGarmentCategoryStaysCreatable…`; M1 | Client skip flow |
-| AC-02 Supply or revise optionally | T3 `aFirstDeclaration…`, `anOmittedFieldIsKept…`; T7 `optionalContextCanBeDeclared…`; M2–M3 | **The values are delegated defaults (OPEN-S4-16); an inclusive-representation review is advised** |
-| AC-03 Remove current input | T3 `clearingEverything…`; T7 (`gender_context IS NULL` after clearing); M4 | "Stops affecting future personalization": no personalization consumer exists. Recorded gap. |
+| AC-01 Omit without penalty | T1 `absenceIsTheDefault…`; T3 `aFirstDeclarationIsCreatedOnlyWhenACodeIsSubmitted`; T7 `anAccountThatDeclaredNothing…`, `anEmptyFirstChangeAndANoOpWriteNothing`, `everyGarmentCategoryStaysCreatable…`; M1, X5 | Client skip flow |
+| AC-02 Supply or revise optionally | T3 `aFirstDeclaration…`, `anOmittedFieldIsKept…`, `everyCombinationOfOmittedNullAndACodeIsAppliedFieldByField`; T4; T7 `optionalContextCanBeDeclared…`, `malformedValuesAndBodies…`; M2–M3, M5 | **The values are delegated defaults (OPEN-S4-16); an inclusive-representation review is advised** |
+| AC-03 Remove current input | T3 `clearingEverything…`; T6 (nullable values only); T7 (`gender_context IS NULL` after clearing), `clearingBothValuesKeepsTheRevisionLine…`; M4 | "Stops affecting future personalization": no personalization consumer exists. Recorded gap. |
 | AC-04 Keep influence soft | T7 `everyGarmentCategoryStaysCreatable…` (no gate) | **Soft influence on real rankings is not demonstrable; no ranking exists** |
-| AC-05 Cancelled or uncertain revision | T3 `aStaleRevision…`; T7 `aStaleRevision…`, `noOtherSessionOrAccount…`; T8 | Client uncertain-outcome review |
-| AC-06 Preserve purpose | T7 `optionalContextNeverChangesPreferencesOrThePublishedContext`, `unsupportedValues…` (no echo); M7 | Privacy review |
+| AC-05 Cancelled or uncertain revision | T3 `aStaleRevision…`; T7 `aStaleRevision…`, `noOtherSessionOrAccount…`; T8; T10 (`503`, rollback, one application on retry); M5, X1, X7 | Client uncertain-outcome review |
+| AC-06 Preserve purpose | T7 `optionalContextNeverChangesPreferencesOrThePublishedContext`, `unsupportedValues…` (no echo), `declaredAndRejectedValuesNeverReachTheLog`; M7 | Privacy review |
 
 ### 15.2 Requirements to tests
 
@@ -2544,10 +3008,10 @@ Check 'M6 preferences untouched (still undeclared)' ($null -eq $prefs.Json.revis
 
 ## 16. Definition of Done
 
-- [ ] P1–P22 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `CurrentPersonalContextIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 123 required reports with no failure or skip.
+- [x] P1–P22 and T1–T10 applied (2026-11-22; the repository files equal this guide's steps). `./mvnw -o clean verify` passed in the repository on 2026-11-22: 651 unit and 413 integration tests, none failed, errored or was skipped, including `PreferencesApiIT`, `CurrentPersonalContextIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` finds 123 required reports with no failure or skip. (Locally 122 of 123; `HeifDecodingIT` needs libheif, which CI installs.)
 - [ ] **Inclusive-representation and privacy review of `GenderContextCode` and `BodyShapeCode` and their client labels (OPEN-S4-16).** Any change goes through a new migration plus the enum and OpenAPI.
-- [ ] The AC-03/AC-04 consumer gap is recorded as untriggered or outstanding; it is never reported as passing.
+- [x] The AC-03/AC-04 consumer gap is recorded as outstanding (§15.1); it is not reported as passing.
 - [ ] Client evidence: skip, initial and later entry, clear, cancel, uncertain review, account switch, Vietnamese and accessibility.
 
 ## 17. Troubleshooting
@@ -2563,10 +3027,10 @@ Check 'M6 preferences untouched (still undeclared)' ($null -eq $prefs.Json.revis
 
 ## 18. Final Checklist
 
-- [ ] V13 touches only `personal_context`, with CHECKs on both vocabularies.
-- [ ] Separate revision; preferences are never read or written by the optional-context service.
-- [ ] Omitted keeps, null clears, a code sets; an empty first operation creates nothing; a no-op keeps the revision.
-- [ ] Exact codes; unsupported values are rejected without being echoed.
-- [ ] No value in logs, published APIs, providers or other modules.
-- [ ] Every vocabulary mention says "delegated default, review advised".
-- [ ] OpenAPI 0.15.0; 6 CI entries.
+- [x] V13 touches only `personal_context`, with CHECKs on both vocabularies.
+- [x] Separate revision; preferences are never read or written by the optional-context service.
+- [x] Omitted keeps, null clears, a code sets; an empty first operation creates nothing; a no-op keeps the revision.
+- [x] Exact codes; unsupported values are rejected without being echoed.
+- [x] No value in logs, published APIs, providers or other modules.
+- [x] Every vocabulary mention says "delegated default, review advised".
+- [x] OpenAPI 0.15.0; 6 CI entries.

@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22) and US-WAR-003 (OPEN-S4-11–15, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), US-WAR-003 (OPEN-S4-11–15, since 2026-11-22) and US-PROF-002 (OPEN-S4-16–17, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -67,8 +67,8 @@ Each entry has these fields:
 | [OPEN-S4-13](#open-s4-13--category-and-color-filters-and-the-statement-catalogue) | WAR-003 | S4-WAR-02 | Repeated `category` and `color` parameters: OR within a group, AND across groups. A catalogue of 14 complete statements for the 7 restricted shapes. | Delegated default | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending |
 | [OPEN-S4-14](#open-s4-14--criteria-bound-cursor-and-result-states) | WAR-003 | S4-WAR-03 | `v2` cursor carrying a criteria fingerprint; a mismatch gives `CONDITIONS_CHANGED`. `resultState` is computed in one read snapshot. | Delegated default | Implemented 2026-11-22 (US-WAR-003); tests pass locally | Pending |
 | [OPEN-S4-15](#open-s4-15--search-indexing-evidence) | WAR-003 | S4-WAR-04 | No new index in Sprint 4. Documented `EXPLAIN` procedure and the triggers for adding one. | Delegated default | Measured 2026-11-22: no index; the child-set comparison changed (US-WAR-003 §14) | Pending (repeat on deployed data) |
-| [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values**, defined canonically in SRS §4.10.1 since 2026-11-17. | Delegated default | Pending | **Pending (inclusive-representation review)** |
-| [OPEN-S4-17](#open-s4-17--optional-context-resource-persistence-and-clearing) | PROF-002 | S4-PROF-02/03/04 | `/optional-context` resource, V13 table, presence-aware PATCH. No published API. | Delegated default | Pending | Pending |
+| [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values**, defined canonically in SRS §4.10.1 since 2026-11-17. | Delegated default | Implemented 2026-11-22 (US-PROF-002); tests pass locally | **Pending (inclusive-representation review; the values are not PO-approved)** |
+| [OPEN-S4-17](#open-s4-17--optional-context-resource-persistence-and-clearing) | PROF-002 | S4-PROF-02/03/04 | `/optional-context` resource, V13 table, presence-aware PATCH. No published API. | Delegated default | Implemented 2026-11-22 (US-PROF-002); tests pass locally | Pending (CI run; client evidence) |
 | [OPEN-S4-18](#open-s4-18--location-representation-precision-and-manual-resolution) | CTX-001 | S4-CTX-01 | 2-decimal point rounded by the server; `DEVICE` or `MANUAL`; a label. The client resolves cities from a bundled reference. | Delegated default | Pending | Pending (client, privacy) |
 | [OPEN-S4-19](#open-s4-19--location-revision-clearing-and-evidence-binding) | CTX-001 | S4-CTX-02 | V14 tables. PATCH `selection`. Weather is acquired after commit, and evidence is published only while the location revision is still current. | Delegated default | Pending | Pending |
 | [OPEN-S4-20](#open-s4-20--open-meteo-request-and-semantic-mapping) | CTX-001 | S4-CTX-03 | Open-Meteo `current=`, `timeformat=unixtime`, WMO code mapped to a condition, `MODELLED` basis | Delegated default | Pending | **Pending (terms, live request)** |
@@ -950,7 +950,7 @@ Scratch evidence of 2026-11-17: the six guides, including this refinement, were 
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-PROF-01.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-PROF-002; `clean verify` and the manual checks M1–M7 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - **`VERIFICATION PENDING`: an inclusive-representation and privacy review of the values and their client labels is strongly advised before release.**
 
 **G. Implementation steps.** US-PROF-002:
@@ -1002,7 +1002,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-PROF-02/03/04.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-22** (US-PROF-002; `clean verify` and the manual checks M1–M7 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-PROF-002:

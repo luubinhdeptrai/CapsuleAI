@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.14.0
+  version: 0.15.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -22,6 +22,7 @@ info:
       - US-GAR-005: Remove a garment while preserving minimal history
       - US-GAR-006: Attach a photo to an existing imageless garment
       - US-WAR-003: Find owned garments through search and filters
+      - US-PROF-002: Control optional body and gender context
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -63,8 +64,12 @@ info:
 
     This specification does not introduce endpoints for
     session listing, all-device logout, replacing or removing a
-    garment's photo, body or gender profiles, location, or
-    public profiles.
+    garment's photo, location, or public profiles.
+
+    Optional context (US-PROF-002) is the account's own,
+    optional, self-declared gender and body-shape context. It is
+    never required, never inferred, never a measurement and never
+    restricts garments; null means not provided.
 
     A staged photo can be attached to an existing garment that
     has no photo (US-GAR-006) through an explicitly
@@ -101,7 +106,7 @@ tags:
   - name: Wardrobe
     description: The authenticated user's own confirmed garments
   - name: PersonalContext
-    description: The authenticated user's own declared preferences
+    description: The authenticated user's own declared preferences and optional context
 
 # Every endpoint requires bearer authentication unless it
 # explicitly overrides this requirement with security: [].
@@ -1499,6 +1504,80 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Preferences"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/personal-context/optional-context:
+    get:
+      tags:
+        - PersonalContext
+      operationId: viewOptionalContext
+      summary: The account's optional gender and body-shape context
+      description: |
+        US-PROF-002 AC-01/03 (FR-PROF-005–007, BRULE-PROF-001). Always
+        200: an account that declared nothing has every field null.
+        Absent context is not a default and is never inferred.
+      responses:
+        "200":
+          description: The current optional context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptionalContext"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    patch:
+      tags:
+        - PersonalContext
+      operationId: reviseOptionalContext
+      summary: Declare, revise or clear optional gender and body-shape context
+      description: |
+        US-PROF-002 (approved S4-PROF-01/02/03/04; values selected
+        under OPEN-S4-16). A separate record from preferences, with
+        its own revision.
+
+        - An omitted field keeps its value; null clears it; a code
+          sets it. Codes are exact.
+        - expectedRevision is required: null for the first
+          declaration (only one can be created), otherwise the
+          revision last read. A mismatch is 409 REVISION_CONFLICT.
+        - A change that would change nothing returns 200 with the
+          same revision; an empty first change creates nothing.
+
+        The values never restrict garment categories or validity
+        and are not shared with other capabilities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OptionalContextRevisionRequest"
+            examples:
+              firstDeclaration:
+                summary: First declaration of one field
+                value:
+                  expectedRevision: null
+                  genderContext: "NON_BINARY"
+              clear:
+                summary: Clear the body shape, keep the gender context
+                value:
+                  expectedRevision: "2"
+                  bodyShape: null
+      responses:
+        "200":
+          description: The change was accepted (or changed nothing); the optional context as it now is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptionalContext"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2968,6 +3047,70 @@ components:
           type: string
           format: uuid
           description: The account's READY staged photo the user reviewed.
+
+    OptionalContextRevisionRequest:
+      type: object
+      description: |
+        A presence-aware change of the account's optional context
+        (US-PROF-002). There is no owner field.
+      required:
+        - expectedRevision
+      properties:
+        expectedRevision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: null for the first declaration; otherwise the revision last read (opaque).
+        genderContext:
+          anyOf:
+            - $ref: "#/components/schemas/GenderContextCode"
+            - type: "null"
+        bodyShape:
+          anyOf:
+            - $ref: "#/components/schemas/BodyShapeCode"
+            - type: "null"
+
+    OptionalContext:
+      type: object
+      description: |
+        The account's optional context. Every field is always present;
+        revision and updatedAt are null while nothing was ever declared;
+        a value is null when not provided or cleared.
+      required:
+        - revision
+        - genderContext
+        - bodyShape
+        - updatedAt
+      properties:
+        revision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]*$"
+        genderContext:
+          anyOf:
+            - $ref: "#/components/schemas/GenderContextCode"
+            - type: "null"
+        bodyShape:
+          anyOf:
+            - $ref: "#/components/schemas/BodyShapeCode"
+            - type: "null"
+        updatedAt:
+          type: [string, "null"]
+          format: date-time
+
+    GenderContextCode:
+      type: string
+      description: |
+        Optional self-declared gender context (values selected under
+        OPEN-S4-16; inclusive-representation review pending).
+        ANOTHER_GENDER means a gender not listed; leave the field null
+        to not provide it.
+      enum: [WOMAN, MAN, NON_BINARY, ANOTHER_GENDER]
+
+    BodyShapeCode:
+      type: string
+      description: |
+        Optional self-declared body shape as a neutral geometric
+        silhouette (values selected under OPEN-S4-16). No measurement.
+      enum: [RECTANGLE, TRIANGLE, INVERTED_TRIANGLE, HOURGLASS, ROUND]
 
     FieldError:
       type: object

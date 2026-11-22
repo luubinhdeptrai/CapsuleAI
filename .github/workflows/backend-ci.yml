@@ -172,6 +172,12 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.out.persistence.JdbcWardrobeSearchRepositoryIT.xml' = 8
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.SearchWardrobeApiIT.xml' = 9
             'failsafe-reports/TEST-com.capsuleai.wardrobe.adapter.in.web.SearchWardrobeFailureIT.xml' = 2
+            'surefire-reports/TEST-com.capsuleai.personalcontext.domain.OptionalContextTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.personalcontext.application.ReviseOptionalContextServiceTest.xml' = 8
+            'surefire-reports/TEST-com.capsuleai.personalcontext.adapter.in.web.OptionalContextRevisionRequestTest.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.out.persistence.OptionalContextSchemaIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.in.web.OptionalContextApiIT.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.application.ConcurrentOptionalContextIT.xml' = 3
           }
 
           foreach ($entry in $required.GetEnumerator()) {
