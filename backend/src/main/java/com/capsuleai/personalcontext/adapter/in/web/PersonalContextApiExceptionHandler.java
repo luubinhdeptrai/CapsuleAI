@@ -1,5 +1,7 @@
 package com.capsuleai.personalcontext.adapter.in.web;
 
+import com.capsuleai.personalcontext.application.OptionalContextRevisionConflictException;
+import com.capsuleai.personalcontext.application.OptionalContextValidationException;
 import com.capsuleai.personalcontext.application.PreferenceFieldViolation;
 import com.capsuleai.personalcontext.application.PreferencesRevisionConflictException;
 import com.capsuleai.personalcontext.application.PreferencesValidationException;
@@ -45,6 +47,22 @@ public class PersonalContextApiExceptionHandler {
                         + "review the current choices and submit again."));
     }
 
+    /** US-PROF-002: the same body shape as preferences; no submitted value is echoed. */
+    @ExceptionHandler(OptionalContextValidationException.class)
+    public ResponseEntity<ProblemDetail> handleOptionalContextValidation(OptionalContextValidationException exception) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED",
+                "Some choices are not available. Correct them and submit again; nothing was saved.");
+        problem.setProperty("fieldErrors", fieldErrors(exception.violations()));
+        return respond(problem);
+    }
+
+    @ExceptionHandler(OptionalContextRevisionConflictException.class)
+    public ResponseEntity<ProblemDetail> handleOptionalContextConflict(OptionalContextRevisionConflictException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
+                "Your optional profile information changed after you opened it, so this change was not applied. "
+                        + "Reload it, review it and submit again."));
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> handleUnreadableBody(HttpMessageNotReadableException exception) {
         return respond(problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST",
@@ -79,7 +97,7 @@ public class PersonalContextApiExceptionHandler {
 
     private static ResponseEntity<ProblemDetail> outcomeNotConfirmed() {
         return respond(problem(HttpStatus.SERVICE_UNAVAILABLE, "TEMPORARILY_UNAVAILABLE",
-                "Your preferences could not be reached, so the outcome is not confirmed. Reload them before "
+                "Your personal context could not be reached, so the outcome is not confirmed. Reload it before "
                         + "retrying; a change repeated with the same expectedRevision is never applied twice."));
     }
 

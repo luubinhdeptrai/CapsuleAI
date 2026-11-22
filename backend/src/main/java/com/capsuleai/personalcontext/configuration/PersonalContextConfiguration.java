@@ -1,11 +1,15 @@
 package com.capsuleai.personalcontext.configuration;
 
+import com.capsuleai.personalcontext.adapter.out.persistence.JdbcOptionalContextRepository;
 import com.capsuleai.personalcontext.adapter.out.persistence.JdbcPreferenceProfileRepository;
 import com.capsuleai.personalcontext.adapter.out.persistence.SpringPersonalContextTransactions;
 import com.capsuleai.personalcontext.api.CurrentPersonalContext;
 import com.capsuleai.personalcontext.application.CurrentPersonalContextService;
+import com.capsuleai.personalcontext.application.ReviseOptionalContextService;
 import com.capsuleai.personalcontext.application.RevisePreferencesService;
+import com.capsuleai.personalcontext.application.ViewOptionalContextService;
 import com.capsuleai.personalcontext.application.ViewPreferencesService;
+import com.capsuleai.personalcontext.application.ports.OptionalContextRepository;
 import com.capsuleai.personalcontext.application.ports.PersonalContextTransactions;
 import com.capsuleai.personalcontext.application.ports.PreferenceProfileRepository;
 import java.time.Clock;
@@ -45,5 +49,23 @@ public class PersonalContextConfiguration {
     @Bean
     CurrentPersonalContext currentPersonalContext(PreferenceProfileRepository profiles) {
         return new CurrentPersonalContextService(profiles);
+    }
+
+    /** US-PROF-002: optional context, a separately revisioned record (S4-PROF-02). Not published (S4-PROF-04). */
+    @Bean
+    OptionalContextRepository optionalContextRepository(JdbcClient jdbcClient) {
+        return new JdbcOptionalContextRepository(jdbcClient);
+    }
+
+    @Bean
+    ViewOptionalContextService viewOptionalContextService(OptionalContextRepository optionalContextRepository) {
+        return new ViewOptionalContextService(optionalContextRepository);
+    }
+
+    @Bean
+    ReviseOptionalContextService reviseOptionalContextService(OptionalContextRepository optionalContextRepository,
+                                                              PersonalContextTransactions personalContextTransactions,
+                                                              Clock clock) {
+        return new ReviseOptionalContextService(optionalContextRepository, personalContextTransactions, clock);
     }
 }
