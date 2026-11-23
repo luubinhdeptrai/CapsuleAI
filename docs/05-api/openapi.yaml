@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.16.0
+  version: 0.17.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -24,6 +24,7 @@ info:
       - US-WAR-003: Find owned garments through search and filters
       - US-PROF-002: Control optional body and gender context
       - US-CTX-001: Choose environmental context with safe fallback
+      - US-BULK-001: Review and confirm a bulk garment-photo import
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -66,6 +67,15 @@ info:
     This specification does not introduce endpoints for
     session listing, all-device logout, replacing or removing a
     garment's photo, or public profiles.
+
+    Bulk import (US-BULK-001) queues several selected photos as
+    one batch of server-identified items. Each photo is staged
+    through the photo-upload endpoint, linked to its item,
+    reviewed and explicitly confirmed one item at a time; only a
+    confirmed item becomes a garment. Items succeed, fail or are
+    cancelled independently, and a stop cancels every item that
+    was not yet accepted. Limits: 20 items per batch, 3 active
+    batches, a 7-day batch lifetime.
 
     Location context (US-CTX-001) is the account's one current
     selection, rounded to two decimals, and the weather acquired
@@ -1438,6 +1448,305 @@ paths:
         "503":
           $ref: "#/components/responses/Unavailable"
 
+  /api/v1/wardrobe/bulk-imports:
+    post:
+      tags:
+        - Wardrobe
+      operationId: startBulkImport
+      summary: Start an import batch for several selected photos
+      description: |
+        US-BULK-001 (approved S4-BULK-01 to S4-BULK-07; limits are
+        delegated defaults, OPEN-S4-25).
+
+        Creates a batch of itemCount items, each with a stable id
+        and the status AWAITING_PHOTO. Nothing is owned: a garment
+        exists only after an item is explicitly confirmed.
+
+        - 201: started. 200: the same Idempotency-Key started this
+          batch earlier; it is returned in its current state.
+        - 400 VALIDATION_FAILED: a missing or malformed key, or an
+          itemCount that is missing or not a whole number from 1 to
+          20.
+        - 409 BULK_IMPORT_LIMIT_REACHED: 3 batches are already
+          active (open and unexpired).
+        - 422 IDEMPOTENCY_KEY_REUSED: the key started a batch with
+          another itemCount.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            A UUID the client generates once per intended import and
+            repeats unchanged on every retry of it.
+          schema:
+            type: string
+            format: uuid
+          example: "0d9b7c4e-2f1a-4b6c-9e8d-7a6b5c4d3e2f"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportCreationRequest"
+            example:
+              itemCount: 3
+      responses:
+        "201":
+          description: The batch was started by this request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "200":
+          description: The batch this Idempotency-Key started earlier, in its current state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "400":
+          $ref: "#/components/responses/BulkImportRejected"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/BulkImportLimitReached"
+        "422":
+          $ref: "#/components/responses/IdempotencyKeyReused"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    get:
+      tags:
+        - Wardrobe
+      operationId: listActiveBulkImports
+      summary: The account's active import batches, for resuming
+      description: |
+        US-BULK-001 (OPEN-S4-30). Open, unexpired batches, newest
+        first, each with every item's outcome. Stopped and expired
+        batches stay readable by id.
+      responses:
+        "200":
+          description: The active batches (possibly none).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImportList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/bulk-imports/{batchId}:
+    get:
+      tags:
+        - Wardrobe
+      operationId: viewBulkImport
+      summary: One import batch with every item's own outcome
+      description: |
+        US-BULK-001 AC-02/AC-05. The current status of the batch
+        (OPEN, STOPPED or EXPIRED) and of each item. Use it to
+        review the outcome after an interrupted response.
+      parameters:
+        - $ref: "#/components/parameters/BulkImportBatchId"
+      responses:
+        "200":
+          description: The batch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/BulkImportNotFound"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/bulk-imports/{batchId}/items/{itemId}/photo:
+    post:
+      tags:
+        - Wardrobe
+      operationId: linkBulkImportItemPhoto
+      summary: Link a staged photo to one item
+      description: |
+        US-BULK-001 (OPEN-S4-30). Links one of the account's READY,
+        unexpired staged photos to an unfinished item, which becomes
+        REVIEWABLE. A photo linked before is replaced and cancelled.
+        Linking the photo the item already has changes nothing.
+
+        - 409 PHOTO_UPLOAD_NOT_USABLE: the photo is not READY, has
+          expired or is linked to another item.
+        - 409 BULK_IMPORT_CLOSED: the batch is stopped or expired, or
+          the item is accepted or cancelled.
+        - 409 REVISION_CONFLICT: the item changed after review.
+      parameters:
+        - $ref: "#/components/parameters/BulkImportBatchId"
+        - $ref: "#/components/parameters/BulkImportItemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportPhotoRequest"
+            example:
+              expectedRevision: "1"
+              photoUploadId: "7c2e4b1a-9d3f-4e6a-8b5c-0a1b2c3d4e5f"
+      responses:
+        "200":
+          description: The batch after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "400":
+          $ref: "#/components/responses/BulkImportRejected"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/BulkImportTargetNotFound"
+        "409":
+          $ref: "#/components/responses/BulkImportItemConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/bulk-imports/{batchId}/items/{itemId}/acceptance:
+    post:
+      tags:
+        - Wardrobe
+      operationId: acceptBulkImportItem
+      summary: Confirm one reviewed item as a garment
+      description: |
+        US-BULK-001 AC-03/AC-04/AC-06 (S4-BULK-04/05). Confirms the
+        reviewed values of one REVIEWABLE item: the same 13
+        properties and rules as a single garment creation. In one
+        transaction the garment is created with the item's linked
+        photo attached and the item becomes ACCEPTED. Other items
+        are never affected.
+
+        Confirming the same values again after a lost response
+        returns the batch with the same garment; nothing is created
+        twice, even after the garment was removed (garmentCurrent
+        false).
+
+        - 409 BULK_IMPORT_ITEM_NOT_READY: no photo is linked yet.
+        - 409 PHOTO_UPLOAD_NOT_USABLE: the linked photo can no longer
+          be used (photoState EXPIRED); link a photo again.
+        - 409 BULK_IMPORT_CLOSED: the batch is stopped or expired,
+          the item was cancelled, or it was accepted with other
+          values.
+        - 409 REVISION_CONFLICT: the item changed after review.
+      parameters:
+        - $ref: "#/components/parameters/BulkImportBatchId"
+        - $ref: "#/components/parameters/BulkImportItemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportItemAcceptanceRequest"
+            example:
+              expectedRevision: "2"
+              confirmed: true
+              category: "TOPS"
+              color: "NAVY"
+              materials:
+                - "COTTON"
+              styles:
+                - "CASUAL"
+              brand: "Uniqlo"
+      responses:
+        "200":
+          description: The batch after the confirmation (or after an identical earlier one).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "400":
+          $ref: "#/components/responses/BulkImportRejected"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/BulkImportNotFound"
+        "409":
+          $ref: "#/components/responses/BulkImportItemConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/bulk-imports/{batchId}/items/{itemId}/cancellation:
+    post:
+      tags:
+        - Wardrobe
+      operationId: cancelBulkImportItem
+      summary: Cancel one item that was not accepted
+      description: |
+        US-BULK-001 AC-07. The item becomes CANCELED and its staged
+        photo is discarded. Cancelling a cancelled item changes
+        nothing. An accepted item is never cancelled
+        (409 BULK_IMPORT_CLOSED).
+      parameters:
+        - $ref: "#/components/parameters/BulkImportBatchId"
+        - $ref: "#/components/parameters/BulkImportItemId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportItemCancellationRequest"
+            example:
+              expectedRevision: "2"
+      responses:
+        "200":
+          description: The batch after the cancellation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "400":
+          $ref: "#/components/responses/BulkImportRejected"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/BulkImportNotFound"
+        "409":
+          $ref: "#/components/responses/BulkImportItemConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/wardrobe/bulk-imports/{batchId}/stop:
+    post:
+      tags:
+        - Wardrobe
+      operationId: stopBulkImport
+      summary: Stop the remaining work of an import batch
+      description: |
+        US-BULK-001 (S4-BULK-07). After explicit confirmation, every
+        item that was not accepted is cancelled with its staged
+        photo, accepted items stay accepted, and the batch takes no
+        new item work. Stopping again changes nothing.
+      parameters:
+        - $ref: "#/components/parameters/BulkImportBatchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportStopRequest"
+            example:
+              confirmed: true
+      responses:
+        "200":
+          description: The stopped batch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImport"
+        "400":
+          $ref: "#/components/responses/BulkImportRejected"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/BulkImportNotFound"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
   /api/v1/personal-context/preferences:
     get:
       tags:
@@ -1697,6 +2006,24 @@ components:
         type: string
         format: uuid
       example: "6f1c2a8e-9b3d-4e5f-a1b2-c3d4e5f60718"
+
+    BulkImportBatchId:
+      name: batchId
+      in: path
+      required: true
+      description: The id of one of the account's import batches.
+      schema:
+        type: string
+        format: uuid
+
+    BulkImportItemId:
+      name: itemId
+      in: path
+      required: true
+      description: The id of one item of that batch.
+      schema:
+        type: string
+        format: uuid
 
   securitySchemes:
     bearerAuth:
@@ -3356,6 +3683,234 @@ components:
           type: string
           description: Provider attribution to display with the weather.
 
+    BulkImportCreationRequest:
+      type: object
+      description: How many photos the user selected for one batch.
+      required:
+        - itemCount
+      properties:
+        itemCount:
+          type: integer
+          minimum: 1
+          maximum: 20
+          description: |
+            A whole number from 1 to the configured limit (20).
+            Text or a fraction is UNSUPPORTED_VALUE.
+
+    BulkImportPhotoRequest:
+      type: object
+      required:
+        - expectedRevision
+        - photoUploadId
+      properties:
+        expectedRevision:
+          type: string
+          description: The item revision the user reviewed.
+        photoUploadId:
+          type: string
+          format: uuid
+          description: One of the account's READY staged photos.
+
+    BulkImportItemAcceptanceRequest:
+      type: object
+      description: |
+        The explicit confirmation of one item with its reviewed
+        values, in the same shape and with the same rules as
+        GarmentCreationRequest. There is no photo field: the item's
+        linked photo is attached.
+      required:
+        - expectedRevision
+        - confirmed
+        - category
+        - color
+      properties:
+        expectedRevision:
+          type: string
+          description: The item revision the user reviewed.
+        confirmed:
+          type: boolean
+          description: Must be true. false or missing creates nothing.
+        category:
+          $ref: "#/components/schemas/GarmentCategoryCode"
+        subtype:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSubtypeCode"
+            - type: "null"
+        color:
+          $ref: "#/components/schemas/GarmentColorCode"
+        materials:
+          type: array
+          description: Zero or more Materials; repeated values collapse into one.
+          items:
+            $ref: "#/components/schemas/GarmentMaterialCode"
+        pattern:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentPatternCode"
+            - type: "null"
+        styles:
+          type: array
+          description: Zero or more Styles; repeated values collapse into one.
+          items:
+            $ref: "#/components/schemas/GarmentStyleCode"
+        fit:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentFitCode"
+            - type: "null"
+        neckline:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentNecklineCode"
+            - type: "null"
+        sleeveLength:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSleeveLengthCode"
+            - type: "null"
+        length:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentLengthCode"
+            - type: "null"
+        silhouette:
+          anyOf:
+            - $ref: "#/components/schemas/GarmentSilhouetteCode"
+            - type: "null"
+        brand:
+          type: [string, "null"]
+          maxLength: 100
+          description: Kept exactly as entered; at most 100 Unicode code points.
+        price:
+          anyOf:
+            - $ref: "#/components/schemas/Price"
+            - type: "null"
+
+    BulkImportItemCancellationRequest:
+      type: object
+      required:
+        - expectedRevision
+      properties:
+        expectedRevision:
+          type: string
+          description: The item revision the user reviewed.
+
+    BulkImportStopRequest:
+      type: object
+      required:
+        - confirmed
+      properties:
+        confirmed:
+          type: boolean
+          description: Must be true. false or missing stops nothing.
+
+    BulkImport:
+      type: object
+      description: |
+        One import batch and every item's own outcome. Every field
+        is always present. Only an ACCEPTED item has a garment; a
+        linked photo alone is never a garment.
+      required:
+        - id
+        - status
+        - itemCount
+        - acceptedCount
+        - canceledCount
+        - pendingCount
+        - createdAt
+        - expiresAt
+        - stoppedAt
+        - items
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - OPEN
+            - STOPPED
+            - EXPIRED
+          description: EXPIRED means the 7-day lifetime ended; it takes no new item work.
+        itemCount:
+          type: integer
+        acceptedCount:
+          type: integer
+        canceledCount:
+          type: integer
+        pendingCount:
+          type: integer
+          description: Items neither accepted nor cancelled.
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        stoppedAt:
+          type: [string, "null"]
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkImportItem"
+
+    BulkImportItem:
+      type: object
+      required:
+        - id
+        - position
+        - status
+        - revision
+        - photoState
+        - photoUploadId
+        - garmentId
+        - garmentCurrent
+      properties:
+        id:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          description: The item's place in the queue, from 1.
+        status:
+          type: string
+          enum:
+            - AWAITING_PHOTO
+            - REVIEWABLE
+            - ACCEPTED
+            - CANCELED
+        revision:
+          type: string
+          description: Opaque; send it back as expectedRevision.
+        photoState:
+          type: string
+          enum:
+            - NONE
+            - READY
+            - EXPIRED
+          description: |
+            NONE: no photo linked. READY: the linked photo can be
+            confirmed. EXPIRED: the linked photo can no longer be
+            used (expired, cancelled or used elsewhere); link a photo
+            again.
+        photoUploadId:
+          type: [string, "null"]
+          format: uuid
+          description: The linked staged photo while REVIEWABLE.
+        garmentId:
+          type: [string, "null"]
+          format: uuid
+          description: The garment of an ACCEPTED item.
+        garmentCurrent:
+          type: [boolean, "null"]
+          description: For an ACCEPTED item, whether its garment is still in the current wardrobe.
+
+    BulkImportList:
+      type: object
+      required:
+        - batches
+      properties:
+        batches:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkImport"
+
     FieldError:
       type: object
       description: A validation failure associated with a request field.
@@ -3769,11 +4324,93 @@ components:
               - field: "cursor"
                 code: "INVALID_FORMAT"
 
+    BulkImportRejected:
+      description: |
+        Nothing changed. VALIDATION_FAILED lists every missing or
+        unusable value, checked before anything is looked up:
+        Idempotency-Key, itemCount, expectedRevision,
+        photoUploadId, confirmed and the garment values.
+        MALFORMED_REQUEST means the body is not valid JSON.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "Some garment values are missing, unconfirmed or not allowed. Correct or clear them and confirm again; nothing was saved."
+            code: "VALIDATION_FAILED"
+            fieldErrors:
+              - field: "itemCount"
+                code: "UNSUPPORTED_VALUE"
+
+    BulkImportNotFound:
+      description: |
+        BULK_IMPORT_NOT_FOUND: the account has no such batch, or the
+        batch has no such item. Another account's batch gives the
+        same answer.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This import is not among your imports. Return to your imports to choose another one."
+            code: "BULK_IMPORT_NOT_FOUND"
+
+    BulkImportTargetNotFound:
+      description: |
+        BULK_IMPORT_NOT_FOUND: no such batch or item.
+        PHOTO_UPLOAD_NOT_FOUND: the photo is not among the account's
+        staged photos. Another account's resources give the same
+        answers.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "This photo is not among your staged photos. Choose the photo again."
+            code: "PHOTO_UPLOAD_NOT_FOUND"
+
+    BulkImportLimitReached:
+      description: |
+        BULK_IMPORT_LIMIT_REACHED: the account already has 3 active
+        batches. Nothing was started.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "You already have the maximum number of open imports. Finish or stop one before starting another; nothing was started."
+            code: "BULK_IMPORT_LIMIT_REACHED"
+
+    BulkImportItemConflict:
+      description: |
+        Nothing changed. BULK_IMPORT_CLOSED: the batch is stopped or
+        expired, or the item's outcome is final.
+        BULK_IMPORT_ITEM_NOT_READY: no photo is linked yet.
+        PHOTO_UPLOAD_NOT_USABLE: the photo cannot be used for this
+        item. REVISION_CONFLICT: the item changed after review.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            title: "Conflict"
+            status: 409
+            detail: "This import or this item no longer accepts this change, so nothing changed. Reload the import to see each item's current outcome."
+            code: "BULK_IMPORT_CLOSED"
+
     IdempotencyKeyReused:
       description: |
-        The Idempotency-Key was already used for a garment with
-        different values. Nothing was saved; use a new key for a
-        new garment.
+        The Idempotency-Key was already used with different values
+        (a garment, or an import with another itemCount). Nothing
+        was saved; use a new key for a new action.
       content:
         application/problem+json:
           schema:
@@ -3781,7 +4418,7 @@ components:
           example:
             title: "Unprocessable Content"
             status: 422
-            detail: "This Idempotency-Key was already used for a different garment. Use a new key for a new garment; nothing was saved."
+            detail: "This Idempotency-Key was already used with different values. Use a new key for a new garment or a new import; nothing was saved."
             instance: "/api/v1/wardrobe/garments"
             code: "IDEMPOTENCY_KEY_REUSED"
 

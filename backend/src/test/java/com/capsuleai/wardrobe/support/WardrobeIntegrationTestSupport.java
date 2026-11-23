@@ -33,6 +33,7 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
     protected static final String GARMENTS = "/api/v1/wardrobe/garments";
     protected static final String IDEMPOTENCY_KEY = "Idempotency-Key";
     protected static final String PHOTO_UPLOADS = "/api/v1/wardrobe/photo-uploads";
+    protected static final String BULK_IMPORTS = "/api/v1/wardrobe/bulk-imports";
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -41,7 +42,8 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
 
     @BeforeEach
     protected void resetWardrobeState() {
-        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_garment_removal_cleanup, wardrobe.wardrobe_photo_upload, "
+        jdbc.sql("TRUNCATE TABLE wardrobe.wardrobe_bulk_import_item, wardrobe.wardrobe_bulk_import_batch, "
+                + "wardrobe.wardrobe_garment_removal_cleanup, wardrobe.wardrobe_photo_upload, "
                 + "wardrobe.wardrobe_garment_material, wardrobe.wardrobe_garment_style, wardrobe.wardrobe_garment")
                 .update();
         photoStorage.reset();
@@ -121,5 +123,27 @@ public abstract class WardrobeIntegrationTestSupport extends IdentityIntegration
                 .param("owner", ownerAccountId)
                 .query(Long.class)
                 .single();
+    }
+
+    /** US-BULK-001: POSTs one batch start with the given Idempotency-Key (none when null). */
+    protected ResultActions startBulkImport(String accessToken, String idempotencyKey, Map<String, ?> body)
+            throws Exception {
+        MockHttpServletRequestBuilder request = post(BULK_IMPORTS)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JSON.writeValueAsString(body));
+        if (idempotencyKey != null) {
+            request.header(IDEMPOTENCY_KEY, idempotencyKey);
+        }
+        return mockMvc.perform(request);
+    }
+
+    /** US-BULK-001: POSTs one batch or item command to {@code path}. */
+    protected ResultActions postBulkImportCommand(String accessToken, String path, Map<String, ?> body)
+            throws Exception {
+        return mockMvc.perform(post(path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JSON.writeValueAsString(body)));
     }
 }

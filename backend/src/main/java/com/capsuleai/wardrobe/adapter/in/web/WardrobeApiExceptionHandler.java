@@ -1,5 +1,10 @@
 package com.capsuleai.wardrobe.adapter.in.web;
 
+import com.capsuleai.wardrobe.application.BulkImportClosedException;
+import com.capsuleai.wardrobe.application.BulkImportItemConflictException;
+import com.capsuleai.wardrobe.application.BulkImportItemNotReadyException;
+import com.capsuleai.wardrobe.application.BulkImportLimitReachedException;
+import com.capsuleai.wardrobe.application.BulkImportNotFoundException;
 import com.capsuleai.wardrobe.application.GarmentAlreadyHasPhotoException;
 import com.capsuleai.wardrobe.application.GarmentFieldViolation;
 import com.capsuleai.wardrobe.application.GarmentNoLongerCurrentException;
@@ -75,8 +80,8 @@ public class WardrobeApiExceptionHandler {
     @ExceptionHandler(IdempotencyKeyReusedException.class)
     public ResponseEntity<ProblemDetail> handleIdempotencyKeyReused(IdempotencyKeyReusedException exception) {
         return respond(problem(HttpStatus.UNPROCESSABLE_CONTENT, "IDEMPOTENCY_KEY_REUSED",
-                "This Idempotency-Key was already used for a different garment. Use a new key for a new garment; "
-                        + "nothing was saved."));
+                "This Idempotency-Key was already used with different values. Use a new key for a new garment or "
+                        + "a new import; nothing was saved."));
     }
 
     /** The same answer for an unknown id and another account's garment (NFR-SEC-001). */
@@ -107,6 +112,42 @@ public class WardrobeApiExceptionHandler {
         return respond(problem(HttpStatus.CONFLICT, "GARMENT_ALREADY_HAS_PHOTO",
                 "This garment already has a photo, so the chosen photo was not attached. Reload the garment to see "
                         + "its current photo."));
+    }
+
+    /** US-BULK-001: the same answer for an unknown id and another account's batch or item. */
+    @ExceptionHandler(BulkImportNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleBulkImportNotFound(BulkImportNotFoundException exception) {
+        return respond(problem(HttpStatus.NOT_FOUND, "BULK_IMPORT_NOT_FOUND",
+                "This import is not among your imports. Return to your imports to choose another one."));
+    }
+
+    /** US-BULK-001 (S4-BULK-07): stopped or expired batch, or an item whose outcome is final. */
+    @ExceptionHandler(BulkImportClosedException.class)
+    public ResponseEntity<ProblemDetail> handleBulkImportClosed(BulkImportClosedException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "BULK_IMPORT_CLOSED",
+                "This import or this item no longer accepts this change, so nothing changed. Reload the import to "
+                        + "see each item's current outcome."));
+    }
+
+    /** US-BULK-001 (OPEN-S4-25): the active-batch limit. */
+    @ExceptionHandler(BulkImportLimitReachedException.class)
+    public ResponseEntity<ProblemDetail> handleBulkImportLimitReached(BulkImportLimitReachedException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "BULK_IMPORT_LIMIT_REACHED",
+                "You already have the maximum number of open imports. Finish or stop one before starting another; "
+                        + "nothing was started."));
+    }
+
+    @ExceptionHandler(BulkImportItemNotReadyException.class)
+    public ResponseEntity<ProblemDetail> handleBulkImportItemNotReady(BulkImportItemNotReadyException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "BULK_IMPORT_ITEM_NOT_READY",
+                "This item has no photo yet, so there is nothing to confirm. Add its photo first."));
+    }
+
+    @ExceptionHandler(BulkImportItemConflictException.class)
+    public ResponseEntity<ProblemDetail> handleBulkImportItemConflict(BulkImportItemConflictException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
+                "This item changed after you opened it, so your change was not applied. Reload the import, review "
+                        + "the item and confirm again."));
     }
 
     /** US-GAR-003 (FR-AI-012, ERR-AI-001): the photo was not accepted; replace it or continue manually. */

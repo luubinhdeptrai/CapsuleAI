@@ -3,15 +3,11 @@ package com.capsuleai.wardrobe.application;
 import com.capsuleai.wardrobe.application.GarmentEntryValidator.ValidatedGarmentEntry;
 import com.capsuleai.wardrobe.application.ports.GarmentRepository;
 import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
-import com.capsuleai.wardrobe.application.ports.RecordedGarmentCreation;
 import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
-import com.capsuleai.wardrobe.domain.Garment;
-import com.capsuleai.wardrobe.domain.PhotoUpload;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -23,19 +19,20 @@ import java.util.UUID;
  * and (with a photo) the photo's READY → ATTACHED transition commit together, so repeating the
  * same addition returns the garment already accepted instead of creating a second one. A photo
  * that cannot be used makes the addition fail; it never falls back to an imageless garment.
+ *
+ * <p>US-BULK-001 (OPEN-S4-29): the acceptance rules live in {@link GarmentAcceptance}, shared with bulk item
+ * acceptance; this service validates the request and runs them in one transaction. Behavior is unchanged.
  */
 public final class AddGarmentService {
 
-    private final GarmentRepository garments;
-    private final PhotoUploadRepository photoUploads;
-    private final WardrobeTransactions transactions;
+    private final GarmentAcceptance garmentAcceptance;
+    private final WardrobeTransactions wardrobeTransactions;
     private final Clock clock;
 
-    public AddGarmentService(GarmentRepository garments, PhotoUploadRepository photoUploads,
-                             WardrobeTransactions transactions, Clock clock) {
-        this.garments = Objects.requireNonNull(garments, "garments");
-        this.photoUploads = Objects.requireNonNull(photoUploads, "photoUploads");
-        this.transactions = Objects.requireNonNull(transactions, "transactions");
+    public AddGarmentService(GarmentRepository garmentRepository, PhotoUploadRepository photoUploadRepository,
+                             WardrobeTransactions wardrobeTransactions, Clock clock) {
+        this.garmentAcceptance = new GarmentAcceptance(garmentRepository, photoUploadRepository);
+        this.wardrobeTransactions = Objects.requireNonNull(wardrobeTransactions, "wardrobeTransactions");
         this.clock = Objects.requireNonNull(clock, "clock");
     }
 
@@ -48,64 +45,11 @@ public final class AddGarmentService {
      *                                         has since been removed (US-GAR-005, OPEN-S4-03)
      */
     public GarmentCreation add(AddGarmentCommand command) {
-        UUID owner = Objects.requireNonNull(command.ownerAccountId(), "ownerAccountId");
+        UUID ownerAccountId = Objects.requireNonNull(command.ownerAccountId(), "ownerAccountId");
         ValidatedGarmentEntry entry = GarmentEntryValidator.validate(command);
-        String fingerprint = GarmentCreationFingerprint.of(entry.profile(), entry.photoUploadId());
+        String creationFingerprint = GarmentCreationFingerprint.of(entry.profile(), entry.photoUploadId());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-
-        if (entry.photoUploadId().isPresent()) {
-            return addWithPhoto(owner, entry, entry.photoUploadId().get(), fingerprint, now);
-        }
-        Garment candidate = Garment.confirmManualEntry(UUID.randomUUID(), owner, entry.profile(), now);
-        return transactions.inTransaction(() -> {
-            if (garments.addIfCreationKeyUnused(candidate, entry.creationKey(), fingerprint)) {
-                return new GarmentCreation(candidate, true);
-            }
-            return replay(owner, entry.creationKey(), fingerprint);
-        });
-    }
-
-    /**
-     * One transaction: lock the staged photo (serializing confirmations, cancellation and expiry),
-     * replay an earlier acceptance of the same key, otherwise require a usable photo, create the
-     * garment and attach the photo.
-     */
-    private GarmentCreation addWithPhoto(UUID owner, ValidatedGarmentEntry entry, UUID photoUploadId,
-                                         String fingerprint, Instant now) {
-        return transactions.inTransaction(() -> {
-            // Lock first (when the row still exists), then look for an earlier acceptance: after a removal
-            // and its cleanup the photo row is gone, but the replay must still be recognized (OPEN-S4-03).
-            Optional<PhotoUpload> lockedUpload = photoUploads.lockOwned(owner, photoUploadId);
-            if (garments.findCreation(owner, entry.creationKey()).isPresent()) {
-                return replay(owner, entry.creationKey(), fingerprint);
-            }
-            PhotoUpload upload = lockedUpload.orElseThrow(PhotoUploadNotFoundException::new);
-            if (!upload.isUsableAt(now)) {
-                throw new PhotoUploadNotUsableException();
-            }
-            Garment candidate = Garment.confirmWithPhoto(UUID.randomUUID(), owner, entry.profile(), now,
-                    upload.asGarmentPhoto());
-            if (!garments.addIfCreationKeyUnused(candidate, entry.creationKey(), fingerprint)) {
-                return replay(owner, entry.creationKey(), fingerprint);
-            }
-            if (!photoUploads.attach(upload.id(), candidate.id(), now)) {
-                throw new IllegalStateException("A locked READY photo could not be attached");
-            }
-            return new GarmentCreation(candidate, true);
-        });
-    }
-
-    private GarmentCreation replay(UUID owner, UUID creationKey, String fingerprint) {
-        RecordedGarmentCreation earlier = garments.findCreation(owner, creationKey)
-                .orElseThrow(() -> new IllegalStateException("A used creation key has no recorded garment"));
-        if (!earlier.creationFingerprint().equals(fingerprint)) {
-            throw new IdempotencyKeyReusedException();
-        }
-        if (!earlier.garment().isCurrent()) {
-            // US-GAR-005 (OPEN-S4-03): accepted earlier and removed since. A retry never recreates the
-            // garment and never presents a removed garment as the current result of the addition.
-            throw new GarmentNoLongerCurrentException();
-        }
-        return new GarmentCreation(earlier.garment(), false);
+        return wardrobeTransactions.inTransaction(() ->
+                garmentAcceptance.acceptInCurrentTransaction(ownerAccountId, entry, creationFingerprint, now));
     }
 }

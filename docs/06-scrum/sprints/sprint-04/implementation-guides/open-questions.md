@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), US-WAR-003 (OPEN-S4-11–15, since 2026-11-22), US-PROF-002 (OPEN-S4-16–17, since 2026-11-22) and US-CTX-001 (OPEN-S4-18–24, since 2026-11-23), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed and no real Open-Meteo request has been made.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **All six guides are implemented in the repository** (US-GAR-005, OPEN-S4-01–06, since 2026-11-21; US-GAR-006, OPEN-S4-07–10, US-WAR-003, OPEN-S4-11–15 and US-PROF-002, OPEN-S4-16–17, since 2026-11-22; US-CTX-001, OPEN-S4-18–24, and US-BULK-001, OPEN-S4-25–30, since 2026-11-23; OPEN-S4-31–33 with them). `clean verify` passes locally. **Nothing is deployed, CI has not run, and no real Open-Meteo request has been made**, so every entry that names an external, operational, client or Product Owner check stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -76,15 +76,15 @@ Each entry has these fields:
 | [OPEN-S4-22](#open-s4-22--one-elapsed-acquisition-deadline) | CTX-001 | S4-CTX-05 | `PT2S` from adapter entry, including capacity wait. `RestClient` on JDK client; bounded executor; 64 KiB body | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | **Pending (measured)** |
 | [OPEN-S4-23](#open-s4-23--environmental-basis-and-absent-consumers) | CTX-001 | S4-CTX-06 | Basis (revision, status, evidence time) is carried in the HTTP read model; no new published API until a consumer exists | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
 | [OPEN-S4-24](#open-s4-24--weather-privacy-configuration-and-test-isolation) | CTX-001 | S4-CTX-01/03/05 | Fixed trusted base URL (HTTPS, or loopback in tests). No coordinates in logs. Test double in integration tests. | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
-| [OPEN-S4-25](#open-s4-25--bulk-admission-limits-and-retention) | BULK-001 | S4-BULK-06 | 20 items, 3 active batches, `P7D` lifetime, aggregate 300,000,000 bytes derived from the photo rule. No server-side drafts. | Delegated default | Pending | Pending (PO review advised) |
-| [OPEN-S4-26](#open-s4-26--batch-and-item-states) | BULK-001 | S4-BULK-02 | Item states `AWAITING_PHOTO`, `REVIEWABLE`, `ACCEPTED` and `CANCELED`, plus derived photo states. Batch `OPEN` or `STOPPED`, plus derived `EXPIRED`. | Delegated default | Pending | Pending |
-| [OPEN-S4-27](#open-s4-27--batch-and-item-identity-and-idempotency) | BULK-001 | S4-BULK-05, S4-INT-02 | Batch Idempotency-Key plus a fingerprint. Server-generated item ids and acceptance keys. Item revisions. | Delegated default | Pending | Pending |
-| [OPEN-S4-28](#open-s4-28--batch-stop-item-cancellation-and-lock-order) | BULK-001 | S4-BULK-07, S4-INT-01 | Batch `FOR UPDATE` for stop, `FOR SHARE` for item commands; then item, photo, garment. Unclaimed stages are cancelled. | Delegated default | Pending | Pending |
-| [OPEN-S4-29](#open-s4-29--shared-acceptance-seam-and-per-item-transaction) | BULK-001 | S4-BULK-01/04 | `GarmentAcceptance` extracted from `AddGarmentService`. The item becomes `ACCEPTED` in the same transaction as the garment and photo. | Delegated default | Pending | Pending |
-| [OPEN-S4-30](#open-s4-30--sequential-processing-expired-photos-and-recovery) | BULK-001 | S4-BULK-03/06 | The client stages sequentially. An expired photo means reselecting it. The batch list and detail support resumption. No worker, no AI. | Delegated default | Pending | Pending (client) |
-| [OPEN-S4-31](#open-s4-31--migrations-openapi-versions-ci-and-shared-file-order) | All | S4-INT-03 | V12/V13/V14/V15; OpenAPI 0.12.0–0.17.0; `sprint_04` CI trigger; cumulative order | Delegated default | Pending | Pending |
-| [OPEN-S4-32](#open-s4-32--error-vocabulary-additions) | All | S4-INT-02/03 | New codes and field-error codes; operation-neutral 409 and 503 texts | Delegated default | Pending | Pending |
-| [OPEN-S4-33](#open-s4-33--configuration-properties-and-test-profile) | All | S4-GAR-03, S4-CTX-05, S4-BULK-06 | New `capsuleai.*` properties with startup validation, and test-profile values | Delegated default | Pending | Pending |
+| [OPEN-S4-25](#open-s4-25--bulk-admission-limits-and-retention) | BULK-001 | S4-BULK-06 | 20 items, 3 active batches, `P7D` lifetime, aggregate 300,000,000 bytes derived from the photo rule. No server-side drafts. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending (PO review advised) |
+| [OPEN-S4-26](#open-s4-26--batch-and-item-states) | BULK-001 | S4-BULK-02 | Item states `AWAITING_PHOTO`, `REVIEWABLE`, `ACCEPTED` and `CANCELED`, plus derived photo states. Batch `OPEN` or `STOPPED`, plus derived `EXPIRED`. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending |
+| [OPEN-S4-27](#open-s4-27--batch-and-item-identity-and-idempotency) | BULK-001 | S4-BULK-05, S4-INT-02 | Batch Idempotency-Key plus a fingerprint. Server-generated item ids and acceptance keys. Item revisions. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending |
+| [OPEN-S4-28](#open-s4-28--batch-stop-item-cancellation-and-lock-order) | BULK-001 | S4-BULK-07, S4-INT-01 | Batch `FOR UPDATE` for stop, `FOR SHARE` for item commands; then item, photo, garment. Unclaimed stages are cancelled. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending |
+| [OPEN-S4-29](#open-s4-29--shared-acceptance-seam-and-per-item-transaction) | BULK-001 | S4-BULK-01/04 | `GarmentAcceptance` extracted from `AddGarmentService`. The item becomes `ACCEPTED` in the same transaction as the garment and photo. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending |
+| [OPEN-S4-30](#open-s4-30--sequential-processing-expired-photos-and-recovery) | BULK-001 | S4-BULK-03/06 | The client stages sequentially. An expired photo means reselecting it. The batch list and detail support resumption. No worker, no AI. | Delegated default | Implemented 2026-11-23 (US-BULK-001); tests pass locally | Pending (client) |
+| [OPEN-S4-31](#open-s4-31--migrations-openapi-versions-ci-and-shared-file-order) | All | S4-INT-03 | V12/V13/V14/V15; OpenAPI 0.12.0–0.17.0; `sprint_04` CI trigger; cumulative order | Delegated default | Implemented 2026-11-23 (all six guides); tests pass locally | Pending |
+| [OPEN-S4-32](#open-s4-32--error-vocabulary-additions) | All | S4-INT-02/03 | New codes and field-error codes; operation-neutral 409 and 503 texts | Delegated default | Implemented 2026-11-23 (all six guides); tests pass locally | Pending |
+| [OPEN-S4-33](#open-s4-33--configuration-properties-and-test-profile) | All | S4-GAR-03, S4-CTX-05, S4-BULK-06 | New `capsuleai.*` properties with startup validation, and test-profile values | Delegated default | Implemented 2026-11-23 (all six guides); tests pass locally | Pending |
 
 ## 3. Coverage of the plan's named blockers
 
@@ -1359,7 +1359,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-BULK-06.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`. Product Owner review of the four values is advised.
 
 **G. Implementation steps.** US-BULK-001:
@@ -1402,7 +1402,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-BULK-001:
@@ -1442,7 +1442,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-BULK-05 and S4-INT-02.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-BULK-001:
@@ -1491,7 +1491,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-BULK-07 and S4-INT-01.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-BULK-001:
@@ -1530,7 +1530,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-BULK-01 and S4-BULK-04.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-BULK-001:
@@ -1573,7 +1573,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-BULK-001; `clean verify` and the manual checks M1–M10 passed locally). A CI run on a pull request to `sprint_04` is still required.
 - **`VERIFICATION PENDING` (client multiphoto and resume evidence).**
 
 **G. Implementation steps.** US-BULK-001:
@@ -1617,7 +1617,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-INT-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23**, with the last of the six guides (US-BULK-001): V12–V15, OpenAPI 0.17.0, 139 required CI reports. `clean verify` passed locally; a CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.**
@@ -1683,7 +1683,7 @@ BULK-001 reuses `REVISION_CONFLICT` for a stale item revision, with item wording
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23**, with the last of the six guides (US-BULK-001): V12–V15, OpenAPI 0.17.0, 139 required CI reports. `clean verify` passed locally; a CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.**
@@ -1735,7 +1735,7 @@ BULK-001 reuses `REVISION_CONFLICT` for a stale item revision, with item wording
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23**, with the last of the six guides (US-BULK-001): V12–V15, OpenAPI 0.17.0, 139 required CI reports. `clean verify` passed locally; a CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.**

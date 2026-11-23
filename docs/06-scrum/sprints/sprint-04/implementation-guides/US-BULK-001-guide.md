@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-BULK-01 to S4-BULK-07, S4-INT-01, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-25 to 33 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)). **The four admission values (20 items, 3 active batches, `P7D`, 300,000,000 bytes) are delegated defaults; Product Owner review is advised.** |
 | Out of scope by instruction | AI extraction or proposal of garment values, outfit recommendation, parallel or background processing, server-side drafts |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. Client multiphoto and resume evidence and the M11 resource measurement are outstanding. |
+| Verification status | **Applied to the repository on 2026-11-23** (P1–P35 and T1–T9 implemented from this guide, then reviewed; the review corrections and added tests are recorded in P21 and §13). `./mvnw -o clean verify` passed in the repository on 2026-11-23: 710 unit and 464 integration tests, none failed, errored or was skipped. Of the 139 required CI reports, 138 were present with at least their minimum; the missing one is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. Manual M1–M10 passed on a throwaway stack, and M11 was measured locally (§14). **Still required:** Product Owner review of the four OPEN-S4-25 values, M11 in the agreed environment, client evidence (M12), and a CI run on a pull request to `sprint_04`. Batch purge stays deferred to account-lifecycle work. |
 
 ## 1. Story Overview
 
@@ -2094,6 +2094,29 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
             FROM wardrobe.wardrobe_bulk_import_batch
             """;
 
+    static final String SELECT_BATCH_BY_CREATION_KEY = SELECT_BATCH + """
+            WHERE owner_account_id = :ownerAccountId AND creation_key = :creationKey
+            """;
+
+    static final String SELECT_OWNED_BATCH = SELECT_BATCH + """
+            WHERE owner_account_id = :ownerAccountId AND id = :batchId
+            """;
+
+    /** Share mode: item commands of one batch run in parallel, and a stop waits for them. */
+    static final String LOCK_BATCH_FOR_ITEM_WORK = SELECT_OWNED_BATCH + """
+            FOR SHARE
+            """;
+
+    /** Exclusive: item commands wait until the stop commits. */
+    static final String LOCK_BATCH_FOR_STOP = SELECT_OWNED_BATCH + """
+            FOR UPDATE
+            """;
+
+    static final String SELECT_ACTIVE_BATCHES = SELECT_BATCH + """
+            WHERE owner_account_id = :ownerAccountId AND status = 'OPEN' AND expires_at > :now
+            ORDER BY created_at DESC, id DESC
+            """;
+
     static final String COUNT_ACTIVE = """
             SELECT count(*) FROM wardrobe.wardrobe_bulk_import_batch
             WHERE owner_account_id = :ownerAccountId AND status = 'OPEN' AND expires_at > :now
@@ -2115,6 +2138,18 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
             SELECT id, batch_id, queue_position, acceptance_key, status, photo_upload_id, garment_id, revision,
                    updated_at
             FROM wardrobe.wardrobe_bulk_import_item
+            """;
+
+    static final String LOCK_ITEM = SELECT_ITEM + """
+            WHERE batch_id = :batchId AND id = :itemId
+            FOR UPDATE
+            """;
+
+    /** Unfinished items in queue order, so concurrent stops always lock them in the same order. */
+    static final String LOCK_UNFINISHED_ITEMS = SELECT_ITEM + """
+            WHERE batch_id = :batchId AND status IN ('AWAITING_PHOTO', 'REVIEWABLE')
+            ORDER BY queue_position
+            FOR UPDATE
             """;
 
     static final String PHOTO_LINKED_TO_ANOTHER_ITEM = """
@@ -2168,7 +2203,7 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
 
     @Override
     public Optional<BulkImportBatch> findByCreationKey(UUID ownerAccountId, UUID creationKey) {
-        return jdbcClient.sql(SELECT_BATCH + "WHERE owner_account_id = :ownerAccountId AND creation_key = :creationKey")
+        return jdbcClient.sql(SELECT_BATCH_BY_CREATION_KEY)
                 .param("ownerAccountId", ownerAccountId)
                 .param("creationKey", creationKey)
                 .query((row, rowNumber) -> mapBatch(row))
@@ -2210,17 +2245,17 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
 
     @Override
     public Optional<BulkImportBatch> lockForItemWork(UUID ownerAccountId, UUID batchId) {
-        return lockBatch(ownerAccountId, batchId, "FOR SHARE");
+        return ownedBatch(LOCK_BATCH_FOR_ITEM_WORK, ownerAccountId, batchId);
     }
 
     @Override
     public Optional<BulkImportBatch> lockForStop(UUID ownerAccountId, UUID batchId) {
-        return lockBatch(ownerAccountId, batchId, "FOR UPDATE");
+        return ownedBatch(LOCK_BATCH_FOR_STOP, ownerAccountId, batchId);
     }
 
     @Override
     public Optional<BulkImportItem> lockItem(UUID batchId, UUID itemId) {
-        return jdbcClient.sql(SELECT_ITEM + "WHERE batch_id = :batchId AND id = :itemId FOR UPDATE")
+        return jdbcClient.sql(LOCK_ITEM)
                 .param("batchId", batchId)
                 .param("itemId", itemId)
                 .query((row, rowNumber) -> mapItem(row))
@@ -2229,9 +2264,7 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
 
     @Override
     public List<BulkImportItem> lockUnfinishedItems(UUID batchId) {
-        return jdbcClient.sql(SELECT_ITEM
-                        + "WHERE batch_id = :batchId AND status IN ('AWAITING_PHOTO', 'REVIEWABLE') "
-                        + "ORDER BY queue_position FOR UPDATE")
+        return jdbcClient.sql(LOCK_UNFINISHED_ITEMS)
                 .param("batchId", batchId)
                 .query((row, rowNumber) -> mapItem(row))
                 .list();
@@ -2269,19 +2302,12 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
 
     @Override
     public Optional<BatchOverview> findOverview(UUID ownerAccountId, UUID batchId, Instant now) {
-        return jdbcClient.sql(SELECT_BATCH + "WHERE owner_account_id = :ownerAccountId AND id = :batchId")
-                .param("ownerAccountId", ownerAccountId)
-                .param("batchId", batchId)
-                .query((row, rowNumber) -> mapBatch(row))
-                .optional()
-                .map(batch -> overviewOf(batch, now));
+        return ownedBatch(SELECT_OWNED_BATCH, ownerAccountId, batchId).map(batch -> overviewOf(batch, now));
     }
 
     @Override
     public List<BatchOverview> findActiveOverviews(UUID ownerAccountId, Instant now) {
-        return jdbcClient.sql(SELECT_BATCH
-                        + "WHERE owner_account_id = :ownerAccountId AND status = 'OPEN' AND expires_at > :now "
-                        + "ORDER BY created_at DESC, id DESC")
+        return jdbcClient.sql(SELECT_ACTIVE_BATCHES)
                 .param("ownerAccountId", ownerAccountId)
                 .param("now", toDatabase(now))
                 .query((row, rowNumber) -> mapBatch(row))
@@ -2291,8 +2317,9 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
                 .toList();
     }
 
-    private Optional<BulkImportBatch> lockBatch(UUID ownerAccountId, UUID batchId, String lockClause) {
-        return jdbcClient.sql(SELECT_BATCH + "WHERE owner_account_id = :ownerAccountId AND id = :batchId " + lockClause)
+    /** One of the owner-scoped batch statements: a plain read, or a share or exclusive lock. */
+    private Optional<BulkImportBatch> ownedBatch(String statement, UUID ownerAccountId, UUID batchId) {
+        return jdbcClient.sql(statement)
                 .param("ownerAccountId", ownerAccountId)
                 .param("batchId", batchId)
                 .query((row, rowNumber) -> mapBatch(row))
@@ -2359,6 +2386,7 @@ public final class JdbcBulkImportRepository implements BulkImportRepository {
 - **Admission lock.** `pg_advisory_xact_lock` is held until commit or rollback; it is never released manually. The outer `SELECT 1` turns the `void` result into a value that `JdbcClient` can read.
 - **Photo join.** The overview joins the photo by owner as well, so another account's stage can never show as READY. The `CASE` keeps `garment_current` `NULL` (not `TRUE`) for items without a garment.
 - **Locks.** `FOR SHARE` on the batch lets acceptances of different items run in parallel, while a stop (`FOR UPDATE`) waits for them and they wait for it.
+- **Complete statements (review of 2026-11-23).** The first version appended `FOR SHARE` or `FOR UPDATE` to the batch query at run time, and built the other `WHERE` clauses inside the methods. Every statement is now a named, complete constant, as shared-architecture §14 requires: one text block, or a compile-time concatenation of constant text blocks. The behavior is unchanged.
 
 ### Step P22 — [ADD] `backend/src/main/java/com/capsuleai/wardrobe/adapter/in/web/BulkImportCreationRequest.java`
 
@@ -3659,7 +3687,23 @@ This brings the total to 139 required entries, the final count for Sprint 4.
 
 ## 13. Complete Automated Test Implementation
 
-The counts in P35 equal the `@Test` methods below. **No test has been run in the repository.** The unchanged creation suites (`AddGarmentServiceTest`, `PhotoBackedGarmentCreationTest`, `ConcurrentGarmentCreationIT`, `ConcurrentPhotoConfirmationIT`, `AddGarmentApiIT`, `PhotoGarmentApiIT`) are the regression evidence for the P8 refactoring and must stay green.
+The counts in P35 are the CI minimums. The review of 2026-11-23 added tests:
+
+- **`BulkImportApiIT`: 19 tests** (minimum 13). The additions cover:
+  - all 13 properties across Tops, Pants and a minimum-only item;
+  - a repeated link;
+  - validation before lookup, unknown and foreign items, and confirming a cancelled item;
+  - no echo of submitted values and no photo id in the log;
+  - a stage used for a single garment;
+  - the resume order.
+- **`ConcurrentBulkImportIT`: 8 tests** (minimum 3). Five are real-PostgreSQL races:
+  - another item accepted while one item is held, with a stop waiting for it;
+  - an acceptance waiting behind a stop;
+  - two items racing for one stage;
+  - identical starts with one key;
+  - the expiry job skipping a held photo.
+
+The unchanged creation suites (`AddGarmentServiceTest`, `PhotoBackedGarmentCreationTest`, `ConcurrentGarmentCreationIT`, `ConcurrentPhotoConfirmationIT`, `AddGarmentApiIT`, `PhotoGarmentApiIT`) are the regression evidence for the P8 refactoring and must stay green.
 
 ### Step T1 — [ADD] `backend/src/test/java/com/capsuleai/wardrobe/domain/BulkImportBatchTest.java`
 
@@ -4228,6 +4272,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -4576,6 +4624,221 @@ class BulkImportApiIT extends WardrobeIntegrationTestSupport {
         assertThat(countGarmentsOf(tokens.accountId())).isOne();
     }
 
+    /**
+     * AC-03/AC-04: each category's applicable properties among the 13 are kept exactly. Materials and Styles keep
+     * their distinct values, Brand and Price their text and amount. A minimum-only item stays minimum: no value is
+     * invented.
+     */
+    @Test
+    void acceptedItemsKeepEveryReviewedPropertyAndNothingThatWasNotGiven() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("bulk-properties@example.com");
+        StartedBatch batch = start(tokens.accessToken(), 3);
+        for (int position = 1; position <= 3; position++) {
+            link(tokens.accessToken(), batch, position, "1",
+                    stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1024, 768))).andExpect(status().isOk());
+        }
+
+        String top = garmentIdAfterAccepting(tokens.accessToken(), batch, 1, garment("TOPS", "COLORFUL",
+                "subtype", "POLO_SHIRTS", "materials", List.of("WOOL", "CASHMERE", "WOOL"), "pattern", "HOUNDSTOOTH",
+                "styles", List.of("FEMININE", "CLASSIC", "FEMININE"), "fit", "SLIM", "neckline", "SHIRT_COLLAR",
+                "sleeveLength", "SHORT_SLEEVE", "length", "WAIST", "brand", "Brand Ẩn Danh",
+                "price", Map.of("amount", "12.50", "currency", "USD")));
+        String pants = garmentIdAfterAccepting(tokens.accessToken(), batch, 2, garment("PANTS", "DARK_GRAY",
+                "subtype", "JEANS", "length", "SHORT", "silhouette", "BOOTCUT"));
+        String minimum = garmentIdAfterAccepting(tokens.accessToken(), batch, 3, minimumGarment("BAGS", "BLACK"));
+
+        inspect(tokens.accessToken(), top)
+                .andExpect(jsonPath("$.category").value("TOPS"))
+                .andExpect(jsonPath("$.subtype").value("POLO_SHIRTS"))
+                .andExpect(jsonPath("$.color").value("COLORFUL"))
+                .andExpect(jsonPath("$.materials", hasSize(2)))
+                .andExpect(jsonPath("$.materials[0]").value("WOOL"))
+                .andExpect(jsonPath("$.materials[1]").value("CASHMERE"))
+                .andExpect(jsonPath("$.pattern").value("HOUNDSTOOTH"))
+                .andExpect(jsonPath("$.styles", hasSize(2)))
+                .andExpect(jsonPath("$.styles[0]").value("CLASSIC"))
+                .andExpect(jsonPath("$.styles[1]").value("FEMININE"))
+                .andExpect(jsonPath("$.fit").value("SLIM"))
+                .andExpect(jsonPath("$.neckline").value("SHIRT_COLLAR"))
+                .andExpect(jsonPath("$.sleeveLength").value("SHORT_SLEEVE"))
+                .andExpect(jsonPath("$.length").value("WAIST"))
+                .andExpect(jsonPath("$.silhouette").value(nullValue()))
+                .andExpect(jsonPath("$.brand").value("Brand Ẩn Danh"))
+                .andExpect(jsonPath("$.price.amount").value("12.50"))
+                .andExpect(jsonPath("$.price.currency").value("USD"))
+                .andExpect(jsonPath("$.provenance").value("USER_ENTERED"));
+        inspect(tokens.accessToken(), pants)
+                .andExpect(jsonPath("$.subtype").value("JEANS"))
+                .andExpect(jsonPath("$.length").value("SHORT"))
+                .andExpect(jsonPath("$.silhouette").value("BOOTCUT"))
+                .andExpect(jsonPath("$.fit").value(nullValue()))
+                .andExpect(jsonPath("$.sleeveLength").value(nullValue()));
+        inspect(tokens.accessToken(), minimum)
+                .andExpect(jsonPath("$.subtype").value(nullValue()))
+                .andExpect(jsonPath("$.materials").isEmpty())
+                .andExpect(jsonPath("$.pattern").value(nullValue()))
+                .andExpect(jsonPath("$.styles").isEmpty())
+                .andExpect(jsonPath("$.brand").value(nullValue()))
+                .andExpect(jsonPath("$.price").value(nullValue()));
+        assertThat(countGarmentsOf(tokens.accountId())).isEqualTo(3);
+    }
+
+    /** S4-INT-02: linking the photo an item already has, even with the revision read before, changes nothing. */
+    @Test
+    void aRepeatedLinkOfTheSamePhotoChangesNothing() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("bulk-relink@example.com");
+        StartedBatch batch = start(tokens.accessToken(), 1);
+        UUID photo = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1024, 768));
+        link(tokens.accessToken(), batch, 1, "1", photo).andExpect(jsonPath("$.items[0].revision").value("2"));
+
+        link(tokens.accessToken(), batch, 1, "1", photo)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].revision").value("2"))
+                .andExpect(jsonPath("$.items[0].photoUploadId").value(photo.toString()))
+                .andExpect(jsonPath("$.items[0].photoState").value("READY"));
+
+        assertThat(photoUploadStatus(photo)).isEqualTo("READY");
+    }
+
+    /**
+     * Request problems are reported before any lookup, so an unknown batch gives 400 for a malformed request.
+     * An unknown item, or an item of the owner's other batch, is 404. A cancelled item cannot be confirmed.
+     */
+    @Test
+    void requestProblemsComeFirstAndUnknownOrFinishedItemsAreRefused() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("bulk-order@example.com");
+        StartedBatch batch = start(tokens.accessToken(), 1);
+        StartedBatch otherBatch = start(tokens.accessToken(), 1);
+        String unknownItem = BULK_IMPORTS + "/" + UUID.randomUUID() + "/items/" + UUID.randomUUID();
+
+        Map<String, Object> unconfirmed = reviewed("NAVY");
+        unconfirmed.put("confirmed", false);
+        unconfirmed.put("expectedRevision", "1");
+        postBulkImportCommand(tokens.accessToken(), unknownItem + "/acceptance", unconfirmed)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'confirmed')].code", hasItem("NOT_CONFIRMED")));
+        postBulkImportCommand(tokens.accessToken(), unknownItem + "/photo", Map.of("expectedRevision", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'photoUploadId')].code", hasItem("REQUIRED")));
+        postBulkImportCommand(tokens.accessToken(), unknownItem + "/cancellation", Map.of("expectedRevision", "x"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'expectedRevision')].code", hasItem("INVALID_FORMAT")));
+        postBulkImportCommand(tokens.accessToken(), BULK_IMPORTS + "/" + UUID.randomUUID() + "/stop", Map.of())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'confirmed')].code", hasItem("REQUIRED")));
+
+        postBulkImportCommand(tokens.accessToken(), BULK_IMPORTS + "/" + batch.id() + "/items/" + UUID.randomUUID()
+                + "/cancellation", Map.of("expectedRevision", "1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("BULK_IMPORT_NOT_FOUND"));
+        postBulkImportCommand(tokens.accessToken(), BULK_IMPORTS + "/" + batch.id() + "/items/"
+                + otherBatch.itemIds().getFirst() + "/cancellation", Map.of("expectedRevision", "1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("BULK_IMPORT_NOT_FOUND"));
+
+        link(tokens.accessToken(), batch, 1, "1", stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1024, 768)));
+        cancel(tokens.accessToken(), batch, 1, "2").andExpect(status().isOk());
+        accept(tokens.accessToken(), batch, 1, "3", reviewed("NAVY"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("BULK_IMPORT_CLOSED"));
+        assertThat(countGarmentsOf(tokens.accountId())).isZero();
+    }
+
+    /** NFR-PRIV-001, M10 automated: no submitted value or staged-photo id appears in an error or in the log. */
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void neitherErrorsNorLogsRevealSubmittedValuesOrPhotoIds(CapturedOutput output) throws Exception {
+        LoggerFactory.getLogger(BulkImportApiIT.class).info("bulk import log capture is active");
+        IssuedTokens tokens = registerAndLogIn("bulk-privacy@example.com");
+        StartedBatch batch = start(tokens.accessToken(), 2);
+        UUID photo = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1024, 768));
+        UUID otherPhoto = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(800, 600));
+        link(tokens.accessToken(), batch, 1, "1", photo).andExpect(status().isOk());
+
+        Map<String, Object> rejected = reviewed("NAVY");
+        rejected.put("brand", "Nhãn Riêng " + "x".repeat(100));
+        rejected.put("subtype", "JEANS");
+        String rejection = accept(tokens.accessToken(), batch, 1, "2", rejected)
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String notUsable = link(tokens.accessToken(), batch, 2, "1", photo)
+                .andExpect(status().isConflict())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Map<String, Object> privateBrand = reviewed("NAVY");
+        privateBrand.put("brand", "Nhãn Riêng Bí Mật");
+        accept(tokens.accessToken(), batch, 1, "2", privateBrand).andExpect(status().isOk());
+        link(tokens.accessToken(), batch, 2, "1", otherPhoto).andExpect(status().isOk());
+
+        assertThat(rejection).doesNotContain("Nhãn Riêng").doesNotContain("JEANS");
+        assertThat(notUsable).doesNotContain(photo.toString());
+        assertThat(output.getAll())
+                .as("the capture must see this class's own log line, or the check below proves nothing")
+                .contains("bulk import log capture is active")
+                .doesNotContain("Nhãn Riêng")
+                .doesNotContain(photo.toString())
+                .doesNotContain(otherPhoto.toString());
+    }
+
+    /**
+     * A stage linked to an item but used by the owner for a single garment belongs to that garment. The item then
+     * reads EXPIRED, cannot be confirmed with it, and relinking never takes the photo back from the garment.
+     */
+    @Test
+    void aPhotoUsedForASingleGarmentIsNeverTakenBackByTheItem() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("bulk-used-elsewhere@example.com");
+        StartedBatch batch = start(tokens.accessToken(), 1);
+        UUID sharedStage = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1024, 768));
+        link(tokens.accessToken(), batch, 1, "1", sharedStage).andExpect(status().isOk());
+        Map<String, Object> single = minimumGarment("SHOES", "BLACK");
+        single.put("photoUploadId", sharedStage.toString());
+        addGarment(tokens.accessToken(), UUID.randomUUID().toString(), single).andExpect(status().isCreated());
+
+        view(tokens.accessToken(), batch).andExpect(jsonPath("$.items[0].photoState").value("EXPIRED"));
+        accept(tokens.accessToken(), batch, 1, "2", reviewed("NAVY"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PHOTO_UPLOAD_NOT_USABLE"));
+        link(tokens.accessToken(), batch, 1, "2", stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(800, 600)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].photoState").value("READY"));
+
+        assertThat(photoUploadStatus(sharedStage)).as("the single garment keeps its photo").isEqualTo("ATTACHED");
+        accept(tokens.accessToken(), batch, 1, "3", reviewed("NAVY")).andExpect(status().isOk());
+        assertThat(countGarmentsOf(tokens.accountId())).isEqualTo(2);
+    }
+
+    /** OPEN-S4-30: the resume list shows the owner's active batches, newest first. */
+    @Test
+    void theResumeListShowsActiveBatchesNewestFirst() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("bulk-resume@example.com");
+        StartedBatch oldest = start(tokens.accessToken(), 1);
+        clock.advance(Duration.ofSeconds(1));
+        StartedBatch middle = start(tokens.accessToken(), 2);
+        clock.advance(Duration.ofSeconds(1));
+        StartedBatch newest = start(tokens.accessToken(), 3);
+
+        mockMvc.perform(get(BULK_IMPORTS).header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.batches", hasSize(3)))
+                .andExpect(jsonPath("$.batches[0].id").value(newest.id()))
+                .andExpect(jsonPath("$.batches[1].id").value(middle.id()))
+                .andExpect(jsonPath("$.batches[2].id").value(oldest.id()))
+                .andExpect(jsonPath("$.batches[0].items", hasSize(3)));
+    }
+
+    private String garmentIdAfterAccepting(String accessToken, StartedBatch batch, int position,
+                                           Map<String, Object> reviewedValues) throws Exception {
+        String body = accept(accessToken, batch, position, "2", reviewedValues)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[" + (position - 1) + "].status").value("ACCEPTED"))
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        return JsonPath.read(body, "$.items[" + (position - 1) + "].garmentId");
+    }
+
+    private ResultActions inspect(String accessToken, String garmentId) throws Exception {
+        return mockMvc.perform(get(GARMENTS + "/" + garmentId).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
     private StartedBatch start(String accessToken, int itemCount) throws Exception {
         String body = startBulkImport(accessToken, UUID.randomUUID().toString(), Map.of("itemCount", itemCount))
                 .andExpect(status().isCreated())
@@ -4633,14 +4896,25 @@ class BulkImportApiIT extends WardrobeIntegrationTestSupport {
 ```java
 package com.capsuleai.wardrobe.application;
 
+import com.capsuleai.wardrobe.application.ports.BulkImportRepository;
 import com.capsuleai.wardrobe.application.ports.BulkImportRepository.BatchOverview;
+import com.capsuleai.wardrobe.application.ports.BulkImportRepository.ItemOverview;
+import com.capsuleai.wardrobe.application.ports.BulkImportRepository.LinkedPhotoState;
+import com.capsuleai.wardrobe.application.ports.PhotoUploadRepository;
+import com.capsuleai.wardrobe.application.ports.WardrobeTransactions;
+import com.capsuleai.wardrobe.domain.BulkImportBatch;
+import com.capsuleai.wardrobe.domain.BulkImportBatchStatus;
+import com.capsuleai.wardrobe.domain.BulkImportItem;
 import com.capsuleai.wardrobe.domain.BulkImportItemStatus;
 import com.capsuleai.wardrobe.support.TestImages;
 import com.capsuleai.wardrobe.support.WardrobeIntegrationTestSupport;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -4666,6 +4940,18 @@ class ConcurrentBulkImportIT extends WardrobeIntegrationTestSupport {
 
     @Autowired
     private AcceptBulkImportItemService acceptBulkImportItemService;
+
+    @Autowired
+    private BulkImportRepository bulkImportRepository;
+
+    @Autowired
+    private PhotoUploadRepository photoUploadRepository;
+
+    @Autowired
+    private WardrobeTransactions wardrobeTransactions;
+
+    @Autowired
+    private PhotoUploadPolicy photoUploadPolicy;
 
     @Test
     void aStopAndAnAcceptanceOfTheSameItemLeaveOneCoherentOutcome() throws Exception {
@@ -4755,6 +5041,264 @@ class ConcurrentBulkImportIT extends WardrobeIntegrationTestSupport {
             executor.shutdownNow();
         }
         assertThat(countRows("wardrobe.wardrobe_bulk_import_batch")).isEqualTo(3);
+    }
+
+    /**
+     * Scenario B: item work holds the batch in share mode, so another item is accepted while one item's command is
+     * still in flight; a stop needs the batch exclusively and really waits (seen in pg_stat_activity) until that
+     * command ends, then cancels what is unfinished.
+     */
+    @Test
+    void anotherItemIsAcceptedWhileOneItemIsHeldButAStopWaitsForIt() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-bulk-parallel@example.com");
+        BatchOverview batch = startWithLinkedPhotos(tokens, 2);
+        UUID batchId = batch.batch().id();
+        UUID heldItem = batch.items().get(0).item().id();
+        String otherItem = batch.items().get(1).item().id().toString();
+        CountDownLatch held = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        try {
+            Future<Void> inFlight = executor.submit(() -> wardrobeTransactions.inTransaction(() -> {
+                bulkImportRepository.lockForItemWork(tokens.accountId(), batchId).orElseThrow();
+                bulkImportRepository.lockItem(batchId, heldItem).orElseThrow();
+                held.countDown();
+                awaitQuietly(release);
+                return null;
+            }));
+            assertThat(held.await(10, SECONDS)).isTrue();
+
+            Future<BatchOverview> acceptance = executor.submit(() -> acceptBulkImportItemService.accept(
+                    new AcceptBulkImportItemCommand(tokens.accountId(), batchId.toString(), otherItem, "2", true,
+                            REVIEWED)));
+            assertThat(acceptance.get(10, SECONDS).items().get(1).item().status())
+                    .as("another item is accepted while the first item's command is in flight")
+                    .isEqualTo(BulkImportItemStatus.ACCEPTED);
+
+            Future<BatchOverview> stop = executor.submit(() ->
+                    bulkImportService.stop(tokens.accountId(), batchId.toString(), true));
+            awaitABackendWaitingForALock();
+            assertThat(stop.isDone()).as("a stop waits for the in-flight item command").isFalse();
+            release.countDown();
+            inFlight.get(10, SECONDS);
+
+            BatchOverview stopped = stop.get(10, SECONDS);
+            assertThat(stopped.currentStatus()).isEqualTo(BulkImportBatchStatus.STOPPED);
+            assertThat(stopped.items()).extracting(item -> item.item().status())
+                    .containsExactly(BulkImportItemStatus.CANCELED, BulkImportItemStatus.ACCEPTED);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+        assertThat(countGarmentsOf(tokens.accountId())).isOne();
+    }
+
+    /**
+     * Scenario C, stop first (deterministic): an acceptance that has to wait behind a stop holding the batch
+     * exclusively re-reads the batch once the stop commits, finds it stopped and the item cancelled, and is refused
+     * as closed. Nothing is created and the photo is not attached.
+     */
+    @Test
+    void anAcceptanceWaitingBehindAStopIsRefusedAndCreatesNothing() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-bulk-stop-first@example.com");
+        BatchOverview batch = startWithLinkedPhotos(tokens, 1);
+        UUID batchId = batch.batch().id();
+        String itemId = batch.items().getFirst().item().id().toString();
+        UUID photoId = batch.items().getFirst().item().photoUploadId().orElseThrow();
+        CountDownLatch stopping = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Void> stop = executor.submit(() -> wardrobeTransactions.inTransaction(() -> {
+                BulkImportBatch locked = bulkImportRepository.lockForStop(tokens.accountId(), batchId).orElseThrow();
+                for (BulkImportItem item : bulkImportRepository.lockUnfinishedItems(batchId)) {
+                    bulkImportRepository.update(item.canceled(clock.instant()), item.revision());
+                }
+                bulkImportRepository.markStopped(batchId, locked.stop(clock.instant()).stoppedAt().orElseThrow());
+                stopping.countDown();
+                awaitQuietly(release);
+                return null;
+            }));
+            assertThat(stopping.await(10, SECONDS)).isTrue();
+            Future<String> acceptance = executor.submit(() -> {
+                try {
+                    acceptBulkImportItemService.accept(new AcceptBulkImportItemCommand(tokens.accountId(),
+                            batchId.toString(), itemId, "2", true, REVIEWED));
+                    return "accepted";
+                } catch (BulkImportClosedException closed) {
+                    return "closed";
+                }
+            });
+
+            awaitABackendWaitingForALock();
+            assertThat(acceptance.isDone()).as("the acceptance waits for the stop").isFalse();
+            release.countDown();
+            stop.get(10, SECONDS);
+
+            assertThat(acceptance.get(10, SECONDS)).isEqualTo("closed");
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+        assertThat(countGarmentsOf(tokens.accountId())).isZero();
+        assertThat(photoUploadStatus(photoId)).as("the photo was not attached").isEqualTo("READY");
+    }
+
+    /** Scenario D: two items racing for one staged photo; the photo lock lets exactly one link it. */
+    @Test
+    void twoItemsRacingForOneStagedPhotoLetExactlyOneLinkIt() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-bulk-one-photo@example.com");
+        for (int round = 0; round < 5; round++) {
+            BatchOverview batch = bulkImportService.create(new CreateBulkImportCommand(tokens.accountId(),
+                    UUID.randomUUID().toString(), 2, true)).batch();
+            String batchId = batch.batch().id().toString();
+            UUID photoId = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(900 + round, 700));
+            CyclicBarrier start = new CyclicBarrier(2);
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            try {
+                List<Future<String>> outcomes = new ArrayList<>();
+                for (ItemOverview item : batch.items()) {
+                    outcomes.add(executor.submit(() -> {
+                        start.await(10, SECONDS);
+                        try {
+                            bulkImportService.linkPhoto(new LinkBulkImportPhotoCommand(tokens.accountId(), batchId,
+                                    item.item().id().toString(), "1", photoId.toString()));
+                            return "linked";
+                        } catch (PhotoUploadNotUsableException notUsable) {
+                            return "not usable";
+                        }
+                    }));
+                }
+                assertThat(List.of(outcomes.get(0).get(20, SECONDS), outcomes.get(1).get(20, SECONDS)))
+                        .containsExactlyInAnyOrder("linked", "not usable");
+            } finally {
+                executor.shutdownNow();
+            }
+            assertThat(jdbc.sql("SELECT count(*) FROM wardrobe.wardrobe_bulk_import_item WHERE photo_upload_id = :photo")
+                    .param("photo", photoId).query(Long.class).single()).isOne();
+            // Each round's batch is stopped, so the rounds stay within the active-batch limit.
+            bulkImportService.stop(tokens.accountId(), batchId, true);
+        }
+    }
+
+    /** Scenario E: identical starts with the same Idempotency-Key race; exactly one batch exists. */
+    @Test
+    void concurrentIdenticalStartsCreateOneBatch() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-bulk-same-key@example.com");
+        String key = UUID.randomUUID().toString();
+        int attempts = 4;
+        CyclicBarrier start = new CyclicBarrier(attempts);
+        ExecutorService executor = Executors.newFixedThreadPool(attempts);
+        List<BulkImportCreation> creations = new ArrayList<>();
+        try {
+            List<Future<BulkImportCreation>> outcomes = new ArrayList<>();
+            for (int attempt = 0; attempt < attempts; attempt++) {
+                outcomes.add(executor.submit(() -> {
+                    start.await(10, SECONDS);
+                    return bulkImportService.create(new CreateBulkImportCommand(tokens.accountId(), key, 2, true));
+                }));
+            }
+            for (Future<BulkImportCreation> outcome : outcomes) {
+                creations.add(outcome.get(20, SECONDS));
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+        assertThat(creations).extracting(creation -> creation.batch().batch().id()).containsOnly(
+                creations.getFirst().batch().batch().id());
+        assertThat(creations).filteredOn(BulkImportCreation::newlyCreated).hasSize(1);
+        assertThat(countRows("wardrobe.wardrobe_bulk_import_batch")).isOne();
+        assertThat(countRows("wardrobe.wardrobe_bulk_import_item")).isEqualTo(2);
+    }
+
+    /**
+     * Scenario F: the expiry job never waits for or overrides an acceptance. While an acceptance holds the linked
+     * photo, the job skips it (SKIP LOCKED) without blocking; after the acceptance commits, the attached photo is
+     * outside the job's reach. A photo nobody holds is expired, and its item then reads EXPIRED.
+     */
+    @Test
+    void theExpiryJobSkipsAPhotoAnAcceptanceHoldsAndNeverTouchesAnAttachedOne() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("race-bulk-expiry@example.com");
+        BatchOverview batch = startWithLinkedPhotos(tokens, 2);
+        UUID batchId = batch.batch().id();
+        UUID acceptedItem = batch.items().get(0).item().id();
+        UUID acceptedPhoto = batch.items().get(0).item().photoUploadId().orElseThrow();
+        UUID idlePhoto = batch.items().get(1).item().photoUploadId().orElseThrow();
+        Instant afterTheStagedPhotoLifetime = clock.instant().plus(Duration.ofHours(25));
+        CountDownLatch held = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Void> acceptanceInFlight = executor.submit(() -> wardrobeTransactions.inTransaction(() -> {
+                bulkImportRepository.lockForItemWork(tokens.accountId(), batchId).orElseThrow();
+                bulkImportRepository.lockItem(batchId, acceptedItem).orElseThrow();
+                photoUploadRepository.lockOwned(tokens.accountId(), acceptedPhoto).orElseThrow();
+                held.countDown();
+                awaitQuietly(release);
+                return null;
+            }));
+            assertThat(held.await(10, SECONDS)).isTrue();
+
+            Future<Integer> expiry = executor.submit(() -> photoUploadRepository.expireDue(afterTheStagedPhotoLifetime,
+                    photoUploadPolicy.inFlightFence(), 10));
+            assertThat(expiry.get(10, SECONDS)).as("only the photo nobody holds is expired, without waiting").isOne();
+            assertThat(photoUploadStatus(acceptedPhoto)).isEqualTo("READY");
+            assertThat(photoUploadStatus(idlePhoto)).isEqualTo("DISCARDED");
+            release.countDown();
+            acceptanceInFlight.get(10, SECONDS);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+
+        BatchOverview accepted = acceptBulkImportItemService.accept(new AcceptBulkImportItemCommand(tokens.accountId(),
+                batchId.toString(), acceptedItem.toString(), "2", true, REVIEWED));
+        assertThat(photoUploadRepository.expireDue(afterTheStagedPhotoLifetime, photoUploadPolicy.inFlightFence(), 10))
+                .isZero();
+        assertThat(photoUploadStatus(acceptedPhoto)).isEqualTo("ATTACHED");
+        assertThat(accepted.items()).extracting(ItemOverview::photoState)
+                .containsExactly(LinkedPhotoState.NONE, LinkedPhotoState.EXPIRED);
+        assertThat(accepted.items().get(0).garmentCurrent()).contains(true);
+    }
+
+    /** A new batch whose items each have a READY staged photo linked (revision 2). */
+    private BatchOverview startWithLinkedPhotos(IssuedTokens tokens, int itemCount) throws Exception {
+        BatchOverview overview = bulkImportService.create(new CreateBulkImportCommand(tokens.accountId(),
+                UUID.randomUUID().toString(), itemCount, true)).batch();
+        String batchId = overview.batch().id().toString();
+        for (int position = 0; position < itemCount; position++) {
+            UUID photoId = stagePhotoAndReturnId(tokens.accessToken(), TestImages.jpeg(1000 + position, 750));
+            overview = bulkImportService.linkPhoto(new LinkBulkImportPhotoCommand(tokens.accountId(), batchId,
+                    overview.items().get(position).item().id().toString(), "1", photoId.toString()));
+        }
+        return overview;
+    }
+
+    /** Polls PostgreSQL until another session of this database is blocked on a lock (at most 10 seconds). */
+    private void awaitABackendWaitingForALock() throws InterruptedException {
+        long giveUp = System.nanoTime() + SECONDS.toNanos(10);
+        while (System.nanoTime() < giveUp) {
+            long waiting = jdbc.sql("""
+                            SELECT count(*) FROM pg_stat_activity
+                            WHERE datname = current_database() AND wait_event_type = 'Lock'
+                            """).query(Long.class).single();
+            if (waiting > 0) {
+                return;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("No session started waiting for a row lock within 10 seconds");
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            if (!latch.await(20, SECONDS)) {
+                throw new IllegalStateException("The test never released the held transaction");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while holding the transaction", interrupted);
+        }
     }
 
     /** A new one-item batch whose item has a READY staged photo linked (revision 2). */
@@ -4865,6 +5409,34 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
   - the S3Mock or bucket usage, up to about 300,000,000 original bytes per batch.
 - **Record** the results for the Product Owner's review of the OPEN-S4-25 values.
 
+**Results (run on 2026-11-23).**
+
+- **Setup.**
+  - A throwaway stack: its own `postgres:17.11-bookworm`, its own `adobe/s3mock:5.1.0` and the built jar, with generated credentials. It did not use the developer's `.env`.
+  - S3Mock 5.1 needs `COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS`; `initialBuckets` alone creates no bucket, and staging then answers `503`.
+- **M1–M9.** All passed, with these extra checks:
+  - the unaccepted item's stage is discarded by the stop, while the accepted photo stays attached;
+  - a repeated stop keeps the first stop time;
+  - a replay after removal returns the same garment with `garmentCurrent: false` and creates nothing;
+  - three active batches are admitted and a fourth gets `409 BULK_IMPORT_LIMIT_REACHED`;
+  - 21 items give `400`;
+  - another account's photo gives `404 PHOTO_UPLOAD_NOT_FOUND` and is never linked;
+  - no token gives `401`;
+  - Flyway records V15.
+- **M10.** The application log contained neither the Brand value nor any of the 23 staged-photo ids. T8 `neitherErrorsNorLogsRevealSubmittedValuesOrPhotoIds` repeats this check automatically.
+- **M11, measured locally on the developer machine, not the agreed environment.**
+
+| Measurement | Result |
+| --- | --- |
+| Photos | 20 synthetic 4032 × 3024 JPEGs of about 13.4 MB, staged and linked one after another |
+| Staging time per photo | 0.61 / 0.70 / 1.41 s (min / median / max); 15.2 s in total |
+| Link time per item | At most 37 ms |
+| Original bytes | 267,476,536, within the derived bound of 300,000,000 |
+| Bytes stored in S3Mock | 36,424,753 (the normalized derivatives, long edge 2048) |
+| Peak heap | 213 MB in use before a collection, 229 MB committed |
+
+  The staging was sequential, so at most one decode ran at a time (ceiling 2). The decoder queue was not instrumented separately.
+
 **M12. Client evidence: NOT DONE.** This needs the mobile client:
 
 - multiphoto selection;
@@ -4877,14 +5449,14 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 
 ### 15.1 Acceptance criteria to evidence
 
-| AC | Evidence (planned) | Remaining |
+| AC | Evidence (run in the repository on 2026-11-23) | Remaining |
 | --- | --- | --- |
 | AC-01 Multiphoto queue, invalid item | T1; T8 `startingABatch…`, `aMissingKeyAndAnUnusableItemCount…`; staging rejection is covered by the existing `PhotoUploadApiIT`; M1–M2 | **Client multiphoto selection (M12)** |
 | AC-02 Independent outcomes, no upload-only ownership | T8 `onlyAConfirmedItemBecomesAGarment…` (no garment after linking), `anExpiredPhotoIsShown…`; M3–M4 | Client per-item display |
-| AC-03 Review and correction of 13 properties | T6; T8 `anInvalidMiddleItemFailsAlone…` (category applicability), `onlyAConfirmedItem…` (Materials, Styles, Brand) | Client review form |
+| AC-03 Review and correction of 13 properties | T6; T8 `anInvalidMiddleItemFailsAlone…` (category applicability), `onlyAConfirmedItem…` (Materials, Styles, Brand), `acceptedItemsKeepEveryReviewedProperty…` (all 13 properties, nothing invented) | Client review form |
 | AC-04 Only confirmed entries are saved | T8 `onlyAConfirmedItem…` (`NOT_CONFIRMED` creates nothing); T3 | — |
-| AC-05 Partial failure, accepted survivors | T8 `anInvalidMiddleItemFailsAlone…`, `stoppingCancels…`, `anExpiredBatch…`; T9 stop race; M8 | Client outcome review |
-| AC-06 Retry versus separate intent; cross-account and cross-item | T8 `aRetriedConfirmation…`, `aReplayAfterTheGarmentWasRemoved…`, `aStagedPhotoBelongsToOneItem…`, `noOtherAccount…`; T9 double confirmation; T7 unique stage; M5, M7 | — |
+| AC-05 Partial failure, accepted survivors | T8 `anInvalidMiddleItemFailsAlone…`, `stoppingCancels…`, `anExpiredBatch…`; T9 stop race, an acceptance waiting behind a stop, another item accepted while one is held, the expiry job skipping a held photo; M8 | Client outcome review |
+| AC-06 Retry versus separate intent; cross-account and cross-item | T8 `aRetriedConfirmation…`, `aReplayAfterTheGarmentWasRemoved…`, `aStagedPhotoBelongsToOneItem…`, `noOtherAccount…`, `aRepeatedLink…`, `aPhotoUsedForASingleGarment…`; T9 double confirmation, two items racing for one stage, identical starts; T7 unique stage; M5, M7, X2, X5 | — |
 | AC-07 Cancelled and uncertain actions | T8 `cancellingAnItem…`, `stoppingCancels…`; every command returns the batch for outcome review; M8 | Client uncertain-outcome review |
 
 ### 15.2 Requirements to tests
@@ -4907,11 +5479,11 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 
 ## 16. Definition of Done
 
-- [ ] P1–P35 and T1–T9 applied. `.\mvnw.cmd clean verify` passes, including the unchanged creation suites, `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 139 required reports with no failure or skip.
+- [x] P1–P35 and T1–T9 applied (2026-11-23; the repository files equal this guide's steps). `./mvnw -o clean verify` passed in the repository on 2026-11-23: 710 unit and 464 integration tests, none failed, errored or was skipped, including the unchanged creation suites, `GarmentSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` finds 139 required reports with no failure or skip. (Locally 138 of 139; `HeifDecodingIT` needs libheif, which CI installs.)
 - [ ] **Product Owner review of the OPEN-S4-25 values** (20 items, 3 active batches, `P7D`, derived 300,000,000 bytes) and M11 resource evidence. Changes are configuration only.
 - [ ] Client evidence (M12).
-- [ ] Batch purge with account lifecycle is recorded as deferred, not done.
+- [x] Batch purge with account lifecycle is recorded as deferred, not done.
 
 ## 17. Troubleshooting
 
@@ -4928,13 +5500,13 @@ Check 'M9 resume list no longer shows the stopped batch' ($resume.Status -eq 200
 
 ## 18. Final Checklist
 
-- [ ] V15 touches only `wardrobe`. The item CHECKs encode the state machine; the stage is linked to at most one item.
-- [ ] No garment value, draft or photo byte is stored before confirmation.
-- [ ] Every request problem is reported before any lookup.
-- [ ] The photo used for a garment always comes from the item row.
-- [ ] Acceptance runs through the shared `GarmentAcceptance` in one transaction with the item update.
-- [ ] Lock order: batch → item → photo → garment. A stop holds the batch `FOR UPDATE`.
-- [ ] A retried confirmation, link or cancellation is safe; stop is idempotent.
-- [ ] No AI, outfit recommendation, worker or parallel decoding was added.
-- [ ] OpenAPI 0.17.0; 7 CI entries (total 139).
-- [ ] The OPEN-S4-25 values are labeled as delegated defaults awaiting Product Owner review.
+- [x] V15 touches only `wardrobe`. The item CHECKs encode the state machine; the stage is linked to at most one item.
+- [x] No garment value, draft or photo byte is stored before confirmation.
+- [x] Every request problem is reported before any lookup.
+- [x] The photo used for a garment always comes from the item row.
+- [x] Acceptance runs through the shared `GarmentAcceptance` in one transaction with the item update.
+- [x] Lock order: batch → item → photo → garment. A stop holds the batch `FOR UPDATE`.
+- [x] A retried confirmation, link or cancellation is safe; stop is idempotent.
+- [x] No AI, outfit recommendation, worker or parallel decoding was added.
+- [x] OpenAPI 0.17.0; 7 CI entries (total 139).
+- [x] The OPEN-S4-25 values are labeled as delegated defaults awaiting Product Owner review.
