@@ -18,9 +18,11 @@ class PreferencesSchemaIT extends PersonalContextIntegrationTestSupport {
                         WHERE table_schema = 'personal_context' ORDER BY table_name
                         """).query(String.class).list())
                 .containsExactly("personal_context_common_need",
+                        "personal_context_location", // V14, US-CTX-001
                         "personal_context_optional_context", // V13, US-PROF-002
                         "personal_context_preferences",
-                        "personal_context_preferred_style");
+                        "personal_context_preferred_style",
+                        "personal_context_weather_evidence"); // V14, US-CTX-001
     }
 
     @Test

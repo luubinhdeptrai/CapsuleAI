@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: CapsuleAI API
-  version: 0.15.0
+  version: 0.16.0
   description: |
     CapsuleAI Sprint 1 — Secure Account Access, extended in Sprint 2
     (Backend Only).
@@ -23,6 +23,7 @@ info:
       - US-GAR-006: Attach a photo to an existing imageless garment
       - US-WAR-003: Find owned garments through search and filters
       - US-PROF-002: Control optional body and gender context
+      - US-CTX-001: Choose environmental context with safe fallback
 
     Authentication model:
       - Access tokens are HS256-signed JWTs.
@@ -64,7 +65,14 @@ info:
 
     This specification does not introduce endpoints for
     session listing, all-device logout, replacing or removing a
-    garment's photo, location, or public profiles.
+    garment's photo, or public profiles.
+
+    Location context (US-CTX-001) is the account's one current
+    selection, rounded to two decimals, and the weather acquired
+    for it from Open-Meteo within a single 2-second deadline.
+    Weather is current when its evidence is at most 30 minutes
+    old; otherwise the environment is reported as UNAVAILABLE
+    with a reason. A selected city is never presented as weather.
 
     Optional context (US-PROF-002) is the account's own,
     optional, self-declared gender and body-shape context. It is
@@ -106,7 +114,7 @@ tags:
   - name: Wardrobe
     description: The authenticated user's own confirmed garments
   - name: PersonalContext
-    description: The authenticated user's own declared preferences and optional context
+    description: The authenticated user's own declared preferences, optional context and location
 
 # Every endpoint requires bearer authentication unless it
 # explicitly overrides this requirement with security: [].
@@ -1578,6 +1586,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OptionalContext"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/RevisionConflict"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /api/v1/personal-context/location:
+    get:
+      tags:
+        - PersonalContext
+      operationId: viewLocation
+      summary: The account's location selection and its environmental context
+      description: |
+        US-CTX-001 AC-02/03 (FR-WEATHER-001–005; approved S4-CTX-01–06).
+        Always 200. When no current weather evidence exists for the
+        selection, weather is acquired on demand within 2 seconds;
+        otherwise the stored evidence is reused while it is at most
+        30 minutes old. environment.status is NO_SELECTION, CURRENT or
+        UNAVAILABLE (with unavailableReason); the selection is reported
+        separately and is never itself weather.
+      responses:
+        "200":
+          description: The selection and its environmental context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationContext"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    patch:
+      tags:
+        - PersonalContext
+      operationId: reviseLocation
+      summary: Select, change or clear the account's location
+      description: |
+        US-CTX-001 (OPEN-S4-18/19). selection omitted keeps it; null
+        clears it (no provider request); an object replaces it. The
+        server rounds latitude and longitude to two decimals before
+        storing or sending them. source is DEVICE or MANUAL; a MANUAL
+        selection needs a label (1–80 characters). expectedRevision is
+        required: null for the first selection, otherwise the revision
+        last read; a mismatch is 409 and changes nothing.
+
+        The selection is committed first; weather is acquired after
+        the commit. A weather failure never undoes the accepted
+        selection: the response reports it with an UNAVAILABLE
+        environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationRevisionRequest"
+            examples:
+              manualCity:
+                summary: First selection of a city resolved on the device
+                value:
+                  expectedRevision: null
+                  selection:
+                    latitude: 10.7769
+                    longitude: 106.7009
+                    label: "Hồ Chí Minh"
+                    source: "MANUAL"
+              clear:
+                summary: Clear the selection
+                value:
+                  expectedRevision: "2"
+                  selection: null
+      responses:
+        "200":
+          description: The change was accepted (or changed nothing); the selection and its environmental context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationContext"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -3111,6 +3199,162 @@ components:
         Optional self-declared body shape as a neutral geometric
         silhouette (values selected under OPEN-S4-16). No measurement.
       enum: [RECTANGLE, TRIANGLE, INVERTED_TRIANGLE, HOURGLASS, ROUND]
+
+    LocationRevisionRequest:
+      type: object
+      description: A change of the account's location selection (US-CTX-001). There is no owner field.
+      required:
+        - expectedRevision
+      properties:
+        expectedRevision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]{0,17}$"
+          description: null for the first selection; otherwise the revision last read (opaque).
+        selection:
+          anyOf:
+            - $ref: "#/components/schemas/LocationSelectionInput"
+            - type: "null"
+
+    LocationSelectionInput:
+      type: object
+      required:
+        - latitude
+        - longitude
+        - source
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: Rounded by the server to two decimals before storage or use.
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          description: Rounded by the server to two decimals before storage or use.
+        label:
+          type: [string, "null"]
+          maxLength: 80
+          description: Required for MANUAL (the city resolved on the device); optional for DEVICE.
+        source:
+          type: string
+          enum: [DEVICE, MANUAL]
+
+    LocationContext:
+      type: object
+      description: |
+        The accepted selection and, separately, its environmental
+        context. Every field is always present.
+      required:
+        - revision
+        - selection
+        - environment
+      properties:
+        revision:
+          type: [string, "null"]
+          pattern: "^[1-9][0-9]*$"
+          description: null while nothing was ever selected.
+        selection:
+          anyOf:
+            - $ref: "#/components/schemas/LocationSelection"
+            - type: "null"
+        environment:
+          $ref: "#/components/schemas/EnvironmentalContext"
+
+    LocationSelection:
+      type: object
+      required:
+        - latitude
+        - longitude
+        - label
+        - source
+      properties:
+        latitude:
+          type: number
+          description: Two decimals (about 1.1 km).
+        longitude:
+          type: number
+          description: Two decimals (about 1.1 km).
+        label:
+          type: [string, "null"]
+        source:
+          type: string
+          enum: [DEVICE, MANUAL]
+
+    EnvironmentalContext:
+      type: object
+      required:
+        - status
+        - basisRevision
+        - unavailableReason
+        - weather
+      properties:
+        status:
+          type: string
+          enum: [NO_SELECTION, CURRENT, UNAVAILABLE]
+        basisRevision:
+          type: [string, "null"]
+          description: The location revision this status applies to; null for NO_SELECTION.
+        unavailableReason:
+          type: [string, "null"]
+          enum: [NOT_CONFIGURED, PROVIDER_UNAVAILABLE, DEADLINE_EXCEEDED, INVALID_PROVIDER_DATA, STALE_PROVIDER_DATA, SELECTION_CHANGED, null]
+        weather:
+          anyOf:
+            - $ref: "#/components/schemas/Weather"
+            - type: "null"
+
+    Weather:
+      type: object
+      description: |
+        Translated current weather. observedAt is the provider's
+        evidence time (freshness is measured from it); retrievedAt is
+        when the server received it. basis MODELLED means model
+        output, not a station observation.
+      required:
+        - condition
+        - weatherCode
+        - temperatureCelsius
+        - apparentTemperatureCelsius
+        - relativeHumidityPercent
+        - precipitationMillimetres
+        - windSpeedKilometresPerHour
+        - observedAt
+        - retrievedAt
+        - basis
+        - provider
+        - attribution
+      properties:
+        condition:
+          type: string
+          enum: [CLEAR, MAINLY_CLEAR, PARTLY_CLOUDY, OVERCAST, FOG, DRIZZLE, FREEZING_DRIZZLE, RAIN, FREEZING_RAIN, SNOW, RAIN_SHOWERS, SNOW_SHOWERS, THUNDERSTORM, THUNDERSTORM_WITH_HAIL]
+        weatherCode:
+          type: integer
+          description: WMO weather interpretation code.
+        temperatureCelsius:
+          type: number
+        apparentTemperatureCelsius:
+          type: [number, "null"]
+        relativeHumidityPercent:
+          type: [integer, "null"]
+        precipitationMillimetres:
+          type: [number, "null"]
+        windSpeedKilometresPerHour:
+          type: [number, "null"]
+        observedAt:
+          type: string
+          format: date-time
+        retrievedAt:
+          type: string
+          format: date-time
+        basis:
+          type: string
+          enum: [MODELLED, OBSERVED]
+        provider:
+          type: string
+          enum: [OPEN_METEO]
+        attribution:
+          type: string
+          description: Provider attribution to display with the weather.
 
     FieldError:
       type: object

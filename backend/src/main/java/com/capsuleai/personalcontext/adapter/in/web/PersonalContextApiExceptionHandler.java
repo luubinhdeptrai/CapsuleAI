@@ -1,5 +1,7 @@
 package com.capsuleai.personalcontext.adapter.in.web;
 
+import com.capsuleai.personalcontext.application.LocationRevisionConflictException;
+import com.capsuleai.personalcontext.application.LocationValidationException;
 import com.capsuleai.personalcontext.application.OptionalContextRevisionConflictException;
 import com.capsuleai.personalcontext.application.OptionalContextValidationException;
 import com.capsuleai.personalcontext.application.PreferenceFieldViolation;
@@ -61,6 +63,22 @@ public class PersonalContextApiExceptionHandler {
         return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
                 "Your optional profile information changed after you opened it, so this change was not applied. "
                         + "Reload it, review it and submit again."));
+    }
+
+    /** US-CTX-001: the same body shape; no submitted coordinate or label is echoed. */
+    @ExceptionHandler(LocationValidationException.class)
+    public ResponseEntity<ProblemDetail> handleLocationValidation(LocationValidationException exception) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED",
+                "This location cannot be used. Correct it and submit again; your saved location is unchanged.");
+        problem.setProperty("fieldErrors", fieldErrors(exception.violations()));
+        return respond(problem);
+    }
+
+    @ExceptionHandler(LocationRevisionConflictException.class)
+    public ResponseEntity<ProblemDetail> handleLocationConflict(LocationRevisionConflictException exception) {
+        return respond(problem(HttpStatus.CONFLICT, "REVISION_CONFLICT",
+                "Your location changed after you opened it, so this change was not applied. Reload it, review it "
+                        + "and submit again."));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

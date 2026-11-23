@@ -3,6 +3,7 @@ package com.capsuleai.personalcontext.support;
 import com.capsuleai.identity.support.IdentityIntegrationTestSupport;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
@@ -20,15 +21,22 @@ public abstract class PersonalContextIntegrationTestSupport extends IdentityInte
 
     protected static final String PREFERENCES = "/api/v1/personal-context/preferences";
     protected static final String OPTIONAL_CONTEXT = "/api/v1/personal-context/optional-context";
+    protected static final String LOCATION = "/api/v1/personal-context/location";
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
+
+    /** US-CTX-001: the @Primary weather double of every integration context. */
+    @Autowired
+    protected ControllableWeatherProvider weatherProvider;
 
     @BeforeEach
     protected void resetPersonalContextState() {
         jdbc.sql("TRUNCATE TABLE personal_context.personal_context_common_need, "
                 + "personal_context.personal_context_preferred_style, personal_context.personal_context_preferences, "
-                + "personal_context.personal_context_optional_context")
+                + "personal_context.personal_context_optional_context, "
+                + "personal_context.personal_context_weather_evidence, personal_context.personal_context_location")
                 .update();
+        weatherProvider.reset();
     }
 
     protected ResultActions viewPreferences(String accessToken) throws Exception {
@@ -62,5 +70,18 @@ public abstract class PersonalContextIntegrationTestSupport extends IdentityInte
             body.put((String) namesAndValues[index], namesAndValues[index + 1]);
         }
         return body;
+    }
+
+    /** US-CTX-001. */
+    protected ResultActions viewLocation(String accessToken) throws Exception {
+        return mockMvc.perform(get(LOCATION).header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+    }
+
+    /** US-CTX-001. Build bodies with {@link #json(Object...)} to keep JSON nulls. */
+    protected ResultActions reviseLocation(String accessToken, Map<String, ?> body) throws Exception {
+        return mockMvc.perform(patch(LOCATION)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JSON.writeValueAsString(body)));
     }
 }

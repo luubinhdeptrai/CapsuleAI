@@ -6,7 +6,7 @@
 | Repository baseline | `sprint_04` at `33c579c` (merge of PR #5, the Sprint 3 branch) |
 | Plan decisions | All 30 Sprint 4 recommendations (S4-GAR-01–06, S4-WAR-01–04, S4-PROF-01–04, S4-CTX-01–06, S4-BULK-01–07, S4-INT-01–03) **approved by the Product Owner on 2026-11-16** |
 | This file | The 33 detailed choices that the approved decisions left open, selected by Claude under the Product Owner's explicit delegation of 2026-11-16 |
-| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), US-WAR-003 (OPEN-S4-11–15, since 2026-11-22) and US-PROF-002 (OPEN-S4-16–17, since 2026-11-22), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
+| Verification status | **Only US-GAR-005 (OPEN-S4-01–06, since 2026-11-21), US-GAR-006 (OPEN-S4-07–10, since 2026-11-22), US-WAR-003 (OPEN-S4-11–15, since 2026-11-22), US-PROF-002 (OPEN-S4-16–17, since 2026-11-22) and US-CTX-001 (OPEN-S4-18–24, since 2026-11-23), with their parts of OPEN-S4-31–33, are implemented in the repository; nothing is deployed and no real Open-Meteo request has been made.** The other guides contain proposed code and tests. They were compiled and their tests passed only in an isolated scratch copy, most recently on 2026-11-17 ([README §11](README.md#11-status)); every decision therefore stays `VERIFICATION PENDING`. |
 | Revision of 2026-11-17 | OPEN-S4-11 refined for Vietnamese descriptor search, explicitly authorized by the Product Owner; OPEN-S4-14 matching policy `m2`; OPEN-S4-09 mapped to the formal US-GAR-006 story; canonical-document references added. No other decision changed. |
 
 ## 1. Decision authority
@@ -69,13 +69,13 @@ Each entry has these fields:
 | [OPEN-S4-15](#open-s4-15--search-indexing-evidence) | WAR-003 | S4-WAR-04 | No new index in Sprint 4. Documented `EXPLAIN` procedure and the triggers for adding one. | Delegated default | Measured 2026-11-22: no index; the child-set comparison changed (US-WAR-003 §14) | Pending (repeat on deployed data) |
 | [OPEN-S4-16](#open-s4-16--optional-genderbody-vocabulary) | PROF-002 | S4-PROF-01 | `genderContext`: 4 values; `bodyShape`: 5 geometric values. Absence means not provided. **Newly selected values**, defined canonically in SRS §4.10.1 since 2026-11-17. | Delegated default | Implemented 2026-11-22 (US-PROF-002); tests pass locally | **Pending (inclusive-representation review; the values are not PO-approved)** |
 | [OPEN-S4-17](#open-s4-17--optional-context-resource-persistence-and-clearing) | PROF-002 | S4-PROF-02/03/04 | `/optional-context` resource, V13 table, presence-aware PATCH. No published API. | Delegated default | Implemented 2026-11-22 (US-PROF-002); tests pass locally | Pending (CI run; client evidence) |
-| [OPEN-S4-18](#open-s4-18--location-representation-precision-and-manual-resolution) | CTX-001 | S4-CTX-01 | 2-decimal point rounded by the server; `DEVICE` or `MANUAL`; a label. The client resolves cities from a bundled reference. | Delegated default | Pending | Pending (client, privacy) |
-| [OPEN-S4-19](#open-s4-19--location-revision-clearing-and-evidence-binding) | CTX-001 | S4-CTX-02 | V14 tables. PATCH `selection`. Weather is acquired after commit, and evidence is published only while the location revision is still current. | Delegated default | Pending | Pending |
-| [OPEN-S4-20](#open-s4-20--open-meteo-request-and-semantic-mapping) | CTX-001 | S4-CTX-03 | Open-Meteo `current=`, `timeformat=unixtime`, WMO code mapped to a condition, `MODELLED` basis | Delegated default | Pending | **Pending (terms, live request)** |
-| [OPEN-S4-21](#open-s4-21--weather-freshness-and-latest-evidence) | CTX-001 | S4-CTX-04 | Age measured from the provider's `current.time`; inclusive 30 minutes; 5-minute future tolerance; latest evidence only | Delegated default | Pending | Pending |
-| [OPEN-S4-22](#open-s4-22--one-elapsed-acquisition-deadline) | CTX-001 | S4-CTX-05 | `PT2S` from adapter entry, including capacity wait. `RestClient` on JDK client; bounded executor; 64 KiB body | Delegated default | Pending | **Pending (measured)** |
-| [OPEN-S4-23](#open-s4-23--environmental-basis-and-absent-consumers) | CTX-001 | S4-CTX-06 | Basis (revision, status, evidence time) is carried in the HTTP read model; no new published API until a consumer exists | Delegated default | Pending | Pending |
-| [OPEN-S4-24](#open-s4-24--weather-privacy-configuration-and-test-isolation) | CTX-001 | S4-CTX-01/03/05 | Fixed trusted base URL (HTTPS, or loopback in tests). No coordinates in logs. Test double in integration tests. | Delegated default | Pending | Pending |
+| [OPEN-S4-18](#open-s4-18--location-representation-precision-and-manual-resolution) | CTX-001 | S4-CTX-01 | 2-decimal point rounded by the server; `DEVICE` or `MANUAL`; a label. The client resolves cities from a bundled reference. | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending (client, privacy) |
+| [OPEN-S4-19](#open-s4-19--location-revision-clearing-and-evidence-binding) | CTX-001 | S4-CTX-02 | V14 tables. PATCH `selection`. Weather is acquired after commit, and evidence is published only while the location revision is still current. | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
+| [OPEN-S4-20](#open-s4-20--open-meteo-request-and-semantic-mapping) | CTX-001 | S4-CTX-03 | Open-Meteo `current=`, `timeformat=unixtime`, WMO code mapped to a condition, `MODELLED` basis | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | **Pending (terms, live request)** |
+| [OPEN-S4-21](#open-s4-21--weather-freshness-and-latest-evidence) | CTX-001 | S4-CTX-04 | Age measured from the provider's `current.time`; inclusive 30 minutes; 5-minute future tolerance; latest evidence only | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
+| [OPEN-S4-22](#open-s4-22--one-elapsed-acquisition-deadline) | CTX-001 | S4-CTX-05 | `PT2S` from adapter entry, including capacity wait. `RestClient` on JDK client; bounded executor; 64 KiB body | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | **Pending (measured)** |
+| [OPEN-S4-23](#open-s4-23--environmental-basis-and-absent-consumers) | CTX-001 | S4-CTX-06 | Basis (revision, status, evidence time) is carried in the HTTP read model; no new published API until a consumer exists | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
+| [OPEN-S4-24](#open-s4-24--weather-privacy-configuration-and-test-isolation) | CTX-001 | S4-CTX-01/03/05 | Fixed trusted base URL (HTTPS, or loopback in tests). No coordinates in logs. Test double in integration tests. | Delegated default | Implemented 2026-11-23 (US-CTX-001); tests pass locally | Pending |
 | [OPEN-S4-25](#open-s4-25--bulk-admission-limits-and-retention) | BULK-001 | S4-BULK-06 | 20 items, 3 active batches, `P7D` lifetime, aggregate 300,000,000 bytes derived from the photo rule. No server-side drafts. | Delegated default | Pending | Pending (PO review advised) |
 | [OPEN-S4-26](#open-s4-26--batch-and-item-states) | BULK-001 | S4-BULK-02 | Item states `AWAITING_PHOTO`, `REVIEWABLE`, `ACCEPTED` and `CANCELED`, plus derived photo states. Batch `OPEN` or `STOPPED`, plus derived `EXPIRED`. | Delegated default | Pending | Pending |
 | [OPEN-S4-27](#open-s4-27--batch-and-item-identity-and-idempotency) | BULK-001 | S4-BULK-05, S4-INT-02 | Batch Idempotency-Key plus a fingerprint. Server-generated item ids and acceptance keys. Item revisions. | Delegated default | Pending | Pending |
@@ -1054,7 +1054,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-CTX-01.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - **`VERIFICATION PENDING`: client permission, manual and skip evidence, and a privacy review of 2-decimal precision.**
 
 **G. Implementation steps.** US-CTX-001:
@@ -1101,7 +1101,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-CTX-02.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-CTX-001:
@@ -1150,7 +1150,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-CTX-03.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - **`VERIFICATION PENDING`:**
   - Open-Meteo terms of use, attribution and eligibility for the actual deployment are **not verified**;
   - the request and response shape are taken from the provider's public documentation and **must be confirmed by a real authorized request**;
@@ -1195,7 +1195,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-CTX-04.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-CTX-001:
@@ -1238,8 +1238,8 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes the approved S4-CTX-05.
-- `IMPLEMENTATION PENDING`.
-- **`VERIFICATION PENDING`: measured elapsed behavior of the concrete client.**
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
+- **`VERIFICATION PENDING`: measured elapsed behavior of the concrete client in the agreed environment.** M8 was measured locally on 2026-11-23 against a loopback server that never answers (developer machine, not the agreed environment): 141 reads, each answered UNAVAILABLE / DEADLINE_EXCEEDED in 2,007–2,064 ms; at most 8 `weather-acquisition` threads; the JDK client's threads returned to baseline after idle. The measurement also showed that a caller obtaining capacity just before its deadline still sends a request it abandons at once (US-CTX-001 guide §14).
 
 **G. Implementation steps.** US-CTX-001:
 
@@ -1277,7 +1277,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`; realizes S4-CTX-06.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-CTX-001:
@@ -1313,7 +1313,7 @@ Existing stored values must be migrated or kept.
 **F. Authority and status.**
 
 - `SELECTED BY CLAUDE — DELEGATED DEFAULT`.
-- `IMPLEMENTATION PENDING`.
+- **Implemented in the repository on 2026-11-23** (US-CTX-001; `clean verify` passed locally; no real Open-Meteo request was made). A CI run on a pull request to `sprint_04` is still required.
 - `VERIFICATION PENDING`.
 
 **G. Implementation steps.** US-CTX-001:

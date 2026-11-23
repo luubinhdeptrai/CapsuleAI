@@ -8,7 +8,7 @@
 | Approved decisions applied | S4-CTX-01 to S4-CTX-06, S4-INT-02, S4-INT-03, all **approved by the Product Owner on 2026-11-16** |
 | Delegated defaults applied | OPEN-S4-18 to 24, 31, 32, 33 (`SELECTED BY CLAUDE — DELEGATED DEFAULT`, [record](open-questions.md)) |
 | External status | **The Open-Meteo terms of use, attribution and eligibility for the actual deployment are not verified, and no real provider request has been made.** The request and response shapes follow the provider's public documentation (checked through Context7 on 2026-11-16) and must be confirmed by a real authorized request (§14 M7). |
-| Verification status | **Not applied to the repository and not run there.** Scratch evidence of 2026-11-17, after the Vietnamese search refinement: the six guides were applied in order to an isolated copy of `backend/`, `docs/05-api` and `.github/workflows`, plus the canonical alias document, and `clean verify` passed there (687 unit and 435 integration tests; none failed, errored or was skipped), including every test in §13. An earlier run on 2026-11-16 had also passed. A run in the repository and its CI is still required. No real Open-Meteo request was made, and the 2-second deadline must be measured in the agreed environment. |
+| Verification status | **Applied to the repository on 2026-11-23** (P1–P14 by the developer, reviewed against this guide; P15–P35, T1–T15 and the review corrections afterwards). `./mvnw -o clean verify` passed in the repository on 2026-11-23: 694 unit and 434 integration tests, none failed, errored or was skipped. Of the 132 required CI reports, 131 were present with at least their minimum; the missing one is the Sprint 3 `HeifDecodingIT`, which needs libheif that the local machine lacks and CI installs. Manual M1–M6 and M6a passed with the provider switched off. M8 was measured locally on 2026-11-23 against a loopback server that never answers (developer machine, not the agreed environment): 141 reads, each answered UNAVAILABLE / DEADLINE_EXCEEDED in 2,007–2,064 ms; at most 8 `weather-acquisition` threads; the JDK client's threads returned to baseline after idle. **Still required:** the Open-Meteo terms, attribution and eligibility review and an authorized real request (M7), M8 in the agreed environment, a CI run on a pull request to `sprint_04`, client evidence, and the AC-04/AC-05 consumers. |
 
 ## 1. Story Overview
 
@@ -747,6 +747,8 @@ Field errors use these codes:
 | P31 | MODIFY | `backend/src/main/resources/application.properties` | Defaults | P29 |
 | P32 | MODIFY | `docs/05-api/openapi.yaml` | 0.15.0 → 0.16.0 | P25–P27 |
 | P33 | MODIFY | `.github/workflows/backend-ci.yml` | 9 entries | T1–T15 |
+| P34 | MODIFY | `backend/src/main/resources/application-local.properties` | Local runs make no provider request (review 2026-11-23) | P31 |
+| P35 | MODIFY | `backend/README.md` | Endpoint and weather switch (review 2026-11-23) | P31, P34 |
 | T1 | ADD | `…/test/pc/domain/LocationSelectionTest.java` | Rounding and labels | P3 |
 | T2 | ADD | `…/test/pc/domain/WeatherFreshnessTest.java` | 30-minute boundary, WMO codes | P5, P7 |
 | T3 | ADD | `…/test/pc/adapter/out/weather/OpenMeteoResponseTranslatorTest.java` | Translation | P24 |
@@ -2033,6 +2035,7 @@ public final class OpenMeteoWeatherProvider implements WeatherProvider, AutoClos
 
     private static final Logger log = LoggerFactory.getLogger(OpenMeteoWeatherProvider.class);
 
+    private final HttpClient httpClient;
     private final RestClient restClient;
     private final OpenMeteoResponseTranslator responseTranslator = new OpenMeteoResponseTranslator();
     private final Duration acquisitionDeadline;
@@ -2051,7 +2054,7 @@ public final class OpenMeteoWeatherProvider implements WeatherProvider, AutoClos
         }
         this.maximumResponseBytes = maximumResponseBytes;
         this.clock = Objects.requireNonNull(clock, "clock");
-        HttpClient httpClient = HttpClient.newBuilder()
+        this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(acquisitionDeadline)
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
@@ -2153,10 +2156,14 @@ public final class OpenMeteoWeatherProvider implements WeatherProvider, AutoClos
         }
     }
 
-    /** Stops the acquisition threads when the application context closes. */
+    /**
+     * Stops the acquisition threads and the HTTP client (its selector thread and any open exchange) when the
+     * application context closes.
+     */
     @Override
     public void close() {
         acquisitionExecutor.shutdownNow();
+        httpClient.shutdownNow();
     }
 
     private Instant now() {
@@ -2179,6 +2186,7 @@ public final class OpenMeteoWeatherProvider implements WeatherProvider, AutoClos
 - **Interruption.** An interrupted JDK `HttpClient.send` aborts the exchange in current JDKs. The design relies only on the caller returning on time and on bounded threads; prompt connection release after `cancel(true)` must be **measured** (OPEN-S4-22, §14 M8).
 - **Redirects.** `HttpClient.Redirect.NEVER` keeps the request at the configured host.
 - **Body limit.** `readNBytes(limit + 1)` reads at most one byte past the limit.
+- **Close (review of 2026-11-23).** `close()` also shuts down the JDK `HttpClient`. Without it, the client's selector and worker threads outlived the bean: three threads remained in T4 `creatingOpensNoConnectionAndClosingStopsTheAdaptersThreads`.
 
 **Common mistakes.**
 
@@ -2197,6 +2205,7 @@ import com.capsuleai.personalcontext.domain.WeatherCondition;
 import com.capsuleai.personalcontext.domain.WeatherReading;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -2225,12 +2234,18 @@ final class OpenMeteoResponseTranslator {
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     WeatherAcquisition translate(byte[] body, WeatherQuery query, Instant retrievedAt) {
-        JsonNode root;
         try {
-            root = jsonMapper.readTree(body);
-        } catch (JacksonException malformed) {
+            return translateOrReject(body, query, retrievedAt);
+        } catch (JacksonException | ArithmeticException | DateTimeException | IllegalArgumentException unusable) {
+            // Malformed JSON, or a number that cannot be represented (an int or long out of range, a value that
+            // overflows a double, a time beyond the representable instants): unusable data, never a provider
+            // failure and never an exception escaping the adapter.
             return invalid();
         }
+    }
+
+    private WeatherAcquisition translateOrReject(byte[] body, WeatherQuery query, Instant retrievedAt) {
+        JsonNode root = jsonMapper.readTree(body);
         if (root == null || !root.isObject()) {
             return invalid();
         }
@@ -2315,6 +2330,7 @@ final class OpenMeteoResponseTranslator {
 **Explanation.**
 
 - The plausibility bounds keep impossible values out of the evidence and inside the `NUMERIC` column precision.
+- **Unrepresentable numbers (review of 2026-11-23).** Jackson 3 does not truncate: `intValue()`, `longValue()` and `decimalValue()` throw `JsonNodeException` for a value out of range or not finite. Examples: a weather code of 4294967298, a time beyond `long`, or `1e400`. Similar values make `intValueExact` and `Instant.ofEpochSecond` throw, for example humidity `1e10`. These exceptions used to escape the translator, and the adapter reported them as `PROVIDER_UNAVAILABLE`. `translate` now reports them as `INVALID_PROVIDER_DATA` (T3 `unrepresentableNumbersAreInvalidProviderData`).
 - Open-Meteo labels its unit `°C` with a degree sign. The Java source is UTF-8, as Maven is configured for the project.
 - Jackson 3's `JacksonException` is unchecked.
 
@@ -2366,7 +2382,9 @@ public record LocationRevisionRequest(JsonNode expectedRevision, JsonNode select
         if (value == null || value.isNull()) {
             return null;
         }
-        if (!value.isNumber()) {
+        // A JSON number too large for a double (for example 1e400) is read as infinity and has no decimal value:
+        // it is reported like a value of the wrong kind (UNSUPPORTED_VALUE), never left to fail as a server error.
+        if (!value.isNumber() || (value.isFloatingPointNumber() && !Double.isFinite(value.doubleValue()))) {
             wrongTypeFields.add(field);
             return null;
         }
@@ -2385,6 +2403,13 @@ public record LocationRevisionRequest(JsonNode expectedRevision, JsonNode select
     }
 }
 ```
+
+**Explanation (review of 2026-11-23).**
+
+- Jackson 3 reads a JSON number too large for a double, such as `1e400`, as infinity, and its `decimalValue()` then throws `JsonNodeException`.
+- The first version let that exception escape the controller, so the client got a server error instead of a field error.
+- A non-finite number is now reported like a value of the wrong kind: `UNSUPPORTED_VALUE`, which the contract documents for "not a number, or out of range" (T12 `unusableValuesAreFieldErrorsNeverServerErrors`).
+- Floating-point values are always doubles here, so their scale is bounded and rounding them is cheap.
 
 ### Step P26 — [ADD] `backend/src/main/java/com/capsuleai/personalcontext/adapter/in/web/LocationContextResponse.java`
 
@@ -2706,14 +2731,21 @@ capsuleai.wardrobe.removal-cleanup.overdue-warning-age=P21D
 # US-CTX-001 weather (S4-CTX-03/05; OPEN-S4-20/22/24/33 delegated defaults). Open-Meteo terms of use,
 # attribution and eligibility for this deployment are NOT verified: confirm them, or set enabled=false (the API
 # then reports NOT_CONFIGURED). The acquisition deadline implements the approved 2-second limit; startup fails
-# above PT2S. The base URL must be https. No API key is used or stored.
-capsuleai.personal-context.weather.enabled=true
+# above PT2S. The base URL must be https. No API key is used or stored. CAPSULE_WEATHER_ENABLED=false switches the
+# provider off without a code change; the local profile defaults to off (application-local.properties).
+capsuleai.personal-context.weather.enabled=${CAPSULE_WEATHER_ENABLED:true}
 capsuleai.personal-context.weather.base-url=https://api.open-meteo.com
 capsuleai.personal-context.weather.acquisition-deadline=PT2S
 capsuleai.personal-context.weather.maximum-concurrent-requests=8
 capsuleai.personal-context.weather.maximum-response-bytes=65536
 capsuleai.personal-context.weather.attribution=Weather data by Open-Meteo.com
 ```
+
+**Explanation (review of 2026-11-23).**
+
+- The default stays `true`, as selected under OPEN-S4-33. Because the provider terms are unreviewed, two environment controls were added.
+- `CAPSULE_WEATHER_ENABLED=false` turns the provider off in any deployment without a code change.
+- P34 makes the `local` profile default to `false`, so a developer run never contacts Open-Meteo unless someone enables it deliberately.
 
 **Common mistake.** Pointing `base-url` at a host with a path. The adapter appends `/v1/forecast`, so give only the origin.
 
@@ -3086,9 +3118,82 @@ AFTER:
 
 This brings the total to 132 required entries. `OpenMeteoWeatherProviderTest` runs as a unit test (Surefire) against an in-process HTTP server and needs no Docker.
 
+### Step P34 — [MODIFY] `backend/src/main/resources/application-local.properties`
+
+Added by the review of 2026-11-23 (R14 deployment risk). Until the Open-Meteo terms are reviewed, a local run must not contact the provider (§14 says so for M1–M6). This step makes that the default of the `local` profile instead of a manual step. The file has no final newline; keep it that way.
+
+BEFORE:
+
+```properties
+capsuleai.wardrobe.photo-storage.path-style=true
+```
+
+AFTER:
+
+```properties
+capsuleai.wardrobe.photo-storage.path-style=true
+
+# US-CTX-001: the Open-Meteo terms of use, attribution and eligibility are not reviewed yet (OPEN-S4-24, guide
+# section 14 M7), so a local run never contacts the provider unless CAPSULE_WEATHER_ENABLED=true is set deliberately.
+# Until then the location API reports weather as UNAVAILABLE / NOT_CONFIGURED.
+capsuleai.personal-context.weather.enabled=${CAPSULE_WEATHER_ENABLED:false}
+```
+
+### Step P35 — [MODIFY] `backend/README.md`
+
+Added by the review of 2026-11-23: the developer README documents the endpoint and the weather switch.
+
+BEFORE:
+
+````markdown
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PreferencesApiIT,ConcurrentPreferencesIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
+```
+
+## 10. Database migrations
+````
+
+AFTER:
+
+````markdown
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PreferencesApiIT,ConcurrentPreferencesIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
+```
+
+### Location and weather
+
+US-CTX-001 adds `GET`/`PATCH /api/v1/personal-context/location`:
+
+- **The selection.** One per account, `DEVICE` or `MANUAL` (a manual city needs a `label`), with its own `revision`. The server rounds it to two decimals before storing it or sending it anywhere. `selection: null` clears it.
+- **The environment.** It is reported separately as `NO_SELECTION`, `CURRENT` (with the reading and both `observedAt` and `retrievedAt`), or `UNAVAILABLE` with a reason.
+- **How weather is acquired.** Weather comes from Open-Meteo after the selection is committed, within one 2-second deadline. A reading is current while its `observedAt` is at most 30 minutes old.
+
+**Weather provider switch.** The **Open-Meteo terms of use, attribution and eligibility for a deployment are not reviewed**:
+
+- `capsuleai.personal-context.weather.enabled` defaults to `true`. Set `CAPSULE_WEATHER_ENABLED=false` to switch the provider off without a code change. The API then reports `UNAVAILABLE` / `NOT_CONFIGURED`.
+- The `local` profile defaults to `false`, so a local run makes no provider request unless `CAPSULE_WEATHER_ENABLED=true` is set deliberately.
+- Tests never contact the provider.
+
+Focused tests, from `backend`:
+
+```powershell
+.\mvnw.cmd '-Dtest=LocationSelectionTest,WeatherFreshnessTest,OpenMeteoResponseTranslatorTest,OpenMeteoWeatherProviderTest,ReviseLocationServiceTest,PersonalContextWeatherPropertiesTest' test
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=LocationSchemaIT,LocationContextApiIT,ConcurrentLocationIT,PreferencesSchemaIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
+```
+
+## 10. Database migrations
+````
+
 ## 13. Complete Automated Test Implementation
 
-The counts in P33 equal the `@Test` methods below. **No test has been run in the repository.** No test calls the public internet: integration tests use `ControllableWeatherProvider`, and the adapter is tested against an in-process HTTP server.
+The counts in P33 are the CI minimums. The review of 2026-11-23 added tests, so six classes now hold more than their minimum. No test calls the public internet: integration tests use `ControllableWeatherProvider`, and the adapter is tested against an in-process HTTP server.
+
+| Class | Tests | CI minimum |
+| --- | ---: | ---: |
+| `OpenMeteoResponseTranslatorTest` | 8 | 5 |
+| `OpenMeteoWeatherProviderTest` | 12 | 7 |
+| `ReviseLocationServiceTest` | 11 | 8 |
+| `LocationContextApiIT` | 10 | 8 |
+| `ConcurrentLocationIT` | 8 | 4 |
+| `PersonalContextWeatherPropertiesTest` | 4 | 3 |
 
 ### Step T1 — [ADD] `backend/src/test/java/com/capsuleai/personalcontext/domain/LocationSelectionTest.java`
 
@@ -3275,6 +3380,49 @@ class OpenMeteoResponseTranslatorTest {
         assertInvalid(DOCUMENTED_RESPONSE.replace("\"temperature_2m\":31.4", "\"temperature_2m\":3140"));
     }
 
+    /**
+     * Numbers that cannot be represented are invalid provider data, never an exception or a provider failure:
+     * a code beyond int, humidity beyond int, a value that overflows a double, a time beyond long or beyond the
+     * representable instants, and a non-finite grid coordinate.
+     */
+    @Test
+    void unrepresentableNumbersAreInvalidProviderData() {
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"weather_code\":2", "\"weather_code\":4294967298"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"relative_humidity_2m\":70", "\"relative_humidity_2m\":1e10"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"temperature_2m\":31.4", "\"temperature_2m\":1e400"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"time\":1763285400", "\"time\":99999999999999999999"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"time\":1763285400", "\"time\":9223372036854775807"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"latitude\":10.75", "\"latitude\":1e400"));
+    }
+
+    /** Negative amounts are impossible; units are never converted (km/h is required, not assumed). */
+    @Test
+    void negativeAmountsAndOtherUnitsAreInvalid() {
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"precipitation\":0.0", "\"precipitation\":-0.1"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"wind_speed_10m\":12.3", "\"wind_speed_10m\":-1"));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"wind_speed_10m\":\"km/h\"", "\"wind_speed_10m\":\"m/s\""));
+        assertInvalid(DOCUMENTED_RESPONSE.replace("\"precipitation\":\"mm\"", "\"precipitation\":\"inch\""));
+    }
+
+    /** Only time, temperature and weather code are required; absent or null optional values stay absent. */
+    @Test
+    void absentOrNullOptionalValuesStayAbsentAndARequiredOneIsNeeded() {
+        String minimal = """
+                {"latitude":10.75,"longitude":106.75,"current_units":{"temperature_2m":"°C"},
+                 "current":{"time":1763285400,"temperature_2m":31.4,"weather_code":0,"precipitation":null}}
+                """;
+
+        WeatherReading reading = ((WeatherAcquisition.Acquired) translate(minimal)).reading();
+
+        assertThat(reading.apparentTemperatureCelsius()).isEmpty();
+        assertThat(reading.relativeHumidityPercent()).isEmpty();
+        assertThat(reading.precipitationMillimetres()).isEmpty();
+        assertThat(reading.windSpeedKilometresPerHour()).isEmpty();
+        assertThat(reading.condition()).isEqualTo(WeatherCondition.CLEAR);
+        assertInvalid(minimal.replace("\"temperature_2m\":31.4,", ""));
+        assertInvalid(minimal.replace("\"weather_code\":0,", ""));
+    }
+
     private WeatherAcquisition translate(String json) {
         return translator.translate(json.getBytes(StandardCharsets.UTF_8), QUERY, RETRIEVED_AT);
     }
@@ -3307,15 +3455,22 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -3441,6 +3596,133 @@ class OpenMeteoWeatherProviderTest {
 
         assertThat(acquisition).isInstanceOf(WeatherAcquisition.Unavailable.class);
         assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(DEADLINE.plus(TOLERANCE));
+    }
+
+    /**
+     * A call abandoned at the deadline keeps its capacity permit only until the abandoned work really ends; the
+     * permit is never leaked, so a later acquisition gets through once the late call has stopped.
+     */
+    @Test
+    void anAbandonedCallReleasesItsCapacityOnceItEnds() throws Exception {
+        behaviour = exchange -> {
+            pause(1500);
+            respond(exchange, 200, OpenMeteoResponseTranslatorTest.DOCUMENTED_RESPONSE);
+        };
+        OpenMeteoWeatherProvider singleCapacity = provider(1);
+        assertDeadlineExceededInTime(singleCapacity);
+
+        behaviour = exchange -> respond(exchange, 200, OpenMeteoResponseTranslatorTest.DOCUMENTED_RESPONSE);
+        long giveUp = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+        WeatherAcquisition later = singleCapacity.acquire(QUERY);
+        while (!(later instanceof WeatherAcquisition.Acquired) && System.nanoTime() < giveUp) {
+            later = singleCapacity.acquire(QUERY);
+        }
+
+        assertThat(later).isInstanceOf(WeatherAcquisition.Acquired.class);
+    }
+
+    /**
+     * Many concurrent callers against a provider that never answers in time: every caller gets DEADLINE_EXCEEDED
+     * within the deadline, and the adapter never runs more acquisition threads than its capacity.
+     */
+    @Test
+    void concurrentTimeoutsNeverGrowAcquisitionThreadsBeyondTheCapacity() throws Exception {
+        behaviour = exchange -> {
+            pause(3000);
+            respond(exchange, 200, OpenMeteoResponseTranslatorTest.DOCUMENTED_RESPONSE);
+        };
+        Set<Long> earlierThreads = acquisitionThreadIds();
+        OpenMeteoWeatherProvider twoAtATime = provider(2);
+        ExecutorService callers = Executors.newFixedThreadPool(12);
+        try {
+            List<CompletableFuture<Duration>> calls = new ArrayList<>();
+            for (int caller = 0; caller < 12; caller++) {
+                calls.add(CompletableFuture.supplyAsync(() -> timedDeadlineExceeded(twoAtATime), callers));
+            }
+            for (CompletableFuture<Duration> call : calls) {
+                assertThat(call.get()).isLessThan(DEADLINE.plus(TOLERANCE));
+            }
+        } finally {
+            callers.shutdownNow();
+        }
+
+        Set<Long> newThreads = acquisitionThreadIds();
+        newThreads.removeAll(earlierThreads);
+        assertThat(newThreads).hasSizeLessThanOrEqualTo(2);
+    }
+
+    /** OPEN-S4-24: a redirect is never followed, so the request cannot leave the configured host. */
+    @Test
+    void aRedirectIsNotFollowed() {
+        behaviour = exchange -> {
+            exchange.getResponseHeaders().add("Location", "http://127.0.0.1:" + server.getAddress().getPort()
+                    + "/elsewhere");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        };
+
+        assertThat(provider(2).acquire(QUERY))
+                .isEqualTo(new WeatherAcquisition.Unavailable(EnvironmentUnavailableReason.PROVIDER_UNAVAILABLE));
+        assertThat(receivedQueries).as("only the original request reached the server").hasSize(1);
+    }
+
+    /** AC-07, OPEN-S4-24: the only log line names the outcome category, never the point or the URL. */
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void aFailureIsLoggedWithoutTheLocationOrTheUrl(CapturedOutput output) {
+        behaviour = exchange -> respond(exchange, 503, "{\"error\":true}");
+
+        provider(2).acquire(QUERY);
+
+        assertThat(output.getAll())
+                .contains("Weather acquisition unavailable (PROVIDER_UNAVAILABLE)")
+                .doesNotContain("10.78")
+                .doesNotContain("106.70")
+                .doesNotContain("latitude")
+                .doesNotContain("127.0.0.1:" + server.getAddress().getPort());
+    }
+
+    /**
+     * Creating the adapter contacts nobody; closing it (the application context does on shutdown) stops its
+     * acquisition threads and its HTTP client, and an acquisition after closing is unavailable, never a hang.
+     */
+    @Test
+    void creatingOpensNoConnectionAndClosingStopsTheAdaptersThreads() {
+        behaviour = exchange -> respond(exchange, 200, OpenMeteoResponseTranslatorTest.DOCUMENTED_RESPONSE);
+        Set<Long> earlierThreads = adapterThreadIds();
+        OpenMeteoWeatherProvider adapter = provider(2);
+        assertThat(receivedQueries).as("construction sends no request").isEmpty();
+        assertThat(adapter.acquire(QUERY)).isInstanceOf(WeatherAcquisition.Acquired.class);
+
+        adapter.close();
+
+        long giveUp = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+        Set<Long> remaining = adapterThreadIds();
+        remaining.removeAll(earlierThreads);
+        while (!remaining.isEmpty() && System.nanoTime() < giveUp) {
+            pause(20);
+            remaining = adapterThreadIds();
+            remaining.removeAll(earlierThreads);
+        }
+        assertThat(remaining).as("acquisition and HTTP client threads after close").isEmpty();
+        assertThat(adapter.acquire(QUERY))
+                .isEqualTo(new WeatherAcquisition.Unavailable(EnvironmentUnavailableReason.PROVIDER_UNAVAILABLE));
+    }
+
+    /** Threads owned by an adapter: its acquisition pool and the JDK HTTP client's selector and workers. */
+    private static Set<Long> adapterThreadIds() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(Thread::isAlive)
+                .filter(thread -> thread.getName().equals("weather-acquisition") || thread.getName().startsWith("HttpClient-"))
+                .map(Thread::threadId)
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private static Set<Long> acquisitionThreadIds() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(thread -> thread.getName().equals("weather-acquisition") && thread.isAlive())
+                .map(Thread::threadId)
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     private OpenMeteoWeatherProvider provider(int maximumConcurrentRequests) {
@@ -3806,6 +4088,7 @@ final class InMemoryLocationRepository implements LocationRepository {
 package com.capsuleai.personalcontext.application;
 
 import com.capsuleai.identity.support.MutableClock;
+import com.capsuleai.personalcontext.application.ports.WeatherAcquisition;
 import com.capsuleai.personalcontext.application.ports.WeatherQuery;
 import com.capsuleai.personalcontext.domain.EnvironmentUnavailableReason;
 import com.capsuleai.personalcontext.domain.LocationSelection;
@@ -3961,6 +4244,54 @@ class ReviseLocationServiceTest {
         assertThat(locationRepository.selectionWrites()).isOne();
     }
 
+    /** A provider defect that throws despite the port contract is contained: the selection stays, nothing is invented. */
+    @Test
+    void aProviderThatThrowsIsReportedAsUnavailableAndKeepsTheSelection() {
+        ImmediatePersonalContextTransactions transactions = new ImmediatePersonalContextTransactions();
+        EnvironmentalContextService failing = new EnvironmentalContextService(locationRepository, query -> {
+            throw new IllegalStateException("adapter defect");
+        }, transactions, clock);
+        ReviseLocationService revise = new ReviseLocationService(locationRepository, failing, transactions, clock);
+
+        LocationContextView view = revise.revise(new ReviseLocationCommand(OWNER, new ExpectedRevision.Unset(),
+                ValueChange.replace(manual("21.0285", "105.8048", "Hà Nội"))));
+
+        assertThat(view.profile().orElseThrow().selection()).isPresent();
+        assertThat(view.environment()).isEqualTo(
+                new EnvironmentalContext.Unavailable(1, EnvironmentUnavailableReason.PROVIDER_UNAVAILABLE));
+        assertThat(locationRepository.findEvidence(OWNER)).isEmpty();
+    }
+
+    /** OPEN-S4-21: up to 5 minutes in the future is clock skew (current); further is invalid and never stored. */
+    @Test
+    void evidenceFarInTheFutureIsInvalidWhileSmallClockSkewIsTolerated() {
+        weatherProvider.respondWithReadingObservedAt(NOW.plus(Duration.ofMinutes(6)));
+
+        LocationContextView view = select(new ExpectedRevision.Unset(), manual("10.7769", "106.7009", "Hồ Chí Minh"));
+
+        assertThat(view.environment()).isEqualTo(
+                new EnvironmentalContext.Unavailable(1, EnvironmentUnavailableReason.INVALID_PROVIDER_DATA));
+        assertThat(locationRepository.findEvidence(OWNER)).isEmpty();
+
+        weatherProvider.respondWithReadingObservedAt(NOW.plus(Duration.ofMinutes(5)));
+        assertThat(viewLocationContextService.view(OWNER).environment()).isInstanceOf(EnvironmentalContext.Current.class);
+    }
+
+    /** Evidence older than 30 minutes whose refresh fails is reported UNAVAILABLE, never presented as current. */
+    @Test
+    void staleStoredEvidenceWhoseRefreshFailsIsNeverPresentedAsCurrent() {
+        weatherProvider.respondWithReadingObservedAt(NOW);
+        select(new ExpectedRevision.Unset(), manual("10.7769", "106.7009", "Hồ Chí Minh"));
+        clock.advance(Duration.ofMinutes(31));
+        weatherProvider.respondWith(new WeatherAcquisition.Unavailable(EnvironmentUnavailableReason.DEADLINE_EXCEEDED));
+
+        EnvironmentalContext environment = viewLocationContextService.view(OWNER).environment();
+
+        assertThat(environment).isEqualTo(
+                new EnvironmentalContext.Unavailable(1, EnvironmentUnavailableReason.DEADLINE_EXCEEDED));
+        assertThat(weatherProvider.queries()).hasSize(2);
+    }
+
     private LocationContextView select(ExpectedRevision expectedRevision, SubmittedLocation submitted) {
         return reviseLocationService.revise(new ReviseLocationCommand(OWNER, expectedRevision,
                 ValueChange.replace(submitted)));
@@ -4094,6 +4425,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -4101,6 +4439,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -4247,6 +4586,69 @@ class LocationContextApiIT extends PersonalContextIntegrationTestSupport {
         viewLocation(other.accessToken()).andExpect(jsonPath("$.environment.status").value("NO_SELECTION"));
         mockMvc.perform(get(LOCATION)).andExpect(status().isUnauthorized());
     }
+
+    /**
+     * A coordinate that overflows a double, a selection that is not an object, a source in another case and a label
+     * of the wrong kind or length are field errors (400), never a server error; nothing is stored or requested.
+     */
+    @Test
+    void unusableValuesAreFieldErrorsNeverServerErrors() throws Exception {
+        IssuedTokens tokens = registerAndLogIn("location-unusable@example.com");
+
+        reviseLocationRaw(tokens.accessToken(), """
+                {"expectedRevision":null,"selection":{"latitude":1e400,"longitude":-1e400,"source":"DEVICE"}}
+                """)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'selection.latitude')].code", hasItem("UNSUPPORTED_VALUE")))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'selection.longitude')].code", hasItem("UNSUPPORTED_VALUE")))
+                .andExpect(jsonPath("$.fieldErrors.length()").value(2));
+        reviseLocation(tokens.accessToken(), json("expectedRevision", null, "selection", "Hà Nội"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("selection"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("UNSUPPORTED_VALUE"));
+        reviseLocation(tokens.accessToken(), json("expectedRevision", null, "selection",
+                Map.of("latitude", 10.7769, "longitude", 106.7009, "label", 7, "source", "manual")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'selection.source')].code", hasItem("UNSUPPORTED_VALUE")))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'selection.label')].code", hasItem("INVALID_FORMAT")));
+        reviseLocation(tokens.accessToken(), json("expectedRevision", null, "selection",
+                Map.of("latitude", 10.7769, "longitude", 106.7009, "label", "x".repeat(81), "source", "MANUAL")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("selection.label"))
+                .andExpect(jsonPath("$.fieldErrors[0].code").value("INVALID_FORMAT"));
+
+        assertThat(countRows("personal_context.personal_context_location")).isZero();
+        assertThat(weatherProvider.queries()).isEmpty();
+    }
+
+    /** M6a automated: neither the submitted coordinates nor the label reach the application log. */
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void coordinatesAndLabelsNeverReachTheLog(CapturedOutput output) throws Exception {
+        LoggerFactory.getLogger(LocationContextApiIT.class).info("location log capture is active");
+        IssuedTokens tokens = registerAndLogIn("location-log@example.com");
+
+        reviseLocation(tokens.accessToken(), json("expectedRevision", null, "selection",
+                Map.of("latitude", 16.4637, "longitude", 107.5909, "label", "Huế Citadel", "source", "MANUAL")))
+                .andExpect(status().isOk());
+        reviseLocation(tokens.accessToken(), json("expectedRevision", "1", "selection",
+                Map.of("latitude", 95.1234, "longitude", 107.5909, "label", "Huế Citadel", "source", "MANUAL")))
+                .andExpect(status().isBadRequest());
+        viewLocation(tokens.accessToken()).andExpect(status().isOk());
+
+        assertThat(output.getAll())
+                .as("the capture must see this class's own log line, or the check below proves nothing")
+                .contains("location log capture is active")
+                .doesNotContain("16.46").doesNotContain("107.59").doesNotContain("16.4637").doesNotContain("95.12")
+                .doesNotContain("Huế Citadel");
+    }
+
+    private ResultActions reviseLocationRaw(String accessToken, String body) throws Exception {
+        return mockMvc.perform(patch(LOCATION)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
+    }
 }
 ```
 
@@ -4268,12 +4670,21 @@ import com.capsuleai.personalcontext.support.PersonalContextIntegrationTestSuppo
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -4294,6 +4705,12 @@ class ConcurrentLocationIT extends PersonalContextIntegrationTestSupport {
 
     @Autowired
     private PersonalContextTransactions personalContextTransactions;
+
+    @Autowired
+    private ReviseOptionalContextService reviseOptionalContextService;
+
+    @Autowired
+    private RevisePreferencesService revisePreferencesService;
 
     @Test
     void aLateReadingForAReplacedSelectionIsNeverPublished() throws Exception {
@@ -4345,6 +4762,176 @@ class ConcurrentLocationIT extends PersonalContextIntegrationTestSupport {
                 new EnvironmentalContext.Unavailable(1, EnvironmentUnavailableReason.SELECTION_CHANGED));
         assertThat(locationRepository.findEvidence(owner)).isEmpty();
         assertThat(locationRepository.find(owner).orElseThrow().revision()).isEqualTo(2);
+    }
+
+    /** Race C: two changes of the same revision; the conditional UPDATE lets exactly one win. */
+    @Test
+    void ofTwoChangesOfTheSameRevisionExactlyOneIsAccepted() throws Exception {
+        UUID owner = registerAndLogIn("race-location-same-revision@example.com").accountId();
+        select(owner, new ExpectedRevision.Unset(), "10.7769", "106.7009");
+
+        List<String> outcomes = race(change(owner, new ExpectedRevision.At(1), "21.0285", "105.8048"),
+                change(owner, new ExpectedRevision.At(1), "16.4637", "107.5909"));
+
+        assertThat(outcomes).containsExactlyInAnyOrder("accepted", "conflict");
+        assertThat(locationRepository.find(owner).orElseThrow().revision()).isEqualTo(2);
+    }
+
+    /**
+     * A publication holds the selection row in share mode until it commits: a concurrent change really waits for it
+     * (seen in pg_stat_activity), then commits and deletes the evidence of the old selection in its own transaction.
+     */
+    @Test
+    void aChangeWaitsForAPublicationHoldingTheSelectionAndThenDeletesItsEvidence() throws Exception {
+        UUID owner = registerAndLogIn("race-location-publication-first@example.com").accountId();
+        select(owner, new ExpectedRevision.Unset(), "10.7769", "106.7009");
+        CountDownLatch published = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService threads = Executors.newFixedThreadPool(2);
+        try {
+            Future<WeatherPublication> publication = threads.submit(() -> personalContextTransactions.inTransaction(() -> {
+                WeatherPublication outcome = locationRepository.publishEvidenceIfCurrent(owner, 1,
+                        ControllableWeatherProvider.reading(clock.instant(), clock.instant()));
+                published.countDown();
+                awaitQuietly(release);
+                return outcome;
+            }));
+            assertThat(published.await(10, SECONDS)).isTrue();
+            Future<String> change = threads.submit(change(owner, new ExpectedRevision.At(1), "21.0285", "105.8048"));
+
+            awaitABackendWaitingForALock();
+            assertThat(change.isDone()).as("the change waits for the publication's share lock").isFalse();
+            release.countDown();
+
+            assertThat(publication.get(10, SECONDS)).isEqualTo(WeatherPublication.PUBLISHED);
+            assertThat(change.get(10, SECONDS)).isEqualTo("accepted");
+        } finally {
+            release.countDown();
+            threads.shutdownNow();
+        }
+        assertThat(locationRepository.findEvidence(owner)).as("the old selection's evidence went with the change")
+                .isEmpty();
+        assertThat(locationRepository.find(owner).orElseThrow().revision()).isEqualTo(2);
+    }
+
+    /**
+     * A publication that has to wait behind an uncommitted change re-reads the row once the change commits (READ
+     * COMMITTED re-check under the lock), sees the new revision and publishes nothing.
+     */
+    @Test
+    void aPublicationWaitingBehindAnUncommittedChangeSeesTheNewRevisionAndPublishesNothing() throws Exception {
+        UUID owner = registerAndLogIn("race-location-change-first@example.com").accountId();
+        select(owner, new ExpectedRevision.Unset(), "10.7769", "106.7009");
+        CountDownLatch changed = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService threads = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> change = threads.submit(() -> personalContextTransactions.inTransaction(() -> {
+                boolean revised = locationRepository.reviseIfCurrentAt(owner, 1, Optional.of(LocationSelection.rounded(
+                        new BigDecimal("16.4637"), new BigDecimal("107.5909"), Optional.of("Huế"), LocationSource.MANUAL)),
+                        clock.instant());
+                changed.countDown();
+                awaitQuietly(release);
+                return revised;
+            }));
+            assertThat(changed.await(10, SECONDS)).isTrue();
+            Future<WeatherPublication> publication = threads.submit(() -> publish(owner, 1, clock.instant()));
+
+            awaitABackendWaitingForALock();
+            assertThat(publication.isDone()).as("the publication waits for the uncommitted change").isFalse();
+            release.countDown();
+
+            assertThat(change.get(10, SECONDS)).isTrue();
+            assertThat(publication.get(10, SECONDS)).isEqualTo(WeatherPublication.SELECTION_CHANGED);
+        } finally {
+            release.countDown();
+            threads.shutdownNow();
+        }
+        assertThat(locationRepository.findEvidence(owner)).isEmpty();
+    }
+
+    /** Race D: location, preferences and optional context are separate records; none blocks or overwrites another. */
+    @Test
+    void locationPreferenceAndOptionalContextChangesNeverConflict() throws Exception {
+        UUID owner = registerAndLogIn("race-location-other-records@example.com").accountId();
+
+        List<String> outcomes = race(change(owner, new ExpectedRevision.Unset(), "10.7769", "106.7009"), () -> {
+            reviseOptionalContextService.revise(new ReviseOptionalContextCommand(owner, new ExpectedRevision.Unset(),
+                    new OptionalContextChanges(ValueChange.replace("WOMAN"), ValueChange.keep())));
+            return "accepted";
+        }, () -> {
+            revisePreferencesService.revise(new RevisePreferencesCommand(owner, new ExpectedRevision.Unset(),
+                    new PreferenceChanges(ValueChange.replace(List.of("CLASSIC")), Map.of(), false)));
+            return "accepted";
+        });
+
+        assertThat(outcomes).containsExactly("accepted", "accepted", "accepted");
+        assertThat(locationRepository.find(owner).orElseThrow().revision()).isEqualTo(1);
+        assertThat(jdbc.sql("SELECT gender_context || '/' || revision FROM personal_context.personal_context_optional_context "
+                        + "WHERE owner_account_id = :owner")
+                .param("owner", owner).query(String.class).single()).isEqualTo("WOMAN/1");
+        assertThat(jdbc.sql("SELECT revision FROM personal_context.personal_context_preferences WHERE owner_account_id = :owner")
+                .param("owner", owner).query(Long.class).single()).isEqualTo(1L);
+    }
+
+    private Callable<String> change(UUID owner, ExpectedRevision expectedRevision, String latitude, String longitude) {
+        return () -> {
+            try {
+                select(owner, expectedRevision, latitude, longitude);
+                return "accepted";
+            } catch (LocationRevisionConflictException conflict) {
+                return "conflict";
+            }
+        };
+    }
+
+    @SafeVarargs
+    private static List<String> race(Callable<String>... contenders) throws Exception {
+        CyclicBarrier start = new CyclicBarrier(contenders.length);
+        ExecutorService executor = Executors.newFixedThreadPool(contenders.length);
+        try {
+            List<Future<String>> outcomes = new ArrayList<>();
+            for (Callable<String> contender : contenders) {
+                outcomes.add(executor.submit(() -> {
+                    start.await(10, SECONDS);
+                    return contender.call();
+                }));
+            }
+            List<String> results = new ArrayList<>();
+            for (Future<String> outcome : outcomes) {
+                results.add(outcome.get(20, SECONDS));
+            }
+            return results;
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    /** Polls PostgreSQL until another session of this database is blocked on a lock (at most 10 seconds). */
+    private void awaitABackendWaitingForALock() throws InterruptedException {
+        long giveUp = System.nanoTime() + SECONDS.toNanos(10);
+        while (System.nanoTime() < giveUp) {
+            long waiting = jdbc.sql("""
+                            SELECT count(*) FROM pg_stat_activity
+                            WHERE datname = current_database() AND wait_event_type = 'Lock'
+                            """).query(Long.class).single();
+            if (waiting > 0) {
+                return;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("No session started waiting for the row lock within 10 seconds");
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            if (!latch.await(20, SECONDS)) {
+                throw new IllegalStateException("The test never released the held transaction");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while holding the transaction", interrupted);
+        }
     }
 
     private void select(UUID owner, ExpectedRevision expectedRevision, String latitude, String longitude) {
@@ -4430,6 +5017,25 @@ class PersonalContextWeatherPropertiesTest {
         assertThat(properties(URI.create("http://127.0.0.1:18080"), deadline).baseUrl().getPort()).isEqualTo(18080);
     }
 
+    @Test
+    void theLimitsAndTheAttributionAreValidated() {
+        URI provider = URI.create("https://api.open-meteo.com");
+        Duration deadline = Duration.ofSeconds(2);
+
+        assertThatThrownBy(() -> new PersonalContextWeatherProperties(true, provider, Duration.ofSeconds(-1), 8, 65_536,
+                "Weather data by Open-Meteo.com")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new PersonalContextWeatherProperties(true, provider, deadline, 0, 65_536,
+                "Weather data by Open-Meteo.com")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new PersonalContextWeatherProperties(true, provider, deadline, 8, 1023,
+                "Weather data by Open-Meteo.com")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new PersonalContextWeatherProperties(true, provider, deadline, 8, 65_536, " "))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> properties(URI.create("https://api.open-meteo.com#fragment"), deadline))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> properties(URI.create("ftp://api.open-meteo.com"), deadline))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private static PersonalContextWeatherProperties properties(URI baseUrl, Duration acquisitionDeadline) {
         return new PersonalContextWeatherProperties(true, baseUrl, acquisitionDeadline, 8, 65_536,
                 "Weather data by Open-Meteo.com");
@@ -4503,19 +5109,49 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 - **Also check** that the backend thread count returns to its baseline afterwards (`jcmd <pid> Thread.print`, threads named `weather-acquisition` at most `maximum-concurrent-requests`).
 - **Record** the measured distribution. OPEN-S4-22 stays `VERIFICATION PENDING` until then.
 
+**Results (run on 2026-11-23).**
+
+- **Setup.**
+  - A throwaway stack: its own `postgres:17.11-bookworm` container and the built jar, with generated credentials. It did not use the developer's `.env`.
+  - Phase 1 ran the `local` profile with no weather switch set, so P34 kept the provider off.
+  - Phase 2 pointed the provider at a loopback server that never answers. No Open-Meteo request was made.
+- **M1–M6.** All passed, with these extra checks:
+  - the stored point has two decimals;
+  - no weather evidence is stored while the provider is off;
+  - clearing keeps the row with every selection column NULL;
+  - a device point is rounded to `21.03`/`105.80`;
+  - the same point after rounding is a no-op;
+  - invalid values give `400` without echoing them, and `1e400` gives `400`, not `500`;
+  - no token, or a logged-out session, gives `401` and changes nothing;
+  - Flyway records V14.
+- **M6a.** Neither log contains a submitted coordinate or label. The phase 2 log names only the reason category, in 41 lines.
+- **M7.** Not done. The Open-Meteo terms, attribution and eligibility are not reviewed, and no request was authorized.
+- **M8, measured locally on the developer machine, not the agreed environment.**
+
+| Measurement | Result |
+| --- | --- |
+| First selection | Accepted; `UNAVAILABLE` / `DEADLINE_EXCEEDED` in 2,064 ms |
+| 20 sequential reads | 2,009 / 2,021 / 2,026 ms (min / median / max). All 20 acquisitions reached the server, so no capacity permit leaked. |
+| 20 concurrent reads | 2,014 / 2,026 / 2,029 ms. The capacity wait counted against the same deadline. |
+| 5 rounds of 20 concurrent reads | 2,007–2,043 ms each |
+| `weather-acquisition` threads | At most 8 throughout |
+| JDK client (`HttpClient-*`) threads | 1 before any acquisition, 11–12 under load, 1 again after 75 s idle |
+
+- **Observation.** A caller that obtains a capacity permit just before its own deadline still sends a request, which it abandons within milliseconds. Under contention, therefore, more requests reach the provider than there are permits: 16 in one round of 20 concurrent reads. The concurrency limit of 8 in-flight calls holds. Avoiding these requests would need a minimum-remaining-time rule, a new timeout that the story does not select. This is recorded for OPEN-S4-22.
+
 ## 15. Acceptance Criteria and Requirements-to-Test Matrices
 
 ### 15.1 Acceptance criteria to evidence
 
-| AC | Evidence (planned) | Remaining |
+| AC | Evidence (run in the repository on 2026-11-23) | Remaining |
 | --- | --- | --- |
 | AC-01 Permission-independent choices | T1 `aManualSelectionNeedsALabel…`; T12 `aManualCitySelection…`, `deviceCoordinatesAreRounded…`, `anAccountWithoutASelection…` (skip); M1–M2 | Client permission explanation, denial and device-failure flows; manual city search on the client (OPEN-S4-18) |
 | AC-02 Actual evidence; a city is not weather | T3 `theDocumentedCurrentResponseIsTranslated`; T12 `aManualCitySelection…` (`observedAt`, `retrievedAt`, `basis`, attribution), `aProviderFailureKeeps…` (no weather values); M3 | Client display. **Real response shape not confirmed (M7)**. |
-| AC-03 Freshness and the 2-second delay | T2 (inclusive boundary); T10 `currentEvidenceIsReused…`, `aNewlyFetchedButStaleReading…`; T12 `evidenceExactlyThirtyMinutesOld…`; T4 (deadline, capacity wait, slow body); T15 (deadline ≤ PT2S) | **The deadline in the agreed environment (M8)** |
+| AC-03 Freshness and the 2-second delay | T2 (inclusive boundary); T10 `currentEvidenceIsReused…`, `aNewlyFetchedButStaleReading…`, `evidenceFarInTheFuture…`, `staleStoredEvidenceWhoseRefreshFails…`; T12 `evidenceExactlyThirtyMinutesOld…`; T4 (deadline, capacity wait, slow body, released capacity, bounded threads); T15 (deadline ≤ PT2S); M8 measured locally | **The deadline in the agreed environment (M8)** |
 | AC-04 Bounded fallback | T4 (all failure outcomes); T10 `aProviderFailureKeeps…`; T12 `aProviderFailureKeeps…`; M3 | "Skip only environmental hard filtering" and "remaining validity still applies": **no outfit filtering or assessment exists yet**. Recorded gap, not a pass. |
-| AC-05 Accepted changes | T13 (all four races); T10 `clearingRemoves…`; T12 `clearingRemoves…` | **Reevaluation or outdated marking of affected results: no result store exists (consumers absent, OPEN-S4-23).** Recorded gap. |
+| AC-05 Accepted changes | T13 (the four fencing tests plus the real lock races: same revision, a change waiting for a publication, a publication waiting behind a change, other records); T10 `clearingRemoves…`; T12 `clearingRemoves…` | **Reevaluation or outdated marking of affected results: no result store exists (consumers absent, OPEN-S4-23).** Recorded gap. |
 | AC-06 Protect accepted context | T10 `aStaleRevision…`, `invalidSelections…`; T12 `aStaleRevision…` (no echo), `noOtherAccount…`; M4–M5 | Client uncertain-outcome review |
-| AC-07 Minimize external exchange | T4 `aValidResponseIsAcquiredAndOnlyTheLocationIsSent`; T12 `deviceCoordinatesAreRounded…` (the provider receives only the rounded point); M6a | Provider terms review (M7) |
+| AC-07 Minimize external exchange | T4 `aValidResponseIsAcquiredAndOnlyTheLocationIsSent`, `aRedirectIsNotFollowed`, `aFailureIsLoggedWithoutTheLocationOrTheUrl`; T12 `deviceCoordinatesAreRounded…`, `coordinatesAndLabelsNeverReachTheLog`; M6a | Provider terms review (M7) |
 
 ### 15.2 Requirements to tests
 
@@ -4533,11 +5169,11 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 
 ## 16. Definition of Done
 
-- [ ] P1–P33 and T1–T15 applied. `.\mvnw.cmd clean verify` passes, including `PreferencesApiIT`, `OptionalContextApiIT`, `PreferencesSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureTest` and `IdentityOpenApiContractIT`.
-- [ ] CI on a PR to `sprint_04` finds 132 required reports with no failure or skip.
+- [x] P1–P35 and T1–T15 applied (2026-11-23; the repository files equal this guide's steps). `./mvnw -o clean verify` passed in the repository on 2026-11-23: 694 unit and 434 integration tests, none failed, errored or was skipped, including `PreferencesApiIT`, `OptionalContextApiIT`, `PreferencesSchemaIT`, `DatabaseSchemaOwnershipIT`, `PersistenceOwnershipSqlTest`, `ArchitectureDependencyTest` and `IdentityOpenApiContractIT`.
+- [ ] CI on a PR to `sprint_04` finds 132 required reports with no failure or skip. (Locally 131 of 132; `HeifDecodingIT` needs libheif, which CI installs.)
 - [ ] **The Open-Meteo terms, attribution and eligibility for the deployment are reviewed.** Either M7 is recorded, or production runs with `enabled=false` and reports `NOT_CONFIGURED`.
-- [ ] **M8 deadline measurement recorded.** OPEN-S4-22 moves from `VERIFICATION PENDING` only with that evidence.
-- [ ] The AC-04 and AC-05 consumer gaps are recorded as outstanding and never reported as passing.
+- [ ] **M8 deadline measurement recorded.** OPEN-S4-22 moves from `VERIFICATION PENDING` only with that evidence. (Measured locally on 2026-11-23, §14; the agreed environment is still outstanding.)
+- [x] The AC-04 and AC-05 consumer gaps are recorded as outstanding (§15.1) and not reported as passing.
 - [ ] Client evidence: permission explanation, grant, deny, device failure, manual city, skip, clear, uncertain outcome, Vietnamese and accessibility.
 
 ## 17. Troubleshooting
@@ -4557,13 +5193,13 @@ Check 'M6 clear -> revision 2, NO_SELECTION' ($cleared.Json.revision -eq '2' -an
 
 ## 18. Final Checklist
 
-- [ ] V14 touches only `personal_context`. The coordinate column scale equals the rounding precision (2 decimals).
-- [ ] The selection has its own revision. Preferences and optional context are never read or written by the location services.
-- [ ] Rounding happens before storage and before the provider. No raw device precision is kept or logged.
-- [ ] Commit first, acquire after, publish only for the same revision under `FOR SHARE`. A change or clear deletes evidence in the same transaction.
-- [ ] Freshness is measured from the provider's evidence time; the 30-minute boundary is inclusive; a stale new reading is never current or stored.
-- [ ] One elapsed deadline covers capacity wait, connection, headers, body and translation; there is no retry.
-- [ ] Every failure is an explicit `UNAVAILABLE` reason. No invented weather.
-- [ ] No coordinates, labels or URLs in logs. Integration tests never call the internet.
-- [ ] OpenAPI 0.16.0; 9 CI entries (total 132).
-- [ ] Open-Meteo terms, M7 and M8 are listed as outstanding until done.
+- [x] V14 touches only `personal_context`. The coordinate column scale equals the rounding precision (2 decimals).
+- [x] The selection has its own revision. Preferences and optional context are never read or written by the location services.
+- [x] Rounding happens before storage and before the provider. No raw device precision is kept or logged.
+- [x] Commit first, acquire after, publish only for the same revision under `FOR SHARE`. A change or clear deletes evidence in the same transaction.
+- [x] Freshness is measured from the provider's evidence time; the 30-minute boundary is inclusive; a stale new reading is never current or stored.
+- [x] One elapsed deadline covers capacity wait, connection, headers, body and translation; there is no retry.
+- [x] Every failure is an explicit `UNAVAILABLE` reason. No invented weather.
+- [x] No coordinates, labels or URLs in logs. Integration tests never call the internet.
+- [x] OpenAPI 0.16.0; 9 CI entries (total 132).
+- [x] Open-Meteo terms, M7 and M8 are listed as outstanding until done.

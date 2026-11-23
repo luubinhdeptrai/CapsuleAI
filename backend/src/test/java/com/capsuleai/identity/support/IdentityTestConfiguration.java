@@ -1,6 +1,7 @@
 package com.capsuleai.identity.support;
 
 import com.capsuleai.identity.api.AuthenticatedAccount;
+import com.capsuleai.personalcontext.support.ControllableWeatherProvider;
 import com.capsuleai.wardrobe.support.FaultInjectingPhotoStorage;
 import java.util.Map;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -44,6 +45,16 @@ public class IdentityTestConfiguration {
     @Primary
     FaultInjectingPhotoStorage faultInjectingPhotoStorage() {
         return new FaultInjectingPhotoStorage();
+    }
+
+    /**
+     * US-CTX-001: every integration context answers weather requests from a controllable double instead of
+     * contacting Open-Meteo. The real adapter is verified separately by OpenMeteoWeatherProviderTest.
+     */
+    @Bean
+    @Primary
+    ControllableWeatherProvider controllableWeatherProvider() {
+        return new ControllableWeatherProvider();
     }
 
     /**

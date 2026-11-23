@@ -480,6 +480,27 @@ Focused tests, from `backend`:
 .\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=PreferencesApiIT,ConcurrentPreferencesIT,PreferencesSchemaIT,CurrentPersonalContextIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
 ```
 
+### Location and weather
+
+US-CTX-001 adds `GET`/`PATCH /api/v1/personal-context/location`:
+
+- **The selection.** One per account, `DEVICE` or `MANUAL` (a manual city needs a `label`), with its own `revision`. The server rounds it to two decimals before storing it or sending it anywhere. `selection: null` clears it.
+- **The environment.** It is reported separately as `NO_SELECTION`, `CURRENT` (with the reading and both `observedAt` and `retrievedAt`), or `UNAVAILABLE` with a reason.
+- **How weather is acquired.** Weather comes from Open-Meteo after the selection is committed, within one 2-second deadline. A reading is current while its `observedAt` is at most 30 minutes old.
+
+**Weather provider switch.** The **Open-Meteo terms of use, attribution and eligibility for a deployment are not reviewed**:
+
+- `capsuleai.personal-context.weather.enabled` defaults to `true`. Set `CAPSULE_WEATHER_ENABLED=false` to switch the provider off without a code change. The API then reports `UNAVAILABLE` / `NOT_CONFIGURED`.
+- The `local` profile defaults to `false`, so a local run makes no provider request unless `CAPSULE_WEATHER_ENABLED=true` is set deliberately.
+- Tests never contact the provider.
+
+Focused tests, from `backend`:
+
+```powershell
+.\mvnw.cmd '-Dtest=LocationSelectionTest,WeatherFreshnessTest,OpenMeteoResponseTranslatorTest,OpenMeteoWeatherProviderTest,ReviseLocationServiceTest,PersonalContextWeatherPropertiesTest' test
+.\mvnw.cmd '-Dtest=HarnessSmokeTest' '-Dit.test=LocationSchemaIT,LocationContextApiIT,ConcurrentLocationIT,PreferencesSchemaIT,DatabaseSchemaOwnershipIT,IdentityOpenApiContractIT' verify
+```
+
 ## 10. Database migrations
 
 The Boot Flyway starter, PostgreSQL Flyway module and JDBC driver apply real migrations on configured startup. Common properties select `classpath:db/migration` and disable Flyway clean.

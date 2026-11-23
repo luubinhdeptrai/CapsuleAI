@@ -178,6 +178,15 @@ jobs:
             'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.out.persistence.OptionalContextSchemaIT.xml' = 3
             'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.in.web.OptionalContextApiIT.xml' = 8
             'failsafe-reports/TEST-com.capsuleai.personalcontext.application.ConcurrentOptionalContextIT.xml' = 3
+            'surefire-reports/TEST-com.capsuleai.personalcontext.domain.LocationSelectionTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.personalcontext.domain.WeatherFreshnessTest.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.personalcontext.adapter.out.weather.OpenMeteoResponseTranslatorTest.xml' = 5
+            'surefire-reports/TEST-com.capsuleai.personalcontext.adapter.out.weather.OpenMeteoWeatherProviderTest.xml' = 7
+            'surefire-reports/TEST-com.capsuleai.personalcontext.application.ReviseLocationServiceTest.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.out.persistence.LocationSchemaIT.xml' = 3
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.adapter.in.web.LocationContextApiIT.xml' = 8
+            'failsafe-reports/TEST-com.capsuleai.personalcontext.application.ConcurrentLocationIT.xml' = 4
+            'surefire-reports/TEST-com.capsuleai.personalcontext.configuration.PersonalContextWeatherPropertiesTest.xml' = 3
           }
 
           foreach ($entry in $required.GetEnumerator()) {
